@@ -1,0 +1,44 @@
+{% extends 'crm/base.html' %}
+{% load static %}
+
+{% block crm %}
+    <div class="card-header"><strong class="card-title">Sales Deals</strong></div>
+    <div class="card-body">
+        <div class="card-body">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>CUSTOMER</th><th>COMPANY</th><th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="purc_tables">
+
+                                </tbody>
+                            </table>
+                        </div>
+    </div>
+
+
+    <script>
+        $(document).ready(function(){
+            // load open purchases
+            let open_purchases = cmms.getOpenPurchases();
+            let purch_rows = "";
+            if(anton.IsRequest(open_purchases)){
+                // load open purchse into table
+                let msg = open_purchases.message
+                for (let i = 0; i < msg.length; i++) {
+                    let row = msg[i];
+                    purch_rows += `
+                        <tr>
+                                        <td>${row['customer']}</td><td>${row['company']}</td><td><a onclick="cmms_sales.viewTransactions('${row['pk']}')" href="javascript:void(0)"><i class="fa fa-eye"></i></a></td>
+                                    </tr>
+                    `
+                }
+
+                $('#purc_tables').html(purch_rows)
+            }
+        });
+    </script>
+
+{% endblock %}

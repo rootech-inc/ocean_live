@@ -1,0 +1,60 @@
+{% extends 'retail/base.html' %}
+{% load static %}
+{% block body %}
+    <div class="card-header">
+        <div class="w-100 h-100 d-flex flex-wrap">
+            <div class="w-25 h-100"><strong class="card-title">PRODUCTS LIST</strong></div>
+            <div class="w-75 h-100 d-flex flex-wrap justify-content-end align-content-center">
+                <a class='btn btn-outline-info mr-1 rounded-0' style='margin-right: 2px'>NEGATIVE FLAG</a>
+                <a href="javascript:void(0)" style="border-radius: 0 !important" onclick="retail.export_retail_products('*')" class="btn btn-outline-warning"><i class="fa fa-file-excel"></i> Export</a>
+            </div>
+        </div>
+    </div>
+    <div id="result" class="card-body bg-light overflow-auto">
+
+
+    </div>
+
+
+    <script>
+        retail.loadProducts()
+
+        $(document).on('change', '#new_group', function() {
+
+            let group_id = $('#new_group').val();
+            let sub_groups = retail.getProductSubGroups(group_id)
+
+            if(anton.IsRequest(sub_groups)){
+                let sg_opt = `<option selected disabled value=0 >Select Sub Group</pption>`;
+                let msg = sub_groups.message
+                for (let i = 0; i < msg.length; i++) {
+                    let sg = msg[i];
+                    sg_opt += `<option value="${sg['code']}">${sg['name']}</option>`
+                }
+
+                $('#new_sub_group').html(sg_opt)
+            }
+        });
+
+        $(document).on('change', '#new_sub_group', function() {
+
+            let sub_group_id = $('#new_sub_group').val();
+            let group_id = $('#new_group').val();
+            let sub_subgroups = retail.getProductSubSubGroups(group_id,sub_group_id)
+
+            if(anton.IsRequest(sub_subgroups)){
+                let sg_opt = ``;
+                let st = `<option selected value='' >None</pption>`
+                let msg = sub_subgroups.message
+                for (let i = 0; i < msg.length; i++) {
+                    let sg = msg[i];
+                    sg_opt += `<option value="${sg['code']}">${sg['name']}</option>`
+                }
+                $('#sg_opt').html('')
+                $('#new_sub_subgroup').html(sg_opt)
+                $('#new_sub_subgroup').prepend(st)
+            }
+        });
+
+    </script>
+{% endblock %}

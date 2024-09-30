@@ -1,0 +1,64 @@
+{% extends 'cmms/sales/sales_base.html' %}
+{% load static %}
+
+{% block cmms %}
+
+
+        <div class="card-header">
+            <strong class="card-title">Proforma Invoices</strong>
+        </div>
+
+        <div class="card-body bg-light" style="overflow: hidden !important">
+            {% if proformas.count > 0 %}
+            <div class="table table-responsive h-100 overflow-auto">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Customer</th><th>Asset</th><th>Created Date</th><th>Created By</th><th>Status</th><th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doc in proformas %}
+                            <tr>
+                                <td>{{ doc.customer.name }}</td>
+                                <td>{{ doc.car_model.model_name }}</td>
+                                <td>{{ doc.created_on }}</td>
+                                <td>{{ doc.created_by.get_full_name }}</td>
+                                <td>
+                                    {% if doc.is_approved %}
+                                        <span class="badge bg-success">approved</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="dropdown dropleft">
+                                      <button class="btn btn-secondary" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="fas fa-angle-left"></i>
+                                      </button>
+                                      <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+
+
+                                            <a class="dropdown-item text-info" onclick="sales.viewProforma('{{ doc.pk }}')" href="javascript:void(0)">View Proforma</a>
+                                            <a class="dropdown-item text-warning" onclick="windowPopUp('/cmms/sales/approve/sales-po/{{ doc.pk }}/','SPEC',500,678)" href="javascript:void(0)">Approve C</a>
+                                            <a class="dropdown-item text-warning" onclick="sales.approveProforma('{{ doc.pk }}')" href="javascript:void(0)">Approve</a>
+
+                                      </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="w-100 h-100 d-flex flex-wrap justify-content-center align-content-center">
+                <div class="alert alert-info text-center">
+                    <strong>NO DOCUMENT</strong>
+                    <p>There is no document for approval</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+{% endblock %}

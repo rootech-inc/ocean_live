@@ -1,0 +1,189 @@
+{% extends 'cmms/service/serv_base.html' %}
+{% load static %}
+
+{% block cmms %}
+    <div class="card-header">
+        <div class="w-100 d-flex flex-wrap">
+            <div class="w-50">
+                <ul class="nav nav-tabs">
+              <li class="nav-item">
+                <a class="nav-link active" data-toggle="tab" href="#home">Job Details</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#menu1">Attachments</a>
+              </li>
+            </ul>
+            </div>
+            <div class="w-50 d-flex justify-content-end">
+                <button onclick="location.href='{% url 'cmms_servicing' %}'" id="cancel" class="btn btn-sm btn-danger"><i class="fa fa-backspace"></i> CANCEL</button>
+                <button id="save_jc" class="btn btn-sm btn-success"><i class="fa fa-save"></i> SAVE</button>
+
+            </div>
+
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Nav tabs -->
+
+
+        <!-- Tab panes -->
+        <div class="tab-content">
+          <div class="tab-pane container p-2 active" id="home">
+
+              <div class="row overflow-auto">
+
+                <div class="col-sm-12 col-md-12 col-lg-6 h-100">
+                    <div class="card">
+                        <div class="card-header">
+                            <strong class="card-title">Customer Details</strong>
+                        </div>
+                        <div class="card-body p-2">
+                            <div class="input-group mb-2">
+                              <div class="input-group-prepend">
+                                  <label for="entry_date" class="input-group-text rounded-0">Entry Date</label>
+                              </div>
+                              <input type="date" value="" id="entry_date" class="form-control rounded-0">
+                          </div>
+                            <!--CUSTOMER -->
+                          <div class="input-group mb-2">
+                              <div class="input-group-prepend">
+                                  <label for="company" class="input-group-text rounded-0">Company</label>
+                              </div>
+                              <input type="text" id="company" class="form-control rounded-0">
+                          </div>
+                            <!-- REP -->
+                            <div class="input-group mb-2">
+                              <div class="input-group-prepend">
+                                  <label for="driver" class="input-group-text rounded-0">Driver</label>
+                              </div>
+                              <input type="text" id="driver" class="form-control rounded-0">
+                          </div>
+
+                            <!-- REP CONTACT -->
+                            <div class="input-group mb-2">
+                              <div class="input-group-prepend">
+                                  <label for="contact" class="input-group-text rounded-0">Contact</label>
+                              </div>
+                              <input type="tel" id="contact" class="form-control rounded-0">
+                          </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-12 col-md-12 col-lg-6 h-100">
+                    <div class="card">
+                        <div class="card-header">
+                            <strong class="card-title">Car Details</strong>
+                        </div>
+                        <div class="card-body p-2">
+                            <!--CUSTOMER -->
+                          <div class="input-group mb-2">
+                              <div class="input-group-prepend">
+                                  <label for="brand" class="input-group-text rounded-0">Brand</label>
+                              </div>
+                              <input type="text" id="brand" placeholder="Toyota" class="form-control rounded-0">
+                          </div>
+                            <!-- REP -->
+                            <div class="input-group mb-2">
+                              <div class="input-group-prepend">
+                                  <label for="model" class="input-group-text rounded-0">Model</label>
+                              </div>
+                              <input type="text" id="model" placeholder="Lexus 2021" class="form-control rounded-0">
+                          </div>
+
+                            <!-- REP CONTACT -->
+                            <div class="input-group mb-2">
+                              <div class="input-group-prepend">
+                                  <label for="car_number" class="input-group-text rounded-0">Number</label>
+                              </div>
+                              <input type="text" id="car_number" placeholder="Number Plate" class="form-control rounded-0">
+                          </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-12 h-100">
+                    <div class="card">
+                        <div class="card-header"><strong class="card-title">Customer Report</strong></div>
+                        <div class="card-body p-1">
+                            <textarea name="" class="form-control rounded-0" id="report"  rows="6"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+          </div>
+          <div class="tab-pane container p-2 fade" id="menu1">
+              <div class="card h-100">
+                <div class="card-header">
+                    <button id='add_img_line' class="btn btn-info">ADD IMAGE</button>
+                </div>
+                <div class="card-body overflow-hidden">
+                    <div class="container-fluid py-2 h-100 overflow-auto">
+                        <div class="row">
+                            <form action="{% url 'save_serv_job_images' %}" method="post" enctype="multipart/form-data" class="col-sm-12 col-md-12 col-lg-4" id="images_que">
+                                {% csrf_token %}
+                                <input type="hidden" name="job_id" id="job_id">
+                                <input type="file" name="file[]" class="form-control">
+                                <hr>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          </div>
+        </div>
+        <div class="container-fluid p-2 h-100">
+
+
+        <div style="height: 65%" class="overflow-hidden">
+
+        </div>
+    </div>
+    </div>
+
+    <script>
+        var allFilesSelected = true;
+        $(document).ready(function(){
+            // Get today's date
+            document.getElementById('entry_date').value = new Date().toISOString().split('T')[0];
+            $('#add_img_line').click(function(){
+                $('#images_que').prepend(`<input type="file" name="file[]" class="form-control">
+                                <hr>`);
+            });
+
+            $('#save_jc').click(function(){
+                let ids = ['company','driver','contact','brand','model','car_number','report','mypk','entry_date'];
+                // Reset `allFilesSelected` before validation
+                let allFilesSelected = true;
+
+                $('input[name="file[]"]').each(function() {
+                    if ($(this).val() === '') {
+                        allFilesSelected = false;
+                        return false;  // Break the loop
+                    }
+                });
+
+
+
+                if(anton.validateInputs(ids) || !allFilesSelected){
+                    let payload = {
+                        module:'save_job_card',
+                        data:anton.Inputs(ids)
+                    }
+
+                    let save = api.call('PUT',payload,'/cmms/api/');
+                    console.table(save)
+                    if(anton.IsRequest(save)){
+                        let saved_id = save.message;
+                        $('#job_id').val(saved_id);
+                        $('#images_que').submit();
+                        kasa.info('Done')
+                    }
+                }
+
+            });
+        });
+    </script>
+{% endblock %}

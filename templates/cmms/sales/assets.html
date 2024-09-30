@@ -1,0 +1,157 @@
+{% extends 'cmms/sales/sales_base.html' %}
+{% load static %}
+
+{% block cmms %}
+    <div class="card-header">
+        <div class="w-100 d-flex flex-wrap">
+            <div class="w-50 d-flex flex-wrap">
+                <button id="new" class="btn nav-btn btn-sm btn-primary mr-1">
+                    <i class="fa fa-plus"></i>
+                </button>
+                <button id="edit" class="btn nav-btn btn-sm btn-warning mr-1">
+                    <i class="fa fa-edit"></i>
+                </button>
+                <button id="previous" class="btn nav-btn btn-sm btn-info mr-1">
+                    <i class="fa fa-backward"></i>
+                </button>
+                <button id="next" class="btn nav-btn btn-sm btn-info mr-1">
+                    <i class="fa fa-forward"></i>
+                </button>
+            </div>
+
+            <div class="w-50 d-flex flex-wrap p-2 justify-content-end">
+                <button id="asset_groups" class="btn p-1 btn-info btn-sm nav-btn">
+                    Asset Group
+                </button>
+                <button class="btn p-1 btn-info btn-sm nav-btn">
+                    Asset List
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-2">
+        <div class="container-fluid h-100">
+            <div class="row h-25 overflow-auto">
+                <div class="col-sm-4">
+                    <!-- Manufacturer -->
+                    <div class="row mb-2">
+                        <label for="name" class="col-sm-4">Name</label>
+                        <div class="col-sm-8">
+                            <input type="text" disabled class="form-control rounded-0" id="name">
+                        </div>
+                    </div>
+                    <!-- Manufacturer -->
+                    <div class="row mb-2">
+                        <label for="manufacturer" class="col-sm-4">Manufacturer</label>
+                        <div class="col-sm-8">
+                            <input type="text" disabled class="form-control rounded-0" id="manufacturer">
+                        </div>
+                    </div>
+
+                    <!-- Origin -->
+                    <div class="row mb-2">
+                        <label for="origin" class="col-sm-4">Car Origin</label>
+                        <div class="col-sm-8">
+                            <input type="text" disabled class="form-control rounded-0" id="origin">
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="col-sm-4">
+                    <!-- SUPPLYEr -->
+                    <div class="row mb-2">
+                        <label for="supplier" class="col-sm-4">Supplier</label>
+                        <div class="col-sm-8">
+                            <input type="text" disabled class="form-control rounded-0" id="supplier">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <label for="supplier_origin" class="col-sm-4">Supp. Origin</label>
+                        <div class="col-sm-8">
+                            <input type="text" disabled class="form-control rounded-0" id="supplier_origin">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-4">
+                    <!-- SUPPLYEr -->
+                    <div class="row mb-2">
+                        <label for="created_by" class="col-sm-4">Created By</label>
+                        <div class="col-sm-8">
+                            <input type="text" disabled class="form-control rounded-0" id="created_by">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <label for="created_date" class="col-sm-4">Created Date</label>
+                        <div class="col-sm-8">
+                            <input type="text" disabled class="form-control rounded-0" id="created_date">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODELS -->
+            <div class="h-75 card p-2">
+                <div class="card-header">
+                    <div class="w-100 d-flex flex-wrap">
+                        <div class="w-50"><strong class="card-title">Models</strong></div>
+                        <div class="w-50 d-flex flex-wrap justify-content-end">
+                            <button onclick="sales.newModelScreen()" class="btn btn-outline-dark">NEW MODEL</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0 overflow-auto">
+                    <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Model Name</th>
+                            <th>Year</th>
+                            <th>Stock</th>
+                            <th>Doc.</th>
+                            <th>Price</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="models">
+{#                        <tr>#}
+{#                            <td><a href="#">Spider</a></td>#}
+{#                            <td>2025</td>#}
+{#                            <td>10</td>#}
+{#                            <td>0</td>#}
+{#                            <td>$1,000.00</td>#}
+{#                            <td>Actions</td>#}
+{#                        </tr>#}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let asset_key = `{{ last_pk }}`;
+        let next = 0,previous = 0;
+        $(document).ready(function(){
+            $('#asset_groups').click(function(){
+                sales.viewAssetGroups()
+            });
+
+            $('#new').click(function(){
+                location.href = '/cmms/sales/assets/new/'
+            });
+
+            $('#next').click(function (){
+                sales.loadAsset(next)
+            })
+
+            $('#previous').click(function (){
+                sales.loadAsset(previous)
+            })
+
+            sales.loadAsset(asset_key)
+        })
+    </script>
+{% endblock %}

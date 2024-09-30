@@ -1,0 +1,732 @@
+{% extends "servicing/base.html" %}
+{% load static %}
+
+{% block body %}
+
+    <!-- HEADER -->
+    <div class="card-header">
+        <div class="w-100 h-100 d-flex flex-wrap">
+
+            <div class="w-75 h-100 d-flex flex-wrap">
+                <button onclick="location.href='{% url 'newjob' %}'" style="margin-right: .2em" class="btn btn-outline-primary"><i class="fa fa-plus"></i></button>
+                <button id="change_app" onclick="svc.changeApp(this.value)" style="margin-right: .2em" class="btn btn-outline-primary">CHGAP</button>
+                <button id="find_job" onclick="findJobScreen()" style="margin-right: .2em" class="btn btn-outline-info"><i class="fa fa-search"></i></button>
+                <button onclick="if(confirm('ARE YOU SURE?')){deleteJobCard(this.value)}" id="delete" style="margin-right: .2em" class="btn btn-outline-danger"><i class="fa fa-trash"></i></button>
+                <button onclick="if(confirm('ARE YOU SURE YOU WANT TO CLOSE SERVICE?')){updateDocument(2)}" id="close" style="margin-right: .2em" class="btn btn-outline-warning"><i class="fa fa-door-closed"></i> close</button>
+                <button id="update" onclick="ticket.updateTranScreen()" style="margin-right: .2em" class="btn btn-outline-info"><i class="fa fa-assistive-listening-systems"></i> update ticket</button>
+                <button id="send_to_client" onclick="ticket.sendToClient($('#delete').val())" style="margin-right: .2em" class="btn btn-outline-success"><i class="fa fa-mail-bulk"></i> client</button>
+                <button id="send_to_provider" onclick="mail_provider()" style="margin-right: .2em" class="btn btn-outline-dark"><i class="fa fa-mail-bulk"></i> provider</button>
+                <button onclick="windowPopUp(`/servicing/jobcard/tracking/${$('#delete').val()}/`,'none',500,1024)" class="btn btn-info"><i class="fa fa-list"></i></button>
+                <input type="hidden" id="cardno">
+                <input type="hidden" id="task">
+            </div>
+            <div class="w-25 h-100 d-flex flex-wrap justify-content-end">
+
+                <button onclick="svc.pendingCards()" style="margin-right: .2em" class="btn btn-outline-primary">PENDING</button>
+                 <button id="prev" onclick="loadJobCard(this.value)" style="margin-right: .2em" class="btn btn-outline-info"><i class="bi bi-skip-backward-btn"></i></button>
+                <button id="next" onclick="loadJobCard(this.value)" style="margin-right: .2em" class="btn btn-outline-info"><i class="bi bi-skip-forward-btn"></i></button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- BODY -->
+    <div class="card-body p-2 overflow-auto">
+        <div class="container h-100">
+            <div class="row h-100 no-gutters">
+                <!-- CLIENT DETAILS -->
+                <div class="col-sm-4">
+                    <div class="card">
+                        <div class="card-header"><strong class="card-title">Client</strong></div>
+                        <div class="card-body p-2">
+                            <!-- NAME -->
+                            <div class="input-group imput-group-sm mb-2">
+                                <div class="input-group-prepend rounded-0">
+                                    <small class="input-group-text rounded-0">NAME</small>
+                                </div>
+                                <input required readonly type="text" class="form-control rounded-0 form-control-sm" id="client_name">
+                            </div>
+
+                            <!-- EMAIL -->
+                            <div class="input-group imput-group-sm mb-2">
+                                <div class="input-group-prepend rounded-0">
+                                    <small class="input-group-text rounded-0">EMAIL</small>
+                                </div>
+                                <input required readonly  type="email" class="form-control rounded-0 form-control-sm" id="client_email">
+                            </div>
+
+                            <!-- CONTACT -->
+                            <div class="input-group imput-group-sm mb-2">
+                                <div class="input-group-prepend rounded-0">
+                                    <small class="input-group-text rounded-0">PHON</small>
+                                </div>
+                                <input type="tel" required readonly  class="form-control rounded-0 form-control-sm" id="client_phone">
+                            </div>
+
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SERVICE DETAILS -->
+                <div class="col-sm-4">
+                    <div class="card">
+                        <div class="card-header"><strong class="card-title">Service Details</strong></div>
+                        <div class="card-body p-2">
+                            <!-- NAME -->
+                            <div class="input-group imput-group-sm mb-2">
+                                <div class="input-group-prepend rounded-0">
+                                    <small class="input-group-text rounded-0">SERVICE MAST</small>
+                                </div>
+                                <input required readonly  type="text" class="form-control rounded-0 form-control-sm" id="service">
+                            </div>
+
+                            <!-- EMAIL -->
+                            <div class="input-group imput-group-sm mb-2">
+                                <div class="input-group-prepend rounded-0">
+                                    <small class="input-group-text rounded-0">SERVICE SUB</small>
+                                </div>
+                                <input required readonly  type="email" class="form-control rounded-0 form-control-sm" id="service_sub">
+                            </div>
+
+                            <!-- CONTACT -->
+                            <div class="row">
+                                <div class="col-sm-6">
+
+                                    <div class="input-group imput-group-sm mb-2">
+                                        <div class="input-group-prepend rounded-0">
+                                            <small class="input-group-text rounded-0">STATUS</small>
+                                        </div>
+                                        <input type="text" required readonly value="" class="form-control rounded-0 form-control-sm" id="status">
+                                    </div>
+
+                                </div>
+
+                                <div class="col-sm-6">
+
+                                    <div class="input-group imput-group-sm mb-2">
+                                        <div class="input-group-prepend rounded-0">
+                                            <small class="input-group-text rounded-0">CARD</small>
+                                        </div>
+                                        <input type="text" required readonly value="" class="form-control rounded-0 form-control-sm" id="cardnox">
+                                    </div>
+
+                                </div>
+                            </div>
+
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TECHNICIAN -->
+                <div class="col-sm-4">
+                    <div class="card">
+                        <div class="card-header"><strong class="card-title">TECHNICAL</strong></div>
+                        <div class="card-body p-2">
+                            <!-- EMAIL -->
+                            <div class="input-group imput-group-sm mb-2">
+                                <div class="input-group-prepend rounded-0">
+                                    <small class="input-group-text rounded-0">APP</small>
+                                </div>
+                                <input required readonly type="text" class="form-control rounded-0 form-control-sm" id="app">
+                                <input type="hidden" id="provider_email">
+                            </div>
+                            <!-- NAME -->
+                            <div class="input-group imput-group-sm mb-2">
+                                <div class="input-group-prepend rounded-0">
+                                    <small class="input-group-text rounded-0">ASSIGNED TO.</small>
+                                </div>
+                                <input required readonly type="text" class="form-control rounded-0 form-control-sm" id="technician">
+                            </div>
+
+                            <!-- CONTACT -->
+                            <div class="input-group imput-group-sm mb-2">
+                                <div class="input-group-prepend rounded-0">
+                                    <small class="input-group-text rounded-0">PHON</small>
+                                </div>
+                                <input type="tel" required readonly  class="form-control rounded-0 form-control-sm" id="techphone">
+                            </div>
+
+
+
+
+
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-12" style="height: 60% !important">
+
+                    <div class="card h-100">
+                        <div class="card-header p-2">
+                                <!-- Nav pills -->
+                                <ul class="nav nav-pills">
+                                  <li class="nav-item">
+                                    <a class="nav-link active" data-toggle="pill" href="#TICKET">TICKET</a>
+                                  </li>
+                                    <li class="nav-item">
+                                    <a class="nav-link" data-toggle="pill" href="#ANALYSIS">ANALYSIS</a>
+                                  </li>
+                                  <li class="nav-item">
+                                    <a class="nav-link" data-toggle="pill" href="#TRANSACTIONS">TRANSACTIONS</a>
+                                  </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-toggle="pill" href="#MATERIALS">MATERIALS</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-toggle="pill" href="#DOCUMENTS">DOCUMENTS</a>
+                                    </li>
+
+                                </ul>
+                        </div>
+
+                        <div class="card-body overflow-auto p-2">
+                            <div class="tab-content">
+                                <div class="tab-pane container active" id="TICKET">
+                                    <h2 id="task_title"></h2>
+                                    <div id="taskdesc"></div>
+                                </div>
+
+                                <div class="tab-pane container fade" id="TRANSACTIONS">
+                                    <table class="table table-sm table-bordered table-striped table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>TITLE</th><th>DESCRIPTION</th><th>BY</th><th>DATE CREATED</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="ticketTrans">
+
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="tab-pane container fade" id="ANALYSIS">
+                                    <div class="p-2" id="annal"></div>
+                                    <div id="checklist" class="w-100">
+
+                                    </div>
+                                </div>
+
+                                <div class="tab-pane container fade" id="MATERIALS">
+                                    <table class="table table-sm table-bordered table-striped table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>LINE</th>
+                                                <th>NAME</th>
+                                                <th>DESCRIPTION</th>
+                                                <th>PRICE</th>
+                                                <th>QTY</th>
+                                                <th>COST</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="materialRows">
+
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="tab-pane container fade" id="DOCUMENTS">
+                                    <div id="doc_win" class="w-50">
+                                        <table class="table table-sm" id="doc_tables">
+
+                                    </table>
+                                    </div>
+
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <div class="dropdown">
+                                <button class="btn btn-info" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fa fa-share"></i> EXPORT
+                                </button>
+                                <!-- Dropdown Menu -->
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    <a class="dropdown-item" href="javascript:void(0)" onclick="svc.materialRequest(`${$('#delete').val()}`)">Material Request</a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="#">Separated link</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        function loadJobCard(cardno){
+            let payload = {
+                module:'servicecard',
+                data:{
+                    cardno:cardno
+                }
+            };
+
+            let request = api.call('VIEW',payload,'/servicing/api/');
+            ////console.table(request)
+            if(request['status_code'] === 200){
+                $('#close').val(cardno)
+                let service = request['message'];
+                console.table(service)
+                let client = service['client'];
+                let service_pk = service['pk'];
+                $('#change_app').val(service_pk);
+                let materials = service['materials'];
+                let documents = service['documents'];
+                let next = service['next'];
+                let owner = service['owner'];
+                let prev = service['prev'];
+                let srvice = service['service']['main'];
+                let subservice = service['service']['sub'];
+                let technician = service['technician'];
+                let ticket = service['ticket'];
+                let timedata = service['timedata'];
+                let task = service['task'];
+                $('#annal').html(service['annal'])
+                $('#cardnox').val(cardno)
+
+                $('#task').val(task['uni']);
+
+                // html modifications
+                if(next['count'] > 0){
+                    $('#next').prop('disabled',false);
+                    $('#next').val(next['nextcode']);
+                } else {
+                    $('#next').prop('disabled',true);
+                }
+                if(prev['count'] > 0){
+                    $('#prev').prop('disabled',false);
+                    $('#prev').val(prev['code']);
+                } else {
+                    $('#prev').prop('disabled',true);
+                }
+
+                console.table(prev)
+
+                // check status
+                statusCheck(service['status'])
+
+                $('#delete').val(cardno)
+
+                $('#client_name').val(client['fullname']);
+                $('#client_email').val(client['email']);
+                $('#client_phone').val(client['phone'])
+
+                // service
+                $('#service').val(srvice['name']);
+                $('#service_sub').val(subservice['name']);
+                if(service['status'] === 1){
+                    $('#status').val("OPEN")
+                    $('#status').removeClass('text-success')
+                    $('#status').removeClass('text-danger')
+                    $('#status').removeClass('text-warning')
+                    $('#status').addClass('text-info')
+                }
+                else if (service['status'] === 0){
+                    $('#status').val("DELETED")
+                    $('#status').removeClass('text-warning')
+                    $('#status').removeClass('text-success')
+                    $('#status').removeClass('text-info')
+                    $('#status').addClass('text-danger')
+                }
+                else if (service['status'] === 2){
+                    $('#status').val("CLOSED")
+                    $('#status').removeClass('text-warning')
+                    $('#status').removeClass('text-danger')
+                    $('#status').removeClass('text-info')
+                    $('#status').addClass('text-success')
+                }
+                else {
+                    $('#status').val("UNKNOWN")
+                    $('#status').removeClass('text-success')
+                    $('#status').removeClass('text-danger')
+                    $('#status').removeClass('text-info')
+                    $('#status').addClass('text-warning')
+
+                }
+
+                $('#app').val(service['app']['name'])
+                $('#provider_email').val(service['app']['provider_email'])
+
+                //technician
+                $('#technician').val(technician['fullname']);
+                $('#techphone').val(technician['phone']);
+                $('#cardno').val(cardno)
+
+                // cheklist
+                let checklist = service['checklist'];
+                let list = '';
+                for(let c = 0; c < checklist.length; c++){
+                    let lx = checklist[c];
+                    if(lx.checked){
+                        list += `
+                        <div class="form-check">
+                          <label class="form-check-label">
+                            <input type="checkbox" checked class="form-check-input" value="">${lx.name}
+                          </label>
+                        </div>
+                    `
+                    } else {
+                        list += `
+                        <div class="form-check">
+                          <label class="form-check-label">
+                            <input type="checkbox" class="form-check-input" value="">${lx.name}
+                          </label>
+                        </div>
+                    `
+                    }
+
+                }
+
+                $('#checklist').html(list)
+
+                // materials
+                let mats = ''
+                for (let m = 0; m < materials.length ; m++) {
+                    let mat = materials[m]
+                    mats += `
+                        <tr>
+                                        <td>${mat['line']}</td>
+                                        <td>${mat['item']}</td>
+                                        <td>${mat['description']}</td>
+                                        <td>${mat['price']}</td>
+                                        <td>${mat['quantity']}</td>
+                                        <td>${mat['total_price']}</td>
+                                    </tr>
+                    `
+                }
+                $('#materialRows').html(mats);
+
+                $('#update').val(ticket['hd']['pk']);
+
+                $('#task_title').html(ticket['hd']['title']);
+                $('#taskdesc').html(ticket['hd']['description']);
+
+                // tickets
+                let ticket_trans = ticket['trans'];
+                let t_rows = '';
+                $('#ticketTrans').html(t_rows);
+                for (let tt = 0; tt < ticket_trans.length; tt++) {
+                    let tran = ticket_trans[tt];
+                    t_rows += `<tr><td><small>${tran['title']}</small></td><td><small>${tran['descr']}</small></td><td><small>${tran['owner']['fullname']}</small></td><td><small>${tran['date']}</small></td></tr>`
+                }
+                $('#ticketTrans').html(t_rows);
+
+
+                // documents
+                let dr = ``
+                for (let d = 0; d < documents.length; d++) {
+                    let dd = documents[d];
+                    console.table(dd)
+                    dr += `<tr>
+                                                    <td><a onclick="anton.viewFile('${dd['url']}','DOCUMENT')" href="javascript:void(0)">${dd['url'].split('/').pop()}</a></td>
+                                                </tr>`
+                }
+
+                $('#doc_tables').html(dr);
+
+
+
+
+
+            } else {
+                alert(request['message'])
+            }
+
+            amodal.hide()
+        }
+
+        function statusCheck(status){
+            let del,close,update,send;
+
+            del = $('#delete');
+            close = $('#close');
+            update = $('#update');
+            send = $('#send_to_client');
+
+            switch (status) {
+                case 0:
+                    // deleted => disable('delete',close,update,send)
+                    del.prop('disabled',true);
+                    close.prop('disabled',true);
+                    update.prop('disabled',true);
+                    send.prop('disabled',true);
+
+                    break;
+                case 1:
+                    //open
+                    del.prop('disabled',false);
+                    close.prop('disabled',false);
+                    update.prop('disabled',false);
+                    send.prop('disabled',false);
+                    break;
+                case 2:
+                    // closed
+                    del.prop('disabled',true);
+                    close.prop('disabled',true);
+                    update.prop('disabled',true);
+                    send.prop('disabled',true);
+                    break;
+                default:
+
+            }
+
+        }
+
+        // delete job card
+        function deleteJobCard(cardno) {
+
+            let payload = {
+                module:'delete_job_card',
+                data:{
+                    cardno:cardno
+                }
+            }
+
+            kasa.response(api.call('DELETE',payload,'/servicing/api/'))
+
+        }
+
+        function updateDocument(status){
+            if(status < 0 || status > 2){
+                kasa.error("INVALID SETTINGS")
+            } else {
+                let payload = {
+                module:'jobcardstatus',
+                data: {
+                    'cardno':$('#cardno').val(),
+                    'status':status
+                    }
+                };
+                alert(api.call(
+                    'PATCH',payload,'/servicing/api/'
+                )['message']);
+                loadJobCard(cardno);
+            }
+        }
+
+        // load first card
+        loadJobCard(`{{ cardno }}`)
+
+        // find job card screen
+        function findJobScreen() {
+            amodal.setTitleText(`<input id="jobstring" onkeyup="findJob()" class="form-control rounded-0 w-100" placeholder="enter string" >`)
+            amodal.setBodyHtml(`<div class="table-responsive"><table class="table table-sm"><thead><tr><th>JOB CARD</th><th>TITLE</th><th>OWNER</th><th>DATE</th></tr></thead><tbody id="queryresults"></tbody></table></div>`)
+
+            amodal.show()
+        }
+
+        // find job
+        function findJob() {
+            let jobstring = $('#jobstring').val();
+            let payload = {
+                module:'findjob',
+                data:{
+                    jobstring:jobstring
+                }
+            };
+
+            let jobquery = api.call('VIEW',payload,'/servicing/api/');
+            ////console.table(jobquery);
+            let queryresults = ''
+            if(jobquery['status_code'] === 200){
+
+                let results = jobquery['message'];
+
+                for (let r = 0; r < results.length; r++) {
+                    let result = results[r];
+                    queryresults += `<tr><td><small class="pointer text-info" onclick="loadJobCard('${result['cardno']}');amodal.hide(false)" >${result['cardno']}</small></td><td title="${result['description']}"><small>${result['title']}</small></td><td><small>${result['owner']}</small></td><td><small>${result['date']}</small></td></tr>`;
+                }
+
+            } else {
+                queryresults = `<tr><td><small class="text-danger">${jobquery['message']}</small></td></tr>`;
+                //console.log(jobquery['message']);
+            }
+            $('#queryresults').html(queryresults);
+        }
+
+
+        function mail_provider() {
+            windowPopUp(`/servicing/main-to-provider/${$('#delete').val()}/`,"EMAIL PROVIDER",1024,760)
+            mailer.new_email_screen()
+            {#let client_address = $('#client_email').val();#}
+            {#let provider_email = $('#provider_email').val();#}
+            {#let it_manager = 'bharat@snedaghana.com,ajay@snedaghana.com';#}
+            {#let cc = `${client_address},${it_manager}`#}
+            {#let title = $('#task_title').text()#}
+            {#let taskdesc = $('#taskdesc').text()#}
+            {#let task = $('#task').val()#}
+            {#taskdesc += `<br><br><i>With ocean at beta release that might be unavailable online sometimes, issue transactions for detailed troubleshooting can be found at <a href="http://41.222.234.59/servicing/jobcard/tracking/${task}/">link</a></i>`#}
+            {##}
+            {##}
+            {#$('#recipient').val(provider_email);#}
+            {#$('#cc').val(cc);#}
+            {#$('#subject').val(`Sneda Ghana Issues : ${title}`)#}
+            {#$('#body').val(taskdesc)#}
+
+
+        }
+
+        class Service {
+            pendingCards(){
+                let payload = {
+                    module:'service_report',
+                    data:{
+                        user:'*',
+                        status:1,
+                        from:'2023-01-01',
+                        to:'2099-12-31'
+                    }
+                }
+
+                let request = api.call('VIEW',payload,'/servicing/api/');
+                console.table(request)
+
+                if(anton.IsRequest(request)){
+                    let message = request['message'];
+                    //console.table(message)
+                    let tr = ''
+                    for (let jb = 0; jb < message.length; jb++) {
+                        let job = message[jb];
+                        let cardno,date,description,service,technician,title;
+                        cardno = job['cardno'];
+                        date = job['date'];
+                        description = job['description'].substring(0, 30);
+                        technician = job['technician'];
+                        title = job['title'];
+                        let owner = job['owner'];
+                        tr += `
+                            <tr>
+                                <td>${date}</td>
+                                <td>${owner}</td>
+                                <td><a onclick="loadJobCard('${cardno}')" href="javascript:void()">${title}</a></td>
+                                <td>${description}</td>
+                                <td>${technician}</td>
+                            </tr>
+                        `
+                    }
+
+                    let tab = `
+                        <table class='table table-sm table-bordered'>
+                            <thead><tr><th>DATE</th><th>OWNER</th><th>TITLE</th><th>DESCRIPTION</th><th>TECHNICIAN</th></tr></thead>
+                            <tbody>${tr}</tbody>
+                        </table>
+                    `;
+                    amodal.setTitleText("PENDING JOBS");
+                    amodal.setBodyHtml(tab);
+                    amodal.setSize('L');
+                    amodal.show();
+                } else {
+                    kasa.error("Invalid Response")
+                }
+            }
+            changeApp(pk){
+                // get apps
+                let apps_payload = {
+                    module:'apps',
+                    data:{
+                        pk:'*'
+                    }
+                };
+                let apps_option = ""
+                //console.table(apps_payload)
+                let request = api.call("VIEW",apps_payload,'/appscenter/api/');
+
+                if(anton.IsRequest(request)){
+                    let apps = request['message'];
+                    for (let ap = 0; ap < apps.length; ap++) {
+                        let app = apps[ap];
+                        apps_option += `<option value="${app['pk']}">${app['name']}</option>`
+                    }
+                    let form = `<select id='app_pk' class='form-control rounded_c mb-2'>${apps_option}</select>`;
+                    amodal.setTitleText("CHANGING JOB APP");
+                    amodal.setBodyHtml(form);
+                    amodal.show()
+                    amodal.setFooterHtml(`<button onclick="svc.changeAppFinal('${pk}')" class="w-100 btn btn-success">CHANGE</button>`)
+
+                } else {
+                    kasa.error("INVALID RESPONSE")
+                }
+            }
+
+            changeAppFinal(service_pk) {
+                let app_pk = $('#app_pk').val()
+                let payload = {
+                    module:'change_service_app',
+                    data: {
+                        card_pk:service_pk,
+                        app_id:app_pk
+                    }
+                };
+
+                let request = api.call('PATCH',payload,'/servicing/api/');
+                if(anton.IsRequest(request)){
+                    amodal.hide()
+                    kasa.success("App Changed")
+                    loadJobCard(request['message'])
+                } else {
+                    kasa.error("INVALID RESPONSE")
+                }
+            }
+
+            materialRequest(){
+                Swal.fire({
+                    text: 'Send Mail?',
+                    showCancelButton: true,
+                    confirmButtonText: 'CONTINUE',
+                    cancelButtonText: 'CANCEL',
+                    input: 'select',
+                    inputOptions: {
+                        'NO': 'NO',
+                        'YES': 'YES'
+                    },
+                    inputPlaceholder: 'Select an option',
+                    inputValidator: (value) => {
+                        return new Promise((resolve) => {
+                            if (value !== '') {
+                                resolve();
+                            } else {
+                                resolve('Please select an option');
+                            }
+                        });
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const selectedValue = result.value;
+
+                        let cardno = $('#delete').val()
+                        api.payload['module'] = 'material_request';
+                        api.payload['data'] = {
+                            'cardno':cardno,
+                            'send':selectedValue
+                        };
+
+                        let response = api.call('VIEW',api.payload,'/servicing/api/')
+                        if(anton.IsRequest(response)){
+                            kasa.html(`<a href="/${response['message']}">DOWNLOAD</a>`)
+                        } else {
+                            kasa.error(response['message'])
+                        }
+
+                    }
+
+
+
+                });
+
+            }
+        }
+        const svc = new Service()
+
+    </script>
+
+{% endblock %}

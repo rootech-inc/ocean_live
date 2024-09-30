@@ -1,0 +1,360 @@
+{% extends 'dashboard/products/prod_base.html' %}
+{% load static %}
+
+{% block body %}
+    <input type="hidden" id="owner" value="{{ request.user.pk }}">
+   
+
+        <div class="modal" id="addItem" data-backdrop="false">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+
+                        <input id="adj_item_search" autocomplete="off" placeholder="query" class="form-control" type="text">
+
+                    </div>
+
+                    <div class="modal-body" style="height: 50vh">
+                        <div id="searchRes" class="h-100 w-100">
+
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button data-dismiss="modal" class="btn btn-sm btn-warning">CLOSE</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        
+            <div class="card-header">
+
+                <div class="w-100 d-flex flex-wrap">
+
+                    <div class="w-75 d-flex flex-wrap justify-content-start">
+                        <button id="new" title="New Transfer" class="btn btn-sm btn-sm btn-success rounded-0 mx-1"><i class="fa fa-plus"></i></button>
+                        <button id="edit" title="Edit Transfer" class="btn btn-warning rounded-0 mx-1"><i class="fa fa-edit"></i></button>
+                        <button id="delete" title="Delete Transfer" class="btn btn-danger rounded-0 mx-1"><i class="fa fa-trash"></i></button>
+                        <button id="previous" title="Previous" class="btn btn-info rounded-0 mx-1"><i class="fa fa-fast-backward"></i></button>
+                        <button id="next" title="Next Document" class="btn btn-info rounded-0 mx-1"><i class="fa fa-fast-forward"></i></button>
+                        <button id="print" title="Print" class="btn btn-dark rounded-0 mx-1"><i class="fa fa-print"></i></button>
+                        <button id="send" title="Send" class="btn btn-primary rounded-0 mx-1"><i class="fa fa-upload"></i></button>
+                        <button id="approve" title="Approve" class="btn btn-success rounded-0 mx-1"><i class="fa fa-check-square"></i></button>
+                    </div>
+                    <div class="w-25 d-flex flex-wrap justify-content-end">
+                        <button id="pending" class="btn btn-info">PENDING</button>
+                    </div>
+                </div>
+
+            </div>
+            <div class="panel-sub-heading">
+                <div class="w-100 container-fluid">
+                    <div class="w-100 row">
+                        <div class="col-sm-3">
+                            <div class="input-group">
+                                <label for="entry_no">Entry No</label>
+                                <div class="row">
+                                    <input type="text" id="entry_no" disabled class="anton-form-tool col-sm-8">
+                                    <input type="text" id="pk" disabled class="anton-form-tool col-sm-4">
+                                </div>
+                            </div>
+                            <label class="w-100">From  <br>
+                                <input type="text" id="from" disabled class="anton-form-tool">
+                            </label>
+                            <label class="w-100">TO  <br>
+                                <input type="text" id="to" disabled class="anton-form-tool">
+                            </label>
+                        </div>
+
+                        <div class="col-sm-3">
+                            <label class="w-100">Created By
+                                <input type="text" id="created_by" disabled class="anton-form-tool">
+                            </label>
+                            <label class="w-100">Total Quantity
+                                <input type="text" id="tran_pieces" disabled class="anton-form-tool">
+                            </label>
+                            <label class="w-100">Total Cost
+                                <input type="text" id="total_cost" disabled class="anton-form-tool">
+                            </label>
+                        </div>
+
+
+                        <div class="col-sm-3">
+                            <label class="w-100">Remark
+                                <textarea disabled id="remarks" class="anton-form-tool w-100" cols="30" rows="5"></textarea>
+                            </label>
+                        </div>
+
+                        <div class="col-sm-3">
+                            <label class="w-100 mb-2">Status
+                                <input type="text" id="status" disabled class="anton-form-tool">
+                            </label>
+                            <button id="evidence" class="btn btn-info">EVIDENCE</button>
+                        </div>
+
+
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-2" style="overflow: hidden;">
+                <div class="w-100 h-100" style="overflow: auto">
+                    <table class="table table-bordered table-hover table-striped table-sm">
+                        <thead>
+                            <tr>
+                                <th>LINE</th>
+                                <th>BARCODE</th>
+                                <th>DESCRIPTION</th>
+                                <th>PACK</th>
+                                <th>PACK QTY</th>
+                                <th>TRAN QTY</th>
+                                <th>UNIT COST</th>
+                                <th>TOTAL COST</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tBody">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+    <script>
+        function viewTransfer(pk){
+            console.log(pk)
+            loader.show()
+            // get transfer
+            let payload = {
+                module:'transfer',
+                data:{
+                    'pk':pk
+                }
+            }
+
+            let transfer = api.call('VIEW',payload,'/inventory/api/')
+            console.table(transfer)
+            if(anton.IsRequest(transfer)){
+
+                let data = transfer['message'][0]
+                let header = data['header'];
+                console.table(header)
+
+                anton.docNav(header)
+                if(header['is_sent']){
+                    $('#send').prop('disabled',true)
+                    $('#approve').prop('disabled',false)
+                } else {
+                    $('#send').prop('disabled',false)
+                    $('#approve').prop('disabled',true)
+                }
+
+                if(header['is_posted']){
+                    $('#approve').prop('disabled',true)
+                }
+                anton.setValues(header)
+                let trans = data['transactions']
+                let rows = ""
+                for(let t = 0; t < trans.length; t++){
+                    let row = trans[t]
+                    let prod = row['product'];
+
+                    rows += `
+                        <tr>
+                            <td>${row['line']}</td>
+                            <td>${prod['barcode']}</td>
+                            <td>${prod['name']}</td>
+                            <td>${row['packing']}</td>
+                            <td>${row['pack_qty']}</td>
+                            <td>${row['tran_qty']}</td>
+                            <td>${row['un_cost']}</td>
+                            <td>${row['cost']}</td>
+                        </tr>
+                    `
+                }
+
+
+                $('#tBody').html(rows)
+                {#console.table(trans)#}
+            } else {
+                kasa.response(transfer)
+            }
+
+            loader.hide()
+        }
+        function postTransfer() {
+            let verif_field = ['recieved_by','rec_remark','entry_no','mypk']
+            if(anton.validateInputs(verif_field)){
+                // make payload
+                let payload = {
+                    module:'post_transfer',
+                    data:anton.Inputs(verif_field)
+                };
+
+                let post = api.call('PATCH',payload,'/inventory/api/')
+
+                if(anton.IsRequest(post)){
+                    // send evidence
+                    $('#transfer_evidence').submit()
+                } else {
+                    kasa.response(post)
+                }
+            } else {
+                kasa.error("Invalid Form Fields")
+            }
+        }
+
+
+
+        $(document).ready(function(){
+            viewTransfer(`{{ last_transfer }}`)
+
+            //evidence
+            $('#evidence').click(function(){
+                let evidence = $('#evidence').val();
+                console.log(evidence)
+                anton.viewFile(evidence,"TRANSFER EVIDENCE","REMARKS")
+            });
+
+            //new
+            $('#new').click(function(){
+                location.href='/inventory/transfer/new/'
+            })
+
+            // edit
+            $('#edit').click(function(){
+                location.href = `/inventory/transfer/edit/${$('#entry_no').val()}/`
+            })
+
+            // delete
+            $('#delete').click(function(){
+                let payload = {}
+                kasa.success("Deleted")
+            })
+
+            // previous
+            $('#previous').click(function(){
+
+                let key = $('#previous').val();
+                viewTransfer(key)
+
+            })
+
+            // next
+            $('#next').click(function(){
+                let key = $('#next').val();
+                viewTransfer(key)
+
+            })
+
+            // print
+            $('#print').click(function(){
+                let payload = {}
+                reports.printTransfer($('#entry_no').val())
+
+            })
+
+            // approve
+            $('#approve').click(function(){
+                let payload = {}
+                console.log("APPROVE")
+                let form = "";
+                let uss = user.allUsers(true)
+                if(anton.IsRequest(uss)){
+                    let ussr = uss.message
+                    let reopts = `<option value="">Select Recipient</option>`
+                    for (let i = 0; i < ussr.length; i++) {
+                        let re = ussr[i]
+                        reopts += `<option value="${re['pk']}">${re['fullname']}</option>`
+                    }
+
+                    form += fom.select('recieved_by',reopts,'',true)
+                    form += fom.textarea('rec_remark',3,true)
+
+
+                    let x_form = `
+                        <form id='transfer_evidence' method='post' enctype="multipart/form-data" action='/inventory/transfer/save-evidence/'>
+                            <input type="hidden" name="doc_type" value="TR">
+                            <input type="text" name="entry" id="entry" value="TR">
+                            <input type="file" accept="image/*" name="file" id="file" class="form-control rounded-0 w-100 mb-2">
+
+                            ${form}
+
+                            </form>
+                    `
+
+                    amodal.setTitleText("POST ENTRY")
+                    amodal.setBodyHtml(x_form)
+                    amodal.setFooterHtml(`<button type="button" onclick="postTransfer()" class="btn btn-success">COMFIRM</button>`)
+                    amodal.show()
+
+                    $('#entry').val($('#entry_no').val())
+                    $('#entry').prop('readonly',true)
+
+                } else {
+                    kasa.response(uss)
+                }
+
+            })
+
+            //send
+            $('#send').click(function(){
+
+
+                try {
+                    if(confirm(`Are you sure?`)){
+                        let delivery_by = prompt("Delivered By")
+                        let ids = ['entry_no','mypk'];
+
+                        if(anton.validateInputs(ids)){
+
+                            let payload = {
+                                module:'send_transfer',
+                                data:{
+                                    entry_no:$('#entry_no').val(),
+                                    mypk:$('#mypk').val(),
+                                    delivery_by:delivery_by
+                                }
+                            }
+                            console.table("FUNCTION")
+
+
+                            let send = api.call('PATCH',payload,'/inventory/api/');
+                            console.table(send)
+                            if(anton.IsRequest(send)){
+                                // print
+
+                                reports.printTransfer($('#entry_no').val())
+                                viewTransfer($('#pk').val())
+
+                            } else {
+                                console.error("here")
+                                throw (`Document Not Sent ${send.message}`)
+                        }
+
+                        } else {
+                            console.error("here2")
+                            throw ("Invalid Form")
+                        }
+                    } else {
+                        console.error("here2")
+                        throw (`Sending Canceled`)
+                    }
+
+                } catch (e) {
+                    kasa.error(e)
+                }
+            });
+
+            //ending
+            $('#pending').click(function(){
+                inv.pendingTransfers()
+            });
+        });
+    </script>
+
+
+{% endblock %}
+

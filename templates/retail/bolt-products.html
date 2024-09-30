@@ -1,0 +1,43 @@
+{% extends 'retail/base.html' %}
+{% load static %}
+{% block body %}
+    <div class="card-header">
+        <div class="w-100 h-100 d-flex flex-wrap">
+            <div class="w-25 h-100"><strong class="card-title">BOLT ITEMS</strong></div>
+            <div class="w-75 h-100 d-flex flex-wrap justify-content-end align-content-center">
+                <button style="border-radius: 0 !important" onclick="retail.boldUploadScreen()" class="btn btn-outline-info"><i class="bx bx-upload"></i> UPLOAD BATCH</button>
+                <button style="border-radius: 0 !important" onclick="retail.markProducts()" class="btn btn-outline-dark"><i class="bx bx-checkbox-checked"></i> MARK UPDATE</button>
+                <button style="border-radius: 0 !important" onclick="retail.checkPrices()" class="btn btn-outline-primary">PRICE CHANGE</button>
+                <a href="javascript:void(0)" style="border-radius: 0 !important" onclick="retail.exportItems('*')" class="btn btn-outline-warning"><i class="fa fa-file-excel"></i> Export</a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body overflow-auto">
+        <table class="table datatable">
+            <thead>
+                <tr>
+                    <th>BARCODE</th>
+                    <th>NAME</th>
+                    <th>BOLT PRICE</th>
+                    <th>INVENTORY PRICE</th>
+                    <th>SPINTEX</th>
+                    <th>NIA</th>
+                    <th>OSU</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                    <tr class="{% if item.price != item.inv_price %}bg-warning{% endif %}">
+                        <td>{{ item.product.barcode }}</td>
+                        <td>{{ item.product.name }}</td>
+                        <td>{{ item.price }}</td>
+                        <td>{{ item.product.price }}</td>
+                        <td class="{% if item.stock_spintex == 1 %}text-success{% else %}text-danger{% endif %}">{{ item.stock_spintex }}</td>
+                        <td class="{% if item.stock_nia == 1 %}text-success{% else %}text-danger{% endif %}">{{ item.stock_nia }}</td>
+                        <td class="{% if item.stock_osu == 1 %}text-success{% else %}text-danger{% endif %}">{{ item.stock_osu }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

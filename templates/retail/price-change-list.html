@@ -1,0 +1,45 @@
+{% extends 'retail/base.html' %}
+{% load static %}
+
+
+
+{% block body %}
+    <div class="card-header">
+        <div class="w-100 d-flex flex-wrap">
+            <div class="w-50"></div>
+            <div class="w-50 d-flex flex-wrap justify-content-end">
+                <button onclick="retail.retrievePriceChangeScreen()" class="btn btn-info">RETRIEVE</button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body overflow-auto">
+        <table class="table table-responsive">
+            <thead>
+                <tr>
+                    <th>LN</th>
+                    <th>BARCODE</th>
+                    <th>NAME</th>
+                    <th>OLD PRICE</th>
+                    <th>NEW PRICE</th>
+                    <th>MARGIN</th>
+                    <th>BY</th>
+                    <th>DATE</th>
+
+                </tr>
+            </thead>
+            <tbody id="items">
+
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer">
+        <button onclick="retail.loadPriceChange(today,today,'excel')" class="btn btn-info"><i class="fa fa-download"></i> DOWNLOAD</button>
+    </div>
+
+    <script>
+        $(document).ready(function(){
+            // lod price change
+            retail.loadPriceChange()
+        })
+    </script>
+{% endblock %}

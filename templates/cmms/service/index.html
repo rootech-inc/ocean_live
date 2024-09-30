@@ -1,0 +1,71 @@
+{% extends 'cmms/service/serv_base.html' %}
+
+{% load static %}
+
+{% block cmms %}
+	<div class="card-header">
+        <div class="w-100 d-flex">
+            <div class="w-50"><strong class="card-title">Job Cards</strong></div>
+            <div class="w-50 d-flex flex-wrap justify-content-end">
+                <button onclick="location.href='{% url 'new_servicing_job' %}'" class="btn btn-primary">NEW</button>
+                <button style="margin-left: .2rem" onclick="location.href='{% url 'servicing_mr' %}'" class="btn btn-warning">REQUEST</button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body bg-light">
+
+        <div class="table-responsive h-100">
+            <table class="table datatable">
+                <thead>
+                    <tr>
+                        <th>DATE</th>
+                        <th>COMPANY</th>
+                        <th>DRIVER</th>
+                        <th>CONTACT</th>
+                        <th>BRAND</th>
+                        <th>MODEL</th>
+                        <th>NUMBER</th>
+                        <th>STATUS</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                {% for job in jobs %}
+                    <tr>
+                        <td>
+                            {% if user.is_superuser %}
+                                <button onclick="deleteServiceJob(`{{ job.pk }}`)" class="btn btn-danger">
+                                    <i class="fa fa-recycle"></i>
+                                </button>
+                            {% endif %}
+                            {{ job.created_on }}
+                        </td>
+                        <td>{{ job.company }}</td>
+                        <td>{{ job.driver }}</td>
+                        <td>{{ job.contact }}</td>
+                        <td>
+                            {{ job.brand }}
+                        </td>
+                        <td>{{ job.model }}</td>
+                        <td><a onclick="location.href=`{% url 'view_service_card' job.pk %}`" href="javascript:void(0)">{{ job.carno }}</a></td>
+                        <td>{{ job.status_html | safe }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function deleteServiceJob(pk){
+            let payload = {
+                module:'job_card',
+                data:{
+                    pk:pk
+                }
+            }
+
+            kasa.confirm(api.call('DELETE',payload,'/cmms/api/').message,1,'here')
+        }
+    </script>
+{% endblock %}

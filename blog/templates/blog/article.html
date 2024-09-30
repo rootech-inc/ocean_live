@@ -1,0 +1,47 @@
+
+{% extends 'blog/base.html' %}
+{% load static %}
+
+{% block body %}
+
+
+    <div class="card-body h-100 overflow-auto py-2 bg-light" >
+        <h2 class="m-0 p-0">{{ article.title }}</h2>
+            <small class="text-muted">Created By {{ article.author.get_full_name }} on {{ article.date_created }} {{ article.time_created }}</small>
+            {% if user.is_superuser %}
+                <span onclick="location.href='{% url 'edit_article' article.uni %}'" class="badge bg-info pointer">edit</span>
+            {% endif %}
+            <hr>
+        <div class="article-header mb-5 text-light" style="background: url('{{ article.image.url }}')">
+            <div class="w-100 h-100 bg_trans_30 d-flex flex-wrap align-content-center justify-content-center">
+
+            </div>
+        </div>
+        <div class="row d-flex flex-wrap justify-content-between no-gutters">
+            <!-- ARTICLE -->
+            <section class="col-sm-12 text-justify" style="font-size: large">
+
+                {{ article.article | safe }}
+
+            </section>
+
+
+
+
+        </div>
+    </div>
+
+
+
+    <script>
+        load_convo_message()
+        setInterval(function() {
+           load_convo_message()
+         }, 1000);
+
+        var d = $('#messages');
+        d.scrollTop(d.prop("scrollHeight"));
+
+    </script>
+
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends 'dashboard/products/prod_base.html' %}
+
+{% block body %}
+
+
+
+    
+
+        
+            <div class="card-header d-flex flex-wrap justify-content-between">
+                <button style="height: fit-content" class="btn btn-primary btn-sm" onclick="location.href='{% url 'new-grn' %}'">NEW</button>
+                <div class="w-50 d-flex flex-wrap justify-content-end">
+                                <button id="prev" onclick="grn.loadGrn($('#prev').val())" class="btn btn-info btn-sm mx-2 bi bi-skip-backward"></button>
+                                <button id="next" onclick="grn.loadGrn($('#next').val())" class="btn btn-info btn-sm bi bi-skip-forward"></button>
+
+                            </div>
+            </div>
+            <div class="panel-sub-heading m-2">
+                <div class="w-100 container-fluid">
+                    <div class="w-100 row">
+                        <div class="col-sm-3">
+                            <label class="w-100">Entry NO <br>
+                                <input type="text" id="ent_num" disabled class="anton-form-tool">
+                            </label>
+                            <label class="w-100">Supplier <br>
+                                <input type="text" id="supplier" disabled class="anton-form-tool">
+                            </label>
+                            <label class="w-100">Location <br>
+                                <input type="text" id="loc" disabled class="anton-form-tool">
+                            </label>
+                        </div>
+                        <div class="col-sm-3">
+                            <label class="w-100">Date Created <br>
+                                <input type="text" id="ent_date" disabled class="anton-form-tool">
+                            </label>
+                            <label class="w-100">Owner <br>
+                                <input type="text" id="t_owner" disabled class="anton-form-tool">
+                            </label>
+                            <label class="w-100">Taxable <br>
+                                <input type="text" id="taxable" disabled class="anton-form-tool">
+                            </label>
+                        </div>
+                        <div class="col-sm-3">
+                            <label class="w-100">Taxable Amount <br>
+                                <input type="text" id="taxable_amt" disabled class="anton-form-tool">
+                            </label>
+                            <label class="w-100">Tax Amount<br>
+                                <input type="text" id="tax_amt" disabled class="anton-form-tool">
+                            </label>
+                            <label class="w-100">Total Amount<br>
+                                <input type="text" id="tot_amt" disabled class="anton-form-tool">
+                            </label> <!-- -->
+                        </div>
+                        <div class="col-sm-3">
+                            <div class="w-100 d-flex flex-wrap">
+                                <button title="Approve" data-bs-toggle="tooltip"
+                                        onclick="if(confirm('ARE YOU SURE?')){productMaster.ApprTrans('grn',this.value); grn.loadGrn(this.value)}"
+                                        id="approve" class="btn btn-sm m-1 btn-success">APPROVE</button>
+                                <button title="Print Document" data-bs-toggle="tooltip" id="print" class="btn btn-sm m-1 btn-dark bi bi-printer"></button>
+                                <button title="Documents" data-bs-toggle="tooltip"  onclick="grn.loadGrDocs($('#print').val())" class="btn btn-sm m-1 btn-info bi bi-file-image"></button>
+
+                            </div>
+                            <br>
+
+                            <label for="ent_rm">Remarks</label><textarea name="" id="ent_rm" cols="30" class="anton-form-tool w-100" disabled rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body" style="overflow: hidden; height: 50vh">
+                <div class="w-100 h-100" style="overflow: auto">
+                    <table class="table table-sm table-bordered table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th>sn</th>
+                                <th>barcode</th>
+                                <th>description</th>
+                                <th>packing</th>
+                                <th>pack_qty</th>
+                                <th>tran_qty</th>
+                                <th>total_tran</th>
+                                <th>un_cost</th>
+                                <th>tot_cost</th>
+
+                            </tr>
+                        </thead>
+                        <tbody id="tbody">
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+      
+
+        <script>
+            grn.loadGrn('{{ entry }}')
+
+           
+
+            $(document).ready(function(){
+                $('#print').click(function(){
+                    let payload = {
+                        "data":{
+                            "doc":"print",
+                            "document":"grn",
+                            "pk":$('#ent_num').val()
+                        }
+                    }
+
+                    let call = api.call('VIEW',payload,'/reports/api/');
+                    if(anton.IsRequest(call)){
+                        let file_link = `/${call['message']}`;
+                        anton.printPDF(file_link)
+                    } else {
+                        kasa.response(call)
+                    }
+                });
+            });
+
+        </script>
+
+    
+
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'crm/base.html' %}
+{% load static %}
+
+{% block crm %}
+    <div class="card-header">
+        <button onclick="crm.newUser()" class="btn btn-info">NEW</button>
+    </div>
+    <div class="card-body overflow-hidden">
+
+        <table class="table datatable">
+            <thead>
+                <tr>
+                    <th>NAME</th><th>LAST LOGGED</th><th>LOGS</th><th>ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for us in users %}
+                    <tr>
+                        <td>{{ us.user.pk }} || {{ us.user.username }} {{ us.user.last_name }}</td>
+                        <td>{{ us.last_logged }}</td>
+                        <td><kbd class="bg-info">today: {{ us.todaylogs }}</kbd></td>
+                        <td><button onclick="crm.bandUser(`{{ us.user.pk }}`)" class="btn btn-sm btn-danger"><i class="fa fa-recycle"></i></button></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script src="{% static 'general/js/classes/crm.js' %}"></script>
+{% endblock %}

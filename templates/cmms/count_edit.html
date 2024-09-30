@@ -1,0 +1,247 @@
+{% extends 'cmms/base.html' %}
+{% load static %}
+
+{% block cmms %}
+
+    <div class="w-100 h-100">
+        <div class="h-100 card">
+            <div class="card-header bg-header1 h-25">
+                <div class="container-fluid">
+
+                    <div class="row d-flex flex-wrap justify-content-between">
+                        <div class="col-sm-3 h-100">
+                            <div class="w-100 d-flex flex-wrap">
+                                <div class="w-50">
+                                    <label for="entry">ENTRY</label><input type="text" readonly id="entry" class="form-control mb-2 w-100 rounded-0" placeholder="NEW !!">
+                                </div>
+                                <div class="w-25">
+                                    <label for="target_pk">KEY</label><input readonly type="text" id="target_pk" value="{{ c_pk }}" class="form-control mb-2 w-100 rounded-0">
+                                </div>
+                                <div class="w-25">
+                                    <label for="entry_status">STATUS</label><input readonly type="text" id="entry_status" class="form-control mb-2 w-100 rounded-0">
+                                </div>
+                            </div>
+                            <label for="loc">LOCATION</label><input type="text" readonly id="loc" class="form-control w-100 rounded-0 mb-2" placeholder="loc">
+                            <div class="w-100 d-flex flex-wrap">
+                                <div class="w-50">
+                                    <label for="ref_freeze">REFERENCE</label><input disabled type="text" id="ref_freeze" class="form-control mb-2 w-100 rounded-0" placeholder="ref_freeze">
+                                </div>
+                                <div class="w-25">
+                                    <label for="ref_pk">KEY</label><input disabled type="text" id="ref_pk"  class="form-control mb-2 w-100 rounded-0">
+                                </div>
+                                <div class="w-25">
+                                    <label for="ref_status">STATUS</label><input disabled type="text" id="ref_status" class="form-control mb-2 w-100 rounded-0">
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="col-sm-4 h-fit d-flex flex-wrap">
+                            <button onclick="cmms.saveCount('update')" id="save" title="save" class="btn btn-success m-1"><i class="bi bi-save2"></i></button>
+                            <button title="Cancel" class="btn btn-warning m-1"><i class="bi bi-back"></i></button>
+
+                            <div class="w-100 h-100">
+
+                            </div>
+
+                        </div>
+
+
+
+                        <div class="col-sm-5 d-flex flex-wrap align-content-between">
+                            <label for="remark">REMARKS</label><textarea disabled class="form-control rounded-0" rows="2" name="remark" id="remark"></textarea>
+
+                            <label for="comment">COMMENT</label><textarea class="form-control rounded-0" rows="2" name="comment" id="comment">NO COMMENT</textarea>
+
+                        </div>
+
+
+                    </div>
+
+
+
+
+
+                </div>
+
+            </div>
+
+            <div  class="card-body h-100 p-2 bg-header1 overflow-hidden">
+                <div class="w-100 bg-tran1 h-100 overflow-auto">
+                    <table class='table table-bordered table-striped table-hover table-sm table-responsive'>
+                <thead>
+                  <tr>
+                      <th>LN</th>
+                      <th>ITEM REF</th>
+                      <th>BARCODE</th>
+                      <th>DESCRIPTION</th>
+                      <th style="width:160px">FROZEN QTY</th>
+                      <th style="width:160px">COUNTED</th>
+                      <th style="width:160px">DIFFERENCE</th>
+                      <th>DETAIL</th>
+                      <th>COMMENT</th>
+                  </tr>
+                </thead>
+                <tbody id="devsBody">
+
+                </tbody>
+                </table>
+                </div>
+
+            </div>
+
+            <div class="card-footer bg-header1">
+
+
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function screenLoad(pk){
+            let payload = {
+                "module":"stock",
+                "data":{
+                    stage:"preview",
+                    pk:pk,
+                    compare:'final_compare',
+                    doc:'preview'
+                }
+            }
+
+            let response = api.call('VIEW',payload,'/cmms/api/')
+
+            let status, message
+            status = response['status_code']
+            message = response['message']
+
+
+
+            if(status === 200){
+                let header,prev,next,trans,count_hd,frozen_hd
+
+                header = message['header']
+                count_hd = header['count']
+                frozen_hd = header['frozen']
+                trans = message['trans']
+
+                $('#remark').val(frozen_hd['remarks'])
+                $('#comment').val(count_hd['comment'])
+                $('#entry').val(count_hd['entry'])
+                $('#ref_freeze').val(frozen_hd['entry'])
+                $('#loc').val(frozen_hd['loc'])
+                $('#ref_pk').val(frozen_hd['pk'])
+                if(frozen_hd['status'] === 2){
+                    $('#ref_status').val('processed')
+                    $('#ref_status').removeClass('text-danger')
+                    $('#ref_status').addClass('text-success')
+                } else{
+                    $('#ref_status').val(`pending (${frozen_hd['status']})`)
+                    $('#ref_status').addClass('text-danger')
+                    $('#ref_status').removeClass('text-success')
+                }
+
+                if(count_hd['status'] === 2){
+                    $('#entry_status').val('processed')
+                    $('#entry_status').removeClass('text-danger')
+                    $('#entry_status').addClass('text-success')
+                    $('#edit').prop('disabled',true)
+                    $('#delete').prop('disabled',true)
+                } else{
+                    $('#entry_status').val(`pending (${frozen_hd['status']})`)
+                    $('#entry_status').addClass('text-danger')
+                    $('#entry_status').removeClass('text-success')
+                }
+
+
+
+
+                prev = count_hd['prev']
+                next = count_hd['next']
+
+                if(prev['valid'] === 'Y'){
+                    // enable
+                    $("#prev").prop("disabled", false);
+                    $('#prev').val(prev['pk'])
+                } else {
+                    // disable
+                    $("#prev").prop("disabled", true);
+                }
+
+                if(next['valid'] === 'Y'){
+                    // enable
+                    $("#next").prop("disabled", false);
+                    $('#next').val(next['pk'])
+                } else {
+                    // disable
+                    $("#next").prop("disabled", true);
+                }
+
+                {#console.table(prev)#}
+                {#return true#}
+
+
+                let tr = '';
+                for (let i = 0; i < trans.length; i++) {
+
+                    let row = i + 1
+
+                    let row_id = `row_${row}`,
+                        ref_id = `ref_${row}`,
+                        bc_id = `bc_${row}`,
+                        name_id = `name_${row}`,
+                        x_id = `x_${row}`,
+                        y_id = `y_${row}`,
+                        z_id = `z_${row}`;
+
+
+
+
+
+
+                    let tran = trans[i]
+                    tr += `<tr id="${row_id}">
+                            <td ondblclick="$('#'${row_id}).remove()">${row}</td>
+                            <td id="${ref_id}">${tran['item_ref']}</td>
+                            <td id="${bc_id}">${tran['barcode']}</td>
+                            <td id="${name_id}">${tran['name']}</td>
+                            <td ><input class="form-control form-control-sm rounded-0" style="width:100px" onkeyup="lincal.sub(${row})" type="text" id="${y_id}" disabled value="${tran['froze_qty']}"></td>
+                            <td><input class="form-control form-control-sm rounded-0" style="width:100px" value="${tran['counted_qty']}" onkeyup="lincal.sub(${row})" id="${x_id}" type="number"></td>
+                            <td><input class="form-control form-control-sm rounded-0" style="width:100px" onkeyup="anton.lineXyz(${row})" value="${tran['diff_qty']}" type="text" id="${z_id}" disabled ></td>
+                            <td>
+                                <input type="text" style="width: 100px" disabled value="${tran['issue']}" id="iss_${row}">
+
+                            </td>
+                            <td>
+                                <i onclick="linecomment.write(${row})" class="pointer"><i class="bi bi-bell"></i></i>
+                                <input type="hidden" name="" id="line${row}_comment" value='${tran['comment']}'>
+
+                            </td>
+                        </tr>
+                        `
+
+                }
+
+                $('#devsBody').html(tr)
+
+                {#recalculate();#}
+
+            }
+
+        }
+
+        function recalculate() {
+            let rows = $('#devsBody tr');
+            for (let r = 0; r < rows.length; r++) {
+                let line = r +1;
+                let row = rows[r]
+
+                lincal.sub(line)
+            }
+        }
+
+        screenLoad({{ c_pk }})
+    </script>
+
+{% endblock %}

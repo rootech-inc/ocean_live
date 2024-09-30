@@ -1,0 +1,80 @@
+{% extends 'cmms/service/serv_base.html' %}
+
+{% load static %}
+
+{% block cmms %}
+	<div class="card-header">
+        <div class="w-100 d-flex">
+            <div class="w-50"><strong class="card-title">Job Cards</strong></div>
+            <div class="w-50 d-flex flex-wrap justify-content-end">
+                <button onclick="location.href='{% url 'new_servicing_job' %}'" class="btn btn-info">NEW</button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body bg-light">
+
+        <div class="table-responsive h-100">
+            <table class="table datatable">
+                <thead>
+                    <tr>
+                        <th>ACTION</th>
+                        <th>CAR</th>
+                        <th>BARCODE</th>
+                        <th>NAME</th>
+                        <th>QUANTITY</th>
+                        <th>REASON</th>
+                        <th>STATUS</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                {% for req in reqs %}
+                    <tr>
+                        <td>
+                            {% if user.is_superuser %}
+{#                                <button  class="btn btn-danger">#}
+{#                                    <i class="fa fa-recycle"></i>#}
+{#                                </button>#}
+                            {% endif %}
+                            <button onclick="issueMaterial(`{{ req.pk }}`)" class="btn btn-success">
+                                    <i class="fa fa-check-circle"></i>
+                                </button>
+                        </td>
+                        <td><a onclick="location.href=`{% url 'view_service_card' req.jobcard.pk %}`" href="javascript:void(0)">{{ req.jobcard.carno }} ({{ req.jobcard.wr_no }})</a></td>
+                        <td>{{ req.barcode }}</td>
+                        <td>{{ req.part }}</td>
+                        <td>{{ req.quantity }}</td>
+                        <td>{{ req.reason }}</td>
+
+                        <td>{{ req.st | safe }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function issueMaterial(pk){
+            let payload = {
+                module:'issue_material',
+                data:{
+                    pk:pk,
+                    mypk:$('#mypk').val()
+                }
+            }
+
+            kasa.confirm(api.call('PATCH',payload,'/cmms/api/').message,1,'here')
+        }
+        function deleteServiceJob(pk){
+            let payload = {
+                module:'job_card',
+                data:{
+                    pk:pk
+                }
+            }
+
+            kasa.confirm(api.call('DELETE',payload,'/cmms/api/').message,1,'here')
+        }
+    </script>
+{% endblock %}

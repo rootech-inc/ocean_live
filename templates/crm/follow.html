@@ -1,0 +1,74 @@
+{% extends 'crm/base.html' %}
+{% load static %}
+
+{% block crm %}
+    <div class="card-header">
+        <div class="w-100 d-flex">
+            <div class="w-50">
+                <strong class="card-title">Follow Ups</strong>
+            </div>
+
+        </div>
+    </div>
+    <div class="card-body overflow-hidden">
+
+        <table class="table datatable">
+            <thead>
+                <tr >
+                    <th>COMPANY</th><th>PERSON</th><th>CONTACT</th><th>DATE</th><th>action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                    <tr class="{% if log.daypass %}text-danger{% endif %}">
+                        <td>
+                            <small>{{ log.log.company }}</small><br>
+                            <small>{{ log.log.sector.name }}</small>
+                        </td>
+                        <td><small>{{ log.log.customer }} <br>{{ log.log.position.name }}</small></td>
+                        <td><i class="bx bx-phone"></i> <small>{{ log.log.phone }}</small> <br> <i class="bx bxs-inbox"></i> <small>{{ log.log.email }}</small></td>
+                        <td>
+                            <small class="bi bi-list-check"> {{ log.log.created_date }}</small>
+                            <br><small class="bi bi-broadcast"> {{ log.follow_date }}</small>
+                        </td>
+
+                        <td>
+                            <div class="dropdown dropdown-menu-left">
+                            <button class="btn btn-info btn-sm" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-bars"></i>
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <a class="dropdown-item" onclick="Swal.fire({title:`{{ log.log.subject }}`,text:`{{ log.log.description }}`})" href="javascript:void(0)"><i class="fa fa-eye"></i> Preview</a>
+                                <a class="dropdown-item" onclick="crm.extendFollowUpScreen('{{ log.pk }}')" href="javascript:void(0)"><i class="fa fa-clock"></i> Extend</a>
+                                <a class="dropdown-item" onclick="crm.closeFollowUp({{ log.pk }})" href="javascript:void(0)"><i class="fa fa-window-close"></i> Close</a>
+                            </div>
+                        </div>
+
+
+
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+    <script>
+        function followUpCheck(){
+            // get value
+                let val = $('#flag').val();
+                if(val !== 'success'){
+                    // show follup date
+                    let follow = fom.date('follow_up_date','',true);
+                    $('#f_date').html(follow)
+                } else {
+                    $('#f_date').html('')
+                }
+        }
+
+        $('#city').change(function (){
+                console.log('change')
+            })
+    </script>
+{% endblock %}

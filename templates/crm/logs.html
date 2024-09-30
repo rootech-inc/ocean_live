@@ -1,0 +1,106 @@
+{% extends 'crm/base.html' %}
+{% load static %}
+
+{% block crm %}
+    <div class="card-header">
+        <div class="w-100 d-flex">
+            <div class="w-50 d-flex flex-wrap">
+                <kbd class="bg-secondary rounded-0">Pending : {{ val.pend }}</kbd>
+                <kbd class="bg-success rounded-0">Valid : {{ val.val }}</kbd>
+                <kbd class="bg-danger rounded-0">Invalid : {{ val.nott }}</kbd>
+            </div>
+            <div class="w-50 d-flex flex-wrap justify-content-end">
+                <button id="new_log"  style="margin-right: .2rem" class="btn btn-primary">NEW</button>
+                <button onclick="crm.uploadCsvScreen()" style="margin-right: .2rem" class="btn btn-info">UPLOAD</button>
+                <button onclick="crm.DownloadMyData()" style="margin-right: .2rem" class="btn btn-info">DOWNLOAD MY LOGS</button>
+                {%  if user.request.is_superuser %}
+                <button onclick="crm.generateReports()" class="btn btn-warning">GENERATE REPORT</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="card-body overflow-hidden">
+
+        <table class="table datatable">
+            <thead>
+                <tr>
+                    <th>COMPANY</th><th>LOCATION</th><th>CONTACT PERSON</th><th>CONTACT</th><th>META DATE</th><th>action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                    <tr>
+                        <td>
+                            <span class="badge {{ log.status.class }}">{{ log.status.message }}</span><br>
+                            <small>{{ log.company }}</small><br>
+                            <small>{{ log.sector.name }}</small>
+                        </td>
+                        <td>
+                            {{ log.geo.city }}<br>
+                            {{ log.geo.suburb }}
+                        </td>
+                        <td>
+                            <small>{{ log.customer }}
+                            <br>{{ log.position.name }}</small>
+                        </td>
+                        <td><i class="bx bx-phone"></i> <small>{{ log.phone }}</small> <br> <i class="bx bxs-inbox"></i> <small>{{ log.email }}</small></td>
+                        <td><small>{{ log.created_date }}</small> <br><small>{{ log.created_time }}</small><br><small>{{ log.owner.get_full_name }}</small></td>
+
+                        <td>
+
+                        <div class="dropleft">
+                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropleftMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                More
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropleftMenuButton">
+                                <a class="dropdown-item text-info" onclick="Swal.fire({title:`{{ log.subject }}`,text:`{{ log.description }}`})" href="javascript:void(0)"><i class="fa fa-eye"></i> Details</a>
+                                <a class="dropdown-item text-success" onclick="crm.createDeal(`{{ log.pk }}`)" href="javascript:void(0)"><i class="fa fa-money-bill"></i> Start Transaction</a>
+{#                                <a class="dropdown-item" href="#">Something else here</a>#}
+                            </div>
+                        </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+    <script>
+        function followUpCheck(){
+            // get value
+                let val = $('#flag').val();
+                if(val !== 'success'){
+                    // show follup date
+                    let follow = fom.date('follow_up_date','',true);
+                    $('#f_date').html(follow)
+                    let person = $('#contact_person').val()
+                    $('#details').val(`Tried contacting ${person} but not reachable \n......`)
+                } else {
+                    {#$('#f_date').html('')#}
+                    $('#details').val('')
+                }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('input, textarea').forEach(function(element) {
+                element.onpaste = function(e) {
+                    e.preventDefault();
+                };
+            });
+        });
+        let pending_follow_ups = parseInt(`{{ followup }}`)
+
+        $(document).ready(function(){
+            $('#new_log').click(function (){
+                if(pending_follow_ups < 1){
+                    crm.newLog()
+                } else {
+                    kasa.error(`You have ${pending_follow_ups} pending follow up(s), complete them`)
+                }
+            });
+        });
+
+    </script>
+{% endblock %}
+

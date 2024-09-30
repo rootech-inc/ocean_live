@@ -1,0 +1,355 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body %}
+
+    <div class="modal" id="broadcast">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <strong class="modal-title">EMAIL BROADCASTING</strong>
+                </div>
+                <div class="modal-body">
+                    <label for="subject">SUBJECT</label><input type="text" class="form-control rounded-0 mb-2" id="subject">
+
+                    <label for="body"></label><textarea id="body" name="article_desc" class="tinymce-editor"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" onclick="email.do_broadcast()">SEND</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="bulk_email">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <strong class="modal-title">GROUP EMAILS</strong>
+                </div>
+                <div class="modal-body">
+                    <label for="bulk_file">FILE</label><input type="file" accept="text/csv" class="form-control mb-2" name="file" id="bulk_file">
+                    <label for="bulk_sub">SUBJECT</label><input type="text" id="bulk_sub" class="form-control rounded-0 mb-2" name="sub">
+
+                    <label for="bulk_message"></label><textarea name="message" id="bulk_message" class="tinymce-editor"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button onclick="email.loadBulk()" class="btn btn-success">SEND</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-header">
+        <strong class="card-title">EMAILS</strong>
+    </div>
+
+    <div class="card-body p-2">
+        <div class="container p-0 h-100">
+
+            <div class="row h-100 d-flex flex-wrap align-content-between">
+                <!-- EMAIL SENDERS -->
+{#                <div class="col-sm-6" style="height: 25% !important">#}
+{#                    <div class="card h-100">#}
+{#                        <div class="card-header">#}
+{#                            <div class="w-100 h-100 d-flex">#}
+{#                                <div class="w-50">#}
+{#                                    <strong class="card-title">SENDERS</strong>#}
+{#                                </div>#}
+{#                                <div class="w-50 d-flex flex-wrap justify-content-end align-content-center">#}
+{#                                    <button onclick="NewSenderScreen()" class="btn btn-info"><i class="fa fa-plus"></i></button>#}
+{#                                </div>#}
+{#                            </div>#}
+{#                        </div>#}
+{#                        <div class="card-body">#}
+{#                            <div class="table-responsive">#}
+{#                                <table class="table table-sm">#}
+{#                                    <thead>#}
+{#                                        <tr>#}
+{#                                            <th>HOST</th>#}
+{#                                            <th>ADDRESS</th>#}
+{#                                            <th>OWNER</th>#}
+{#                                            <th>EMAILS</th>#}
+{#                                        </tr>#}
+{#                                    </thead>#}
+{#                                    <tbody>#}
+{#                                        {% for sender in senders %}#}
+{#                                            <tr>#}
+{#                                                <td>{{ sender.host }}</td>#}
+{#                                                <td>{{ sender.address }}</td>#}
+{#                                                <td>{{ sender.owner.get_full_name }}</td>#}
+{#                                                <td>{{ sender.mails.count }}</td>#}
+{#                                            </tr>#}
+{#                                        {% endfor %}#}
+{#                                    </tbody>#}
+{#                                </table>#}
+{#                            </div>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+
+                <!-- STATISTICS -->
+{#                <div class="col-sm-6" style="height: 25% !important">#}
+{#                    <div class="card h-100">#}
+{#                        <div class="card-header">#}
+{#                            <strong class="card-title">STATISTICS</strong>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+
+                <div class="col-sm-12" style="height: 70%">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <div class="w-100 d-flex flex-wrap">
+                                <div class="w-50"><strong class="card-title">MAIL LOGS</strong></div>
+                                <div class="w-50 d-flex flex-wrap align-content-center justify-content-end">
+                                    <button data-bs-toggle="modal" style="margin-right:5px " data-bs-target="#bulk_email" class="btn btn-info"><i class="fa fa-people-arrows"></i></button>
+                                    <button data-bs-toggle="modal" style="margin-right:5px " data-bs-target="#broadcast" class="btn btn-info"><i class="fa fa-broadcast-tower"></i></button>
+                                    <button onclick="email.new_email_screen()" title="NEW EMAIL" class="btn btn-info rounded-0" style="margin-right:5px "><i class="fa fa-envelope"></i></button>
+                                    <button onclick="email.sync_mails()" class="btn btn-warning rounded-0"><i class="fa fa-sync"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body overflow-auto">
+                            {% if emails.count > 0 %}
+                                <table class="table-sm table table-bordered table-hover table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>SENDER</th>
+                                            <th>RECIPIENT</th>
+                                            <th>COPIED</th>
+                                            <th>ATTACHMENTS</th>
+                                            <th>DATE</th>
+                                            <th>STATUS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for email in emails %}
+                                            <tr>
+                                                <td><span><i onclick="kasa.html(`{{ email.body }}`)" class="fa fa-envelope-open text-info pointer"></i></span> {{ email.sender.address }}</td>
+                                                <td>{{ email.recipient }}</td>
+                                                <td>{{ email.copied }}</td>
+                                                <td>{{ email.attachments.count }}</td>
+                                                <td>{{ email.scheduled_on }}</td>
+                                                <td>
+                                                    <span onclick="alert(`{{ email.sent_response }}`)" class="badge pointer {% if email.is_sent == False %}bg-danger{% else %}bg-success{% endif %}">{{ email.is_sent }}</span>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <div class="w-100 h-100 d-flex flex-wrap align-content-center justify-content-center">
+                                    <span class="display-2 text-muted">NO EMAIL</span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // new sender screen
+        function NewSenderScreen() {
+            amodal.setTitleText("Add New Email Sender");
+            let form = `
+                <label for="host">HOST</label>
+                <input class="form-control rounded-0 mb-2" id="host" />
+                <label for="address">ADDRESS</label>
+                <input class="form-control rounded-0 mb-2" id="address" type="email" />
+                <label for="password">PASSWORD</label>
+                <input class="form-control rounded-0 mb-2" type="password" id="password" />
+                <label for="port">PORT</label>
+                <input class="form-control rounded-0 mb-2" type="number" id="port" />
+                <label for="is_default">DEFAULT</label>
+                <select name="" id="is_default" class="mb-2 form-control">
+                    <option value="False">False</option>
+                    <option value="True">True</option>
+                </select>
+                <label for="is_tls">TLS</label>
+                <select name="" id="is_tls" class="mb-2 form-control">
+                    <option value="False">False</option>
+                    <option value="True">True</option>
+                </select>
+                <hr>
+                <button class="w-100 btn btn-success" onclick="saveNewSender()">ADD</button>
+            `;
+            amodal.setBodyHtml(form);
+            amodal.setFooterHtml(`<button class="w-100 btn btn-success" onclick="saveNewSender()">ADD</button>`);
+            amodal.show()
+        }
+
+        // save new sender
+        function saveNewSender() {
+            let ids = ['host','port','address','password','is_default','is_tls','mypk'];
+            if(anton.validateInputs(ids)){
+                let data = anton.Inputs(ids);
+
+                let payload = {
+                    module:'mail_senders',
+                    data:data
+                };
+                let response = api.call('PUT',payload,'/adapi/');
+                kasa.confirm(response['message'],1,'here');
+            } else {
+                kasa.error("All Field Required")
+            }
+        }
+
+        // new email screen
+        class Email {
+            new_email_screen(){
+                amodal.setTitleText("CREATE AN EMAIL");
+                // get email senders
+                let senders_payload = {
+                    'module':'mail_senders',
+                    data:{}
+                };
+                let senders_response = api.call('VIEW',senders_payload,'/adapi/')
+                if(senders_response['status_code'] === 200){
+                    let senders = senders_response['message'];
+                    let senders_option = '';
+                    for (let s = 0; s < senders.length; s++) {
+                        let sender = senders[s];
+                        senders_option += `<option value="${sender['pk']}">${sender['address']}</option>`
+                    }
+
+
+                    let form = `
+                    <label for="sender">SENDER</label>
+                    <select id="sender" class="form-control rounded-0 mb-2"></select>
+                    <label for="recipient">RECIPIENT</label>
+                    <input type="email" id="recipient" class="form-control rounded-0 mb-2">
+                    <label for="cc">CC</label>
+                    <input type="email" id="cc" class="form-control rounded-0 mb-2">
+                    <label for="subject">SUBJECT</label>
+                    <input type="text" class="form-control rounded-0 mb-2" id="subject">
+
+                    <label for="body">MESSAGE</label>
+                    <textarea name="" id="body" cols="30" rows="10" class="form-control rounded-0"></textarea>
+
+                 <input type="file" id="attachment" class="form-control">
+                    <hr>
+                    <button onclick="email.que()" class="btn btn-success w-100">QUE</button>
+
+                `;
+                amodal.setBodyHtml(form);
+                $('#sender').html(senders_option)
+                amodal.setSize('L')
+                amodal.show()
+
+                } else {
+                    kasa.error(senders_response['message'])
+                }
+
+
+            }
+
+            que() {
+                let ids = ['sender','subject','recipient','cc','body'];
+                if(anton.validateInputs(ids)){
+                    let data = anton.Inputs(ids);
+                    var fileInput = document.getElementById('attachment');
+                    var file = fileInput.files[0];
+                    if(file){
+                        data['attachment'] = file
+                    }
+                    let payload = {
+                        module:'que_mail',
+                        data:data
+                    };
+                    console.table(payload)
+                    let que = api.call('PUT',payload,'/adapi/');
+                    kasa.confirm(que['message'],1,'here')
+                } else {
+                    kasa.error("ALL FIELDS REQUIRED")
+                }
+            }
+
+            sync_mails(){
+                loader.show();
+                let payload = {
+                    data:{
+                        doc:'mail_sync_v2'
+                    }
+                };
+
+                let sync = api.call('VIEW',payload,'/reports/api/');
+                loader.hide()
+                kasa.confirm(sync['message'],1,'here');
+            }
+
+            do_broadcast(){
+                let body = tinymce.get('body').getContent();
+                let subject = $('#subject').val()
+
+                let payload = {
+                    module:'broadcast_mail',
+                    data:{
+                        body:body,
+                        subject:subject
+                    }
+                }
+
+                let request = api.call('PUT',payload,'/adapi/');
+                kasa.confirm(request['message'],1,'here')
+            }
+
+            loadBulk() {
+                const file = document.getElementById('bulk_file').files[0];
+                let em_message = tinymce.get('bulk_message').getContent();
+                let bulk_sub = $('#bulk_sub').val()
+
+
+
+                if(!file || em_message.length < 1 || bulk_sub.length < 1) {
+                    alert('Invalid Form');
+                    return;
+                }
+
+                console.table(file);
+                const reader = new FileReader();
+                reader.onload = e => {
+                    let sent = 0;
+                    let not_sent = 0;
+                    for (const line of e.target.result.split('\r')) {
+                        if(line.split('@').length === 2){
+                            let payload = {
+                                module:'que_mail',
+                                data:{
+                                    sender:'default',
+                                    subject:bulk_sub,
+                                    recipient:line,
+                                    cc:'',
+                                    body:em_message
+                                }
+                            }
+                            let que = api.call('PUT',payload,'/adapi/');
+                            if(anton.IsRequest(que)){
+                                sent ++
+                            } else {
+                                not_sent ++
+                            }
+                            console.table(que)
+                        }
+
+                    }
+                    kasa.confirm(`SENT : ${sent}, NOT SENT ${not_sent}`);
+                }
+
+                reader.readAsText(file);
+
+
+            }
+        }
+        const email = new Email();
+
+    </script>
+
+{% endblock %}

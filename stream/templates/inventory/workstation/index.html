@@ -1,0 +1,118 @@
+{% extends 'dashboard/products/prod_base.html' %}
+{% load static %}
+
+{% block body %}
+    <div  class="w-100 h-100 card">
+
+        <div class="card-header">
+            <div class="w-100 h-100 d-flex flex-wrap">
+                <div class="w-50 h-100"></div>
+
+            </div>
+        </div>
+
+        <div class="card-body p-2">
+            <div class="container-fluid p-0">
+                <div class="w-100 h-100">
+                    <div class="card recent-sales overflow-auto">
+
+
+
+                        <div class="card-body">
+
+
+                          <table class="table table-borderless datatable">
+                            <thead>
+                              <tr>
+                                <th scope="col">OWNER</th>
+                                <th scope="col">SYS_UNIT</th>
+                                <th scope="col">NETWORK</th>
+
+                                <th scope="col">RAM / STORAGE</th>
+                                  <th scope="col">HEART BEAT</th>
+                                  <th>ACTION</th>
+                              </tr>
+                            </thead>
+                            <tbody id="devsBody">
+{#                                {% for ws in wst %}#}
+{#                                  <tr>#}
+{#                                    <td>Brandon Jacob</td>#}
+{#                                    <td><a href="#" class="text-primary">At praesentium minu</a></td>#}
+{#                                    <td>$64</td>#}
+{#                                      <td>Hello / World</td>#}
+{#                                    <td><span class="badge bg-success">Approved</span></td>#}
+{#                                  </tr>#}
+{#                                {% endfor %}#}
+                            </tbody>
+                          </table>
+
+                        </div>
+
+                      </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer"></div>
+
+    </div>
+
+    <script>
+        let data = {
+            'module':'dev_mgmt',
+            'data':{
+                'pk':'*'
+            }
+        }
+
+        // get devices
+        let devices = api.view(data)
+        console.table(devices)
+
+        if(isJson(JSON.stringify(devices))){
+            // get pats
+            let status_code,status,message
+            status_code = devices['status_code']
+            status = devices['status']
+            message = devices['message']
+
+            if(status_code === 200){
+                // get device details
+                let count, devs
+                count = message['count']
+                devs = message['devices']
+
+                if(count > 0){
+                    let devs_row = ''
+                    // load devices
+                    for (let d = 0; d < count; d++) {
+                        let dev = devs[d]
+                        let system = dev['system']
+                        let network = dev['network']
+                        let ram = dev['ram']
+                        let storage = dev['storage']
+                        let timestamp = dev['timestamp']
+                        devs_row += `<tr>
+                                    <td>${system['logged_on_user']}</td>
+                                    <td>${system['model']}</td>
+                                    <td>${network['ip_address']}</td>
+                                      <td>${ram['ram_size']} / ${storage['size']}</td>
+                                        <td>${timestamp['updated_date']} ${timestamp['updated_time']}</td>
+                                    <td><span class="badge bg-success"><a href="/inventory/workstation/view/${network['mac_address']}/">DETAILS</a></span></td>
+                                  </tr>`
+                        ctable(dev)
+                    }
+                    $('#devsBody').html(devs_row)
+
+                }  else {
+                    alert("NO DEVICES FOUND")
+                }
+            }
+
+
+        } else {
+            al('warning','INVALID RESPONSE TYPE')
+        }
+
+    </script>
+{% endblock %}

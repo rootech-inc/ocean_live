@@ -1,0 +1,227 @@
+{% extends 'cmms/sales/sales_base.html' %}
+
+{% load static %}
+
+{% block cmms %}
+   <div class="w-100 h-100 card">
+    <div class="card-header">
+        <div class="modal fade" id="newCust">
+            <div class="modal-dialog modal-xl">
+                <form id="saveCust" method="post" action="{% url 'save_sales_customer' %}" class="modal-content">
+                    <div class="modal-header">
+                        <p class="modal-title">Adding New Customer</p>
+                    </div>
+                    <div class="modal-body bg-header1 p-2">
+
+                        <div class="container p-0">
+                            <div class="row no-gutters d-flex flex-wrap justify-content-center">
+                                {% csrf_token %}
+                                <!-- CONTACT -->
+                                <div class="col-sm-6">
+                                    <div class="card">
+{#                                        <div class="card-header">#}
+{#                                            <small class="card-title">Customer Details</small>#}
+{#                                        </div>#}
+                                        <div class="card-body p-2">
+                                            <input type="hidden" readonly name="url" id="url" required autocomplete="off" class="form-control form-control-sm rounded-0 mb-2">
+                                            <input type="hidden" required name="owner" value="{{ user.pk }}">
+                                            <!-- TYPE -->
+                                            <label for="type_of_client">Type Of Client</label><select class="form-control form-check-sm rounded-0 mb-2" id="type_of_client" name="type_of_client">
+                                              <option value="Private Individual">Private Individual</option>
+                                              <option value="Private Company">Private Company</option>
+                                              <option value="Government">Government</option>
+                                              <option value="Walk In">Walk In</option>
+                                                <option value="Walk In">Phone Call</option>
+                                              <option value="Tender">Tender</option>
+                                              <option value="Bank Financed">Bank Financed</option>
+                                            </select>
+
+                                            <label for="company">Organization</label><input onchange="makeurl()" type="text" name="company" id="company" required autocomplete="off" class="form-control form-control-sm rounded-0 mb-2">
+
+                                            <!-- POSITION -->
+                                            <label for="position">POSITION</label>
+                                            <select name="position" id="position" class="form-control mb-2 form-control-sm rounded-0">
+                                                <option value="Director">Director</option>
+                                                <option value="Owner">Owner</option>
+                                                <option value="Procurement">Procurement</option>
+                                                <option value="Receptionist">Receptionist</option>
+                                                <option value="Transport Manager">Transport Manager</option>
+                                                <option value="Procurement">Others</option>
+                                            </select>
+
+                                            <hr>
+
+                                            <!-- NAME -->
+                                            <label for="name">Name</label><input type="text" name="name" id="name" required autocomplete="off" class="form-control form-control-sm rounded-0 mb-2">
+                                            <!-- TELEPHONE -->
+                                            <label for="mobile">Contact Number</label><input type="tel" name="mobile" id="mobile" required autocomplete="off" class="form-control form-control-sm rounded-0 mb-2">
+                                            <!-- EMAIL -->
+                                            <label for="email">Email</label><input type="email" name="email" id="email" required autocomplete="off" class="form-control form-control-sm rounded-0 mb-2">
+                                            <!-- NOTE -->
+                                            <label for="note">Note</label><textarea required class="form-control mb-2 form-control-sm rounded-0" name="note" id="note" cols="30" rows="2"></textarea>
+                                            <hr>
+                                            <!-- ADDRESS -->
+                                            <label for="region">REGION</label>
+                                            <select onchange="getCities(this.value)" name="region" id="region" class="form-control form-control-sm mb-2 rounded-0">
+                                                <option value="0">SELECT CITY</option>
+                                            </select>
+
+                                            <label for="suburb">SUBURB</label>
+                                            <select disabled name="suburb" id="suburb" class="form-control form-control-sm mb-2 rounded-0">
+                                                <option value="0">SELECT SUBURB</option>
+                                            </select>
+
+
+                                            <label for="address">Address</label><textarea required class="form-control mb-2 form-control-sm rounded-0" name="address" id="address" cols="30" rows="2"></textarea>
+                                            <button type="submit" class="btn btn-success bi bi-save2-fill"> SAVE</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+
+                            </div>
+                        </div>
+
+                    </div>
+
+{#                    <div class="modal-footer">#}
+{#                        #}
+{#                    </div>#}
+
+                </form>
+            </div>
+        </div>
+        <i onclick="location.href='{% url 'new_sales_customer' %}'" title="Add New Customer" class="pointer text-info bi bi-plus-square"></i>
+{#        <button onclick="location.href='{% url 'new_sales_customer' %}'" class="btn btn-info">REGISTER CUSTOMER</button>#}
+    </div>
+    <div class="card-body overflow-hidden">
+        <table class="table table-sm datatable table-hover">
+            <thead>
+                <tr>
+                    <th>CUSTOMER</th>
+                    <th>COMPANY</th>
+                    <th>PHONE</th>
+                    <th>EMAIL</th>
+                    <th>REGION</th>
+                    <th>SUBURB</th>
+                    <th>ACTION</th>
+                </tr>
+            </thead>
+            <tbody id="tBody">
+{#                {% for customer in customers %}#}
+{#                    <tr ondblclick="windowPopUp(`{% url 'sales_customer_transactions' customer.pk %}`,'',1024,700)" class="pointer">#}
+{#                        <td>{{ customer.name }}</td>#}
+{#                        <td>{{ customer.company }}</td>#}
+{#                        <td>{{ customer.mobile }}</td>#}
+{#                        <td>{{ customer.email }}</td>#}
+{#                    </tr>#}
+{#                {% endfor %}#}
+            </tbody>
+        </table>
+    </div>
+   </div>
+
+    <script>
+        let customers = cmms_sales.getCustomer('all')
+
+        if(customers['status_code'] === 200)
+        {
+            let tr = '';
+            for (let i = 0; i < customers['message'].length; i++) {
+                let customer = customers['message'][i]
+                let url = customer['url']
+                tr += `<tr>
+                            <td><small>${customer['name']}</small></td>
+                            <td><small>${customer['company']}</small></td>
+                            <td><small>${customer['mobile']}</small></td>
+                            <td><small>${customer['email']}</small></td>
+                            <td><small>${customer['geography']['region']}</small></td>
+                            <td><small>${customer['geography']['suburb']}</small></td>
+                            <td>
+                                <i onclick="location.href='/cmms/sales/deals/${url}/'" class="bi bi-translate mr-5 pointer"></i>
+                                {% if user.is_superuser %}
+                                <i onclick="if(confirm('ARE YOU SURE')){cmms_sales.delete_customer('${customer['pk']}')}" class="bi bi-trash-fill pointer text-danger"></i>
+                                {% endif %}
+                            </td>
+                        </tr>`
+
+            }
+            $('#tBody').html(tr)
+        } else if (customers['status_code'] === 404) {
+            $('#newCust').modal('show')
+
+        } else {
+            kasa.info(customers['message'])
+        }
+
+        function makeurl() {
+            let company = $('#company').val()
+            $('#url').val(company.replace(/\s/g, '-').toLowerCase())
+        }
+
+        // load cities for modal
+        function getCities(city) {
+            let payload_x = {
+                'module':'geo',
+                data:{
+                    'part':'region',
+                    'key':city
+                }
+            }
+
+            let response = api.call('VIEW',payload_x,'/adapi/')
+
+            if(response['status_code'] === 200){
+                let opt = ''
+                let message = response['message'][0];
+
+                let subs = message['subs']
+                if(subs.length > 0){
+                    for (let sb = 0; sb < subs.length ; sb++) {
+                        let sub = subs[sb]
+                        console.table(sub)
+                        if(sb === 0){
+                            opt += `<option selected value="${sub['pk']}">${sub['name']}</option>`
+                        } else {
+                            opt += `<option value="${sub['pk']}">${sub['name']}</option>`
+                        }
+
+                    }
+                    $('#suburb').prop('disabled',false)
+                    $('#suburb').html(opt)
+                } else {
+                    $('#suburb').prop('disabled',true)
+                    kasa.html(`No subs in region, use <a href="javascript:void()" onclick="windowPopUp('{% url 'geo' %}','LOCATIONS',900,600)" >his link</a> to create a sub in region`)
+                }
+
+
+            }
+        }
+
+        function loadRegions(){
+            let payload = {
+                'module':'geo',
+                data:{
+                    'part':'region',
+                    'key':'*'
+                }
+            }
+
+            let response = api.call('VIEW',payload,'/adapi/')
+
+            if(response['status_code'] === 200){
+                options = ''
+                let message = response['message'];
+                for (let r = 0; r < message.length; r++) {
+                    let region = message[r]
+                    options += `<option value="${region['pk']}">${region['name']}</option>`
+                }
+                $('#region').append(options)
+            }
+        }
+        loadRegions()
+    </script>
+
+{% endblock %}

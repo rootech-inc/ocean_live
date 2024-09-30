@@ -1,0 +1,53 @@
+{% extends 'cmms/service/serv_base.html' %}
+{% load static %}
+
+
+{% block cmms %}
+	<div class="table-responsive bg-light rounded_c h-100 p-1" id="assets_table">
+
+    </div>
+
+    <script>
+
+
+        let assets = cmms.getServiceAsset('all')
+            if(anton.IsRequest(assets)){
+                let rows = ""
+                let asss = assets['message'];
+                for (let i = 0; i < asss.length; i++) {
+                    let ass = asss[i]
+                    console.table(ass)
+
+                    rows += `
+                        <tr>
+                        <td>${ass['cust_name']}</td>
+                        <td>${ass['asset_no']}</td>
+                        <td>${ass['model']}</td>
+                        <td>${ass['chassis']}</td>
+                        <td>${ass['last_serviced']}</td>
+                    </tr>
+                    `
+                }
+                let tab = `
+                    <table class="table table-stripped datatable table-bordered">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>CUSTOMER</th>
+                                <th>CAR NUMBER</th>
+                                <th>CAR MODEL</th>
+                                <th>CHASIS</th>
+                                <th>LAST SERVICED</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="assets_table">
+                            ${rows}
+                        </tbody>
+                    </table>`
+                $('#assets_table').html(tab)
+            } else {
+                kasa.error(assets)
+            }
+
+    </script>
+{% endblock %}

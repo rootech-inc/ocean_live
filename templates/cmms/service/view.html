@@ -1,0 +1,383 @@
+{% extends 'cmms/service/serv_base.html' %}
+{% load static %}
+
+{% block cmms %}
+
+    <form action="{% url 'save_serv_job_images' %}" method="post" enctype="multipart/form-data" class="modal fade" id="new_image_form">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    {% csrf_token %}
+                                <input type="hidden" name="job_id" value="{{ card.pk }}" id="job_id">
+                                <input type="file" accept="image/*" name="file[]" class="form-control">
+                                <hr>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">UPLOAD</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="card-header">
+        <div class="w-100 d-flex flex-wrap">
+            <div class="w-50">
+                <ul class="nav nav-tabs">
+              <li class="nav-item">
+                <a class="nav-link active" data-toggle="tab" href="#home">Job Details</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-toggle="tab" href="#menu1">Attachments</a>
+              </li>
+            </ul>
+            </div>
+            <div class="w-50 d-flex justify-content-end">
+                <button onclick="location.href='{% url 'cmms_servicing' %}'" id="cancel" class="btn btn-sm btn-info"><i class="fa fa-backspace"></i> Back</button>
+
+                {% if card.is_started %}
+                    {% if card.is_ended %}
+                        {% else %}
+                        <button style="margin-left: .5rem" id="end" class="btn btn-sm btn-danger"><i class="fa fa-save"></i> END</button>
+
+                        {% endif %}
+                {% else %}
+                    <button style="margin-left: .5rem" id="start" class="btn btn-sm btn-success"><i class="fa fa-save"></i> START</button>
+                {% endif %}
+
+                <button style="margin-left: .5rem"  id="print" class="btn btn-sm btn-dark"><i class="fa fa-print"></i> Print</button>
+
+
+            </div>
+
+        </div>
+    </div>
+    <div class="tab-content">
+        <div class="tab-pane container p-2 active" id="home">
+            <div  class="row overflow-auto">
+
+            <div class="col-sm-12 col-md-12 col-lg-6 h-100">
+                <div class="card">
+                    <input type="hidden" id="pk" value="{{ card.pk }}">
+                    <div class="card-header">
+                        <strong class="card-title">Customer Details</strong>
+                    </div>
+                    <div class="card-body p-2">
+                        <!--CUSTOMER -->
+                      <div class="input-group mb-2">
+                          <div class="input-group-prepend">
+                              <label for="company" class="input-group-text rounded-0">Company</label>
+                          </div>
+                          <input type="text" id="company" readonly value="{{ card.company }}" class="form-control rounded-0">
+                      </div>
+                        <!-- REP -->
+                        <div class="input-group mb-2">
+                          <div class="input-group-prepend">
+                              <label for="driver"  class="input-group-text rounded-0">Driver</label>
+                          </div>
+                          <input type="text" id="driver" readonly value="{{ card.driver }}" class="form-control rounded-0">
+                      </div>
+
+                        <!-- REP CONTACT -->
+                        <div class="input-group mb-2">
+                          <div class="input-group-prepend">
+                              <label for="contact" class="input-group-text rounded-0">Contact</label>
+                          </div>
+                          <input type="tel" id="contact" readonly value="{{ card.contact }}" class="form-control rounded-0">
+                      </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-12 col-md-12 col-lg-6 h-100">
+                <div class="card">
+                    <div class="card-header">
+                        <strong class="card-title">Car Details</strong>
+                    </div>
+                    <div class="card-body p-2">
+                        <!--CUSTOMER -->
+                      <div class="input-group mb-2">
+                          <div class="input-group-prepend">
+                              <label for="brand" class="input-group-text rounded-0">Brand</label>
+                          </div>
+                          <input type="text" id="brand" readonly value="{{ card.brand }}" placeholder="Toyota" class="form-control rounded-0">
+                      </div>
+                        <!-- REP -->
+                        <div class="input-group mb-2">
+                          <div class="input-group-prepend">
+                              <label for="model" class="input-group-text rounded-0">Model</label>
+                          </div>
+                          <input type="text" id="model" readonly value="{{ card.model }}" placeholder="Lexus 2021" class="form-control rounded-0">
+                      </div>
+
+                        <!-- REP CONTACT -->
+                        <div class="input-group mb-2">
+                          <div class="input-group-prepend">
+                              <label for="car_number" class="input-group-text rounded-0">Number</label>
+                          </div>
+                          <input type="text" id="car_number" readonly value="{{ card.carno }}" placeholder="Number Plate" class="form-control rounded-0">
+                      </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-12">
+                <div class="card">
+                    <div class="card-header"><strong class="card-title">Customer Report</strong></div>
+                    <div class="card-body p-1">
+                        <textarea name="" class="form-control rounded-0" readonly id="report"  rows="5">{{ card.report }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        </div>
+
+        <div class="tab-pane container p-2 fade" id="menu1">
+            <div  class="overflow-hidden">
+                <div class="container-fluid">
+
+
+                    <div class="row">
+
+                        <div class="col-sm-12 col-md-6 col-lg-6">
+
+                            <div id="accordion">
+
+                                <div class="card">
+                                    <div class="card-header">
+                                      <a class="card-link" data-toggle="collapse" href="#images">
+                                        Checklist
+                                      </a>
+                                    </div>
+                                    <div id="images" class="collapse" data-parent="#accordion">
+                                      <div class="card-body">
+                                        <div class="container-fluid py-2 h-100 overflow-auto">
+                                            <button data-bs-target="#new_image_form" data-bs-toggle="modal" class="btn btn-info">ADD</button>
+                                            <div class="row">
+                                                {% for image in card.images %}
+                                                <div class="col-sm-3">
+                                                    <div class="modal" id="image_{{ image.pk }}">
+                                                        <div class="modal-dialog modal-xl text-center modal-dialog-centered">
+                                                            <img src="{{ image.image.url }}" alt="" class="img-fluid">
+                                                        </div>
+                                                    </div>
+                                                    <img data-bs-target="#image_{{ image.pk }}" data-bs-toggle="modal" src="{{ image.image.url }}" alt="" class="img-fluid img-thumbnail">
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                              <div class="card">
+                                <div class="card-header">
+                                  <a class="card-link" data-toggle="collapse" href="#materials">
+                                    Materials
+                                  </a>
+                                </div>
+                                <div id="materials" class="collapse" data-parent="#accordion">
+                                  <div class="card-body">
+                                    <div class="table-response">
+                                        <button id="new_request" class="btn btn-info">REQUEST</button>
+                                        <table class="table table-sm table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Material</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for material in card.materials %}
+                                                    <tr>
+                                                        <td>{{ material.part }}</td>
+                                                        <td>{{ material.st | safe }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                                <div class="card">
+                                <div class="card-header">
+                                  <a class="card-link" data-toggle="collapse" href="#transactions">
+                                    Transactions
+                                  </a>
+                                </div>
+                                <div id="transactions" class="collapse" data-parent="#accordion">
+                                  <div class="card-body">
+                                    <div class="container-fluid py-2 h-100 overflow-auto">
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <th>TITLE</th>
+                                                <th>Details</th>
+                                                <th>Date</th>
+
+                                            </tr>
+                                            {% for transaction in card.transactions %}
+                                                <tr>
+                                                    <td>{{ transaction.title }}</td>
+                                                    <td>{{ transaction.details }}</td>
+                                                    <td>{{ transaction.created_on }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </table>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+
+    <script>
+
+        function startJob(){
+            let ids = ['wr_no','mechanic','mypk','pk'];
+            if(anton.validateInputs(ids)){
+                let payload = {
+                    module:'start_job',
+                    data:anton.Inputs(ids)
+                }
+
+                kasa.confirm(
+                    api.call('PATCH',payload,'/cmms/api/').message,
+                    1,
+                    'here'
+                );
+            } else {
+                kasa.error("Invalid Form")
+            }
+        }
+
+        function endJob(){
+            let ids = ['remarks','mypk','pk','next_service_date'];
+            if(anton.validateInputs(ids)){
+                let payload = {
+                    module:'end_job',
+                    data:anton.Inputs(ids)
+                }
+                // job_card_report
+                let close = api.call('PATCH',payload,'/cmms/api/');
+                if(anton.IsRequest(close)){
+                    let print_payload = {
+                        "module":"job_card_report",
+                        "data":anton.Inputs(['pk'])
+                    }
+
+                    let rep = api.call('VIEW',print_payload,'/cmms/api/');
+                    if(anton.IsRequest(rep)){
+                        anton.viewFile(`/${rep.message}`,'Job Card','')
+                    } else {
+                        kasa.response(rep)
+                    }
+                } else {
+                    kasa.response(close)
+                }
+                {#kasa.confirm(#}
+                {#    api.call('PATCH',payload,'/cmms/api/').message,#}
+                {#    1,#}
+                {#    'here'#}
+                {#);#}
+            } else {
+                kasa.error("Invalid Form")
+            }
+        }
+
+        // new_request
+        function new_request(){
+            let form = ``;
+            form += `<div>
+                        <input type="text" id="barcode" placeholder="Barcode" class="form-control w-100 rounded-0 mb-2">
+                        <input type="text" id="part" placeholder="Part Name" class="form-control w-100 rounded-0 mb-2">
+                        <input type="number" id="quantity" placeholder="Quantity" class="form-control w-100 rounded-0 mb-2">
+                        <textarea  id="reason" rows="3" class="form-control rounded-0" placeholder="Reason"></textarea>
+                    </div>`;
+            amodal.setBodyHtml(form)
+            amodal.setTitleText("Material Request")
+            amodal.setFooterHtml(`<button onclick='send_request()' class="w-100 btn btn-success w-100">SEND</button>`)
+            amodal.show()
+        }
+
+        function send_request(){
+            let ids = ['pk','part','reason','mypk','quantity','quantity','barcode'];
+            if(anton.validateInputs(ids)){
+                let payload = {
+                    module:'material_request',
+                    data:anton.Inputs(ids)
+                }
+
+                let send = api.call("PUT",payload,'/cmms/api/')
+                kasa.confirm(send.message,1,'here')
+            }
+        }
+
+        var allFilesSelected = true;
+        $(document).ready(function(){
+            $('#add_img_line').click(function(){
+                $('#images_que').prepend(`<input type="file" name="file[]" class="form-control">
+                                <hr>`);
+            });
+
+            // new_request
+            $('#new_request').click(function (){
+                new_request()
+            });
+
+            $('#start').click(function(){
+
+
+                let form = ``;
+                form += fom.text('wr_no','Mycom Job Card Number',true)
+                form += fom.text('mechanic','',true)
+
+                amodal.setTitleText("START JOB")
+                amodal.setBodyHtml(form)
+                amodal.setFooterHtml(`<button  class="btn btn-success w-100" onclick='startJob()' >START</button>`)
+                amodal.show()
+
+            });
+
+            $('#end').click(function(){
+                let form = ``;
+
+                form += fom.text('remarks','',true)
+                form += fom.date('next_service_date','',true)
+                form += `<hr><button class="btn btn-danger w-100" onclick='endJob()' >CLOSE</button>`
+
+                amodal.setTitleText("END JOB")
+                amodal.setBodyHtml(form)
+
+                amodal.show()
+            })
+
+            $('#print').click(function (){
+                let print_payload = {
+                        "module":"job_card_report",
+                        "data":anton.Inputs(['pk'])
+                    }
+
+                    let rep = api.call('VIEW',print_payload,'/cmms/api/');
+                    if(anton.IsRequest(rep)){
+                        anton.viewFile(`/${rep.message}`,'Job Card','')
+                        {#kasa.html(`<a href="/${rep.message}">DOWNLOAD</a>`)#}
+                    } else {
+                        kasa.response(rep)
+                    }
+            });
+        });
+    </script>
+{% endblock %}

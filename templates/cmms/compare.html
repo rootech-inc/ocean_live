@@ -1,0 +1,319 @@
+{% extends 'cmms/base.html' %}
+<style>
+    .modal-fullscreen{width:100vw;max-width:none;height:100%;margin:0}
+</style>
+{% block cmms %}
+    <div class="modal" id="more">
+        <div class="modal-dialog modal-dialog-scrollable modal-fullscreen" style="width: 100% !important">
+            <div class="modal-content" style="width: 100% !important">
+                <div class="modal-header">
+                    <strong class="modal-title">INFOGRAPHIC</strong>
+                    <button class="close" data-bs-dismiss="modal">X</button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="container-fluid">
+
+                        <div class="row" style="min-height:  400px">
+
+                            <!-- ISSUES STATS -->
+                            <div class="col-6">
+                              <div class="card">
+                                  <div class="card-header">
+                                      <button class="btn btn-info">CAPTURE</button>
+                                  </div>
+                                <div class="card-body">
+                                  <h5 class="card-title">Pie Chart {{ ussettings.count }}</h5>
+
+                                  <!-- Pie Chart -->
+                                  <div id="infopie" style="min-height: 400px;" class="echart"></div>
+
+
+                                  <!-- End Pie Chart -->
+
+                                </div>
+                              </div>
+                            </div>
+
+                            {% if perms.admin_panel.view_sales %}
+                            <!-- TOTAL SALES -->
+                            <div style="height: 450px" class="col-6">
+
+                                <div class="card">
+                                    <div class="card-body">
+                                          <h5 class="card-title">Bar Chart</h5>
+
+                                          <!-- Bar Chart -->
+                                          <div id="barChart" style="min-height: 400px;" class="echart"></div>
+
+
+                                          <!-- End Bar Chart -->
+
+                                        </div>
+                                  </div>
+
+                            </div>
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+ <div class="w-100 h-100">
+
+    <div style="height: 20%" class="pb-3 w-100">
+        <div class="container-fluid p-0 h-100">
+            <div class="row h-100">
+                <!-- COUNT -->
+                <div class="col-sm-2 h-100">
+                    <div class="card bg-primary h-100">
+                        <div class="card-header bg-primary">
+                            <strong class="card-title text-light">TOTAL COUNT</strong>
+
+                        </div>
+                        <div class="card-body bg-light">
+                            <div class="w-100 text-primary h-100 d-flex flex-wrap align-content-center justify-content-center">
+                                <strong id="tot_count"></strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- SYSTEM -->
+                <div class="col-sm-2 h-100">
+                    <div class="card h-100 bg-secondary">
+                        <div class="card-header bg-secondary">
+                            <strong class="card-title text-light">SYS QTY</strong>
+                        </div>
+                        <div class="card-body bg-light">
+                            <div class="w-100 h-100 text-secondary d-flex flex-wrap align-content-center justify-content-center">
+                                <strong id="sys_count"></strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- QTY DIFF -->
+                <div class="col-sm-2 h-100">
+                    <div class="card bg-warning h-100">
+                        <div class="card-header bg-info">
+                            <strong class="card-title text-dark">QTY DIFF</strong>
+                        </div>
+                        <div class="card-body bg-light">
+                            <div class="w-100 h-100 text-info d-flex flex-wrap align-content-center justify-content-center">
+                                <strong id="qty_diff"></strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VALUE DIFFERENT -->
+                <div class="col-sm-2 h-100">
+                    <div class="card bg-danger h-100">
+                        <div class="card-header bg-danger">
+                            <strong class="card-title text-light">VAL DIFF</strong>
+                        </div>
+                        <div class="card-body bg-light">
+                            <div class="w-100 text-danger h-100 d-flex flex-wrap align-content-center justify-content-center">
+                                <strong id="val_diff"></strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TOOLS AND DETAILS -->
+                <div class="col-sm-4 h-100">
+                    <div class="card p-0 h-100">
+                        <div class="card-body d-flex flex-wrap align-content-center p-1 h-100">
+                            <table class="table table-bordered m-0 table-sm">
+                                <tr><td><strong>LOC</strong></td><td><small class="text-info" id="loc"></small></td></tr>
+                                <tr><td><strong>GROUP</strong></td><td><small class="text-info" id="group"></small></td></tr>
+                                <tr><td><strong>TOOLS</strong></td><td>
+                                    <div class="w-100 d-flex">
+                                        <button onclick="exportExcel()" class="rounded-0 btn btn-sm btn-primary">EXPORT</button>
+                                        <button id="remarks" onclick="alert(this.value)" class="rounded-0 btn btn-sm btn-info">REMARKS</button>
+                                        <button id="infographic" class="btn btn-info btn-info"><i class="bi bi-pie-chart-fill"></i></button>
+                                    </div>
+                                </td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div style="height: 80%" class="card w-100 overflow-auto">
+
+        <div class="h-100 p-0">
+                <div class="w-100 h-100">
+                    <div class="card p-2 h-100 recent-sales overflow-auto">
+
+
+
+                        <div id="devsBody" class="card-body h-100 overflow-hidden">
+
+                        </div>
+
+
+
+                      </div>
+                </div>
+            </div>
+
+    </div>
+
+ </div>
+
+    <script>
+        let ops = {
+            title: {
+                                  text: 'REASON TYPES',
+                                  subtext: 'categories of resons',
+                                  left: 'center'
+                                },
+                                tooltip: {
+                                  trigger: 'item'
+                                },
+                                legend: {
+                                  orient: 'vertical',
+                                  left: 'left'
+                                },
+                                series: [{
+                                  name: 'INFOGRAPHIC OF STOCK COUNT',
+                                  type: 'pie',
+                                  radius: '50%',
+                                  data: [{
+                                      value: {{ wrong_entries }},
+                                      name: 'WRONG ENTRIES'
+                                    },
+                                    {
+                                      value: {{ sys_error }},
+                                      name: 'SYSTEM ERROR'
+                                    },
+                                    {
+                                      value: {{ lost }},
+                                      name: 'LOST'
+                                    },
+
+                                  ],
+                                  emphasis: {
+                                    itemStyle: {
+                                      shadowBlur: 10,
+                                      shadowOffsetX: 0,
+                                      shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                    }
+                                  }
+                                }]
+                              }
+        let fdate = new Date(`{{ as_of }}`).toISOString().split('T')[0];
+        let pk = `{{ pk }}`
+        let group = `{{ group }}`
+
+        let header = cmms.compareAlone(fdate,'preview',pk,group)
+        let entries = header['entries'];
+        let values = header['values']
+        let group_name = header['group']
+
+        function exportExcel(){
+
+            let payload = {
+              "module": "stock",
+              "data": {
+                  "stage":"export",
+                "compare":"final_compare",
+                "as_of":fdate,
+                "doc":'excel',
+                "pk":pk,
+                "group":group
+              }
+            };
+
+            let response = api.call('VIEW',payload,'/cmms/api/')
+            if(response['status_code'] === 200){
+                alert(`<a href="/${response['message']}">DOWNLOAD FILE</a>`)
+            } else {
+                alert(response['message'])
+            }
+
+
+    }
+        let arr = [
+            {value: entries['sys_error'], name: 'SYSTEM ERROR'},
+            {value: entries['wr_entry'], name: 'WRONG ENTRIES'},
+            {value: entries['lost'], name: 'LOST'},
+            {value: entries['unknown'], name: 'UNKNOWN'},
+            {value: entries['not_counted'], name: 'NOT COUNTED'}
+        ]
+
+        let ySeries = [values['sys_error'], values['wr_entry'], values['lost'], values['unknown'], values['not_counted']];
+        let xSeries = [`SE ${values['sys_error']}`, `WE ${values['wr_entry']}`, `LO ${values['lost']}`, `UN ${values['unknown']}`, `NC (${values['not_counted']})`];
+
+
+
+
+
+        console.table(ySeries)
+
+
+    </script>
+
+    <!-- PIE JS -->
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+                        echarts.init(document.querySelector("#infopie")).setOption(
+                              {
+                                title: {
+                                  text: group_name,
+                                  subtext: 'categories of resons',
+                                  left: 'center'
+                                },
+                                tooltip: {
+                                  trigger: 'item'
+                                },
+                                legend: {
+                                  orient: 'vertical',
+                                  left: 'left'
+                                },
+                                series: [{
+                                  name: 'INFOGRAPHIC OF STOCK COUNT',
+                                  type: 'pie',
+                                  radius: '50%',
+                                  data: arr,
+                                  emphasis: {
+                                    itemStyle: {
+                                      shadowBlur: 10,
+                                      shadowOffsetX: 0,
+                                      shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                    }
+                                  }
+                                }]
+                              }
+                        );
+                    });
+
+        // BAR FOR VALUES
+        document.addEventListener("DOMContentLoaded", () => {
+            echarts.init(document.querySelector("#barChart")).setOption({
+                xAxis: {
+                    type: 'category',
+                    data: xSeries
+                },
+                yAxis: {
+                    type: 'value'
+                },
+                series: [{
+                    data: ySeries,
+                    type: 'bar'
+                }]
+            });
+        });
+        // BAR FOR VALUES END
+
+    </script>
+
+    <!-- END OF PIE JS -->
+{% endblock %}

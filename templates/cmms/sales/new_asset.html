@@ -1,0 +1,125 @@
+{% extends 'cmms/sales/sales_base.html' %}
+{% load static %}
+
+{% block cmms %}
+    <div class="card-header">
+        <div class="w-100 d-flex flex-wrap">
+            <div class="w-50 d-flex flex-wrap">
+                <button id="cancel" class="btn nav-btn btn-sm btn-info mr-1">
+                    <i class="fa fa-backspace"></i>
+                </button>
+                <button id="save" class="btn nav-btn btn-sm btn-success mr-1">
+                    <i class="fa fa-save"></i>
+                </button>
+
+            </div>
+
+            <div class="w-50 d-flex flex-wrap p-2 justify-content-end">
+
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-2">
+        <div class="container-fluid h-100">
+            <div class="row h-25 bg-info-light py-2 overflow-auto">
+                <div class="col-sm-4">
+                    <!-- Manufacturer -->
+                    <div class="row mb-2">
+                        <label for="name" class="col-sm-4">Name</label>
+                        <div class="col-sm-8">
+                            <input type="text" placeholder="Name" class="form-control rounded-0" id="name">
+                        </div>
+                    </div>
+                    <!-- Manufacturer -->
+                    <div class="row mb-2">
+                        <label for="manufacturer" class="col-sm-4">Manufacturer</label>
+                        <div class="col-sm-8">
+                            <select class="form-control rounded-0" id="manufacturer">
+                                <option value="">Select Manufacturer</option>
+                                {% for man in mans %}
+                                    <option value="{{ man.pk }}">{{ man.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Origin -->
+                    <div class="row mb-2">
+                        <label for="origin" class="col-sm-4">Car Origin</label>
+                        <div class="col-sm-8">
+                            <select class="form-control rounded-0" id="origin">
+                                <option value="">Select Origin</option>
+                                {% for org in origins %}
+                                    <option value="{{ org.pk }}">{{ org.country }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="col-sm-4">
+                    <!-- SUPPLYEr -->
+                    <div class="row mb-2">
+                        <label for="supplier" class="col-sm-4">Supplier</label>
+                        <div class="col-sm-8">
+                            <select class="form-control rounded-0" id="supplier">
+                                <option value="">Select Origin</option>
+                                {% for sup in suppliers %}
+                                    <option value="{{ sup.pk }}">{{ sup.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="col-sm-4">
+
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+
+    <script>
+
+        function loadAssetGroups(){
+            let asset_groups = sales.getAssetGroup('*');
+            if(anton.IsRequest(asset_groups)){
+                let groups = asset_groups['message'];
+                let option = `<option selected disabled value="" >Select Manufacturer</option>`
+                for(let g = 0; g < groups.length; g++){
+                    let group = groups[g]
+                    option +=`<option  value="${group['pk']}" >${group['name']}</option>`
+                }
+
+                $('#asset_manufacturer').html(option)
+            } else {
+                kasa.response(asset_groups)
+            }
+        }
+        $(document).ready(function(){
+
+            // cancel
+            $('#cancel').click(function(){
+                location.href = '/cmms/sales/assets/'
+            });
+
+            $('#save').click(function(){
+                let fields = ['name','manufacturer','supplier','mypk']
+                if(anton.validateInputs(fields)){
+                    let payload = {
+                        module:"Car",
+                        data:anton.Inputs(fields)
+                    }
+
+                    kasa.confirm(
+                        api.call('PUT',payload,'/cmms/api/').message,1,'/cmms/sales/assets/'
+                    )
+                }
+            });
+        })
+    </script>
+{% endblock %}

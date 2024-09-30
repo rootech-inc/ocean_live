@@ -1,0 +1,1010 @@
+class Retail {
+    interface = '/retail/api/'
+    boldUploadScreen(){
+
+        // get groups
+        let groups = api.call('VIEW',{module:'bolt_group',data:{'pk':'*'}},'/retail/api/')
+        if(groups['status_code'] === 200){
+            let group_options = `<option value="0">NEW</option>`;
+            let grps = groups['message'];
+            for(let g = 0; g < grps.length; g++){
+                let group = grps[g];
+                group_options += `<option value="${group['pk']}">${group['name']}</option>`;
+
+            }
+
+            let form = `
+                <a href="https://">Download Template</a> <br>
+                <label for="group">GROUP</label>
+                <select onchange="retail.uploadGroupSelection()" id="group" class="form-control rounded-0 mb-2">${group_options}</select>
+                <label for="group_name">GROUP NAME</label>
+                <input type="text" name="group_name" id="group_name" class="form-control mb-2 rounded-0">
+                <label for="file">ITEMS FILE</label>
+                <input type="file" name="" id="file" accept="text/csv" class="form-control mb-2 rounded-0">
+                <button onclick="retail.boltUpload()" type="submit" class="btn btn-success w-100">PROCESS</button>
+            `;
+            amodal.setTitleText(`Upload Batch Files`);
+            amodal.setBodyHtml(form);
+            amodal.show()
+        } else {
+            kasa.error(groups['message']);
+        }
+
+    }
+
+    uploadGroupSelection(){
+        let text = $('#group').find(':selected').text();
+        let grou_name = $('#group_name')
+        if(text === 'NEW'){
+            grou_name.val('');
+            grou_name.prop('disabled',false);
+            grou_name.prop('focused',true);
+        } else {
+            grou_name.prop('disabled',true);
+            grou_name.prop('focused',false);
+            grou_name.val(text)
+        }
+
+    }
+
+    boltUpload(){
+
+        if(anton.validateInputs(['group_name'])){
+            let group_req = api.call(
+            'PUT',{'module':'bolt_group',data:{name:$('#group_name').val()}},'/retail/api/'
+            );
+
+            let ms = ``
+
+            if(group_req['status_code'] === 200){
+                let group = group_req['message'];
+                const file = document.getElementById('file').files[0];
+                if(!file) {
+                    alert('PLEASE SELECT A FILE');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = e => {
+
+                    for(const line of e.target.result.split('\r')){
+                        const this_line = line.split(',');
+                        console.table(this_line)
+                        // let barcode,name,price,spintex,nia,osu;
+                        // barcode = this_line[0].replace('\n','');
+                        // name = this_line[1];
+                        // price = this_line[2];
+                        // spintex = this_line[3];
+                        // nia = this_line[4];
+                        // osu = this_line[5];
+                        let item_code = this_line[0]
+                        // let price = this_line[1]
+                        console.log(item_code)
+                        // console.log(price)
+
+                        let payload = {
+                            'module':'bolt_item',
+                            data:{
+                                item_code:item_code
+                            }
+                        };
+
+                        console.log(payload);
+
+                        let prd_put = api.call('PUT',payload,'/retail/api/')
+                        if(anton.IsRequest(prd_put)){
+
+                        } else {
+                            ms += `${item_code} - NOT ADDED <br>`
+                        }
+
+                        console.log(prd_put);
+                    }
+                }
+                reader.readAsText(file)
+
+                kasa.html(ms)
+            } else {
+                kasa.error(group_req['message'])
+            }
+        } else {
+            kasa.error("ALL FIELDS ARE REQUIRED")
+        }
+
+
+
+
+    }
+
+    checkPrices(){
+       loader.show();
+        let payload = {
+            module:'price_change',
+            data: {
+                'send':'no'
+            }
+        };
+
+        let request = api.call('VIEW',payload,'/retail/api/');
+
+        if(anton.IsRequest(request)){
+            let message = request['message'];
+            console.table(message);
+            let table = `
+                <table class="table table-sm table-bordered">
+                    <thead><tr><th>PART</th><th>CHANGES</th><th>FILE</th></tr></thead>
+                    <tbody>
+                        <tr><td>PRICE CHANGE</td><td>${message['price_change']['count']}</td><td><a href="/${message['price_change']['file']}"><i class="bx bx-download"></i></a></td></tr>
+                        <tr><td>SPINTEX STOCK</td><td>${message['spintex_stock_change']['count']}</td><td><a href="/${message['spintex_stock_change']['file']}"><i class="bx bx-download"></i></a></td></tr>
+                        <tr><td>NIA STOCK</td><td>${message['nia_stock_change_file']['count']}</td><td><a href="/${message['nia_stock_change_file']['file']}"><i class="bx bx-download"></i></a></td></tr>
+                        <tr><td>OSU STOCK</td><td>${message['osu_stock_change_file']['count']}</td><td><a href="/${message['osu_stock_change_file']['file']}"><i class="bx bx-download"></i></a></td></tr>
+
+                    </tbody>
+                </table>
+            `;
+
+            amodal.setBodyHtml(table);
+            amodal.setTitleText("PRICE AND STOCK UPDATE");
+            loader.hide();
+            amodal.show();
+        } else {
+            kasa.error(request['message'])
+        }
+
+    }
+
+    markProducts(){
+        let payload = {
+            module:'price_update',
+            data: {
+
+            }
+        };
+
+        if(confirm("Are you Sure?")){
+             let request = api.call('PATCH',payload,'/retail/api/');
+            kasa.confirm(request['message'],1,'here')
+        }
+
+    }
+
+
+    exportItems(pk) {
+        $('#loader').show()
+
+        let payload = {
+            module:'export_items',
+            data: {
+                'format':'excel',
+                key:pk
+            }
+        };
+        let request = api.call('VIEW',payload,'/retail/api/');
+        if(anton.IsRequest(request)){
+
+            kasa.html(`<a href="/${request['message']}">Download File</a>`)
+
+        } else {
+            kasa.error(request['message'])
+        }
+
+        $('#loader').hide()
+    }
+
+    getProduct(item_code=''){
+        let payload = {
+            "module":"prod_master",
+            "data":{
+                "doc":"json",
+                item_code:item_code
+            }
+        }
+
+         return  api.call('VIEW',payload,'/retail/api/');
+    }
+
+    loadProducts() {
+        let payload = {
+            "module":"prod_master",
+            "data":{
+                "doc":"json"
+            }
+        }
+
+        let response = api.call('VIEW',payload,'/retail/api/');
+        if(anton.IsRequest(response)){
+            let products = response['message'];
+            let tr = "";
+            for (let p = 0; p < products.length; p++) {
+                let product = products[p];
+                console.table(product)
+                let group,subgroup,barcode,name,price,is_on_bolt;
+                let item_code = product['item_code'];
+                group = product['group_name'];
+                subgroup = product['sub_group_name'];
+                barcode = product['barcode'];
+                name = product['name'];
+                price = product['retail1'];
+                is_on_bolt = product['is_on_bolt']
+                is_on_bolt = `
+                    <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa fa-info"></i>
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <a class="dropdown-item" href="javascript:void(0)" onclick="retail.changeProductCategory('${item_code}')">Change Group</a>
+                    </div>
+                </div>
+                `
+                tr += `
+                    <tr><td>${group}</td><td>${subgroup}</td><td>${barcode}</td><td>${name}</td><td>${price}</td><td>${is_on_bolt}</td></tr>
+                `;
+            }
+
+            let x =
+                `<table class="table table-bordered table-stripped datatable table-bordered">
+                    <thead class="thead-dark">
+                    <tr>
+                        <th>GROUP</th>
+                        <th>SUB GROUP</th>
+                        <th>BARCODE</th>
+                        <th>NAME</th>
+                        <th>PRICE</th>
+                        <th>ACTION</th>
+                    </tr>
+                    </thead>
+
+                    <tbody id="assets_table">
+                    ${tr}
+                    </tbody>
+                </table>`
+
+            $('#result').html(x)
+        } else {
+            $('#pagebody').html(response['message'])
+        }
+    }
+
+    export_retail_products(pk = '*') {
+        $('#loader').show()
+
+        let payload = {
+            module:'retail_products',
+            data: {
+                'doc':'excel',
+                product:pk
+            }
+        };
+        let request = api.call('VIEW',payload,'/retail/api/');
+        if(anton.IsRequest(request)){
+
+            kasa.html(`<a href="/${request['message']}">Download File</a>`)
+
+        } else {
+            kasa.error(request['message'])
+        }
+
+        $('#loader').hide()
+    }
+
+    // STOCK SECTION
+    retrieveSockFreezeScreen(){
+        let form = ``;
+        form += fom.text('entry','frozen entry in mycom',true)
+        amodal.setTitleText("Retrieve Frozen")
+        amodal.setBodyHtml(form);
+        amodal.setFooterHtml(`<button onclick='retail.retrieveStock()' class='w-100 btn btn-success'>RETIRVE</button>`)
+        amodal.show()
+    }
+
+    retrieveStock(){
+        let ids = ['mypk','entry'];
+        if(anton.validateInputs(ids)){
+            let payload = {
+                module:'retrieve_frozen_stock',
+                data:anton.Inputs(ids)
+            }
+
+            let ret = api.call("PUT",payload,'/retail/api/');
+            if(anton.IsRequest(ret)){
+                console.table(ret)
+            } else {
+                kasa.response(ret)
+            }
+            
+        } else {
+            kasa.error("Fill All Fields")
+        }
+    }
+    // END OF STOCK SECTION
+
+    stockMonitoringFlag(pk = 0,flag=false){
+        let payload = {
+            module:'flag_stock_monitoring',
+            data:{
+                prod_pk:pk,
+                flag:flag
+            }
+        }
+
+        return api.call('PATCH',payload,'/retail/api/')
+    }
+
+    // enable stock
+    enableMonitoring(pk){
+        kasa.confirm(this.stockMonitoringFlag(pk,true)['message'],0,'here')
+    }
+    // disable
+    disableMonitoring(pk){
+        kasa.confirm(this.stockMonitoringFlag(pk,false)['message'],0,'here')
+    }
+
+    stockMonitoring(accuracy = '*'){
+        let payload = {
+            module:'see_stock_monitor',
+            data:{
+                "filter":accuracy
+            }
+        }
+
+        return api.call('VIEW',payload,'/retail/api/')
+    }
+
+    retrieveStockMonitoring(accuracy='*') {
+        let resp = this.stockMonitoring(accuracy);
+        if(anton.IsRequest(resp)){
+            let stocks = resp['message'];
+            if(stocks.length > 0){
+                let tr = ``;
+                for(let s = 0; s < stocks.length; s++){
+                    let stock = stocks[s];
+                    tr += `
+                        <tr><td>${stock['location']}</td><td>${stock['barcode']}</td><td>${stock['name']}</td><td>${stock['stock']}</td><td>${stock['valid']}</td></tr>
+                    `
+                }
+
+                $('tbody').html(tr)
+            } else {
+                $('tbody').html(`<tr><td class="text-danger">NO RECORDS</td></tr>`)
+            }
+        } else {
+            kasa.response(resp)
+        }
+    }
+
+    materialRequestCompareScreen(){
+        let form = '';
+        form += fom.text('mr_no',"",true)
+        form += fom.select('doc',`
+            <option value="" selected disabled>Select Document</option>
+            <option value="JSON">VIEW</option>
+            <option value="excel">Excel</option>
+        `,"",true)
+        amodal.setTitleText("Material Request Check")
+        amodal.setBodyHtml(form)
+        amodal.setFooterHtml(`<button onclick="retail.materialRequestCompare()" class="btn btn-success w-100">CHECK</button>`)
+        amodal.show()
+    }
+
+    materialRequestCompare() {
+        let fields = ['doc','mr_no'];
+        if(anton.validateInputs(fields)){
+            let payload = {
+                module:'mr_check',
+                data:anton.Inputs(fields)
+            };
+
+            let view = api.call('VIEW',payload,'/retail/api/');
+            if(anton.IsRequest(view)){
+                let message = view['message'];
+                let doc_type = $('#doc').val();
+                let mr = $('#mr_no').val()
+                if(doc_type === 'excel'){
+                    kasa.html(`<a href="/${message}">DOWNLOAD FILE</a>`)
+                }
+                else if (doc_type === 'JSON'){
+                    let header,transactions;
+                    header = message['header'];
+                    transactions = message['transactions'];
+
+                    console.table(message)
+
+                    let rep_header = [
+                        "ITEM CODE",
+                        "NAME",
+                        "REQ. QTY",
+                        "LATEST TRANSFER",
+                        "TRAN QTY",
+                        "SOLD AFTER",
+                        "SOLD PERCENTAGE",
+                        "STOCK HEALTH"
+                    ]
+                    // set report table
+                    let rows = ""
+                    for(let r = 0; r < transactions.length; r++){
+                        let row = transactions[r]
+                        rows += `
+                            <tr>
+                                <td>${row['item_code']}</td>
+                                <td>${row['name']}</td>
+                                <td>${row['request_qty']}</td>
+                                <td><p>${row['last_tran_entry']}</p><p>${row['last_tran_entry']}</p></td>
+                                <td>${row['last_tran_qty']}</td>
+                                <td>${row['sold_qty']}</td>
+                                <td>${row['percentage_sold']}</td>
+                                <td>${row['health']}</td>
+                            </tr>
+                        `
+                    }
+                    amodal.hide()
+                    reports.render(rep_header,rows,`MATERIAL REQUEST CHECK FOR ${mr}`)
+                }
+                else {
+                    kasa.info("Invalid Render Configuration")
+                }
+            } else {
+                kasa.response(view)
+            }
+        } else {
+            kasa.error("Invalid Field")
+        }
+    }
+
+    stockReportScreen(){
+        let loc_payload = {
+            module:'location_master',
+            data:{}
+        }
+        let locations = api.call('VIEW',loc_payload,'/retail/api/')
+        let locs = locations.message
+        let l_optons = ""
+        for(let l = 0; l < locs.length; l++){
+            let lc = locs[l]
+            l_optons += `<option value="${lc['code']}">${lc['code']} - ${lc['name']}</option>`
+        }
+        let form = '';
+        form += fom.select('loc_code',`
+            <option value="" selected disabled>Select Location</option>
+            <option value="*" selected>All</option>
+            ${l_optons}
+        `,"",true)
+        form += fom.select('filter',`
+            <option value="" selected disabled>Select Filter</option>
+            <option value="positive">POSITIVE</option>
+            <option value="negative">NEGATIVE</option>
+            <option value="neutral">NEUTRAL</option>
+        `,"",true)
+
+        form += fom.select('doc',`
+            <option value="" selected disabled>Select Document</option>
+            <option value="json">VIEW</option>
+            <option value="excel">Excel</option>
+        `,"",true)
+        amodal.setTitleText("Stock Check")
+        amodal.setBodyHtml(form)
+        amodal.setFooterHtml(`<button onclick="retail.stockReport()" class="btn btn-success w-100">CHECK</button>`)
+        amodal.show()
+    }
+
+    stockReport() {
+        let fields = ['doc','filter']
+        if(anton.validateInputs(fields)){
+            let data = anton.Inputs(fields)
+            let payload = {
+                module:'see_stock_monitor',
+                data:data
+            }
+            let generate = api.call('VIEW',payload,'/retail/api/')
+            if(anton.IsRequest(generate)){
+                let response = generate['message'];
+                if (data['doc'] === 'excel'){
+                    kasa.html(`<a href="/${response}">DOWNLOAD REPORT</a>`)
+                } else if (data['doc']){
+                    let rows = ''
+                    for(let r = 0; r < response.length; r++){
+                        let row = response[r]
+                        rows += `
+                            <tr><td>${row['loc_code']}</td><td>${row['loc_name']}</td><td>${row['barcode']}</td><td>${row['item_name']}</td><td>${row['stock']}</td></tr>
+                        `
+                    }
+
+                    reports.render(['LOC_CODE',"LOC_NAME","BARCODE","NAME","STOCK"],rows,`STOCK REPORT FOR ${data['filter']} ITEMS`)
+                } else {
+                    kasa.error("Unknown Document Rendering Format")
+                }
+            } else {
+                kasa.response(generate)
+            }
+            amodal.hide()
+        } else {
+            kasa.error("Invalid Form")
+        }
+    }
+
+    getRetailDocuments(start_date,end_date){
+        let payload = {
+            module:'documents',
+            data:{
+                start_date:start_date,
+                end_date:end_date
+            }
+        }
+
+        return api.call('VIEW',payload,this.interface)
+    }
+
+    loadRetailDocuments(start_date,end_date){
+        let documents_response = this.getRetailDocuments(start_date,end_date);
+        if(anton.IsRequest(documents_response)){
+            let documents = documents_response.message;
+            let tr = "";
+            for(let m = 0; m < documents.length; m++){
+                let row = documents[m]
+                tr += `
+                <tr>
+                                <td>${row['document']}</td>
+                                <td>
+                                    <span title="Total Documents" class="badge bg-info">${row['total_entries']}</span>
+                                    <span title="Posted Documents" class="badge bg-success">${row['posted']}</span>
+                                    <span title="Pending Documents" class="badge bg-warning">${row['not_posted']}</span>
+                                    <span title="Deleted Documents" class="badge bg-danger">${row['deleted']}</span>
+                                </td>
+                                <td>${row['total_value']}</td>
+                            </tr>
+                `
+            }
+
+            $('#doc_table').html(tr)
+        } else {
+            kasa.response(documents_response)
+        }
+    }
+
+    sales_graph_week() {
+        let payload = {
+            module:'sales_graph_week',
+            data:{}
+        }
+        return api.call('VIEW',payload,this.interface);
+    }
+
+    checkExpiryScreen(){
+        let form = ``;
+        form += fom.text('days','Days before expiry',true)
+        form += fom.select('remove_flagged',`<option value="YES">YES</option><option value="NO">NO</option>`,'',true)
+        form += fom.select('document',`<option value="json">VIEW</option><option value="excel">Excel</option>`,'',true)
+        amodal.setTitleText("Expiry Report")
+        amodal.setBodyHtml(form);
+        amodal.setFooterHtml(`<button onclick="retail.RetrieveExpiry()" class="btn btn-success w-100 rounded_c">RETRIEVE</button>`);
+        amodal.show();
+    }
+
+
+    RetrieveExpiry() {
+        let ids = ['days','remove_flagged','document'];
+        if(anton.validateInputs(ids)) {
+            let payload = {
+                module:"expiry",
+                data:anton.Inputs(ids)
+            }
+
+            let result = api.call('VIEW',payload,this.interface);
+            if(anton.IsRequest(result)){
+                let doc = $('#document').val();
+                if(doc === 'json'){
+                    let header = ['EXPIRY DATE','GRN','BARCODE','ITEM CODE','ITEM NAME','WAREHOUSE',"SPINTEX",'NIA',"OSU",'STOCK']
+                    let tr = '';
+                    let res = result.message;
+                    for(let m = 0; m < res.length; m++){
+                        let row = res[m];
+                        tr += `
+                            <tr>
+                                <td>${row['expiry_date']}</td>
+                                <td>${row['grn']}</td>
+                                <td>${row['barcode']}</td>
+                                <td>${row['item_code']}</td>
+                                <td>${row['item_des']}</td>
+                                <td>${row['warehouse_stock']}</td>
+                                <td>${row['spintex_stock']}</td>
+                                <td>${row['osu_stock']}</td>
+                                <td>${row['nia_stock']}</td>
+                                <td>${row['stock']}</td>
+</tr>
+                        `
+                    }
+                    reports.render(header,tr,'EXPIRY REPORT')
+                    amodal.hide()
+                }
+
+                if(doc === 'excel'){
+                    kasa.html(`<a href="/${result.message}">DOWNLOAD FILE</a>`)
+                }
+            } else {
+                kasa.response(result);
+            }
+        } else {
+            kasa.error("Invalid Form")
+        }
+    }
+
+    addButchMonitorScreen() {
+        let loc_payload = {
+            module:'location_master',
+            data:{}
+        }
+        let locations = api.call('VIEW',loc_payload,'/retail/api/')
+        let locs = locations.message
+        let l_optons = ""
+        for(let l = 0; l < locs.length; l++){
+            let lc = locs[l]
+            l_optons += `<option value="${lc['pk']}">${lc['code']} - ${lc['name']}</option>`
+        }
+        let form   = '';
+        form += fom.select('location',`${l_optons}`,'',true)
+        form += fom.text('barcode','',true)
+        form += fom.text('quantity','',true)
+
+        amodal.setBodyHtml(form);
+        amodal.show();
+        amodal.setTitleText("Add Butchry Sale")
+        amodal.setFooterHtml(`<button class="btn btn-success w-100" onclick="retail.addButchMon()">ADD</button>`)
+    }
+
+    addButchMon() {
+        let ids = ['location','barcode','quantity'];
+        if(anton.validateInputs(ids)){
+            let payload = {
+                module:'kofi_ghana',
+                data:anton.Inputs(ids)
+            }
+
+            let send = api.call('PUT',payload,'/retail/api/')
+            kasa.confirm(send['message'],1,'here')
+        }
+    }
+
+    seeStockToSend() {
+
+
+        let form = fom.locations('code')
+        form += fom.select('view',`<option value="json">VIEW</option><option value="excel">Download</option>`,'',true)
+        form += fom.select('ripe',`<option value="ALL">ALL</option><option value="YES">YES</option><option value="NO">NO</option>`,'show qualified to go only',true)
+        amodal.setBodyHtml(form)
+        amodal.setTitleText("Retrieve Stock TO Send")
+        amodal.setFooterHtml(`<button onclick="retail.StockToSend()" class="btn btn-info w-100">RETRIEVE</button>`)
+        amodal.show();
+    }
+
+    StockToSend() {
+        let id = ['location','ripe','view'];
+        if(anton.validateInputs(id)){
+            let payload = {
+                module:'analysis_for_transfer',
+                data:anton.Inputs(id)
+            }
+
+
+
+            console.table(payload)
+
+            let ripe = $('#ripe').val()
+
+
+
+            let response = api.call('VIEW',payload,'/retail/api/')
+            if(anton.IsRequest(response)){
+                let message = response.message
+                let rows = ``;
+                let v = $('#view').val()
+                if(v == 'excel'){
+                    kasa.html(`<a href="/${message}">DOWNLOAD</a>`)
+                } else {
+                    for (let i = 0; i < message.length; i++) {
+                    let row = message[i];
+                    let text = ''
+                    if(row['health']){
+                        text = 'bg-info'
+                    }
+
+                    let line = i + 1;
+
+
+                    rows += `
+                        <tr class="${text}">
+                            <td>${line}<input type="hidden" id="sold_${line}" value="${row['sold_qty']}"> </td>
+                            <td><input type="checkbox" id="sel_${line}"></td>
+                            <td>${row['location']}</td>
+                            <td id="itemcode_${line}">${row['itemcode']}</td>
+                            <td id="barcode_${line}">${row['barcode']}</td>
+                            <td>${row['name']}</td>
+                            <td>${row['last_transfer']} (${row['last_transfer_date']})</td>
+                            <td>${row['last_transfer_quantity']}</td>
+                            <td>${row['sold_qty']} (${row['percentage_sold']})</td>
+                            <td>${row['two_weeks_sales']} (${row['percentage_sold']})</td>
+                            <td>${row['health']}</td>
+                        </tr>
+                    `
+
+                }
+
+                    $('#items').html(rows)
+                }
+
+            } else {
+                kasa.response(response)
+            }
+            console.table(response)
+        }
+    }
+
+    downloadMaterialRequest() {
+        // Get the table body by ID
+        var tableBody = document.getElementById('items');
+
+        // Find all checkbox elements within the table body
+        var checkboxes = tableBody.querySelectorAll('input[type="checkbox"]');
+        let l_arr = []
+        // Loop through all checkboxes
+        checkboxes.forEach(function(checkbox) {
+            var checkboxId = checkbox.id; // Get the ID of the checkbox
+            let line = checkboxId.split('_')[1];
+
+            if (checkbox.checked) {
+                console.log(line);
+                let barcode_id = `#barcode_${line}`
+                let itemcode_id = `#itemcode_${line}`;
+                let sold_id = `#sold_${line}`;
+
+                let barcode = $(barcode_id).text()
+                let itemcode = $(itemcode_id).text()
+                let sold = parseFloat($(sold_id).val());
+                let to_send = parseInt(sold * 1.25); //25%
+
+
+                let arr = [barcode, itemcode,to_send]
+                l_arr.push(arr)
+                console.table(arr)
+                console.log('Checkbox with ID ' + checkboxId + ' is checked');
+            }
+        });
+
+        let csv = anton.convertToCSV(l_arr)
+        anton.downloadCSV('mr.csv',csv)
+
+    }
+
+    loadPriceChange(from=today,to=today,doc='json'){
+
+            let price_change = this.getPriceChange(from,to,doc)
+            console.table(price_change)
+            if(anton.IsRequest(price_change)){
+                let price_list = price_change.message
+
+                let tr = "";
+                if (doc === 'json'){
+                    for(let p = 0; p < price_list.length; p++){
+                    let r = price_list[p];
+                    let sn = p+1;
+                    let text = '';
+                    if(r['margin'].includes('(')){
+                        text = 'text-danger'
+                    }
+                    tr +=  `
+                        <tr class="${text}">
+                            <td>${sn}</td>
+                            <td>${r['barcode']}</td>
+                            <td>${r['name']}</td>
+                            <td>${r['old_price']}</td>
+                            <td>${r['new_price']}</td>
+                            <td>${r['margin']}</td>
+                            <td>${r['by']}</td>
+                            <td>${r['date']}</td>
+                        </tr>
+                    `;
+                }
+
+                    $('#items').html(tr)
+                }
+
+                if(doc === 'excel'){
+                    kasa.html(`<a href="/${price_list}">DOWNLOAD</a>`)
+                }
+                console.table(price_list)
+
+
+
+            } else {
+                kasa.response(price_change)
+            }
+    }
+
+    retrievePriceChange() {
+        let inp = ['from','to'];
+        let from = $('#from').val();
+        let to = $('#to').val()
+        if(anton.validateInputs(inp)){
+            this.loadPriceChange(from,to)
+        } else {
+            kasa.error('Invalid Form')
+        }
+
+    }
+
+    getPriceChange(from=today, to=today,doc='json') {
+        let payload = {
+            module:'price_change',
+            data:{
+                from:from,
+                to:to,
+                'doc':doc
+            }
+        }
+
+        return api.call('VIEW',payload,'/retail/api/')
+    }
+
+    retrievePriceChangeScreen() {
+        let form = "";
+        form += fom.date('from','',true)
+        form += fom.date('to','',true)
+        form += fom.selectv2('doc',[
+            {
+                val:'json',
+                desc:'Preview',
+            },{
+                val:'excel',
+                desc:'Excel',
+            }
+        ],'',true)
+
+        amodal.setTitleText("Retrieve Price Change")
+        amodal.setBodyHtml(form)
+        amodal.setFooterHtml(`<button class="btn btn-info w-100" onclick="retail.retrievePriceChange();amodal.hide()">Retrieve</button>`)
+        amodal.show()
+    }
+
+    loadSales(loc_id = '*') {
+        let sales = this.getSales(loc_id)
+        let tr = "";
+        if(anton.IsRequest(sales)){
+            let message = sales.message
+            let max = 50;
+            if (message.length < 50){
+                max = message.length;
+            }
+
+
+            for (let i = 0; i < max; i++) {
+                let sale = message[i];
+                tr += `
+                    <tr>
+                                <td>${sale['loc_name']}</td>
+                                <td>${sale['time']}</td>
+                                <td>${sale['barcode']}</td>
+                                <td>${sale['name']}</td>
+                                <td>${sale['tran_qty']}</td>
+                                <td>${sale['unit_price']}</td>
+                                <td>${sale['tran_amt']}</td>
+
+                            </tr>
+                `;
+            }
+        } else {
+            tr = `<tr><td colspan="7" class="text-dan">${sales.message}</td></tr>`
+        }
+
+        $('#sales').html(tr)
+    }
+
+    getSales(loc_id = '*',date_from = today,date_to = today) {
+        let payload = {
+            module:'sales',
+            data:{
+                loc:loc_id,
+                date_from:date_from,
+                date_to:date_to,
+            }
+        }
+
+        return api.call('VIEW',payload,'/retail/api/')
+    }
+
+    changeProductCategory(item_code) {
+        let form = ``;
+
+        let gp_opt = []
+        let groups = this.getProdGroup('*')
+        let pd = this.getProduct(item_code).message[0];
+        if(anton.IsRequest(groups)){
+            let gps = groups.message
+            for (let g = 0; g < gps.length; g++){
+                let gp = gps[g];
+                let ob = {
+                    val:gp.code,
+                    desc:gp.name,
+                }
+
+                gp_opt.push(ob)
+            }
+
+            form += fom.text('item_code','',true)
+            form += fom.text('barcode','',true)
+            form += fom.text('name','',true)
+            form += fom.selectv2('new_group',gp_opt,'',true)
+            form += fom.selectv2('new_sub_group',[],'',true)
+            form += fom.selectv2('new_sub_subgroup',[],'',true)
+
+
+            form += `<hr><button onclick="retail.changeGroup()" class="btn btn-warning w-100">CHANGE</button>`
+
+            amodal.setBodyHtml(form)
+            amodal.setTitleText("Change Product Code")
+            amodal.show()
+
+
+            console.table(pd)
+            $('#item_code').prop('disabled',true)
+            $('#barcode').prop('disabled',true)
+            $('#name').prop('disabled',true)
+
+            $('#item_code').val(pd['item_code'])
+            $('#barcode').val(pd['barcode'])
+            $('#name').val(pd['name'])
+
+        } else {
+            kasa.response(groups)
+        }
+
+    }
+
+    getProdGroup(s) {
+        let payload = {
+            "module":"group_master",
+            "data":{
+
+            }
+        }
+        return api.call('VIEW',payload,'/retail/api/')
+    }
+
+    getProductSubGroups(group_id) {
+        let payload = {
+            "module":"sub_group_master",
+            "data":{
+                group:group_id
+            }
+        }
+        return api.call('VIEW',payload,'/retail/api/')
+    }
+
+    getProductSubSubGroups(group_id,sub_group_id) {
+        let payload = {
+            "module":"sub_subgroup_master",
+            "data":{
+                group:group_id,
+                sub_group_id:sub_group_id
+            }
+        }
+        return api.call('VIEW',payload,'/retail/api/')
+    }
+
+    changeGroup() {
+        let ids = ['item_code','barcode','name','new_group','new_sub_group','mypk']
+        if(anton.validateInputs(ids)){
+            let payload = {
+                module:'change_group',
+                data:anton.Inputs(ids)
+            }
+
+            payload.data['new_sub_subgroup'] = $('#new_sub_subgroup').val()
+
+            kasa.response(api.call('PATCH',payload,'/retail/api/'))
+        } else {
+            kasa.error("Invalid Form")
+        }
+
+
+    }
+}
+
+const retail = new Retail();
