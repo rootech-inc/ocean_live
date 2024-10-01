@@ -2305,6 +2305,10 @@ def new_sms_api(request):
         form = NewSMSApi(request.POST)
         if form.is_valid():
             try:
+                is_default = form.cleaned_data['is_default']
+                if is_default is True:
+                    all_sms = SmsApi.objects.all()
+                    all_sms.is_default = False
                 form.save()
             except Exception as e:
                 return HttpResponse(e)

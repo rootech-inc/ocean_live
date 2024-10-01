@@ -168,11 +168,13 @@
 
 
                 if(anton.validateInputs(ids) || !allFilesSelected){
+                    $('#save_jc').prop('disabled',true)
                     let payload = {
                         module:'save_job_card',
                         data:anton.Inputs(ids)
                     }
-
+                    
+                    
                     let save = api.call('PUT',payload,'/cmms/api/');
                     console.table(save)
                     if(anton.IsRequest(save)){
@@ -180,6 +182,9 @@
                         $('#job_id').val(saved_id);
                         $('#images_que').submit();
                         kasa.info('Done')
+                    } else {
+                        kasa.response(save)
+                        $('#save_jc').prop('disabled',false)
                     }
                 }
 

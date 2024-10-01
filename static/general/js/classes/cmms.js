@@ -1405,6 +1405,28 @@ class Cmms {
 
         return api.call('VIEW',payload,'/cmms/api/')
     }
+
+    serviceReportByNameScreen(){
+        amodal.setTitleText("Search Servicing")
+        let bd = `
+            <input onkeydown='search_service_by_text()' id='search_service_by_text' type='search' class ='form-control rounded-0 w-100 mb-2' placeholder ='query'>
+            <div style'heigt:50vh' class='table-responsive'>
+                <table class='table table-sm table-stripped table-bordered'>
+                    <thead>
+                        <tr>
+                            <th>CUSTOMER</th>
+                            <th>DATE</th>
+                            <th>CAR</th>
+                        </tr>
+                    </thead>
+                    <tbody id='search_service_by_text_body'></tbody>
+                </table>
+            </div>
+        `;
+
+        amodal.setBodyHtml(bd);
+        amodal.show()
+    }
 }
 
 const cmms = new Cmms()

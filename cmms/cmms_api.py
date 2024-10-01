@@ -1425,7 +1425,18 @@ def api(request):
                     response['status_code'] = 200
                     response['message'] = file_name
 
+                elif module == 'search_service_by_text':
+                    query = data.get('query')
+                    cards = JobCard.objects.all()
+                    for card in cards:
+                        arr.append(card.obj())
 
+                    response['status_code'] = 200
+                    response['message'] = arr
+                
+                else:
+                    response['status_code'] = 500
+                    response['message'] = "Invalid Module"
 
             except Exception as e:
                 error_type, error_instance, traceback = sys.exc_info()

@@ -631,6 +631,19 @@ class JobCard(models.Model):
     close_remark = models.TextField()
     next_service_date = models.DateField(null=True, blank=True)
 
+    def obj(self):
+        return {
+            "company":self.company,
+            "driver":self.driver,
+            "date":self.created_on,
+            "carno":self.carno,
+            'pk':self.pk
+
+        }
+
+    class Meta:
+        unique_together = (('carno','created_on'))
+
     def materials(self):
         return JobMaterials.objects.filter(jobcard=self)
 
