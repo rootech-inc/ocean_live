@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Sum
 from django.utils import timezone
@@ -643,6 +644,14 @@ class JobCard(models.Model):
 
     class Meta:
         unique_together = (('carno','created_on'))
+
+    def save(self, *args, **kwargs):
+        if JobCard.objects.filter(
+                carno__iexact=self.carno,
+                created_on=self.created_on
+        ).exists():
+            raise ValidationError("A record with the same carno and created_on already exists (case-insensitive).")
+        super().save(*args, **kwargs)
 
     def materials(self):
         return JobMaterials.objects.filter(jobcard=self)

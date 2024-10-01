@@ -35,6 +35,7 @@ urlpatterns = [
     path('retail_butch_moni/',views.retail_butch_moni,name='retail_butch_moni'),
     path('stock-to-send/',views.stock_to_send,name='stock_to_send'),
     path('price-change/',views.retail_price_change,name='retail_price_change'),
+    path('samples',views.samples,name='samples')
 
 ]
 

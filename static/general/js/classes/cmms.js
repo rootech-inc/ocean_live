@@ -1425,6 +1425,7 @@ class Cmms {
         `;
 
         amodal.setBodyHtml(bd);
+        amodal.setSize('L')
         amodal.show()
     }
 }

@@ -9,6 +9,7 @@
             <div class="w-50 d-flex flex-wrap justify-content-end">
                 <button onclick="location.href='{% url 'new_servicing_job' %}'" class="btn btn-primary">NEW</button>
                 <button style="margin-left: .2rem" onclick="location.href='{% url 'servicing_mr' %}'" class="btn btn-warning">REQUEST</button>
+                <button style="margin-left: .2rem" id="search" class="btn btn-info">SEARCH</button>
                 
             </div>
         </div>
@@ -68,5 +69,59 @@
 
             kasa.confirm(api.call('DELETE',payload,'/cmms/api/').message,1,'here')
         }
+    </script>
+
+    <script>
+      function search_service_by_text(){
+        let ev = this.event;
+        let key = ev.which;
+        console.table(key);
+
+        if(key === 13){
+          // enter make payload
+          let payload = {
+            module:'search_service_by_text',
+            data:{
+              query:$('#search_service_by_text').val()
+            }
+          }
+
+          let retrieve = api.call('VIEW',payload,'/cmms/api/');
+          if(anton.IsRequest(retrieve)){
+            // load
+            let jobs = retrieve.message;
+            let tr = "";
+            for(let j =0; j < jobs.length; j++){
+              let job = jobs[j];
+              tr += `
+                  <tr>
+                    <td>${job['company']}</td>
+                  <td>${job['date']}</td>
+                  <td><a href='/cmms/servicing/card/${job['pk']}/'>${job['carno']}</a></td>
+
+                  </tr>
+
+              `
+            }
+
+            document.getElementById('search_service_by_text_body').innerHTML = tr
+            // $('#search_service_by_text_body').html(tr);
+            console.table(jobs)
+          } else {
+            kasa.response(retrieve)
+          }
+        }
+      }
+      $(document).ready(function () {
+        // Attach keypress event to the new input field
+        $('#search_service_by_text').on('keypress', function (event) {
+          if (event.which === 13) { // 13 is the Enter key
+            alert('Enter key pressed! Value: ' + $(this).val());
+            // You can also perform any other action here
+          }
+        });
+
+        $('#search').click(function (){cmms.serviceReportByNameScreen()})
+      });
     </script>
 {% endblock %}

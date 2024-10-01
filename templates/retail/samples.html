@@ -1,0 +1,26 @@
+{% extends 'retail/base.html' %}
+{% load static %}
+
+
+
+{% block body %}
+    <div class="card h-100">
+        <div class="card-header">
+            <button id="new" style="margin-left: .2rem;" class="btn btn-sm btn-info">NEW</button>
+        </div>
+        <div id="samp_card" class="card-body">
+
+        </div>
+    </div>
+
+
+    <script>
+        $(document).ready(function (){
+            $('#new').click(function(){
+                retail.newSampleScreen()
+            });
+
+            retail.loadSamples('*')
+        })
+    </script>
+{% endblock %}

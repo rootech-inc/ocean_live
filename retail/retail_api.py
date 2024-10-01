@@ -22,7 +22,7 @@ from ocean.settings import RET_DB_HOST, RET_DB_USER, RET_DB_PASS, RET_DB_NAME
 from retail.db import ret_cursor, get_stock, updateStock, percentage_difference
 from retail.models import BoltItems, BoltGroups, ProductSupplier, ProductGroup, ProductSubGroup, Products, Stock, \
     RecipeGroup, RecipeProduct, Recipe, StockHd, StockMonitor, RawStock, ButcheryLiveTransactions, ButchSales, \
-    StockToSend, TranHd, TranTr, RetailSales
+    StockToSend, TranHd, TranTr, RetailSales, SampleHd, SampleTran
 from retail.prodMast import ProdMaster
 from retail.retail_tools import create_recipe_card
 
@@ -71,6 +71,59 @@ def interface(request):
 
                 BoltItems(product=pd,price=price,stock_nia=nia_stock,stock_spintex=spintex_stock,stock_osu=osu_stock).save()
                 success_response['message'] = "Product Added"
+
+            elif module == 'sample':
+                loc_id = data.get('location')
+                bill_ref = data.get('bill_ref')
+                mypk = data.get('mypk')
+
+                owner = User.objects.get(pk=mypk)
+                location = Locations.objects.get(pk=loc_id)
+
+                SampleHd(
+                    location=location,
+                    owner=owner,
+                    bill_ref=bill_ref
+                ).save()
+
+                success_response['message'] = "Sampel Recoeded"
+                response = success_response
+
+            elif module == 'sample_sync':
+                samples = SampleHd.objects.filter(is_sync=False)
+                for sample in samples:
+                    loc = sample.location
+                    host = loc.ip_address
+                    db = loc.db
+                    db_us = loc.db_user
+                    db_ps = loc.db_password
+
+                    # connect to database
+                    conn = ret_cursor(host,'',db,db_us,db_ps)
+                    cur = conn.cursor()
+
+                    bill_ref = sample.bill_ref
+                    qu = (f"SELECT RTRIM(tran_code),RTRIM(tran_desc),mech_no,bill_no,tran_qty,unit_price,tran_amt,tran_type "
+                          f"FROM bill_tran where tran_type = 'S' and billRef = '{bill_ref}'")
+                    cur.execute(qu)
+                    for row in cur.fetchall():
+                        tran_code,tran_desc,mech_no,bill_no,tran_qty,unit_price,tran_amt,tran_type= row
+                        SampleTran(
+                            sample=sample,
+                            barcode=tran_code,
+                            item_name = tran_desc,
+                            mech_no = mech_no,
+                            bill_no = bill_no,
+                            tran_qty = tran_qty,
+                            unit_price=unit_price,
+                            tran_amt=tran_amt
+                        ).save()
+
+
+                    conn.close()
+
+                    sample.is_sync = True
+                    sample.save()
 
             elif module =='sync_transfer':
                 conn = ret_cursor()
@@ -499,6 +552,15 @@ def interface(request):
                 locations = Locations.objects.all()
                 for location in locations:
                     arr.append(location.obj())
+
+                success_response['message'] = arr
+                response = success_response
+
+            elif module == 'sample':
+                samples = SampleHd.objects.all()
+
+                for sample in samples:
+                    arr.append(sample.obj())
 
                 success_response['message'] = arr
                 response = success_response
@@ -2138,6 +2200,29 @@ def interface(request):
                 for item in items:
                     item.price = item.product.price
                     item.save()
+
+            elif module == 'sample_adjust':
+                sam_pk = data.get('sam_pk')
+                adjustment_entry = data.get('adjustment_entry')
+
+                sam = SampleHd.objects.get(pk=sam_pk)
+                sam.ad = adjustment_entry
+                sam.save()
+
+            elif module == 'sample_refund':
+                sam_pk = data.get('sam_pk')
+                refund_entry = data.get('refund_entry')
+
+                sam = SampleHd.objects.get(pk=sam_pk)
+                sam.bill_refund_ref = refund_entry
+                sam.save()
+
+            elif module == 'sample_delete':
+                sam_pk = data.get('sam_pk')
+
+                SampleHd.objects.filter(pk=sam_pk).delete()
+
+
 
             elif module == 'change_group':
                 item_code = data.get('item_code')

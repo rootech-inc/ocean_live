@@ -10,6 +10,7 @@ from django.contrib.messages import success
 from django.db import IntegrityError
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.utils import timezone
@@ -1427,7 +1428,9 @@ def api(request):
 
                 elif module == 'search_service_by_text':
                     query = data.get('query')
-                    cards = JobCard.objects.all()
+                    cards = JobCard.objects.filter(Q(carno__icontains=query) |
+                                                   Q(company__icontains=query) |
+                                                   Q(model__icontains=query) )
                     for card in cards:
                         arr.append(card.obj())
 

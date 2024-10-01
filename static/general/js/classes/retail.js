@@ -804,12 +804,14 @@ class Retail {
                 }
 
                     $('#items').html(tr)
+                } else if(doc === 'excel'){
+                    anton.viewFile(`/${price_list}`)
                 }
 
                 if(doc === 'excel'){
                     kasa.html(`<a href="/${price_list}">DOWNLOAD</a>`)
                 }
-                console.table(price_list)
+                console.table(doc)
 
 
 
@@ -819,11 +821,12 @@ class Retail {
     }
 
     retrievePriceChange() {
-        let inp = ['from','to'];
+        let inp = ['from','to','doc'];
         let from = $('#from').val();
         let to = $('#to').val()
+        let doc = $('#doc').val();
         if(anton.validateInputs(inp)){
-            this.loadPriceChange(from,to)
+            this.loadPriceChange(from,to,doc)
         } else {
             kasa.error('Invalid Form')
         }
@@ -1004,6 +1007,189 @@ class Retail {
         }
 
 
+    }
+
+    newSampleScreen() {
+        let loc_payload = {
+            module:'location_master',
+            data:{}
+        }
+        let locations = api.call('VIEW',loc_payload,'/retail/api/')
+        if(anton.IsRequest(locations)){
+            let loc = locations.message
+            let tr = [];
+            for (let i = 0; i < loc.length; i++) {
+                let lc = loc[i];
+                let tp = lc['type'];
+                if(tp === 'retail'){
+                    console.table(lc)
+                    let obj = {
+                        val:lc['pk'],
+                        desc:lc['name']
+                    }
+
+                    tr.push(obj)
+                }
+
+            }
+
+            let form = "";
+            form += fom.selectv2('location',tr,'',true)
+            form += fom.text('bill_ref','',true)
+            form += `<hr><button class="btn btn-success w-100" onclick="retail.saveSample()">SAVE</button>`
+
+            amodal.setBodyHtml(form)
+            amodal.setTitleText("New Sample")
+            amodal.show()
+        } else {
+            kasa.response(locations)
+        }
+    }
+
+    saveSample() {
+        let ids = ['location','bill_ref','mypk'];
+        if(anton.validateInputs(ids)){
+             let payload = {
+                 module:'sample',
+                 data:anton.Inputs(ids)
+             }
+
+             kasa.confirm(api.call('PUT',payload,'/retail/api/').message,1,'here')
+
+        } else {
+            kasa.error("Invalid Form Field")
+        }
+    }
+
+    getSamples(pk='*'){
+        let payload = {
+            module:'sample',
+            data:{
+                pk:pk
+            }
+        }
+
+        return api.call('VIEW',payload,'/retail/api/')
+    }
+
+    loadSamples(pk='*'){
+        let samples = this.getSamples(pk);
+         let table = "";
+        if(anton.IsRequest(samples)){
+            let sams = samples.message
+            let tr = "";
+            for(let i = 0; i < sams.length; i++) {
+                let samp = sams[i]
+                tr += `
+                    <tr>
+                        <td>${samp['location']['name']}</td>
+                        <td>${samp['mech_no']}</td>
+                        <td>
+                            ${samp['bill_no']} : ${samp['ref']}<br>${samp['bill_refund_no']} : ${samp['bill_refund_ref']}
+                        </td>
+                        <td>${samp['owner']}</td>
+                        <td>${samp['value']}</td>
+                        <td>${samp['date']}</td>
+                        <td>${samp['ad']}</td>
+                        <td><span class="badge bg-info">pending</span></td>
+                        <td>
+                            
+                            <div class="dropdown dropleft">
+                                <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    
+                                </button>
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    <a onclick="retail.adjustSampleScreen('${samp['pk']}')" class="dropdown-item text-primary" href="javascript:void(0)">Adjustemtn</a>
+                                    <a onclick="retail.refundSampleScreen('${samp['pk']}')" class="dropdown-item text-info" href="javascript:void(0)">Refund</a>
+                                    <a onclick="retail.deleteSample('${samp['pk']}')"  class="dropdown-item text-danger" href="javascript:void(0)">Delete</a>
+                                </div>
+                            </div>
+                        
+                        </td>
+                    </tr>
+                `
+            }
+
+            table = `<table class="table table-stripped datatable table-bordered">
+                <thead>
+                    <tr>
+                        <th>LOCATION</th>
+                        <th>MECH NO</th>
+                        <th>BILL NO</th>
+                        <th>USER</th>
+                        <th>VALUE</th>
+                        <th>DATE</th>
+                        <th>AD</th>
+                        <th>STATUS</th>
+                        <th>ACTION</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tr}
+                </tbody>
+            </table>`
+
+
+        } else {
+            kasa.response(samples)
+        }
+
+        $('#samp_card').html(table)
+    }
+
+    adjustSampleScreen(pk) {
+        let form = `<input type="hidden" id="sam_pk" value="${pk}">`
+        form += fom.text('adjustment_entry','',true)
+        form += `<hr><button onclick="retail.adjustSample()" class="btn btn-success">ADJUST</button>`
+
+        amodal.setBodyHtml(form)
+        amodal.setTitleText('Adjust Sample')
+        amodal.show()
+    }
+
+    adjustSample() {
+        let ids = ['sam_pk','adjustment_entry']
+        if(anton.validateInputs(ids)){
+            let payload = {
+                module:'sample_adjust',
+                data:anton.Inputs(ids)
+            }
+
+            kasa.confirm(api.call('PATCH',payload,'/retail/api/').message,1,'here')
+        }
+    }
+
+    refundSampleScreen(pk) {
+        let form = `<input type="hidden" id="sam_pk" value="${pk}">`
+        form += fom.text('refund_entry','',true)
+        form += `<hr><button onclick="retail.refundSample()" class="btn btn-success">REFUND</button>`
+
+        amodal.setBodyHtml(form)
+        amodal.setTitleText('Refund Sample')
+        amodal.show()
+    }
+
+    refundSample() {
+        let ids = ['sam_pk','refund_entry']
+        if(anton.validateInputs(ids)){
+            let payload = {
+                module:'sample_refund',
+                data:anton.Inputs(ids)
+            }
+
+            kasa.confirm(api.call('PATCH',payload,'/retail/api/').message,1,'here')
+        }
+    }
+
+    deleteSample(pk) {
+        let payload = {
+            module:'sample_delete',
+            data:{
+                sam_pk:pk
+            }
+        }
+
+        kasa.confirm(api.call('PATCH',payload,'/retail/api/').message,1,'here')
     }
 }
 

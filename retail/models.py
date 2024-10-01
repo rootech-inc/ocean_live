@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import ForeignKey, Sum
 from django.utils import timezone
+from sympy.logic.inference import valid
 
 from admin_panel.models import Locations
 from blog.anton import make_md5
@@ -398,3 +399,59 @@ class RetailSales(models.Model):
             'barcode':self.barcode
 
         }
+
+
+class SampleHd(models.Model):
+    location = models.ForeignKey(Locations,on_delete=models.CASCADE)
+    bill_ref = models.CharField(max_length=30,unique=True,null=False,blank=False)
+    owner = models.ForeignKey(User,on_delete=models.CASCADE)
+    added_on = models.DateTimeField(auto_now_add=True)
+    is_open = models.BooleanField(default=False)
+    is_sync = models.BooleanField(default=False)
+    ad = models.CharField(max_length=20,unique=True,null=True,blank=True)
+    bill_refund_ref = models.CharField(max_length=30,unique=True,null=True,blank=True)
+
+
+    def obj(self):
+        bill_no = 0
+        mech_no = 0
+        if self.tran().count() > 0:
+            bill_no = self.tran().last().bill_no
+            mech_no = self.tran().last().mech_no
+        return {
+            'location':{
+                'code':self.location.code,
+                'name':self.location.descr
+            },
+            'bill_ref':self.bill_ref,
+            'owner':self.owner.get_full_name(),
+            'is_open':self.is_open,
+            'is_sync':self.is_sync,
+            'ad':self.ad,
+            'mech_no':mech_no,
+            'bill_no':bill_no,
+            'date':self.added_on,
+            'value':self.value(),
+            'ref':self.bill_ref,
+            'bill_refund_ref':self.bill_refund_ref,
+            'bill_refund_no':0,
+            'pk':self.pk
+        }
+
+    def tran(self):
+        return SampleTran.objects.filter(sample=self)
+
+    def value(self):
+        return SampleTran.objects.filter(sample=self).aggregate(Sum('tran_amt'))['tran_amt__sum']
+
+class SampleTran(models.Model):
+    sample =models.ForeignKey(SampleHd,on_delete=models.CASCADE)
+    barcode = models.CharField(max_length=20)
+    item_name = models.CharField(max_length=20)
+    mech_no = models.CharField(max_length=20)
+    bill_no = models.CharField(max_length=20)
+    tran_qty = models.DecimalField(decimal_places=3,max_digits=10,default=0.000)
+    unit_price = models.DecimalField(decimal_places=3,max_digits=10,default=0.000)
+    tran_amt = models.DecimalField(decimal_places=3,max_digits=10,default=0.000)
+
+    sync_on = models.DateTimeField(auto_now=True)

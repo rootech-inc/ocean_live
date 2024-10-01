@@ -314,3 +314,13 @@ def retail_price_change(request):
         }
     }
     return render(request, 'retail/price-change-list.html', context=context)
+
+
+def samples(request):
+    context = {
+        'nav': True,
+        'page': {
+            'title': "Samples"
+        }
+    }
+    return render(request, 'retail/samples.html', context=context)
