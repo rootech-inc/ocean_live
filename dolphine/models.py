@@ -16,14 +16,14 @@ class Files(models.Model):
     status = models.IntegerField(default=1)
     date_crated = models.DateField(auto_now_add=True)
     time_created = models.TimeField(auto_now_add=True)
-
+    file = models.FileField(upload_to='static/uploads/dolphine/%Y/%m/%d')
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def time(self):
         return f"{self.date_crated} {self.time_created}"
 
     def filename(self):
-        return os.path.basename(self.file.name)
+        return os.path.basename(self.file.name) if os.path.isfile(self.file.name) else str(self.file).split('.')[-2]
 
     def delete(self, *args, **kwargs):
         # Remove the file from the file system.

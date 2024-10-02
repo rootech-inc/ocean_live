@@ -624,7 +624,7 @@ class JobCard(models.Model):
     carno = models.CharField(max_length=200)
     report = models.TextField()
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    created_on = models.DateField(default=timezone.now)
+    created_on = models.DateField(auto_now_add=True)
     is_started = models.BooleanField(default=False)
     is_ended  = models.BooleanField(default=False)
     wr_no = models.CharField(max_length=20, blank=True, null=True)
@@ -646,11 +646,22 @@ class JobCard(models.Model):
         unique_together = (('carno','created_on'))
 
     def save(self, *args, **kwargs):
-        if JobCard.objects.filter(
-                carno__iexact=self.carno,
-                created_on=self.created_on
-        ).exists():
-            raise ValidationError("A record with the same carno and created_on already exists (case-insensitive).")
+        # Check if this is an update or a new record
+        if self.pk:
+            # Exclude the current instance from the uniqueness check
+            if JobCard.objects.filter(
+                    carno__iexact=self.carno,
+                    created_on=self.created_on
+            ).exclude(pk=self.pk).exists():
+                raise ValidationError("A record with the same carno and created_on already exists (case-insensitive).")
+        else:
+            # Check uniqueness for a new record
+            if JobCard.objects.filter(
+                    carno__iexact=self.carno,
+                    created_on=self.created_on
+            ).exists():
+                raise ValidationError("A record with the same carno and created_on already exists (case-insensitive).")
+
         super().save(*args, **kwargs)
 
     def materials(self):
