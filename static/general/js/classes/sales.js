@@ -611,6 +611,7 @@ class Sales {
             amodal.setSize('')
             amodal.setFooterHtml(`<button onclick="sales.saveProforma()" class="btn btn-success w-100">GENERATE</button>`)
             amodal.show()
+            $('#customer').prop('disabled',false)
         } else {
             kasa.error(customers['message'])
         }

@@ -2222,6 +2222,14 @@ def interface(request):
 
                 SampleHd.objects.filter(pk=sam_pk).delete()
 
+            elif module == 'sample_ad_check':
+                samps = SampleHd.objects.filter(ad_sync=False)
+                for samp in samps:
+                    ad = samp.ad
+
+                    print(ad)
+
+
 
 
             elif module == 'change_group':

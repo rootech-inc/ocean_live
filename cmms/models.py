@@ -241,6 +241,9 @@ class SalesCustomers(models.Model):
             obj.save()
         super().delete(*args, **kwargs)
 
+    def comp_ok(self):
+        return self.company.replace('’', "'")
+
 
 class SalesCustomerTransactions(models.Model):
     customer = models.ForeignKey(SalesCustomers, on_delete=models.SET_NULL, null=True, blank=True)

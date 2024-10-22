@@ -1196,8 +1196,7 @@ def api(request):
                     pdf.set_font('Arial', 'B', 8)
                     pdf.cell(20, 5, f"Company", 1, 0, 'L')
                     pdf.set_font('Arial', '', 8)
-                    pdf.cell(60, 5, f"{proforma.customer.company[:30]}....", 1, 0, 'L')
-                    pdf.set_font('Arial', 'B', 8)
+                    pdf.cell(60, 5, f"{proforma.customer.comp_ok()[:30]}....", 1, 0, 'L')
                     pdf.cell(20, 5, "Attn. By", 1, 0, 'L')
                     pdf.set_font('Arial', '', 8)
                     pdf.cell(40, 5, f"{proforma.created_by.get_full_name()}", 1, 0, 'C')
@@ -1209,7 +1208,9 @@ def api(request):
                     pdf.set_font('Arial', 'B', 8)
                     pdf.cell(20, 5, "Personal", 1, 0, 'L')
                     pdf.set_font('Arial', '', 8)
-                    pdf.cell(60, 5, f"{proforma.customer.name}", 1, 0, 'L')
+
+                    cn = proforma.customer.name.replace('’', "'")
+                    pdf.cell(60, 5, f"{cn}", 1, 0, 'L')
                     pdf.set_font('Arial', 'B', 8)
                     pdf.cell(20, 5, "Payment", 1, 0, 'L')
                     pdf.set_font('Arial', '', 8)
@@ -1237,11 +1238,11 @@ def api(request):
                     pdf.set_font('Arial', 'B', 8)
                     pdf.cell(20, 5, "Email", 1, 0, 'L')
                     pdf.set_font('Arial', '', 8)
-                    pdf.cell(60, 5, f"{proforma.customer.email}", 1, 0, 'L')
+                    pdf.cell(60, 5, proforma.customer.email.replace('’', "'"), 1, 0, 'L')
                     pdf.set_font('Arial', 'B', 8)
                     pdf.cell(20, 5, "Address", 1, 0, 'L')
                     pdf.set_font('Arial', '', 8)
-                    pdf.cell(40, 5, f"{proforma.customer.address}", 1, 0, 'C')
+                    pdf.cell(40, 5, proforma.customer.address.replace('’', "'"), 1, 0, 'C')
                     pdf.set_font('Arial', 'B', 8)
                     pdf.cell(20, 5, f"Tax", 1, 0, 'L')
                     pdf.set_font('Arial', '', 8)
@@ -1252,8 +1253,10 @@ def api(request):
                     pdf.set_font('Arial', 'B', 8)
                     pdf.cell(20, 5, "Asset", 1, 0, 'L')
                     pdf.set_font('Arial', '', 8)
+                    cm = proforma.car_model.car.manufacturer.name.replace('’', "'")
+                    cmr = proforma.car_model.model_name.replace('’', "'")
                     pdf.cell(120, 5,
-                             f"{proforma.car_model.car.manufacturer.name} / {proforma.car_model.model_name} / {proforma.car_model.year} / {proforma.chassis}",
+                             f"{cm} / {cmr} / {proforma.car_model.year} / {proforma.chassis}",
                              1, 0, 'L')
                     pdf.set_font('Arial', 'B', 8)
                     pdf.cell(20, 5, f"Payable", 1, 0, 'L')
@@ -1269,9 +1272,9 @@ def api(request):
                     pdf.cell(0, 5, "Technical Features", 0, 1)
                     for tech in techs:
                         pdf.set_font('Arial', 'B', 7)
-                        pdf.cell(40, 4, f"{tech.specification_name}", 0, 0)
+                        pdf.cell(40, 4, tech.specification_name.replace('’', "'"), 0, 0)
                         pdf.set_font('Arial', "", 7)
-                        pdf.cell(149, 4, f"{tech.specification_value}", 0, 1)
+                        pdf.cell(149, 4, tech.specification_value.replace('’', "'"), 0, 1)
 
                     pdf.ln(5)
                     # interir
@@ -1280,9 +1283,9 @@ def api(request):
                     pdf.cell(0, 5, "Interior", 0, 1)
                     for intt in intts:
                         pdf.set_font('Arial', 'B', 7)
-                        pdf.cell(40, 4, f"{intt.specification_name}", 0, )
+                        pdf.cell(40, 4, intt.specification_name.replace('’', "'"), 0, )
                         pdf.set_font('Arial', "", 7)
-                        pdf.cell(150, 4, f"{intt.specification_value}", 0, 1)
+                        pdf.cell(150, 4, intt.specification_value.replace('’', "'"), 0, 1)
 
                     pdf.ln(5)
                     # exteriors
@@ -1291,9 +1294,9 @@ def api(request):
                     pdf.cell(0, 5, "Exterior", 0, 1)
                     for ext in exts:
                         pdf.set_font('Arial', 'B', 7)
-                        pdf.cell(40, 4, f"{ext.specification_name}", 0, 0)
+                        pdf.cell(40, 4, ext.specification_name.replace('’', "'"), 0, 0)
                         pdf.set_font('Arial', "", 7)
-                        pdf.cell(140, 4, f"{ext.specification_value}", 0, 1)
+                        pdf.cell(140, 4, ext.specification_value.replace('’', "'"), 0, 1)
 
                     pdf.ln(5)
                     pdf.set_font('Arial', "", 8)
@@ -2277,7 +2280,8 @@ def api(request):
                         sender=mail_sender,
                         recipient=CMMS_PROF_APPROVER,
                         subject=subject,
-                        body=msg
+                        body=msg,
+                        mail_key=make_md5_hash(f"{str(timezone.now)}{CMMS_PROF_APPROVER}")
                     ).save()
 
                     response['status_code'] = 200

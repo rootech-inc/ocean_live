@@ -304,6 +304,7 @@ def service_customer(request, customer_code):
 
 @login_required()
 def sales(request):
+
     context = {
         'nav': True,
         'page': {

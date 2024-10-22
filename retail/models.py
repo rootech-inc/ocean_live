@@ -409,6 +409,7 @@ class SampleHd(models.Model):
     is_open = models.BooleanField(default=False)
     is_sync = models.BooleanField(default=False)
     ad = models.CharField(max_length=20,unique=True,null=True,blank=True)
+    ad_sync = models.BooleanField(default=False)
     bill_refund_ref = models.CharField(max_length=30,unique=True,null=True,blank=True)
 
 
