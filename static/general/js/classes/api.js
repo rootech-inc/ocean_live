@@ -15,6 +15,8 @@ class Api {
             'message':'Not Sent To Backend'
         };
 
+
+
         try {
             $.ajax({
             url:link,

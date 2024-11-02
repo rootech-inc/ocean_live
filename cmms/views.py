@@ -466,15 +466,29 @@ def view_service_card(request,pk):
         }
         return render(request, 'cmms/service/view.html', context=context)
 
-
+@login_required()
 def servicing_mr(request):
     context = {
         'nav': True,
         'page': {
 
-            'title': "CMMS SERVICE / MATERIAL REQUEST"
+            'title': "CMMS SERVICE / CLOSE SERVICE REQUEST"
         },
         'reqs':JobMaterials.objects.filter(is_issued=False)
 
     }
     return render(request, 'cmms/service/mr.html', context=context)
+
+@login_required()
+def view_service_close(request,pk):
+
+    context = {
+        'nav': True,
+        'page': {
+
+            'title': "CMMS SERVICE / CLOSE SERVICE"
+        },
+        'job':JobCard.objects.get(pk=pk)
+
+    }
+    return render(request, 'cmms/service/close.html', context=context)

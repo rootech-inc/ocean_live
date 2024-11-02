@@ -53,6 +53,7 @@ urlpatterns = [
     path('servicing/newjob/' ,views.newjob, name='new_servicing_job'),
     path('servicing/save_serv_job_images/',views.save_serv_job_images,name='save_serv_job_images'),
     path('servicing/card/<pk>/', views.view_service_card,name='view_service_card'),
+    path('servicing/close/<pk>/', views.view_service_close,name='view_service_close'),
     path('servicing/mr/',views.servicing_mr,name='servicing_mr')
 
 ]

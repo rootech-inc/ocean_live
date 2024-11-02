@@ -1,0 +1,241 @@
+{% extends 'cmms/service/serv_base.html' %}
+{% load static %}
+
+{% block cmms %}
+
+    <div class="card-header">
+        <div class="btn-group">
+
+            <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">File</button>
+
+            <div class="dropdown-menu">
+                <p class="dropdown-header">Menu</p>
+                <div class=dropdown-divider></div>
+{#                {% if job.is_ended == False %}#}
+{#                    <a id="close" class="dropdown-item" href="javascript:void(0)">Close</a>#}
+{#                {% endif %}#}
+                <button  {% if job.is_ended == True %}disabled{% endif %} id="close" class="dropdown-item btn-outline-warning" href="javascript:void(0)">Close</button>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="card-body overflow-hidden">
+        <div class="container-fluid overflow-auto h-100 p-2">
+            <div class="row">
+                <div class="col-sm-12 col-md-4 col-lg-4 col-xl-3">
+                    <!--COMPANY -->
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend rounded-0">
+                            <span class="input-group-text rounded-0" id="basic-addon1">Company</span>
+                        </div>
+                        <input type="text" class="form-control rounded-0" readonly value="{{ job.company }}" />
+                    </div>
+
+                    <!-- DRIVER -->
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend rounded-0">
+                            <span class="input-group-text rounded-0" id="basic-addon1">Driver</span>
+                        </div>
+                        <input type="text" class="form-control rounded-0" readonly value="{{ job.driver }}" />
+                    </div>
+
+                    <!-- CONTACT -->
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend rounded-0">
+                            <span class="input-group-text rounded-0" id="basic-addon1">Contact</span>
+                        </div>
+                        <input type="text" class="form-control rounded-0" readonly value="{{ job.contact }}" />
+                    </div>
+                </div>
+
+                <!-- ASSET DETAILS -->
+                <div class="col-sm-12 col-md-4 col-lg-4 col-xl-3">
+                    <!--COMPANY -->
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend rounded-0">
+                            <span class="input-group-text rounded-0" id="basic-addon1">Brand</span>
+                        </div>
+                        <input type="text" class="form-control rounded-0" readonly value="{{ job.brand }}" />
+                    </div>
+
+                    <!-- DRIVER -->
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend rounded-0">
+                            <span class="input-group-text rounded-0" id="basic-addon1">Model</span>
+                        </div>
+                        <input type="text" class="form-control rounded-0" readonly value="{{ job.model }}" />
+                    </div>
+
+                    <!-- CONTACT -->
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend rounded-0">
+                            <span class="input-group-text rounded-0" id="basic-addon1">Number</span>
+                        </div>
+                        <input type="text" class="form-control rounded-0" readonly value="{{ job.carno }}" />
+                    </div>
+                </div>
+
+                <div class="col-sm-12 col-md-4 col-lg-4 col-xl-3">
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend rounded-0">
+                            <span class="input-group-text rounded-0" id="basic-addon1">Next Service</span>
+                        </div>
+                        <input {% if job.is_ended == True %}disabled{% endif %} type="date" id="next_service_date" class="form-control rounded-0" value="" />
+                    </div>
+
+
+                    <form id="invoice_form" action="" method="post" enctype="multipart/form-data" class="input-group mb-3">
+                        {% csrf_token %}
+                        <div class="input-group-prepend rounded-0">
+                            <span class="input-group-text rounded-0" id="basic-addon1">Invoice</span>
+                        </div>
+                        <input type="file" id="invoice" name="invoice" accept="application/pdf" class="form-control rounded-0"/>
+                        <input type="hidden" id="pk" name="pk" value="{{ job.pk }}" />
+                    </form>
+
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend rounded-0">
+                            <span class="input-group-text rounded-0" >Remarks</span>
+                        </div>
+                        <input type="text"  id="remarks" class="form-control rounded-0"/>
+                    </div>
+
+                </div>
+
+
+            </div>
+
+            <div class="row h-50">
+                <div class="col-sm-12">
+                    <div class="card w-100">
+                        <div class="card-header">
+                            <div class="w-100 d-flex">
+                                <div class="w-50"><strong class="card-title">Job Details</strong></div>
+                                <div class="w-50 d-flex flex-wrap justify-content-end">
+                                    <button {% if job.is_ended == True %}disabled{% endif %} id="new_line" class="btn btn-info btn-sm"><i class="fa fa-plus"></i> New Material</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body overflow-hidden">
+                            <div class="table-responsive h-100 overflow-auto">
+                                <table class="table table-sm table-striped table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Barcode</th>
+                                            <th>Name</th>
+                                            <th>Description</th>
+                                            <th>Quantity</th>
+                                            <th>Price</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="table_body">
+                                    {% for item in job.materials %}
+                                        <tr id="row_{{ forloop.counter }}">
+                                        <td>{{ forloop.counter }}</td>
+                                            <td><input class="form-control form-control-sm rounded-0" value="{{ item.barcode }}" placeholder="Barcode" type="text" id="barcode_{{ forloop.counter }}"></td>
+                                            <td><input class="form-control form-control-sm rounded-0" value="{{ item.part }}" placeholder="Name" type="text" id="name_{{ forloop.counter }}"></td>
+                                            <td><input class="form-control form-control-sm rounded-0" value="{{ item.reason }}" placeholder="Reason" type="text" id="reason_{{ forloop.counter }}"></td>
+                                        <td><input style="width: 100px" id="quantity_{{ forloop.counter }}" type="number" value="{{ item.quantity }}"></td>
+                                        <td><input style="width: 100px" id="price_{{ forloop.counter }}" type="number" value="{{ item.price }}"></td>
+                                        <td><input style="width: 100px" id="total_{{ forloop.counter }}" type="number" value="{{ item.total }}"></td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    $(document).ready(function() {
+        $('#new_line').click(function() {
+            $('#new_line').addClass('disabled');
+            let line_no = $('#table_body tr').length + 1;
+            let line = `
+                <tr id="row_${line_no}">
+                    <td>${line_no}</td>
+                    <td><input class="form-control form-control-sm rounded-0" placeholder="Barcode" type="text" id="barcode_${line_no}"></td>
+                    <td><input class="form-control form-control-sm rounded-0" placeholder="Name" type="text" id="name_${line_no}"></td>
+                    <td><input class="form-control form-control-sm rounded-0" placeholder="Reason" type="text" id="reason_${line_no}"></td>
+                    <td><input style="width: 100px" class="form-control form-control-sm rounded-0" placeholder="Quantity" type="text" id="quantity_${line_no}"></td>
+                    <td><input style="width: 100px" class="form-control form-control-sm rounded-0" placeholder="Unit Price" type="text" id="price_${line_no}"></td>
+                    <td><input style="width: 100px" class="form-control form-control-sm rounded-0" placeholder="Unit Price" type="text" id="total_${line_no}"></td>
+                </tr>
+            `
+
+            $('#table_body').append(line);
+
+            $('#new_line').removeClass('disabled');
+
+        })
+
+
+        $('#close').click(function() {
+            console.log('CLOCKED')
+            let rows = [];
+            let err = 0;
+            $("#table_body tr").each(function() {
+                const trId = $(this).attr("id");
+                let line = trId.split('_')[1];
+
+                // make rows
+                const idx = [`barcode_${line}`,`name_${line}`,`reason_${line}`,`quantity_${line}`,`price_${line}`,`total_${line}`,`total_${line}`]
+                if(anton.validateInputs(idx)){
+                    rows.push({
+                        barcode: $(`#barcode_${line}`).val(),
+                        name: $(`#name_${line}`).val(),
+                        reason: $(`#reason_${line}`).val(),
+                        quantity: $(`#quantity_${line}`).val(),
+                        price: $(`#price_${line}`).val(),
+                        total: $(`#total_${line}`).val()
+
+                    })
+                } else {
+                    err += 1;
+                }
+
+
+            });
+
+
+            let payload = {
+                module:"end_job_v2",
+                data:{
+                    pk:`{{ job.pk }}`,
+                    rows:rows,
+                }
+            }
+
+            let head_ids = ['next_service_date', 'invoice', 'remarks','mypk','pk'];
+            if(anton.validateInputs(head_ids)){
+                payload.data['header'] = anton.Inputs(head_ids);
+                const fileInput = document.getElementById("invoice");
+
+                payload.data['header']['invoice'] = fileInput.files[0];
+            } else {
+                err += 1;
+            }
+
+            if(err === 0){
+
+                let end = api.call('PATCH',payload,'/cmms/api/');
+                console.table(end);
+
+            } else {
+                kasa.error("There is an error")
+            }
+
+
+
+        })
+    })
+    </script>
+
+{% endblock %}

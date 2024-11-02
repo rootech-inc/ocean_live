@@ -709,6 +709,11 @@ class JobMaterials(models.Model):
     issued_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,related_name='issued_by')
     quantity = models.DecimalField(max_digits=10,decimal_places=2,default=0.00)
     barcode = models.CharField(max_length=255, null=True, blank=True)
+    price = models.DecimalField(max_digits=10,decimal_places=2,default=0.00)
+
+
+    def total(self):
+        return self.price * self.quantity
 
     def st(self):
         if self.is_issued:

@@ -2205,11 +2205,82 @@ def api(request):
                     response['status_code'] = 200
                     response['message'] = "Work Started"
 
+                elif module == 'end_job_v2':
+                    # print(data)
+                    hd = data.get('header')
+                    remark = hd['remarks']
+                    jobpk = hd['pk']
+                    mypk = hd['mypk']
+                    # print(hd['mypk'])
+                    # print(hd)
+                    # print(hd['mypk'])
+                    next_service_date = hd['next_service_date']
+
+                    job = JobCard.objects.get(pk=jobpk)
+                    owner = User.objects.get(pk=mypk)
+                    sms_phone = job.contact
+                    carno = job.carno
+                    sms = f"""Dear {job.driver}, Servicing for your car with registration {carno} has ended, leave us a feedback with link below\nhttps://tinyurl.com/snedamtl\n\nThank You\nSneda Motors Limited"""
+
+                    job.is_ended = True
+                    job.close_remark = remark
+                    job.next_service_date = next_service_date
+
+
+
+                    if not job.is_started:
+                        raise Exception("Job Not Started")
+                    # make rows
+                    rows = data.get('rows')
+                    JobMaterials.objects.filter(jobcard=job).delete()
+                    for row in rows:
+                        barcode = row['barcode']
+                        name = row['name']
+                        reason = row['reason']
+                        quantity = row['quantity']
+                        price = row['price']
+
+
+                        if JobMaterials.objects.filter(barcode=barcode,jobcard=job).exists():
+                            mat = JobMaterials.objects.get(barcode=barcode,jobcard=job)
+                            mat.price = price
+                            mat.quantity = quantity
+                            mat.save()
+
+                        else:
+                            JobMaterials(
+                                jobcard=job,
+                                part=name,reason=reason,owner=owner,quantity=quantity,price=price
+                            ).save()
+
+
+
+
+                    job.save()
+
+                    # add transaction
+                    JobCardTransactions(
+                        title="Job Card Opened",
+                        details=f"""Job card has been closed""",
+                        owner=owner,
+                        jobcard_id=jobpk
+                    ).save()
+
+                    Sms(
+                        api=SmsApi.objects.get(is_default=1),
+                        to=sms_phone,
+                        message=sms
+                    ).save()
+
+                    response['status_code'] = 200
+                    response['message'] = "Work Closed"
+
                 elif module == 'end_job':
                     remark = data.get('remarks')
                     jobpk = data.get('pk')
                     mypk = data.get('mypk')
                     next_service_date = data.get('next_service_date')
+
 
                     job = JobCard.objects.get(pk=jobpk)
                     owner = User.objects.get(pk=mypk)

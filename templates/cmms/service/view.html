@@ -39,6 +39,7 @@
                     {% if card.is_ended %}
                         {% else %}
                         <button style="margin-left: .5rem" id="end" class="btn btn-sm btn-danger"><i class="fa fa-save"></i> END</button>
+                        <button style="margin-left: .5rem" id="close_wo" class="btn btn-sm btn-warning"><i class="fa fa-save"></i> CLOSE</button>
 
                         {% endif %}
                 {% else %}
@@ -363,6 +364,17 @@
 
                 amodal.show()
             })
+
+            $('#close_wo').click(function(){
+                let id = ['pk'];
+                if(anton.validateInputs(id)){
+                    let pk = $('#pk').val();
+                    let ur = `/cmms/servicing/close/${pk}/`
+                    location.href = ur
+                } else {
+                    kasa.error("Cannot Find PK")
+                }
+            });
 
             $('#print').click(function (){
                 let print_payload = {
