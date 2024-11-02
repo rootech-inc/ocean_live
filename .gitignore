@@ -25,5 +25,6 @@ appconfig/migrations/__pycache__/0001_initial.cpython-310.pyc
 /static/general/snedaghana-8ac36ff86480.json
 static/general/snedaghana-8ac36ff86480.json 
 static/general/snedaghana-8ac36ff86480.json
+/static/general/snedaghana-drive.json
 */migrations/*
 !*/migrations/__init__.py

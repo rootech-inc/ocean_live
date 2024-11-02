@@ -1191,6 +1191,85 @@ class Retail {
 
         kasa.confirm(api.call('PATCH',payload,'/retail/api/').message,1,'here')
     }
+
+    StockScreen(){
+        let loc_payload = {
+            module:'location_master',
+            data:{}
+        }
+        let locations = api.call('VIEW',loc_payload,'/retail/api/')
+        let locs = locations.message
+        let l_optons = ""
+        for(let l = 0; l < locs.length; l++){
+            let lc = locs[l]
+            l_optons += `<option value="${lc['code']}">${lc['code']} - ${lc['name']}</option>`
+        }
+        let form = '';
+        let loc =  fom.select('loc_id',`
+            <option value="" selected disabled>Select Location</option>
+            <option value="*" selected>All</option>
+            ${l_optons}
+        `,"",true)
+
+        let stat = fom.select('status',`
+            
+            <option value="*" selected>All</option>
+            <option value="-">Negative</option>
+            <option value="+">Positive</option>
+        `,"",true);
+
+        let catpl = {
+            "module":"group_master",
+            "data":{
+
+            }
+        }
+
+        let cx = "";
+        let cats = api.call('VIEW',catpl,'/retail/api/')['message'];
+        for(let c = 0; c < cats.length; c++){
+            const ct = cats[c];
+            cx += `<option value="${ct['code']}">${ct['name']}</option>`
+        }
+
+        let cat =  fom.select('category',`
+            <option value="" disabled>Select Category</option>
+            
+            ${cx}
+        `,"",true)
+
+        let doc = fom.select('export',`
+            
+            
+            <option value="json">Preview</option>
+            <option value="excel">Excel</option>
+        `,"",true);
+
+        let ht = `<div class="container"><div class="row"><div class="col-sm-6">${loc}</div><div class="col-sm-6">${stat}</div><div class="col-sm-6">${cat}</div><div class="col-sm-6">${doc}</div></div></div>`
+
+        amodal.setBodyHtml(ht)
+        amodal.setTitleText("Get Stock")
+        amodal.setFooterHtml(`<button onclick="retail.seeStock()" class="btn btn-info w-100">GENERATE</button>`)
+        amodal.show()
+    }
+
+    async seeStock() {
+        let ids = ['export','category','loc_id','status'];
+        let inps = anton.Inputs(ids);
+        let payload = {
+            module:'detailed_stock',
+            data:anton.Inputs(ids)
+        }
+
+        let fet = api.call('VIEW',payload,'/retail/api/');
+
+        if(inps['export'] === 'excel'){
+            anton.viewFile(`/${fet['message']}`)
+        } else {
+            kasa.info('preview')
+        }
+
+    }
 }
 
 const retail = new Retail();

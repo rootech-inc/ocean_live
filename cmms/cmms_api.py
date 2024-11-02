@@ -1,5 +1,6 @@
 import csv
 import json
+import mimetypes
 import os.path
 import sys
 import traceback
@@ -79,6 +80,128 @@ def api(request):
                     response['message'] = resp
                     cursor.close()
                     connection.close()
+
+                elif module == 'sync_job_card_to_cloud':
+                    import gspread
+                    from oauth2client.service_account import ServiceAccountCredentials
+
+                    # Define the scope and authenticate using the JSON key file
+                    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+                    creds = ServiceAccountCredentials.from_json_keyfile_name(
+                        "static/general/snedaghana-8ac36ff86480.json", scope)
+                    client = gspread.authorize(creds)
+
+                    # Open the Google Sheet by name or by URL
+                    sheet = client.open("DAILY_MOTORS_JOBS")  # Use .sheet1 for the first sheet
+
+                    from google.oauth2 import service_account
+                    from googleapiclient.discovery import build
+                    from googleapiclient.http import MediaFileUpload
+
+                    # Authenticate using the service account
+                    SCOPES = ['https://www.googleapis.com/auth/drive.file']
+                    SERVICE_ACCOUNT_FILE = 'static/general/snedaghana-drive.json'  # Update this with your path
+
+                    credentials_drive = service_account.Credentials.from_service_account_file(
+                        SERVICE_ACCOUNT_FILE, scopes=SCOPES
+                    )
+
+
+                    jobs = JobCard.objects.filter(is_synced=False,is_ended=True).order_by('pk')[:10]
+
+                    row_c = 0
+                    im_c = 0
+
+
+                    for job in jobs:
+                        row_c += 1
+                        row = [
+                            f"{str(job.created_on)}",
+                            job.wr_no,
+                            job.company,
+                            job.driver,
+                            job.contact,
+                            job.brand,
+                            job.model,
+                            job.carno,
+                            job.report,
+                            job.mechanic,
+                            job.close_remark,
+                            f"{str(job.next_service_date)}"
+
+                        ]
+
+
+
+                        dt = []
+                        sheet_name = str(job.created_on)
+                        hd = None
+                        try:
+                            new_sheet = sheet.worksheet(sheet_name)
+
+                        except gspread.exceptions.WorksheetNotFound:
+                            new_sheet = sheet.add_worksheet(title=sheet_name, rows=100, cols=20)
+                            hd = ["CREATED DATE","WORK ORDER", "COMPANY", "DRIVER", "CONTACT", "BRAND", "MODEL", "CAR NUMBER", "REPORT","MECHANIC","CLOSING REMARK", "NEXT SERVICE"]
+
+                        if hd:
+                            dt.append(hd)
+
+                        dt.append(row)
+                        print(dt)
+                        new_sheet.append_rows(dt,value_input_option="USER_ENTERED")
+
+                        # update
+
+
+                        # upload images
+                        # Build the Drive API service
+                        service = build('drive', 'v3', credentials=credentials_drive)
+                        images = job.images()
+                        for image in images:
+                            print(image)
+                            if(image.image_exists()):
+                                file_path = image.get_image_full_path()
+                                mime_type, _ = mimetypes.guess_type(file_path)
+                                media = MediaFileUpload(file_path, mimetype=mime_type)
+                                file_name = os.path.basename(file_path)
+
+
+
+                                file_metadata = {
+                                    'name': job.wr_no,
+                                    'mimeType': 'application/vnd.google-apps.folder',
+                                    'parents':['1XCTOFoFIdkZw9cn-3jHzY_e5f8jG-yCq']
+                                }
+                                folder = service.files().create(body=file_metadata, fields='id').execute()
+                                parent = folder.get('id')
+                                print(file_metadata)
+                                print('LEGEND PARENT','1XCTOFoFIdkZw9cn-3jHzY_e5f8jG-yCq')
+                                print("PARENT ",parent)
+
+                                # Create a request to upload the file
+                                file_metadata = {
+                                    'name': file_name,  # File name in Drive
+                                    'parents': [parent]  # Set the created folder as the parent
+                                }
+                                print(media)
+                                request = service.files().create(
+                                    media_body=media,
+                                    body=file_metadata
+                                )
+                                file = request.execute()
+                                print(f"Uploaded file ID: {file}")
+                                im_c += 1
+                        job.is_synced = True
+                        job.save()
+                        print(row)
+
+                    response['status_code'] = 200
+                    response['message'] = {
+                        "row_count":row_c    ,
+                        "Images":im_c,
+                        'rows':dt
+                    }
+
 
                 elif module == 'groups':
                     cursor = db()
@@ -1695,7 +1818,8 @@ def api(request):
                         carno=car_number,
                         report=report,
                         owner=owner,
-                        created_on=entry_date
+                        created_on=entry_date,
+                        is_started=False,
                     ).save()
 
                     just_saved = JobCard.objects.get(

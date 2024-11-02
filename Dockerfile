@@ -24,6 +24,9 @@ WORKDIR /app
 COPY req.txt /app/
 RUN pip install --upgrade pip && pip install -r req.txt
 
+
+
+
 # Copy the Django project files to the container
 COPY . /app/
 

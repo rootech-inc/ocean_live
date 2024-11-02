@@ -1492,6 +1492,7 @@ def interface(request):
                 else:
                     success_response['status_code'] = 404
                     success_response['message'] = "Product Not Found"
+
             elif module == 'recipe_item':
                 key = data.get('key', '*')
 
@@ -2187,6 +2188,78 @@ def interface(request):
 
                 conn.close()
                 success_response['message'] = arr
+                response = success_response
+
+            elif module == 'detailed_stock':
+                loc_id = data.get('loc_id','*')
+                status = data.get('status','*')
+                category = data.get('category','*')
+                doc_type = data.get('export','json')
+
+                print(data)
+
+                if doc_type == 'excel':
+                    import openpyxl
+                    book = openpyxl.Workbook()
+                    sheet = book.active
+                    sheet.title = "STOCK"
+
+                    sheet.append(['BARCODE',"NAME","STOCK"])
+
+                prod_query = f"SELECT item_code,RTRIM(barcode),RTRIM(item_des) from prod_mast prod_mast where group_code = '{category}'"
+                if category != '*':
+                    prod_query = f"SELECT item_code,RTRIM(barcode),RTRIM(item_des) from prod_mast where group_code = '{category}'"
+
+                print(prod_query)
+
+                conn = ret_cursor()
+                cursor = conn.cursor()
+                arr = []
+                cursor.execute(prod_query)
+                for item in cursor.fetchall():
+                    item_code,barcode,item_name = item
+
+
+
+                    # get stock
+                    stock = get_stock(item_code)
+                    if loc_id == '*':
+                        stock = stock.get('total')
+                    else:
+                        stock = stock.get(loc_id)
+
+                    li = None
+                    if status == '*':
+                        li = [barcode,item_name,stock]
+                    if status == '-':
+                        if stock < 0:
+                            li = [barcode,item_name,stock]
+
+                    if status == '+':
+                        if stock > 0:
+                            li = [barcode,item_name,stock]
+
+                    if doc_type == 'json':
+                        if li is not None:
+                            arr.append(li)
+
+                    if doc_type == 'excel':
+                        if li is not None:
+                            sheet.append(li)
+                    print(li)
+
+
+                conn.close()
+                if doc_type == 'excel':
+
+                    file = 'static/general/tmp/retail_stock.xlsx'
+
+                    book.save(file)
+                    arr = file
+
+                success_response['message'] = arr
+                success_response['statuc_code'] = 200
+
                 response = success_response
 
             else:

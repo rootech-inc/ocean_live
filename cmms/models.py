@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -634,6 +635,8 @@ class JobCard(models.Model):
     mechanic = models.CharField(max_length=64, blank=True, null=True)
     close_remark = models.TextField()
     next_service_date = models.DateField(null=True, blank=True)
+    is_synced = models.BooleanField(default=False)
+
 
     def obj(self):
         return {
@@ -724,3 +727,12 @@ class JobCardImages(models.Model):
     jobcard = models.ForeignKey(JobCard, on_delete=models.CASCADE)
     image = models.ImageField(upload_to='static/uploads/dolphine/servicing//%Y/%m/%d/')
     part = models.CharField(max_length=65, null=True, blank=True)
+
+    def get_image_full_path(self):
+        """Returns the full filesystem path of the image."""
+        # Join the MEDIA_ROOT with the relative path of the image field
+        return os.path.join(self.image.storage.location, self.image.name)
+
+    def image_exists(self):
+        """Checks if the image file exists on the filesystem."""
+        return os.path.exists(self.get_image_full_path())

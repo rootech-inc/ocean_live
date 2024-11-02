@@ -99,6 +99,7 @@ class Anton {
         amodal.setBodyHtml("Cannot Load Resource")
         if (url.length > 0) {
             amodal.setTitleText(title)
+            amodal.setFooterHtml('<a href="'+url+'" target="_blank">DOWNLOAD</a>')
             let ft = this.fileType(url);
             if (ft === 'image') {
                 amodal.setBodyHtml(

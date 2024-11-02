@@ -1097,35 +1097,40 @@ def api_call(request, module, crud):
                         text = pending.message
                         sender_id = pending.api.sender_id
                         api_key = pending.api.api_key
-                        endPoint = f"https://apps.mnotify.net/smsapi?key={api_key}&to={to}&msg={text}&sender_id={sender_id}"
-                        resp = requests.post(endPoint)
-                        data = resp.json()
+                        sms_check_end = f"https://apps.mnotify.net/smsapi/balance?key={api_key}"
+                        balance = requests.get(sms_check_end).json()
+                        if balance['sms_balance'] > 0:
+                            endPoint = f"https://apps.mnotify.net/smsapi?key={api_key}&to={to}&msg={text}&sender_id={sender_id}"
+                            resp = requests.post(endPoint)
+                            data = resp.json()
 
-                        status = data['status']
-                        code = data['code']
-                        resp_msg = f"{data['message']} - {endPoint}"
+                            status = data['status']
+                            code = data['code']
+                            resp_msg = f"{data['message']} - {endPoint}"
 
-                        if code == '1000':
-                            # success
+                            if code == '1000':
+                                # success
+                                sent = Sms.objects.get(pk=pk)
+                                sent.status = 1
+                                sent.save()
+
+                            # tried
+                            import datetime
+                            current_time = datetime.datetime.now()
+                            tim = f"{current_time.hour}:{current_time.minute}:{current_time.second}"
+                            dat = f"{current_time.year}-{current_time.month}-{current_time.day}"
                             sent = Sms.objects.get(pk=pk)
-                            sent.status = 1
+                            sent.last_tried_time = tim
+                            sent.last_tried_date = dat
                             sent.save()
 
-                        # tried
-                        import datetime
-                        current_time = datetime.datetime.now()
-                        tim = f"{current_time.hour}:{current_time.minute}:{current_time.second}"
-                        dat = f"{current_time.year}-{current_time.month}-{current_time.day}"
-                        sent = Sms.objects.get(pk=pk)
-                        sent.last_tried_time = tim
-                        sent.last_tried_date = dat
-                        sent.save()
+                            # insert sent status
+                            SmsResponse(sms=Sms.objects.get(pk=pk), resp_code=code, resp_msg=resp_msg).save()
 
-                        # insert sent status
-                        SmsResponse(sms=Sms.objects.get(pk=pk), resp_code=code, resp_msg=resp_msg).save()
-
-                        response['status'] = 200
-                        response['message'] = data
+                            response['status'] = 200
+                            response['message'] = data
+                        else:
+                            raise Exception (f"Inssuficient Balance {balance['sms_balance']}")
                     except Exception as e:
                         response['status'] = 505
                         response['message'] = str(e)
