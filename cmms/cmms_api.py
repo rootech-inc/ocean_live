@@ -92,7 +92,7 @@ def api(request):
                     client = gspread.authorize(creds)
 
                     # Open the Google Sheet by name or by URL
-                    sheet = client.open("DAILY_MOTORS_JOBS")  # Use .sheet1 for the first sheet
+                    sheet = client.open("OPEN_JOBS")  # Use .sheet1 for the first sheet
 
                     from google.oauth2 import service_account
                     from googleapiclient.discovery import build
@@ -107,7 +107,7 @@ def api(request):
                     )
 
 
-                    jobs = JobCard.objects.filter(is_synced=False,is_ended=True).order_by('pk')[:10]
+                    jobs = JobCard.objects.filter(is_synced=False,is_started=True).order_by('pk')[:100]
 
                     row_c = 0
                     im_c = 0
@@ -125,9 +125,7 @@ def api(request):
                             job.model,
                             job.carno,
                             job.report,
-                            job.mechanic,
-                            job.close_remark,
-                            f"{str(job.next_service_date)}"
+                            job.mechanic
 
                         ]
 
@@ -141,7 +139,7 @@ def api(request):
 
                         except gspread.exceptions.WorksheetNotFound:
                             new_sheet = sheet.add_worksheet(title=sheet_name, rows=100, cols=20)
-                            hd = ["CREATED DATE","WORK ORDER", "COMPANY", "DRIVER", "CONTACT", "BRAND", "MODEL", "CAR NUMBER", "REPORT","MECHANIC","CLOSING REMARK", "NEXT SERVICE"]
+                            hd = ["CREATED DATE","WORK ORDER", "COMPANY", "DRIVER", "CONTACT", "BRAND", "MODEL", "CAR NUMBER", "REPORT","MECHANIC"]
 
                         if hd:
                             dt.append(hd)
@@ -155,42 +153,44 @@ def api(request):
 
                         # upload images
                         # Build the Drive API service
-                        service = build('drive', 'v3', credentials=credentials_drive)
-                        images = job.images()
-                        for image in images:
-                            print(image)
-                            if(image.image_exists()):
-                                file_path = image.get_image_full_path()
-                                mime_type, _ = mimetypes.guess_type(file_path)
-                                media = MediaFileUpload(file_path, mimetype=mime_type)
-                                file_name = os.path.basename(file_path)
+                        # service = build('drive', 'v3', credentials=credentials_drive)
+                        # images = job.images()
+                        # for image in images:
+                        #     print(image)
+                        #     if(image.image_exists()):
+                        #         file_path = image.get_image_full_path()
+                        #         mime_type, _ = mimetypes.guess_type(file_path)
+                        #         media = MediaFileUpload(file_path, mimetype=mime_type)
+                        #         file_name = os.path.basename(file_path)
+                        #
+                        #
+                        #
+                        #         file_metadata = {
+                        #             'name': job.wr_no,
+                        #             'mimeType': 'application/vnd.google-apps.folder',
+                        #             'parents':['1XCTOFoFIdkZw9cn-3jHzY_e5f8jG-yCq']
+                        #         }
+                        #         folder = service.files().create(body=file_metadata, fields='id').execute()
+                        #         parent = folder.get('id')
+                        #         print(file_metadata)
+                        #         print('LEGEND PARENT','1XCTOFoFIdkZw9cn-3jHzY_e5f8jG-yCq')
+                        #         print("PARENT ",parent)
+                        #
+                        #         # Create a request to upload the file
+                        #         file_metadata = {
+                        #             'name': file_name,  # File name in Drive
+                        #             'parents': [parent]  # Set the created folder as the parent
+                        #         }
+                        #         print(media)
+                        #         request = service.files().create(
+                        #             media_body=media,
+                        #             body=file_metadata
+                        #         )
+                        #         file = request.execute()
+                        #         print(f"Uploaded file ID: {file}")
+                        #         im_c += 1
+                        #
 
-
-
-                                file_metadata = {
-                                    'name': job.wr_no,
-                                    'mimeType': 'application/vnd.google-apps.folder',
-                                    'parents':['1XCTOFoFIdkZw9cn-3jHzY_e5f8jG-yCq']
-                                }
-                                folder = service.files().create(body=file_metadata, fields='id').execute()
-                                parent = folder.get('id')
-                                print(file_metadata)
-                                print('LEGEND PARENT','1XCTOFoFIdkZw9cn-3jHzY_e5f8jG-yCq')
-                                print("PARENT ",parent)
-
-                                # Create a request to upload the file
-                                file_metadata = {
-                                    'name': file_name,  # File name in Drive
-                                    'parents': [parent]  # Set the created folder as the parent
-                                }
-                                print(media)
-                                request = service.files().create(
-                                    media_body=media,
-                                    body=file_metadata
-                                )
-                                file = request.execute()
-                                print(f"Uploaded file ID: {file}")
-                                im_c += 1
                         job.is_synced = True
                         job.save()
                         print(row)
@@ -198,8 +198,7 @@ def api(request):
                     response['status_code'] = 200
                     response['message'] = {
                         "row_count":row_c    ,
-                        "Images":im_c,
-                        'rows':dt
+                        "Images":im_c
                     }
 
 
