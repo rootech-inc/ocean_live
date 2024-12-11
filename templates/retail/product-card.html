@@ -1,0 +1,184 @@
+{% extends 'retail/base.html' %}
+{% load static %}
+{% block body %}
+
+
+    <div class="card h-100">
+        <div class="card-header">
+            <div class="w-100 d-flex flex-wrap justify-content-between align-items-center">
+                <div class="w-50 d-flex flex-wrap justify-content-start align-content-center">
+                    <button id="previous" style="margin-right: .5em" class="btn btn-info btn-sm">
+                        <i class="bx bx-arrow-to-left"></i>
+                    </button>
+                    <button id="next" class="btn btn-info btn-sm">
+                        <i class="bx bx-arrow-to-right"></i>
+                    </button>
+                </div>
+                <div class="w-50 d-flex flex-wrap justify-content-end align-content-center">
+                    <div class="dropdown dropleft">
+                    <button class="btn btn-secondary" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="bx bx-arrow-to-left"></i><i class="bx bx-menu"></i>
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <a class="dropdown-item" onclick="retail.boldUploadScreen()" href="javascript:void(0)"><i class="bx bx-upload"></i> UPLOAD BATCH</a>
+                        <a class="dropdown-item" onclick="retail.markProducts()" href="javascript:void(0)"><i class="bx bx-checkbox-checked"></i> MARK UPDATE</a>
+                        <a class="dropdown-item" onclick="retail.checkPrices()" href="javascript:void(0)">PRICE CHANG</a>
+{#                        <a class="dropdown-item" onclick="retail.exportItems('*')" href="javascript:void(0)"><i class="fa fa-file-excel"></i> Export</a>#}
+                        <div class="dropdown-divider"></div>
+                        <h5 class="dropdown-header">V2</h5>
+
+                        <a class="dropdown-item" href="javascript:void(0)" onclick="retail.Mark2BoltScreen(`${$('#barcode').val()}`)"><i class="bx bx-checkbox-checked text-danger"></i> Mark For Bolt</a>
+
+                        <a class="dropdown-item" onclick="retail.sync2bolt()" href="javascript:void(0)"><i class="bx bx-sync text-warning"></i> sync2bolt</a>
+                        <a class="dropdown-item" onclick="retail.mark_send2bold()" href="javascript:void(0)"><i class="bx bx-checkbox-checked text-success"></i>mark_send2bold</a>
+                        <div class="dropdown-divider"></div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="container-fluid h-100 p-2">
+                <div class="row h-100">
+                    <div class="col-sm-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <strong class="card-title">Product Details</strong>
+                            </div>
+                            <div class="card-body py-2">
+                                <div class="input-group mb-2">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text rounded-0">GROUP</span>
+                                    </div>
+                                    <input type="text" id="group_name" class="form-control rounded-0" readonly placeholder="Product Name">
+                                </div>
+                                <div class="input-group mb-2">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text rounded-0">SUB-GROUP</span>
+                                    </div>
+                                    <input type="text" id="sub_group_name" class="form-control rounded-0" readonly placeholder="Product Name">
+                                </div>
+
+                                <div class="input-group input-group-sm mb-2">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text rounded-0">BARCODE</span>
+                                    </div>
+                                    <input type="text" id="barcode" class="form-control form-control-sm rounded-0" readonly placeholder="Product Name">
+                                </div>
+
+                                <div class="input-group input-group-sm mb-2">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text rounded-0">NAME</span>
+                                    </div>
+                                    <input type="text" id="name" class="form-control form-control-sm rounded-0" readonly placeholder="Product Name">
+                                </div>
+                                <div class="input-group mb-2">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text rounded-0">PRICE</span>
+                                    </div>
+                                    <input type="text" id="retail1" class="form-control rounded-0" readonly placeholder="Prod">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <strong class="card-title">Services</strong>
+                            </div>
+                            <div class="card-body text-center p-2">
+                                <div class="input-group mb-2">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text rounded-0">BOLT</span>
+                                    </div>
+                                    <input type="text" id="is_on_bolt" class="form-control rounded-0" readonly placeholder="Prod">
+                                </div>
+                                <div class="input-group mb-2">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text rounded-0">SOLD</span>
+                                    </div>
+                                    <input type="text" id="sold" class="form-control rounded-0" readonly placeholder="Prod">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <strong class="card-title">Image</strong>
+                                <button class="btn btn-sm btn-info">CHANGE</button>
+                            </div>
+                            <div class="card-body text-center p-2">
+                                <img src="" style="width: 200px" id="image" alt="" class="img-fluid img-thumbnail">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-12 h-50">
+                        <div class="card h-100">
+                            <div class="card-body p-2">
+                                <!-- Nav pills -->
+                                <ul class="nav nav-pills">
+                                  <li class="nav-item">
+                                    <a class="nav-link active" data-toggle="pill" href="#home">Stock</a>
+                                  </li>
+                                  <li class="nav-item">
+                                    <a class="nav-link" data-toggle="pill" href="#menu1">Cardex</a>
+                                  </li>
+                                  <li class="nav-item">
+                                    <a class="nav-link" data-toggle="pill" href="#menu2">Activities</a>
+                                  </li>
+                                </ul>
+
+                                <!-- Tab panes -->
+                                <div class="tab-content">
+                                  <div class="tab-pane container py-2 active" id="home">
+                                      <div class="row">
+                                          <div class="col-sm-12 col-md-6">
+                                              <table class="table table-sm table-striped table-bordered" >
+                                                  <thead class="thead-dark">
+                                                    <tr>
+                                                        <th>LOCATION</th><th>QUANTITY</th>
+                                                    </tr>
+                                                  </thead>
+                                                  <tbody id="stock_body"></tbody>
+                                              </table>
+                                          </div>
+                                      </div>
+                                  </div>
+                                  <div class="tab-pane container fade" id="menu1">...</div>
+                                  <div class="tab-pane container fade" id="menu2">...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        $(document).ready(function(){
+            let next,previous;
+
+            next = 0;
+            previous = 0;
+            retail.loadCard(`{{ pk }}`)
+
+            $('#previous').click(function(){
+                retail.loadCard($(this).val())
+            })
+
+            $('#next').click(function(){
+                retail.loadCard($(this).val())
+            })
+        });
+
+    </script>
+
+{% endblock %}

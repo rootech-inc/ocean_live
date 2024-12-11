@@ -1,0 +1,38 @@
+{% extends 'retail/base.html' %}
+{% load static %}
+{% block body %}
+
+    <div class="card-header">
+        <div class="w-100 h-100 d-flex flex-wrap">
+            <div class="w-25 h-100">
+                <strong class="card-title">Groups</strong>
+            </div>
+            <div class="w-75 h-100 d-flex flex-wrap align-content-center justify-content-end">
+                <button onclick="retail.addProduct2groupScreen(`{{ cats.pk }}`)" class="btn btn-info">NEW GROUP</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-body overflow-auto">
+        <table class="table datatable">
+            <thead>
+                <tr>
+                    <th>BARCODE</th><th>NAME</th><th>PRICE</th><th>IS_SYNC</th><th>ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cats.items %}
+                    <tr>
+                        <td>{{ item.product.barcode }}</td>
+                        <td>{{ item.product.name }}</td>
+                        <td>{{ item.product.price }}</td>
+                        <td>{{ item.is_sync }}</td>
+                        <td></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+{% endblock %}

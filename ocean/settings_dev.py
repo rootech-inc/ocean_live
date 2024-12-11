@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 from pathlib import Path
 import os
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -24,6 +25,7 @@ SECRET_KEY = 'django-insecure-q^#wfi0xy1z-7nv9vj9r^137i=j@zzij8na9q4zr!dsg$-&q!b
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+
 
 ALLOWED_HOSTS = ['*']
 
@@ -50,8 +52,13 @@ INSTALLED_APPS = [
     'dolphine.apps.DolphineConfig',
     'cmms.apps.CmmsConfig',
     'apiv2.apps.Apiv2Config',
-    'appscenter.apps.AppscenterConfig'
-
+    'appscenter.apps.AppscenterConfig',
+    'reports.apps.ReportsConfig',
+    'taskmanager.apps.TaskmanagerConfig',
+    'retail.apps.RetailConfig',
+    'crm.apps.CrmConfig',
+    'servicing.apps.ServicingConfig',
+    'maintenance.apps.MaintenanceConfig'
 ]
 
 MIDDLEWARE = [
@@ -86,6 +93,13 @@ WSGI_APPLICATION = 'ocean.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
+# Read environment variables or use defaults
+DATABASE_ENGINE = os.environ.get('DB_ENGINE', 'django.db.backends.mysql')
+DATABASE_NAME = os.environ.get('DB_NAME', 'ocean')
+DATABASE_USER = os.environ.get('DB_USER', 'root')
+DATABASE_PASSWORD = os.environ.get('DB_PASSWORD', 'Sunderland@411')
+DATABASE_HOST = os.environ.get('DB_HOST', '127.0.0.1')
+DATABASE_PORT = os.environ.get('DB_PORT', '3306')
 
 DATABASES = {
     'ex': {
@@ -93,11 +107,23 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     },
     'default': {
+        'ENGINE': DATABASE_ENGINE,
+        'NAME': 'ocean_loc',
+        'USER': DATABASE_USER,
+        'PASSWORD': DATABASE_PASSWORD,
+        'HOST': '127.0.0.1',
+        'PORT': DATABASE_PORT,
+        'OPTIONS': {
+            "init_command": "SET foreign_key_checks = 0;",
+        },
+    },
+
+    'online': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ocean',
-        'USER': 'root',
+        'NAME': 'u560949065_ocean',
+        'USER': 'u560949065_ocean',
         'PASSWORD': 'Sunderland@411',
-        'HOST': 'localhost',
+        'HOST': 'snedasmartmeter.com',
         'PORT': '3306',
         'OPTIONS': {
             "init_command": "SET foreign_key_checks = 0;",
@@ -145,7 +171,6 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
 )
-
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
@@ -181,10 +206,35 @@ SESSION_SAVE_EVERY_REQUEST = True  # "False" by default
 # session settings
 
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'ocean.auth.EmailBackend',
+]
+
 # CMMS DATA PARAMETERS
-DB_SERVER = '127.0.0.1'
-#DB_PORT = '1237'
-DB_PORT = '1433'
+
+DB_SERVER = '192.168.2.4' if DEBUG is False else '192.168.2.4'
+DB_PORT = '1237' if DEBUG is False else '1237'
 DB_USER = 'sa'
 DB_PASSWORD = 'sa@123456'
-DB_NAME = 'PROC_CMMS_V1'
+DB_NAME = 'CMMS'
+
+OLD_DB_SERVER = '192.168.2.4'
+OLD_DB_PORT = '1433'
+# DB_USER = 'sa'
+# DB_PASSWORD = 'sa@123456'
+OLD_DB_NAME = 'PROC_CMMS_V1'
+# DB_SERVER = '127.0.0.1'
+# #DB_PORT = '1237'
+# DB_PORT = '1433'
+# DB_NAME = 'PROC_CMMS_V1'
+
+RET_DB_HOST = '192.168.2.4'
+# RET_DB_HOST = '26.80.117.10'
+RET_DB_NAME = 'SMSEXPV17'
+RET_DB_USER = 'sa'
+RET_DB_PASS = 'sa@123456'
+RET_DB_PORT = ''
+
+# approvers email
+CMMS_PROF_APPROVER = 'uyinsolomon2@gmail.com'

@@ -12,6 +12,42 @@
         <div class="row">
             <div class="row">
 
+                <div class="col-sm-12">
+                    <div style="max-height: 45vh; overflow: hidden" class="card">
+                        <div class="card-header">
+                            <strong class="card-title">LIVE SALES</strong>
+                        </div>
+                        <div class="card-body overflow-auto">
+                            <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>LOC</th>
+                                <th>TIME</th>
+                                <th>BARCODE</th>
+                                <th>NAME</th>
+                                <th>QUANTITY</th>
+                                <th>PRICE</th>
+                                <th>TOTAL</th>
+
+                            </tr>
+                        </thead>
+
+                        <tbody id="sales">
+                            <tr>
+                                <td>LOC</td>
+                                <td>TIME</td>
+                                <td>BARCODE</td>
+                                <td>NAME</td>
+                                <td>QUANTITY</td>
+                                <td>PRICE</td>
+                                <td>TOTAL</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="col-sm-6">
                     <div class="card mb-2 overflow- border border-info">
             <div class="card-header">
@@ -76,41 +112,7 @@
                   </div>
                 </div>
 
-                <div class="col-sm-12">
-                    <div style="max-height: 45vh; overflow: hidden" class="card">
-                        <div class="card-header">
-                            <strong class="card-title">LIVE SALES</strong>
-                        </div>
-                        <div class="card-body overflow-auto">
-                            <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>LOC</th>
-                                <th>TIME</th>
-                                <th>BARCODE</th>
-                                <th>NAME</th>
-                                <th>QUANTITY</th>
-                                <th>PRICE</th>
-                                <th>TOTAL</th>
 
-                            </tr>
-                        </thead>
-
-                        <tbody id="sales">
-                            <tr>
-                                <td>LOC</td>
-                                <td>TIME</td>
-                                <td>BARCODE</td>
-                                <td>NAME</td>
-                                <td>QUANTITY</td>
-                                <td>PRICE</td>
-                                <td>TOTAL</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                        </div>
-                    </div>
-                </div>
         </div>
     </div>
     </div>
@@ -134,7 +136,7 @@
             });
 
             // #live Sales
-            retail.loadSales('*');
+            retail.loadSales(10);
 
 
         });

@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from admin_panel.models import Locations, SmsApi, Sms
@@ -324,3 +324,40 @@ def samples(request):
         }
     }
     return render(request, 'retail/samples.html', context=context)
+
+
+def bolt_category(request,pk):
+    if BoltGroups.objects.filter(pk=pk).exists():
+        cat = BoltGroups.objects.get(pk=pk)
+        context = {
+            'nav': True,
+            'page': {
+                'title': cat.name
+            },
+            'cats':cat
+        }
+        return render(request, 'retail/bolt-group.html', context=context)
+    else:
+        return redirect('bolt_groups', pk)
+
+@csrf_exempt
+def bolt_upload_image(request):
+    if request.method == 'POST':
+        barcode = request.POST['barcode']
+        file = request.FILES['image']
+
+        item = BoltItems.objects.get(product__barcode=barcode)
+        item.image = file
+        item.save()
+
+        # return to previous page
+        return JsonResponse({'message': 'Form submitted successfully!'})
+@login_required()
+def product_card(request):
+
+    context = {
+        'nav': True,
+        'page_title': 'Products Master | Card',
+        "pk":Products.objects.all().last().pk,
+    }
+    return render(request, 'retail/product-card.html', context=context)

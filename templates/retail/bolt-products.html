@@ -5,10 +5,27 @@
         <div class="w-100 h-100 d-flex flex-wrap">
             <div class="w-25 h-100"><strong class="card-title">BOLT ITEMS</strong></div>
             <div class="w-75 h-100 d-flex flex-wrap justify-content-end align-content-center">
-                <button style="border-radius: 0 !important" onclick="retail.boldUploadScreen()" class="btn btn-outline-info"><i class="bx bx-upload"></i> UPLOAD BATCH</button>
-                <button style="border-radius: 0 !important" onclick="retail.markProducts()" class="btn btn-outline-dark"><i class="bx bx-checkbox-checked"></i> MARK UPDATE</button>
-                <button style="border-radius: 0 !important" onclick="retail.checkPrices()" class="btn btn-outline-primary">PRICE CHANGE</button>
-                <a href="javascript:void(0)" style="border-radius: 0 !important" onclick="retail.exportItems('*')" class="btn btn-outline-warning"><i class="fa fa-file-excel"></i> Export</a>
+{#                <button style="border-radius: 0 !important" onclick="retail.boldUploadScreen()" class="btn btn-outline-info"><i class="bx bx-upload"></i> UPLOAD BATCH</button>#}
+{#                <button style="border-radius: 0 !important" onclick="retail.markProducts()" class="btn btn-outline-dark"><i class="bx bx-checkbox-checked"></i> MARK UPDATE</button>#}
+{#                <button style="border-radius: 0 !important" onclick="retail.checkPrices()" class="btn btn-outline-primary">PRICE CHANGE</button>#}
+{#                <a href="javascript:void(0)" style="border-radius: 0 !important" onclick="retail.exportItems('*')" class="btn btn-outline-warning"><i class="fa fa-file-excel"></i> Export</a>#}
+{#                <button onclick="retail.sync2bolt()" style="border-radius: 0 !important" class="btn btn-outline-info">sync2bolt</button>#}
+                <div class="dropdown dropleft">
+                    <button class="btn btn-secondary" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa fa-arrow-down"></i> Menu
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <a class="dropdown-item" onclick="retail.boldUploadScreen()" href="javascript:void(0)"><i class="bx bx-upload"></i> UPLOAD BATCH</a>
+                        <a class="dropdown-item" onclick="retail.markProducts()" href="javascript:void(0)"><i class="bx bx-checkbox-checked"></i> MARK UPDATE</a>
+                        <a class="dropdown-item" onclick="retail.checkPrices()" href="javascript:void(0)">PRICE CHANG</a>
+{#                        <a class="dropdown-item" onclick="retail.exportItems('*')" href="javascript:void(0)"><i class="fa fa-file-excel"></i> Export</a>#}
+                        <div class="dropdown-divider"></div>
+                        <h5 class="dropdown-header">V2</h5>
+                        <a class="dropdown-item" onclick="retail.sync2bolt()" href="javascript:void(0)"><i class="bx bx-sync"></i> sync2bolt</a>
+                        <a class="dropdown-item" onclick="retail.mark_send2bold()" href="javascript:void(0)"><i class="bx bx-checkbox-checked"></i>mark_send2bold</a>
+                        <div class="dropdown-divider"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -16,25 +33,49 @@
         <table class="table datatable">
             <thead>
                 <tr>
+                    <th>IMAGE</th>
+                    <th>GROUP</th>
+                    <th>SUN GROUP</th>
                     <th>BARCODE</th>
                     <th>NAME</th>
+                    <th>ACT</th>
                     <th>BOLT PRICE</th>
                     <th>INVENTORY PRICE</th>
                     <th>SPINTEX</th>
                     <th>NIA</th>
                     <th>OSU</th>
+                    <th>SYNC</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in items %}
-                    <tr class="{% if item.price != item.inv_price %}bg-warning{% endif %}">
+                    <tr class="{% if item.is_sync == False %}text-warning{% endif %}">
+                        <td><img onclick="windowPopUp(`{{ item.image.url }}`,'',600,600)" src="{{ item.image.url }}" alt="" style="width: 50px" class="img-fluid"></td>
+                        <td>{{ item.group.name }} </td>
+                    <td>{{ item.subgroup.name }}</td>
                         <td>{{ item.product.barcode }}</td>
                         <td>{{ item.product.name }}</td>
+                        <td>
+                            <div class="dropdown">
+                              <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                
+                              </button>
+                              <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                  <div class="dropdown-header">Menu</div>
+                                  <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="javascript:void(0)" onclick="retail.changeBoltGroupScreen('{{ item.pk }}')">Change Category</a>
+                                <a class="dropdown-item" href="#">Another action</a>
+                                <a class="dropdown-item" href="#">Something else here</a>
+                              </div>
+                            </div>
+
+                        </td>
                         <td>{{ item.price }}</td>
                         <td>{{ item.product.price }}</td>
                         <td class="{% if item.stock_spintex == 1 %}text-success{% else %}text-danger{% endif %}">{{ item.stock_spintex }}</td>
                         <td class="{% if item.stock_nia == 1 %}text-success{% else %}text-danger{% endif %}">{{ item.stock_nia }}</td>
                         <td class="{% if item.stock_osu == 1 %}text-success{% else %}text-danger{% endif %}">{{ item.stock_osu }}</td>
+                        <td>{{ item.is_sync }}</td>
                     </tr>
                 {% endfor %}
             </tbody>

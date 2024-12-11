@@ -13,6 +13,7 @@ from blog.anton import make_md5
 from ocean import settings
 
 
+
 # CLERKS
 class Clerk(models.Model):
     location = models.ForeignKey('admin_panel.Locations', on_delete=models.CASCADE)
@@ -43,9 +44,21 @@ class BoltGroups(models.Model):
         return BoltItems.objects.filter(group=self)
 
 
+
+class BoltSubGroups(models.Model):
+    name = models.CharField(unique=False, max_length=266)
+    group = models.ForeignKey(BoltGroups, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('group', 'name')
+
+
 class BoltItems(models.Model):
     product = models.OneToOneField('Products', on_delete=models.CASCADE,null=True)
     price = models.DecimalField(max_digits=10, decimal_places=3,default=0.000)
+
+    group = models.ForeignKey(BoltGroups, on_delete=models.CASCADE)
+    subgroup = models.ForeignKey(BoltSubGroups, on_delete=models.CASCADE)
 
     stock_nia = models.IntegerField(null=False, blank=False)
     stock_spintex = models.IntegerField(null=False, blank=False)
@@ -53,6 +66,18 @@ class BoltItems(models.Model):
 
     created_on = models.DateTimeField(auto_now_add=True)
     edited_on = models.DateTimeField(auto_now=True)
+
+    is_sync = models.BooleanField(default=False)
+    group_changed = models.BooleanField(default=False)
+
+    image = models.ImageField(upload_to='static/uploads/dolphine/bolt/', null=True,default='static/uploads/dolphine/bolt/default.png')
+
+    def stock(self):
+        obj = {}
+        from retail.db import get_stock
+        stk = get_stock(self.product.code)
+        return stk
+
 
 
 class ProductSupplier(models.Model):
@@ -96,7 +121,26 @@ class Products(models.Model):
     name = models.CharField(unique=False, max_length=100)
     price = models.DecimalField(decimal_places=3, max_digits=60)
     stock_monitor = models.BooleanField(default=False)
+    image = models.ImageField(upload_to='static/uploads/dolphine/bolt/', null=True,
+                              default='static/uploads/dolphine/bolt/default.png')
 
+    def obj(self):
+        image_url = ""
+        if BoltItems.objects.filter(product=self).exists():
+            image_url = BoltItems.objects.filter(product=self).first().image.url
+        else:
+            image_url = self.image.url if self.image else 'static/uploads/dolphine/bolt/default.png'
+        return {
+            'pk':self.pk,
+            'name':self.name,
+            'barcode':self.barcode,
+            'price':self.price,
+            'stock_monitor':self.stock_monitor,
+            'image':image_url,
+            'next':Products.objects.filter(pk__gt=self.pk).first().pk if Products.objects.filter(pk__gt=self.pk).exists() else 0,
+            'previous': Products.objects.filter(pk__lt=self.pk).last().pk if Products.objects.filter(pk__lt=self.pk).exists() else 0,
+            'stock':self.live_stock()
+        }
 
     def is_on_bolt(self):
         barcode = self.barcode.strip()
@@ -104,6 +148,10 @@ class Products(models.Model):
             return True
         else:
             return False
+
+    def live_stock(self):
+        from retail.db import get_stock
+        return get_stock(self.code)
 
     def stock(self):
         arr = []
@@ -456,3 +504,47 @@ class SampleTran(models.Model):
     tran_amt = models.DecimalField(decimal_places=3,max_digits=10,default=0.000)
 
     sync_on = models.DateTimeField(auto_now=True)
+
+
+class BillHeader(models.Model):
+    loc = models.ForeignKey(Locations,on_delete=models.CASCADE)
+    bill_no = models.IntegerField()
+    bill_ref = models.CharField(max_length=20,unique=True,null=False,blank=False)
+    pay_mode = models.CharField(max_length=20)
+    bill_date = models.DateField()
+    bill_time = models.TimeField()
+
+    class Meta:
+        unique_together = (('loc','bill_ref'),)
+
+    def transactions(self):
+        pass 
+
+
+class BillTrans(models.Model):
+    bill = models.ForeignKey(BillHeader,on_delete=models.CASCADE)
+    time = models.TimeField()
+    product = models.ForeignKey(Products,on_delete=models.CASCADE)
+    quantity = models.DecimalField(decimal_places=3,max_digits=10,default=0.000)
+    price = models.DecimalField(decimal_places=3,max_digits=10,default=0.000)
+
+    added_on = models.DateTimeField(auto_now=True)
+
+
+    def obj(self):
+        return {
+            'pk':self.pk,
+            'name':self.product.name,
+            'barcode':self.product.barcode,
+            'quantity':self.quantity,
+            'price':self.price,
+            'total':self.quantity * self.price,
+            'time':self.time,
+            'bill_no':self.bill.bill_no,
+            'bill_ref':self.bill.bill_ref,
+            'location':self.bill.loc.descr,
+        }
+
+    def transactions(self):
+        pass
+

@@ -197,13 +197,7 @@ class Anton {
         const input = document.getElementById(`${element}`);
             const fileStatus = document.getElementById('fileStatus');
 
-            if (input.files.length > 0) {
-                return true
-            } else {
-
-                return
-
-            }
+            return input.files.length > 0;
     }
 }
 

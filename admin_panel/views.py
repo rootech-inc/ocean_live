@@ -2559,3 +2559,5 @@ def log500(request):
         Log500(path=path, what=what).save()
         messages.success(request, "Page Error has been reported")
         return redirect('home')
+
+

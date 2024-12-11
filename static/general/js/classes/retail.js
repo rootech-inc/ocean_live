@@ -218,7 +218,7 @@ class Retail {
             for (let p = 0; p < products.length; p++) {
                 let product = products[p];
                 console.table(product)
-                let group,subgroup,barcode,name,price,is_on_bolt;
+                let group,subgroup,barcode,name,price,is_on_bolt,sold;
                 let item_code = product['item_code'];
                 group = product['group_name'];
                 subgroup = product['sub_group_name'];
@@ -226,18 +226,42 @@ class Retail {
                 name = product['name'];
                 price = product['retail1'];
                 is_on_bolt = product['is_on_bolt']
-                is_on_bolt = `
+                sold = product['sold']
+                if (sold == 'null'){
+                    sold = 0
+                }
+                let bolt_hg = "fa fa-square-o border-success";
+                if(is_on_bolt){
+                    bolt_hg = 'fa fa-check text-success'
+                }
+                let r_id = `row_${item_code}`
+
+                let dropa = "";
+
+                dropa += `<a class="dropdown-item" href="javascript:void(0)" onclick="retail.changeProductCategory('${item_code}')">Change Group</a>`
+                dropa += `<a class="dropdown-item" href="javascript:void(0)" onclick="retail.viewStock('${item_code}')">See Stock</a>`
+                if(!is_on_bolt){
+                    dropa += `<a class="dropdown-item" href="javascript:void(0)" onclick="retail.Mark2BoltScreen('${barcode}')">Mark For Bolt</a>`
+                }
+
+
+                let drop = `
                     <div class="dropdown">
-                    <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <button class="btn btn-primary  dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="fa fa-info"></i>
                     </button>
                     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <a class="dropdown-item" href="javascript:void(0)" onclick="retail.changeProductCategory('${item_code}')">Change Group</a>
+                    ${dropa}
                     </div>
                 </div>
                 `
+
+                // tr += `
+                //     <tr id="${r_id}"><td>${group}</td><td>${subgroup}</td><td>${barcode}</td><td>${name}</td><td>${price}</td><td>${is_on_bolt}</td></tr>
+                // `;
+
                 tr += `
-                    <tr><td>${group}</td><td>${subgroup}</td><td>${barcode}</td><td>${name}</td><td>${price}</td><td>${is_on_bolt}</td></tr>
+                    <tr id="${r_id}"><td>${barcode}</td><td>${name}</td><td>${price}</td><td>${sold}</td><td><i class="${bolt_hg}"></i></td><td>${drop}</td></tr>
                 `;
             }
 
@@ -245,11 +269,11 @@ class Retail {
                 `<table class="table table-bordered table-stripped datatable table-bordered">
                     <thead class="thead-dark">
                     <tr>
-                        <th>GROUP</th>
-                        <th>SUB GROUP</th>
                         <th>BARCODE</th>
                         <th>NAME</th>
                         <th>PRICE</th>
+                        <th title="Sold since 2024">SSOLD</th>
+                        <th>SERVICES</th>
                         <th>ACTION</th>
                     </tr>
                     </thead>
@@ -866,8 +890,8 @@ class Retail {
         amodal.show()
     }
 
-    loadSales(loc_id = '*') {
-        let sales = this.getSales(loc_id)
+    loadSales(limit = 10) {
+        let sales = this.getSales(limit)
         let tr = "";
         if(anton.IsRequest(sales)){
             let message = sales.message
@@ -881,13 +905,13 @@ class Retail {
                 let sale = message[i];
                 tr += `
                     <tr>
-                                <td>${sale['loc_name']}</td>
+                                <td>${sale['location']}</td>
                                 <td>${sale['time']}</td>
                                 <td>${sale['barcode']}</td>
                                 <td>${sale['name']}</td>
-                                <td>${sale['tran_qty']}</td>
-                                <td>${sale['unit_price']}</td>
-                                <td>${sale['tran_amt']}</td>
+                                <td>${sale['quantity']}</td>
+                                <td>${sale['price']}</td>
+                                <td>${sale['total']}</td>
 
                             </tr>
                 `;
@@ -899,13 +923,11 @@ class Retail {
         $('#sales').html(tr)
     }
 
-    getSales(loc_id = '*',date_from = today,date_to = today) {
+    getSales(limit = 10) {
         let payload = {
-            module:'sales',
+            module:'transactions_today',
             data:{
-                loc:loc_id,
-                date_from:date_from,
-                date_to:date_to,
+                limit:limit
             }
         }
 
@@ -999,9 +1021,18 @@ class Retail {
                 data:anton.Inputs(ids)
             }
 
+            let item_code = payload['data']['item_code'];
+
             payload.data['new_sub_subgroup'] = $('#new_sub_subgroup').val()
 
-            kasa.response(api.call('PATCH',payload,'/retail/api/'))
+            // amodal.setFooterHtml(`<button class="w-100 btn btn-success w-100" onclick="amodal.hide()">OK</button>`)
+            // amodal.setBodyHtml(api.call('PATCH',payload,'/retail/api/')['message'])
+            kasa.info(api.call('PATCH',payload,'/retail/api/')['message'])
+            let r_id = `#row_${item_code}`
+            $(r_id).remove();
+            amodal.hide()
+            // retail.loadProducts()
+            // kasa.confirm(api.call('PATCH',payload,'/retail/api/')['message'],1,'here')
         } else {
             kasa.error("Invalid Form")
         }
@@ -1270,6 +1301,414 @@ class Retail {
         }
 
     }
+
+    newBoltGroupScrren() {
+        let form = "";
+        form += fom.text('name','',true)
+
+        amodal.setBodyHtml(form)
+        amodal.setTitleText('NEW BOLT GROUP')
+        amodal.setFooterHtml(`<button onclick="retail.saveBoltCategory()" class="btn btn-success w-100">SAVE</button>`)
+        amodal.show()
+    }
+
+    saveBoltCategory() {
+        let ids = ['mypk','name']
+        if(anton.validateInputs(ids)){
+            let payload = {
+                module:'bolt_group',
+                data:anton.Inputs(ids)
+            }
+
+            kasa.confirm(api.call('PUT',payload,'/retail/api/')['message'],1,'here')
+
+        } else {
+            kasa.error("Invalid Form")
+        }
+    }
+
+    deleteBoltGroup(id) {
+        let payload = {
+            module:'bolt_group',
+            data:{pk:id}
+        }
+
+        kasa.confirm(api.call("DELETE",payload,'/retail/api/')['message'],1,'here')
+    }
+
+    addProduct2groupScreen(group_pk) {
+        // get all products
+        let products = retail.getProduct('');
+        if(anton.IsRequest(products)){
+            let prods = products.message;
+            console.table(prods)
+        } else {
+            kasa.response(products)
+        }
+
+    }
+
+    getBoltGroups(pk='*'){
+        let payload = {
+            module:'bolt_group',
+            data:{
+                pk:"*"
+            }
+        }
+
+        return api.call('VIEW', payload, '/retail/api/')
+    }
+
+    getBoltSubGroups(pk){
+        let payload = {
+                module:'bolt_sub_group',
+                data:{
+                    key:pk
+                }
+            }
+
+        return api.call('VIEW', payload, '/retail/api/')
+    }
+
+    Mark2BoltScreen(barcode) {
+        let payload = {
+            module:'bolt_group',
+            data:{
+                pk:"*"
+            }
+        }
+
+        let groups = api.call('VIEW',payload,'/retail/api/')['message']
+        let product = retail.getProduct(barcode)['message'][0]['name']
+
+
+        let gob = [];
+        for (let g = 0; g < groups.length; g++){
+            let grp = groups[g];
+            console.table(grp)
+            let x = {
+                val:grp['pk'],
+                desc:grp['name']
+            }
+
+            gob.push(x)
+        }
+
+
+        let image_form = `
+            <form action="/retail/bolt/upload_image/" id="bolt_img_form" method="post" enctype="multipart/form-data" class="w-100"><input name="image" id="bolt_image_input" type="file" accept="image/*"><input type="text" class="form-control rounded-0" readonly value="${barcode}" name="barcode"></form><div><img src="" style="width: 200px" alt="" class="img-fluid" id="bolt_img"></div>
+        `;
+
+        let form = "";
+
+       let category = fom.selectv2('category',gob,'',true)
+        let sub_category = fom.selectv2('sub_category',[],'',true)
+        let name_frm = `<input class="form-control rounded-0" readonly value="${product}">`
+        form += `
+            <div class="row"><div class="col-sm-6">${image_form}</div><div class="col-sm-6">${name_frm}${category}${sub_category}</div></div>
+        `
+
+
+
+
+        amodal.setBodyHtml(form);
+        amodal.setTitleText("Mark For Bolt Sync")
+        amodal.setFooterHtml(`<button onclick="retail.mark2Bolt('${barcode}')" class="btn btn-success w-100">MARK</button>`)
+        amodal.setSize('L')
+        amodal.show()
+
+        $('#category').change(function(){
+            // load sub
+            console.log("hello")
+            let payload = {
+                module:'bolt_sub_group',
+                data:{
+                    key:$('#category').val()
+                }
+            }
+
+            let sub_groups = api.call('VIEW',payload,'/retail/api/')['message']
+
+
+            let sub_gob ='';
+            for (let g = 0; g < sub_groups.length; g++){
+                let grp = sub_groups[g];
+                sub_gob += `<option value="${grp['pk']}">${grp['name']}</option>`
+            }
+
+            $('#sub_category').html(sub_gob)
+        });
+
+
+
+    }
+
+    mark2Bolt(barcode) {
+        let ids = ['category','sub_category'];
+        if(anton.validateInputs(ids) && anton.isInputFiles('bolt_image_input')){
+            let payload = {
+                module:'mark2bolt',
+                data:anton.Inputs(ids)
+            }
+
+            payload['data']['barcode'] = barcode;
+
+            let mark = api.call('PATCH',payload,'/retail/api/');
+            if(anton.IsRequest(mark)){
+                $('#bolt_img_form').submit()
+            } else {
+                kasa.response(mark)
+            }
+            // kasa.confirm(api.call('PATCH',payload,'/retail/api/')['message'],1,'here')
+
+        } else {
+            kasa.error("Invalid Form")
+        }
+    }
+
+    sync2bolt() {
+        let payload = {
+            "module":"send2bolt",
+            "data":{}
+        }
+
+        let call = api.call("VIEW",payload,'/retail/api/')
+        if(anton.IsRequest(call)){
+            let files = call['message'];
+            let images,products,prices,stock;
+            images = files['images']
+            products = files['csv'];
+            prices = files['prices']
+            stock = files['stock']
+
+            let html = `
+                <table class="table table-striped table-bordered"><thead><tr><th>FILE</th><th>ACTION</th></tr></thead>
+                   <tbody>
+                   <tr><td>IMAGES</td><td><a href="/${images}"><i class="fa fa-download"></i></a></td></tr>
+                   <tr><td>PRODUCTS</td><td><a href="/${products}"><i class="fa fa-download"></i></a></td></tr>
+                   <tr><td>PRICES</td><td><a href="/${prices}"><i class="fa fa-download"></i></a></td></tr>
+                   <tr><td>STOCK</td><td>
+                    <a href="/${stock['spintex']}"><i class="fa fa-download"></i></a> Spintex <br>
+                    <a href="/${stock['nia']}"><i class="fa fa-download"></i></a> NIA <br>
+                    <a href="/${stock['osu']}"><i class="fa fa-download"></i></a> OSU
+                   </td></tr>
+                   </tbody></table>
+            `
+
+            amodal.setBodyHtml(html)
+            amodal.show()
+            amodal.setTitleText("Downlaod FOr Bolt")
+
+        } else {
+            kasa.response(call)
+        }
+
+    }
+
+    changeBoltGroupScreen(s) {
+
+        let product_detail = this.getBoltProduct(s)['message'][0]
+        console.table(product_detail)
+
+        let form  = "";
+        let top_div = `
+            <p><strong>BARCODE</strong> ${product_detail['barcode']}</p>
+            <p><strong>NAME</strong> ${product_detail['item_des']}</p>
+            <p><strong>GROUP</strong> ${product_detail['group'].name} / ${product_detail['subgroup'].name}</p>
+        `;
+
+        let options = "";
+
+        let groups = this.getBoltGroups('*')
+        if(anton.IsRequest(groups)){
+            let grps = groups.message;
+            let arr = [];
+            for(let g = 0; g < grps.length; g++){
+                let grp = grps[g];
+                // make object
+                arr.push({
+                    val:grp['pk'],desc:grp['name']
+                })
+            }
+
+            options = arr
+
+        } else {
+            kasa.response(groups);
+            throw Error("Error")
+        }
+
+        form += top_div
+
+        form += fom.selectv2('category',options,'',true)
+        form += fom.selectv2('sub_category',[],'',true)
+
+        amodal.setBodyHtml(form)
+        amodal.setTitleText("Change Category")
+        amodal.setFooterHtml(`<button onclick="retail.commitBoltGroupChange('${s}')" class="w-100 btn btn-success">CHANGE</button>`)
+        amodal.show()
+
+        $('#category').change(function(){
+            let pk = $('#category').val();
+            let subsx = retail.getBoltSubGroups(pk);
+
+            if(anton.IsRequest(subsx)){
+                let subs = subsx['message'];
+
+                let s_opts = '';
+                for(let s = 0; s < subs.length; s++) {
+                    let sub = subs[s];
+                    s_opts += `<option value="${sub['pk']}">${sub['name']}</option>`
+                }
+                $('#sub_category').html(s_opts)
+            } else {
+                kasa.response(subsx)
+            }
+
+        });
+    }
+
+    getBoltProduct(pk) {
+        return api.call("VIEW",{module:"bolt_products",data:{pk:pk}},'/retail/api/');
+    }
+
+    commitBoltGroupChange(pk) {
+        let ids = ['category,sub_category'];
+        if(anton.validateInputs(ids)){
+            let payload = {
+                module:'bolt_group',
+                data:anton.Inputs(ids)
+            }
+
+            payload['data']['pk'] = pk;
+
+            kasa.confirm(api.call('PATCH',payload,'/retail/api/')['message'],1,'here')
+
+        } else {
+            kasa.error("Invalid Form")
+        }
+    }
+
+    getStock(item_code){
+        return api.call('VIEW',{module:'stock',data:{item_code:item_code}},'/retail/api/')
+    }
+
+    viewStock(itemCode) {
+        let stock = this.getStock(itemCode);
+        if(anton.IsRequest(stock)){
+            let message = stock.message;
+            console.table(message)
+            // display stock
+            let tr = ``
+            for (const trKey in message) {
+                tr += `
+                    <tr><td><strong>${trKey}</strong></td><td>${message[trKey]}</td></tr>
+                `
+            }
+
+            amodal.setBodyHtml(`<table class="table table-striped table-bordered">${tr}</table>`)
+            amodal.show()
+
+        } else {
+            kasa.response(stock)
+        }
+    }
+
+    mark_send2bold() {
+        if(confirm("Are you sure you want to send to bolt?")){
+            let payload = {
+                module:'mark_send2bold',
+                data:{}
+            }
+
+            let response = api.call('VIEW',payload,'/retail/api/');
+            if(anton.IsRequest(response)){
+                let link = response.message
+                anton.viewFile(`/${link}`)
+            } else {
+                kasa.response(response)
+            }
+
+        } else {
+            kasa.info("Cancelled")
+        }
+    }
+
+    loadCard(s) {
+        console.log(s)
+        let product = this.getCardProduct(s);
+        if(anton.IsRequest(product)){
+            let message = product['message'][0];
+            $('#previous').val(message['previous'])
+            $('#next').val(message['next'])
+            $('#image').attr('src',`${message['image']}`)
+
+            let stock = message['stock'];
+
+            let str = ""
+            for (const trKey in stock) {
+                str += `<tr><td>${trKey}</td><td>${stock[trKey]}</td></tr>`
+            }
+
+            $('#stock_body').html(str)
+
+            let live_product = this.getProduct(message['barcode'])['message'][0];
+
+
+            anton.setValues(live_product)
+            console.table(live_product)
+
+        } else {
+            kasa.response(product)
+        }
+    }
+
+    getCardProduct(pk='*') {
+        return api.call("VIEW",{
+            module:'prod',
+            data:{
+                pk:pk
+            },
+
+        },'/retail/api/');
+    }
 }
 
 const retail = new Retail();
+
+$(document).on('change', '#bolt_image_input', function() {
+    console.log("Bolt Image Loading")
+    const file = this.files[0]; // Get the selected file
+
+    if (file) {
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            $('#bolt_img').attr('src', e.target.result).show(); // Set image source and make it visible
+        };
+
+        reader.readAsDataURL(file); // Read the file as a data URL
+    }
+});
+
+ $(document).on('submit', '#bolt_img_form', function(e) {
+            e.preventDefault(); // Prevent the default form submission
+            console.log("Sending Image")
+            const form = $(this);
+            const formData = new FormData(form[0]); // Create FormData object from the form
+
+            $.ajax({
+                type: 'POST', // Or use form.attr('method') if you want it dynamic
+                url: form.attr('action'), // Form action or current page URL
+                data: formData,
+                contentType: false, // Prevent jQuery from setting content type
+                processData: false, // Prevent jQuery from processing data
+                success: function(response) {
+                    console.table(response)
+                    kasa.confirm(response.message,1,'here')
+                },
+                error: function(xhr) {
+                    $('#response').html('<p>Error: ' + xhr.responseText + '</p>');
+                }
+            });
+        });

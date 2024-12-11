@@ -18,11 +18,11 @@ from sympy import Product
 from admin_panel.anton import format_currency
 from admin_panel.models import Emails, Locations
 from inventory.views import transfer
-from ocean.settings import RET_DB_HOST, RET_DB_USER, RET_DB_PASS, RET_DB_NAME
+from ocean.settings import RET_DB_HOST, RET_DB_USER, RET_DB_PASS, RET_DB_NAME, BOLT_PROVIDER_ID, BOLT_MARGIN
 from retail.db import ret_cursor, get_stock, updateStock, percentage_difference
 from retail.models import BoltItems, BoltGroups, ProductSupplier, ProductGroup, ProductSubGroup, Products, Stock, \
     RecipeGroup, RecipeProduct, Recipe, StockHd, StockMonitor, RawStock, ButcheryLiveTransactions, ButchSales, \
-    StockToSend, TranHd, TranTr, RetailSales, SampleHd, SampleTran
+    StockToSend, TranHd, TranTr, RetailSales, SampleHd, SampleTran, BoltSubGroups, BillHeader, BillTrans
 from retail.prodMast import ProdMaster
 from retail.retail_tools import create_recipe_card
 
@@ -55,7 +55,12 @@ def interface(request):
                 #print(data)
 
                 item_code = data.get('item_code').replace("\n", "")
+
+                group_name = data.get('group_name')
+                sub_group_name = data.get('sub_group_name')
                 #print(item_code)
+                if Products.objects.filter(barcode=item_code).count() == 0:
+                    item_code = f"0{item_code}"
                 pd = Products.objects.get(barcode=item_code)
                 price = pd.price
                 item_code = pd.code
@@ -69,8 +74,58 @@ def interface(request):
 
                 BoltItems.objects.filter(product=pd).delete()
 
-                BoltItems(product=pd,price=price,stock_nia=nia_stock,stock_spintex=spintex_stock,stock_osu=osu_stock).save()
+                if BoltGroups.objects.filter(name=group_name).count() == 0:
+                    BoltGroups.objects.create(name=group_name)
+
+                group = BoltGroups.objects.get(name=group_name)
+
+                if BoltSubGroups.objects.filter(name=sub_group_name).count() == 0:
+                    BoltSubGroups.objects.create(name=sub_group_name,group=group)
+
+                subgroup = BoltSubGroups.objects.get(name=sub_group_name)
+
+
+
+
+                BoltItems(product=pd,price=price,stock_nia=nia_stock,stock_spintex=spintex_stock,stock_osu=osu_stock,group=group.pk,subgroup=subgroup.pk).save()
                 success_response['message'] = "Product Added"
+
+            elif module == 'bill':
+                header = data.get('header')
+                transactions = data.get('transactions')
+
+                location = Locations.objects.get(code=header.get('loc_id'))
+                bill_no = header.get('bill_no')
+                bill_ref = header.get('bill_ref')
+                pay_mode = header.get('pay_mode')
+                bill_date = header.get('bill_date')
+                bill_time = header.get('bill_time')
+
+                BillHeader.objects.filter(bill_ref=bill_ref).delete()
+                # save header
+                BillHeader.objects.create(loc=location,bill_no=bill_no,bill_ref=bill_ref,pay_mode=pay_mode,bill_date=bill_date,bill_time=bill_time)
+                # get the just created
+                bill = BillHeader.objects.get(bill_ref=bill_ref)
+
+                # save transactions
+                for tran in transactions:
+                    print(tran)
+                    time = tran.get('time')
+                    barcode = tran.get('barcode')
+                    quantity = tran.get('quantity')
+                    price = tran.get('price')
+                    prod_id = tran.get('prod_id')
+                    tran_type = tran.get('tran_type')
+
+                    print(barcode)
+                    print(prod_id)
+                    print(tran_type)
+                    if tran_type == 'S':
+                        product = Products.objects.get(code=prod_id)
+                        BillTrans.objects.create(bill=bill,product=product,quantity=quantity,time=time,price=price)
+
+
+
 
             elif module == 'sample':
                 loc_id = data.get('location')
@@ -232,11 +287,26 @@ def interface(request):
 
             elif module == 'bolt_group':  # add bolt group
                 name = data.get('name')
+                subs = data.get('subs')
+                print(subs)
                 try:
-                    BoltGroups(name=name).save()
+                    if BoltGroups.objects.filter(name=name).count() == 0:
+                        BoltGroups(name=name).save()
+
+                    group = BoltGroups.objects.get(name=name)
+                    for sub in subs:
+                        print(sub)
+                        if BoltSubGroups.objects.filter(name=sub,group=group).count() == 0:
+                            BoltSubGroups.objects.create(group=group, name=sub)
+
+                    success_response['message'] = BoltGroups.objects.get(name=name).pk
+
                 except Exception as e:
-                    pass
-                success_response['message'] = BoltGroups.objects.get(name=name).pk
+                    success_response['status_code'] = 500
+                    success_response['message'] = str(e)
+
+
+
 
             elif module == 'sync_retail_suppliers':
                 query = "select supp_code as 'code',supp_name as 'name',contact as 'person',phone1 as 'phone',address1 as 'email',address2 as 'city',country_id as 'country' from supplier"
@@ -719,6 +789,20 @@ def interface(request):
                 success_response['message'] = arr
                 response = success_response
 
+            elif module == 'transactions_today':
+                from datetime import datetime
+                today = datetime.now().strftime('%Y-%m-%d')
+                limit = data.get('limit',0)
+                # get some alphas
+                transactions = BillTrans.objects.filter(bill__bill_date=today).order_by('-time')
+                if limit > 0:
+                    transactions = transactions[:limit]
+                arr = []
+                for tran in transactions:
+                    arr.append(tran.obj())
+
+                success_response['message'] = arr
+
             elif module == 'analysis_for_transfer':
                 loc_id = data.get('location')
                 loc = Locations.objects.get(code=loc_id)
@@ -982,16 +1066,19 @@ def interface(request):
                 for item in items:
                     item_list.append({
                         'pk': item.pk,
-                        'barcode': item.barcode,
-                        'item_des': item.item_des,
+                        'barcode': item.product.barcode,
+                        'item_des': item.product.name,
                         'price': item.price,
-                        'price_diff': item.price_diff,
                         'stock_nia': item.stock_nia,
                         'stock_spintex': item.stock_spintex,
                         'stock_osu': item.stock_osu,
                         'group': {
                             'pk': item.group.pk,
                             'name': item.group.name
+                        },
+                        'subgroup': {
+                            'pk': item.subgroup.pk,
+                            'name': item.subgroup.name
                         }
                     })
 
@@ -1001,9 +1088,25 @@ def interface(request):
                 pk = data.get('key') or '*'
                 grps = []
                 if pk == '*':
-                    groups = BoltGroups.objects.all()
+                    groups = BoltGroups.objects.all().order_by('name')
                 else:
-                    groups = BoltGroups.objects.filter(pk=pk)
+                    groups = BoltGroups.objects.filter(pk=pk).order_by('name')
+
+                for group in groups:
+                    grps.append({
+                        'pk': group.pk,
+                        'name': group.name
+                    })
+
+                success_response['message'] = grps
+
+            elif module == 'bolt_sub_group':
+                pk = data.get('key') or '*'
+                grps = []
+                if pk == '*':
+                    groups = BoltSubGroups.objects.all().order_by('name')
+                else:
+                    groups = BoltSubGroups.objects.filter(group_id=pk).order_by('name')
 
                 for group in groups:
                     grps.append({
@@ -1190,7 +1293,7 @@ def interface(request):
                     row = 2
 
                     for item in items:
-                        sheet[f'A{row}'] = item.product.subgroup.group.name
+                        sheet[f'A{row}'] = f"{item.group.name} / {item.subgroup.name}"
                         sheet[f'B{row}'] = item.product.barcode
                         sheet[f'C{row}'] = item.product.name
                         sheet[f'D{row}'] = item.price
@@ -2099,25 +2202,75 @@ def interface(request):
             elif module == 'prod_master':
                 item_code = data.get('item_code','')
                 arr = []
+                # query = f"""
+                #
+                #     SELECT
+                #     item_code,
+                #     group_code,(SELECT RTRIM(LTRIM(group_des)) from group_mast gm where gm.group_code = pm.group_code)as 'group_name',
+                #     sub_group,(SELECT RTRIM(LTRIM(sub_group_des)) from sub_group sg where sg.group_code = pm.group_code and sub_group = pm.sub_group) as 'sub_group_name',
+                #     sub_subgroup,(SELECT sub_subgroup_des FROM sub_subgroup ssg where ssg.group_code = pm.group_code and ssg.sub_subgroup = pm.sub_subgroup and ssg.sub_group = pm.sub_group) as 'sub_sub_name',
+                #     RTRIM(barcode) as 'barcode',
+                #     RTRIM(item_des) as 'name',
+                #     retail1,
+                #     (select SUM(tran_qty) from pos_tran where prod_id = pm.item_code and entry_no in (SELECT entry_no from pos_tran_hd where entry_date >= '2024-01-01')) as 'sold'
+                #      from prod_mast pm where pm.item_code like '%{item_code}%' or barcode like '%{item_code}%' and is_gp_chg = 0 and item_type != 0 order by pm.item_des
+                #
+                # """
+
                 query = f"""
-                
-                    SELECT 
-                    item_code,
-                    group_code,(SELECT RTRIM(LTRIM(group_des)) from group_mast gm where gm.group_code = pm.group_code)as 'group_name',
-                    sub_group,(SELECT RTRIM(LTRIM(sub_group_des)) from sub_group sg where sg.group_code = pm.group_code and sub_group = pm.sub_group) as 'sub_group_name',
-                    sub_subgroup,(SELECT sub_subgroup_des FROM sub_subgroup ssg where ssg.group_code = pm.group_code and ssg.sub_subgroup = pm.sub_subgroup and ssg.sub_group = pm.sub_group) as 'sub_sub_name',
-                    RTRIM(barcode) as 'barcode',
-                    RTRIM(item_des) as 'name',
-                    retail1
-                     from prod_mast pm where pm.item_code like '%{item_code}%' order by pm.item_des 
-                
+                    
+                    WITH SoldData AS (
+    SELECT
+        prod_id,
+        SUM(tran_qty) AS sold
+    FROM
+        pos_tran pt
+    JOIN
+        pos_tran_hd pth ON pt.entry_no = pth.entry_no
+    WHERE
+        pth.entry_date >= '2024-01-01'
+    GROUP BY
+        prod_id
+)
+SELECT 
+    pm.item_code,
+    pm.group_code,
+    RTRIM(LTRIM(gm.group_des)) AS group_name,
+    pm.sub_group,
+    RTRIM(LTRIM(sg.sub_group_des)) AS sub_group_name,
+    pm.sub_subgroup,
+    RTRIM(ssg.sub_subgroup_des) AS sub_sub_name,
+    RTRIM(pm.barcode) AS barcode,
+    RTRIM(pm.item_des) AS name,
+    pm.retail1,
+    COALESCE(sd.sold, 0) AS sold
+FROM 
+    prod_mast pm
+LEFT JOIN 
+    group_mast gm ON gm.group_code = pm.group_code
+LEFT JOIN 
+    sub_group sg ON sg.group_code = pm.group_code AND sg.sub_group = pm.sub_group
+LEFT JOIN 
+    sub_subgroup ssg ON ssg.group_code = pm.group_code AND ssg.sub_group = pm.sub_group AND ssg.sub_subgroup = pm.sub_subgroup
+LEFT JOIN 
+    SoldData sd ON sd.prod_id = pm.item_code
+WHERE 
+    (pm.item_code LIKE '%{item_code}%' OR pm.barcode LIKE '%{item_code}%') 
+    AND pm.is_gp_chg = 0 
+    AND pm.item_type != 0
+ORDER BY 
+    pm.item_des;
+
+            
                 """
 
                 conn = ret_cursor()
                 cursor = conn.cursor()
                 cursor.execute(query)
                 for item in cursor.fetchall():
-                    item_code,group_code,group_name,sub_group_code,sub_group_name,sub_subsub_group_code,sub_subsub_group_name,barcode,name,retail1 = item
+                    item_code,group_code,group_name,sub_group_code,sub_group_name,sub_subsub_group_code,sub_subsub_group_name,barcode,name,retail1,sold = item
+                    if sold == 'null':
+                        sold = 0
                     obj = {
                         "item_code":item_code,
                         "group_code":group_code,
@@ -2128,7 +2281,9 @@ def interface(request):
                         "sub_subsub_group_code":sub_subsub_group_code,
                         "sub_subsub_group_name":sub_subsub_group_name,
                         "barcode":barcode,
-                        "retail1":retail1
+                        "retail1":retail1,
+                        "is_on_bolt":True if BoltItems.objects.filter(product__barcode=barcode).exists() else False,
+                        'sold':sold
 
                     }
 
@@ -2138,6 +2293,22 @@ def interface(request):
                 conn.close()
                 success_response['message'] = arr
                 response = success_response
+
+            elif module == 'prod':
+                pk = data.get('pk','*')
+                if pk == '*':
+                    prods = Products.objects.all()
+                else:
+                    prods = Products.objects.filter(pk=pk)
+
+                for prod in prods:
+                    print(prod.obj())
+                    arr.append(prod.obj())
+
+
+
+                success_response['message'] = arr
+
 
             elif module == 'group_master':
                 query = "select RTRIM(group_code),RTRIM(LTRIM(group_des)) as 'group_name' from group_mast order by group_name"
@@ -2262,6 +2433,238 @@ def interface(request):
 
                 response = success_response
 
+            elif module == 'update_bolt_price':
+                products = BoltItems.objects.all()
+
+                arr = []
+                for product in products:
+                    price = product.price
+                    inv_price = product.product.price
+
+                    # if price !=  inv_price:
+                    if True:
+                        product.price = inv_price
+                        new_price = inv_price + inv_price * Decimal(0.30)
+                        print(new_price)
+                        arr.append({
+                            "sku":product.product.barcode,
+                            "base_selling_price":format_currency(new_price),
+                            "price_measure_unit":'piece'
+                        })
+
+                legend_payload = {
+                    "region_id": 0,
+                    "provider_ids": ["string"],
+                    "price_list": {
+                        "currency": "GHS",
+                        "skus":arr
+                    }
+                }
+
+                success_response['message'] = legend_payload
+                response = success_response
+
+            elif module == 'update_bolt_stock':
+                products = BoltItems.objects.all()
+                id = data.get('loc_id')
+                arr = []
+                for product in products:
+                    arr.append({
+                        "sku":product.product.barcode,
+                        "quantity":product.stock().get(id),
+                        'selling_unit':"pieces"
+
+                    })
+
+                legend_payload = {
+                    "provider_ids": ["string"],
+                    "sku_quantities": arr
+                }
+
+                success_response['message'] = legend_payload
+                response = success_response
+
+            elif module == 'send2bolt':
+                items = BoltItems.objects.filter(is_sync=False).order_by('product__name')
+                count = items.count()
+                countx = count
+                import csv
+
+                out = []
+                # out.append(["SKU","NAME","GROUP","PRICE"])
+                # for item in items:
+                #     # print(f"{str(count) }"f"/{ str(countx)}")
+                #     li = [item.product.barcode,item.product.name,f"{item.group.name}/{item.subgroup.name}",item.product.price]
+                #     print(li)
+                #     out.append(li)
+                #
+                #     count -= 1
+
+                providers_id = ""
+                for bolt_id in BOLT_PROVIDER_ID:
+                    print(bolt_id)
+                    row = BOLT_PROVIDER_ID[bolt_id]
+                    providers_id += f"{row.get('id')},"
+
+                # remove last comma
+                providers_id = providers_id[:-1]
+                print(providers_id)
+
+                import os
+                import zipfile
+                import shutil
+
+                time_ext = str(timezone.now()).replace(':', '_').replace(' ', '_')
+                folder = f"static/general/tmp/{time_ext}"
+                # Create the folder if it doesn't exist
+                if not os.path.exists(folder):
+                    os.makedirs(folder)
+
+
+                csv_file = f"static/general/tmp/bot_{time_ext}_file.csv"
+                prices_file = f"static/general/tmp/bot_{time_ext}_prices.csv"
+                spintex_stock_file = f"static/general/tmp/bot_{time_ext}_spintex_stock.csv"
+                nia_stock_file = f"static/general/tmp/bot_{time_ext}_nia_stock.csv"
+                osu_stock_file = f"static/general/tmp/bot_{time_ext}_osu_stock.csv"
+
+                with open(csv_file,mode='w',newline='', encoding="utf-8") as px,\
+                        open(prices_file,mode='w',newline='', encoding="utf-8") as prices,\
+                    open(spintex_stock_file, mode='w', newline='', encoding="utf-8") as spintex_stock,\
+                        open(nia_stock_file, mode='w', newline='', encoding="utf-8") as nia_stock,\
+                        open(osu_stock_file, mode='w', newline='', encoding="utf-8") as osu_stock:
+                    writer = csv.writer(px)
+                    pw = csv.writer(prices)
+                    spintex = csv.writer(spintex_stock)
+                    nia = csv.writer(nia_stock)
+                    osu = csv.writer(osu_stock)
+
+
+
+                    print("Writing to file")
+                    # Controlled loop to write each row
+                    header = [
+                        "SKU",
+                        "Barcode",
+                        "Name en-GH",
+                        "Name en-US",
+                        "Level 1 - Category",
+                        "Level 2 - Subcategory",
+                        "Provider IDs",
+                        "Sub-category code"
+                    ]
+                    writer.writerow(header)
+                    pw.writerow(["SKU","Selling price","Provier IDs"])
+                    stock_header = ['sku','quantity','address']
+                    nia.writerow(stock_header)
+                    osu.writerow(stock_header)
+                    spintex.writerow(stock_header)
+
+                    for item in items:
+                        li = [
+                            str(item.product.barcode),
+                            str(item.product.barcode),
+                            item.product.name,
+                            item.product.name,
+                            item.group.name,
+                            item.subgroup.name,
+                            str(providers_id),
+                            f"{item.group.name}/{item.subgroup.name}"
+                        ]
+
+                        stock = get_stock(item.product.code)
+                        sp_stk = [
+                            item.product.barcode,
+                            stock.get('spintex',5) if stock.get('spintex') > 0 else 5,
+                            BOLT_PROVIDER_ID.get('001')['address']
+                        ]
+                        ni_stk = [
+                            item.product.barcode,
+                            stock.get('nia',5)  if stock.get('nia') > 0 else 5,
+                            BOLT_PROVIDER_ID.get('202')['address']
+                        ]
+                        os_stk = [
+                            item.product.barcode,
+                            stock.get('osu',5)  if stock.get('osu') > 0 else 5,
+                            BOLT_PROVIDER_ID.get('205')['address']
+                        ]
+
+                        margin = BOLT_MARGIN / 100
+                        cap = Decimal(margin) * Decimal(item.product.price)
+                        price_with_margin = item.product.price + cap
+                        pw.writerow([str(item.product.barcode),price_with_margin,providers_id])
+                        nia.writerow(ni_stk)
+                        spintex.writerow(sp_stk)
+                        osu.writerow(os_stk)
+
+
+                        original_file = item.image.path
+                        file_name = os.path.basename(original_file)
+
+                        name, ext = os.path.splitext(file_name)
+                        new_file_name = f"{name}_image{ext}"
+
+                        destination_file = os.path.join(folder, f"{new_file_name}")
+                        shutil.copy(original_file, destination_file)
+
+                        # copy file
+
+
+                        print(li)
+                        out.append(li)
+                        writer.writerow(li)  # Writes each row once
+
+
+
+
+
+                original_file = csv_file
+                file_name = os.path.basename(original_file)
+                destination_file = os.path.join(folder, f"{file_name}")
+                shutil.copy(original_file, destination_file)
+
+                zip_filename = folder + ".zip"
+                # Compress the folder into a zip file
+                with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                    # Walk the directory tree and add all files to the zip
+                    for root, dirs, files in os.walk(folder):
+                        for file in files:
+                            zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), folder))
+
+                success_response['message'] = {
+                    "images":zip_filename,"csv":csv_file,'prices':prices_file,'stock':{
+                        'nia':nia_stock_file,'osu':osu_stock_file,'spintex':spintex_stock_file
+                    }
+                }
+
+            elif module == 'stock':
+                item_code = data.get('item_code')
+                success_response['message'] = get_stock(item_code)
+
+            elif module == 'mark_send2bold':
+                items = BoltItems.objects.filter(is_sync=False)
+                import openpyxl
+                wb = openpyxl.Workbook()
+                sh = wb.active
+                sh.title = "Sent To Bolt"
+                header = ["BARCODE","NAME","PRICE"]
+                sh.append(header)
+                for item in items:
+                    product = item.product
+                    margin = BOLT_MARGIN / 100
+                    cap = Decimal(margin) * Decimal(item.product.price)
+                    price_with_margin = item.product.price + cap
+                    li = [product.barcode,product.name,price_with_margin]
+                    sh.append(li)
+
+                time_ext = str(timezone.now()).replace(':', '_').replace(' ', '_')
+                file_name = f"static/general/tmp/sent_to_bolt_as_of_{time_ext}.xlsx"
+                wb.save(file_name)
+                # Filter the BoltItems having is_sync=False
+                BoltItems.objects.filter(is_sync=False).update(is_sync=True)
+
+                success_response['message'] = file_name
+
+
             else:
                 raise Exception("No View Module")
 
@@ -2274,6 +2677,29 @@ def interface(request):
                     item.price = item.product.price
                     item.save()
 
+            elif module == 'mark2bolt':
+                category = data.get('category')
+                sub_category = data.get('sub_category')
+                barcode = data.get('barcode')
+
+                group = BoltGroups.objects.get(pk=category)
+                sub = BoltSubGroups.objects.get(pk=sub_category)
+                product = Products.objects.get(barcode=barcode)
+
+                stock = get_stock(barcode)
+                stock_nia = stock.get('nia')
+                stock_spintex = stock.get('spintex')
+                stock_osu = stock.get('osu')
+
+
+                BoltItems.objects.create(
+                    product = product,
+                    group = group,
+                    subgroup = sub,stock_nia = stock_nia,stock_spintex = stock_spintex,stock_osu = stock_osu,
+                )
+
+                success_response['message'] = "Product Marked"
+
             elif module == 'sample_adjust':
                 sam_pk = data.get('sam_pk')
                 adjustment_entry = data.get('adjustment_entry')
@@ -2281,6 +2707,23 @@ def interface(request):
                 sam = SampleHd.objects.get(pk=sam_pk)
                 sam.ad = adjustment_entry
                 sam.save()
+
+            elif module == 'bolt_group':
+                pk = data.get('pk')
+                category = data.get('category')
+                sub_category = data.get('sub_category')
+
+                item = BoltItems.objects.get(pk=pk)
+                group = BoltGroups.objects.get(pk=category)
+                subgroup = BoltSubGroups.objects.get(pk=sub_category)
+
+                item.group = group
+                item.subgroup = subgroup
+                item.group_changed = True
+
+                item.save()
+                success_response['message'] = "Category Changed"
+
 
             elif module == 'sample_refund':
                 sam_pk = data.get('sam_pk')
@@ -2313,8 +2756,11 @@ def interface(request):
                 new_sub_group = data.get('new_sub_group')
                 new_sub_subgroup = data.get('new_sub_subgroup')
                 by = data.get('mypk')
+                print(data)
 
-                update_query = f"update prod_mast set group_code = '{new_group}', sub_group = '{new_sub_group}', sub_subgroup = '{new_sub_subgroup}' where item_code = '{item_code}'"
+                update_query = f"update prod_mast set group_code = '{new_group}', sub_group = '{new_sub_group}', sub_subgroup = '{new_sub_subgroup}',is_gp_chg = 1 where item_code = '{item_code}' "
+
+                print(update_query)
 
                 conn = ret_cursor()
                 cursor = conn.cursor()
@@ -2323,7 +2769,7 @@ def interface(request):
                 conn.close()
 
 
-                success_response['message'] = update_query
+                success_response['message'] = "Group Changed Successfully"
                 response = success_response
 
             elif module == 'close_recipe':
@@ -2359,6 +2805,12 @@ def interface(request):
                 product.save()
 
                 success_response['message'] = f"Minitory flag changed for product {name} from {current} to {flag} "
+
+        elif method == 'DELETE':
+            if module == 'bolt_group':
+                pk = data.get('pk')
+                BoltGroups.objects.filter(pk=pk).delete()
+                success_response['message'] = "Group Deleted Successfully"
 
         response = success_response
 

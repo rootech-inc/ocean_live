@@ -8,7 +8,7 @@
                 <strong class="card-title">Groups</strong>
             </div>
             <div class="w-75 h-100 d-flex flex-wrap align-content-center justify-content-end">
-                <button class="btn btn-info">NEW GROUP</button>
+                <button onclick="retail.newBoltGroupScrren()" class="btn btn-info">NEW GROUP</button>
             </div>
         </div>
     </div>
@@ -24,9 +24,11 @@
                 {% for group in groups %}
                     <tr>
                         <td>{{ group.name }}</td>
-                        <td>{{ group.items.count }}</td>
+                        <td><a href="{% url 'bolt_category' group.pk %}">{{ group.items.count }}</a></td>
                         <td>
+
                             <a onclick="retail.exportItems({{ group.pk }})" title="Export Items In Excel" href="javascript:void(0)" class="text-success"><i class="fa fa-file-excel"></i></a>
+                            <button onclick="retail.deleteBoltGroup({{ group.pk }})" title="Export Items In Excel" href="javascript:void(0)" class="btn btn-danger btn-sm ml-4"><i class="fa fa-trash"></i></button>
                         </td>
                     </tr>
                 {% endfor %}

@@ -100,6 +100,7 @@ DATABASE_USER = os.environ.get('DB_USER', 'root')
 DATABASE_PASSWORD = os.environ.get('DB_PASSWORD', 'Sunderland@411')
 DATABASE_HOST = os.environ.get('DB_HOST', '192.168.2.60')
 DATABASE_PORT = os.environ.get('DB_PORT', '3306')
+BOLT_MARGIN = os.environ.get('BOLT_MARGIN',25)
 
 DATABASES = {
     'ex': {
@@ -238,3 +239,22 @@ RET_DB_PORT = ''
 
 # approvers email
 CMMS_PROF_APPROVER = 'uyinsolomon2@gmail.com'
+
+BOLT_PROVIDER_ID = {
+    "001":{
+        "id":"75541",
+        "name":"Spintex",
+        "address":"SNEDA Shopping Centre Limited - Spintex - 520 - 75541"
+    },
+    "202":{
+        "id":"75542",
+        "name":"NIA",
+        "address":"SNEDA Shopping Centre Limited - NIA - 521 - 75542",
+    },
+    "205":{
+        "id":"75550",
+        "name":"OSU",
+        "address":"SNEDA Shopping Centre Limited - Osu - 522 - 75550"
+    }
+}
+
