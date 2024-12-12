@@ -2811,6 +2811,13 @@ ORDER BY
                 pk = data.get('pk')
                 BoltGroups.objects.filter(pk=pk).delete()
                 success_response['message'] = "Group Deleted Successfully"
+            elif module == 'bolt_item':
+                barcode = data.get('barcode')
+                product = Products.objects.get(barcode=barcode)
+                BoltItems.objects.filter(product__barcode=barcode).delete()
+
+                success_response['message'] = "Item Deleted Successfully"
+                product.allowed_on_bolt = False
 
         response = success_response
 

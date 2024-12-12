@@ -1672,6 +1672,45 @@ class Retail {
 
         },'/retail/api/');
     }
+
+    changeBoltImage(barcode='none') {
+        console.log("Barcode")
+        let image_form = `
+            <form action="/retail/bolt/upload_image/" id="bolt_img_form" method="post" enctype="multipart/form-data" class="w-100"><input name="image" id="bolt_image_input" type="file" accept="image/*"><input type="hidden" class="form-control rounded-0" readonly value="${barcode}" name="barcode"></form><div><img src="" style="width: 200px" alt="" class="img-fluid" id="bolt_img"></div>
+        `;
+        amodal.setBodyHtml(image_form);
+        amodal.setTitleText("Change Bolt Image")
+        amodal.setFooterHtml(`<button id="save_bolt_image" class="btn btn-success w-100">CHANGE</button>`)
+        // amodal.setSize('L')
+        amodal.show()
+        console.log("Hello")
+
+        $('#save_bolt_image').click(function(){
+            $('#bolt_img_form').submit()
+        });
+    }
+
+
+    removeFromBolt(barcode) {
+        if(confirm("Are you sure you want to remove from bolt?")){
+            let remove = api.call('DELETE',{
+                module:'bolt_item',
+                data:{
+                    barcode:barcode
+                }
+            },'/retail/api/');
+
+            if(anton.IsRequest(remove)){
+                $(`#row_${barcode}`).remove();
+                kasa.success(
+                    `Removed ${barcode} from bolt`)
+            } else {
+                kasa.response(remove)
+            }
+        } else {
+            kasa.info("Operation Canceled")
+        }
+    }
 }
 
 const retail = new Retail();

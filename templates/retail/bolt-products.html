@@ -49,7 +49,7 @@
             </thead>
             <tbody>
                 {% for item in items %}
-                    <tr class="{% if item.is_sync == False %}text-warning{% endif %}">
+                    <tr id="row_{{ item.product.barcode }}" class="{% if item.is_sync == False %}text-warning{% endif %}">
                         <td><img onclick="windowPopUp(`{{ item.image.url }}`,'',600,600)" src="{{ item.image.url }}" alt="" style="width: 50px" class="img-fluid"></td>
                         <td>{{ item.group.name }} </td>
                     <td>{{ item.subgroup.name }}</td>
@@ -57,24 +57,27 @@
                         <td>{{ item.product.name }}</td>
                         <td>
                             <div class="dropdown">
-                              <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                
+                              <button class="btn btn-sm" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="bx bx-menu"></i>
                               </button>
                               <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                   <div class="dropdown-header">Menu</div>
                                   <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="javascript:void(0)" onclick="retail.changeBoltGroupScreen('{{ item.pk }}')">Change Category</a>
-                                <a class="dropdown-item" href="#">Another action</a>
-                                <a class="dropdown-item" href="#">Something else here</a>
+                                <a class="dropdown-item text-primary" href="javascript:void(0)" onclick="retail.changeBoltGroupScreen('{{ item.pk }}')"><i class="bx bx-group"></i> Change Category</a>
+                                   <div class="dropdown-divider"></div>
+                                <a class="dropdown-item text-secondary" href="javascript:void(0)" onclick="retail.changeBoltImage(`{{ item.product.barcode }}`)"><i  class="bx bx-image"></i> Change Image</a>
+                                   <div class="dropdown-divider"></div>
+                                  <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="retail.removeFromBolt(`{{ item.product.barcode }}`)"><i  class="bx bx-trash"></i> Remove</a>
+
                               </div>
                             </div>
 
                         </td>
                         <td>{{ item.price }}</td>
                         <td>{{ item.product.price }}</td>
-                        <td class="{% if item.stock_spintex == 1 %}text-success{% else %}text-danger{% endif %}">{{ item.stock_spintex }}</td>
-                        <td class="{% if item.stock_nia == 1 %}text-success{% else %}text-danger{% endif %}">{{ item.stock_nia }}</td>
-                        <td class="{% if item.stock_osu == 1 %}text-success{% else %}text-danger{% endif %}">{{ item.stock_osu }}</td>
+                        <td class="{% if item.stock_spintex == 1 %}text-success{% else %}text-danger{% endif %}">{{ item.stock.spintex }}</td>
+                        <td class="{% if item.stock_nia == 1 %}text-success{% else %}text-danger{% endif %}">{{ item.stock.nia }}</td>
+                        <td class="{% if item.stock_osu == 1 %}text-success{% else %}text-danger{% endif %}">{{ item.stock.osu }}</td>
                         <td>{{ item.is_sync }}</td>
                     </tr>
                 {% endfor %}

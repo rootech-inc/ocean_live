@@ -151,6 +151,17 @@ def bolt_products(request):
     }
     return render(request, 'retail/bolt-products.html', context=context)
 
+@login_required()
+def bolt_products_pending(request):
+    context = {
+        'nav': True,
+        'page': {
+            'title': "Bolt Pending Sync"
+        },
+        'items': BoltItems.objects.filter(is_sync=False).order_by('product__name')
+    }
+    return render(request, 'retail/bolt-products.html', context=context)
+
 
 @login_required()
 def bolt_groups(request):
@@ -339,6 +350,8 @@ def bolt_category(request,pk):
         return render(request, 'retail/bolt-group.html', context=context)
     else:
         return redirect('bolt_groups', pk)
+
+
 
 @csrf_exempt
 def bolt_upload_image(request):

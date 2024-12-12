@@ -76,7 +76,12 @@ class BoltItems(models.Model):
         obj = {}
         from retail.db import get_stock
         stk = get_stock(self.product.code)
-        return stk
+        obj['nia'] = stk['nia']
+        obj['spintex'] = stk['spintex']
+        obj['osu'] = stk['osu']
+        return obj
+
+
 
 
 
@@ -123,6 +128,7 @@ class Products(models.Model):
     stock_monitor = models.BooleanField(default=False)
     image = models.ImageField(upload_to='static/uploads/dolphine/bolt/', null=True,
                               default='static/uploads/dolphine/bolt/default.png')
+    allowed_on_bolt = models.BooleanField(default=True)
 
     def obj(self):
         image_url = ""
