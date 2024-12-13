@@ -1198,7 +1198,8 @@ def api_call(request, module, crud):
 
                 asset_count = cursor.execute(f"select count(*) from asset_mast where asset_no = '{carno}'").fetchone()[
                     0]
-                if asset_count == 1:
+                print(asset_count)
+                if asset_count > 0:
                     frame = {
                         'customer': {
                             'name': '',
