@@ -203,11 +203,12 @@ class Retail {
          return  api.call('VIEW',payload,'/retail/api/');
     }
 
-    loadProducts() {
+    loadProducts(category='') {
         let payload = {
             "module":"prod_master",
             "data":{
-                "doc":"json"
+                "doc":"json",
+
             }
         }
 
@@ -261,7 +262,7 @@ class Retail {
                 // `;
 
                 tr += `
-                    <tr id="${r_id}"><td>${barcode}</td><td>${name}</td><td>${price}</td><td>${sold}</td><td><i class="${bolt_hg}"></i></td><td>${drop}</td></tr>
+                    <tr id="${r_id}"><td>${group}</td><td>${subgroup}</td><td>${barcode}</td><td>${name}</td><td>${price}</td><td>${sold}</td><td><i class="${bolt_hg}"></i></td><td>${drop}</td></tr>
                 `;
             }
 
@@ -269,6 +270,8 @@ class Retail {
                 `<table class="table table-bordered table-stripped datatable table-bordered">
                     <thead class="thead-dark">
                     <tr>
+                        <th>GROUP</th>
+                        <th>SUB</th>
                         <th>BARCODE</th>
                         <th>NAME</th>
                         <th>PRICE</th>
@@ -587,6 +590,14 @@ class Retail {
     sales_graph_week() {
         let payload = {
             module:'sales_graph_week',
+            data:{}
+        }
+        return api.call('VIEW',payload,this.interface);
+    }
+
+    bolt_graph_week() {
+        let payload = {
+            module:'bolt_graph_week',
             data:{}
         }
         return api.call('VIEW',payload,this.interface);

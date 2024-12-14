@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
+from sympy import Product
+
 from admin_panel.models import Locations, SmsApi, Sms
 from cmms.extra import db
 from retail.forms import NewClerk
@@ -374,3 +376,17 @@ def product_card(request):
         "pk":Products.objects.all().last().pk,
     }
     return render(request, 'retail/product-card.html', context=context)
+
+@login_required()
+def bolt_landing(request):
+    cent = BoltItems.objects.all().count() / Products.objects.all().count() * 100
+    context = {
+        'nav': True,
+        'page_title': 'Bolt',
+        "matrix": {
+            'cent':"{:.2f}".format(cent),
+            'on_bolt':BoltItems.objects.all().count() ,
+            'all':Products.objects.all().count()
+        },
+    }
+    return render(request, 'retail/bolt-landing.html', context=context)

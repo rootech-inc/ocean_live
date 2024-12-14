@@ -519,7 +519,7 @@ class BillHeader(models.Model):
     pay_mode = models.CharField(max_length=20)
     bill_date = models.DateField()
     bill_time = models.TimeField()
-
+    bill_amt = models.DecimalField(decimal_places=3,max_digits=10,default=0.000)
     class Meta:
         unique_together = (('loc','bill_ref'),)
 

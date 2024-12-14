@@ -100,10 +100,11 @@ def interface(request):
                 pay_mode = header.get('pay_mode')
                 bill_date = header.get('bill_date')
                 bill_time = header.get('bill_time')
+                bill_amt = header.get('bill_amt')
 
                 BillHeader.objects.filter(bill_ref=bill_ref).delete()
                 # save header
-                BillHeader.objects.create(loc=location,bill_no=bill_no,bill_ref=bill_ref,pay_mode=pay_mode,bill_date=bill_date,bill_time=bill_time)
+                BillHeader.objects.create(loc=location,bill_no=bill_no,bill_ref=bill_ref,pay_mode=pay_mode,bill_date=bill_date,bill_time=bill_time,bill_amt=bill_amt)
                 # get the just created
                 bill = BillHeader.objects.get(bill_ref=bill_ref)
 
@@ -2148,6 +2149,35 @@ def interface(request):
                 conn.close()
                 success_response['message'] = arr
                 response = success_response
+
+            elif module == 'bolt_graph_week':
+                locations = Locations.objects.filter(type='retail')
+                from datetime import timedelta
+                # Calculate the start date (7 days ago)
+                from django.utils.timezone import now
+                start_date = now().date() - timedelta(days=7)
+                end_date = now().date()
+                date_range = [start_date + timedelta(days=x) for x in range(0, (end_date - start_date).days + 1)]
+                labels = []
+                sales_data = {}
+                for dr in date_range:
+                    labels.append(dr)
+
+                for location in locations:
+                    sales_arr = []
+                    for d in labels:
+                        sales = BillHeader.objects.filter(loc=location,bill_date=d,pay_mode='BOLT').aggregate(Sum('bill_amt'))
+                        sales_arr.append(sales['bill_amt__sum'])
+
+                    sales_data.update({location.descr:sales_arr})
+
+                arr = {
+                    "labels": labels,
+                    "dataset": sales_data
+                }
+                success_response['message'] = arr
+                response = success_response
+
 
             elif module == 'sales_graph_week':
                 from django.utils.timezone import now

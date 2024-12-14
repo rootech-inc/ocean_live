@@ -1,0 +1,96 @@
+{% extends 'retail/base.html' %}
+{% load static %}
+{% block body %}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-12 col-md-4 col-lg-3">
+                <div class="card">
+                    <div class="card-body p-2">
+                        <h5 class="text-muted">Metric</h5>
+                        <div class="w-100 d-flex">
+                            <div class="w-50">
+                                {{ matrix.on_bolt }}/{{ matrix.all }} <br>
+                                <span class="text-success">{{ matrix.cent }}%</span>
+                            </div>
+                            <div class="w-50 d-flex flex-wrap justify-content-end">
+{#                                <div style="height: 50px; width: 50px"#}
+{#                                     class="rounded-circle border border-2 border-info d-flex flex-wrap justify-content-center align-content-center bg-info"#}
+{#                                >20%</div>#}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6">
+                  <div class="card">
+                    <div class="card-body">
+                      <h5 class="card-title">WEEKLY SALES COMPARE</h5>
+
+                      <!-- Line Chart -->
+                      <canvas id="lineChart" style="max-height: 400px;"></canvas>
+
+                      <!-- End Line CHart -->
+
+                    </div>
+                  </div>
+                </div>
+
+        </div>
+    </div>
+
+
+    <script>
+
+    // Function to generate a random RGB color
+function getRandomRGBColor() {
+    const r = Math.floor(Math.random() * 256); // Random value between 0 and 255
+    const g = Math.floor(Math.random() * 256); // Random value between 0 and 255
+    const b = Math.floor(Math.random() * 256); // Random value between 0 and 255
+    return `rgb(${r}, ${g}, ${b})`;
+}
+        // line labels
+        let sales_graph_week = retail.bolt_graph_week();
+        console.table(sales_graph_week)
+        let lables = []
+        let dataset = []
+        if(anton.IsRequest(sales_graph_week)){
+            let data = sales_graph_week.message;
+            labels = data['labels']
+            let obj = data['dataset'];
+
+            for (let key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    let st = obj[key]
+                    let set_data = [];
+                    for(let s = 0; s < st.length; s++){
+                        set_data.push(st[s])
+                    }
+                    dataset.push({
+                    label: `${key}`,
+                                    data: st,
+                                    fill: false,
+                                    borderColor: getRandomRGBColor(),
+                                    tension: 0.1
+                })
+                }
+            }
+        }
+                        document.addEventListener("DOMContentLoaded", () => {
+                          new Chart(document.querySelector('#lineChart'), {
+                            type: 'line',
+                            data: {
+                              labels: labels,
+                              datasets: dataset
+                            },
+                            options: {
+                              scales: {
+                                y: {
+                                  beginAtZero: true
+                                }
+                              }
+                            }
+                          });
+                        });
+                      </script>
+{% endblock %}
