@@ -2326,10 +2326,11 @@ ORDER BY
 
             elif module == 'prod':
                 pk = data.get('pk','*')
+                filter = data.get('filter','pk')
                 if pk == '*':
                     prods = Products.objects.all()
                 else:
-                    prods = Products.objects.filter(pk=pk)
+                    prods = Products.objects.filter(pk=pk) if filter == 'pk' else Products.objects.filter(barcode=pk)
 
                 for prod in prods:
                     print(prod.obj())
@@ -2717,9 +2718,9 @@ ORDER BY
                 product = Products.objects.get(barcode=barcode)
 
                 stock = get_stock(barcode)
-                stock_nia = stock.get('nia')
-                stock_spintex = stock.get('spintex')
-                stock_osu = stock.get('osu')
+                stock_nia = 0
+                stock_spintex = 0
+                stock_osu = 0
 
 
                 BoltItems.objects.create(

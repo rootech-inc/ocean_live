@@ -129,6 +129,7 @@ class Products(models.Model):
     image = models.ImageField(upload_to='static/uploads/dolphine/bolt/', null=True,
                               default='static/uploads/dolphine/bolt/default.png')
     allowed_on_bolt = models.BooleanField(default=True)
+    shelf = models.IntegerField(default=0)
 
     def obj(self):
         image_url = ""
@@ -145,7 +146,8 @@ class Products(models.Model):
             'image':image_url,
             'next':Products.objects.filter(pk__gt=self.pk).first().pk if Products.objects.filter(pk__gt=self.pk).exists() else 0,
             'previous': Products.objects.filter(pk__lt=self.pk).last().pk if Products.objects.filter(pk__lt=self.pk).exists() else 0,
-            'stock':self.live_stock()
+            'stock':self.live_stock(),
+            'shelf':self.shelf,
         }
 
     def is_on_bolt(self):

@@ -1645,11 +1645,12 @@ class Retail {
         }
     }
 
-    loadCard(s) {
+    loadCard(s,filter='pk') {
         console.log(s)
-        let product = this.getCardProduct(s);
+        let product = this.getCardProduct(s,filter);
         if(anton.IsRequest(product)){
             let message = product['message'][0];
+            console.table(message)
             $('#previous').val(message['previous'])
             $('#next').val(message['next'])
             $('#image').attr('src',`${message['image']}`)
@@ -1674,11 +1675,12 @@ class Retail {
         }
     }
 
-    getCardProduct(pk='*') {
+    getCardProduct(pk='*',filter='pk') {
         return api.call("VIEW",{
             module:'prod',
             data:{
-                pk:pk
+                pk:pk,
+                filter:filter
             },
 
         },'/retail/api/');

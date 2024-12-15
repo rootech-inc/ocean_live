@@ -374,6 +374,7 @@ def product_card(request):
         'nav': True,
         'page_title': 'Products Master | Card',
         "pk":Products.objects.all().last().pk,
+        "searchButton":"prod_card"
     }
     return render(request, 'retail/product-card.html', context=context)
 
