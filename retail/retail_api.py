@@ -56,8 +56,9 @@ def interface(request):
 
                 item_code = data.get('item_code').replace("\n", "")
 
-                group_name = data.get('group_name')
-                sub_group_name = data.get('sub_group_name')
+                group_pk = data.get('group')
+                subgroup_pk = data.get('sub_group')
+                image = data.get('image')
                 #print(item_code)
                 if Products.objects.filter(barcode=item_code).count() == 0:
                     item_code = f"0{item_code}"
@@ -72,23 +73,26 @@ def interface(request):
                 spintex_stock = stock.get('spintex',0)
                 osu_stock = stock.get('osu',0)
 
-                BoltItems.objects.filter(product=pd).delete()
+                # BoltItems.objects.filter(product=pd).delete()
 
-                if BoltGroups.objects.filter(name=group_name).count() == 0:
-                    BoltGroups.objects.create(name=group_name)
+                # if BoltGroups.objects.filter(name=group_name).count() == 0:
+                #     BoltGroups.objects.create(name=group_name)
 
-                group = BoltGroups.objects.get(name=group_name)
+                group = BoltGroups.objects.get(pk=group_pk)
 
-                if BoltSubGroups.objects.filter(name=sub_group_name).count() == 0:
-                    BoltSubGroups.objects.create(name=sub_group_name,group=group)
+                # if BoltSubGroups.objects.filter(name=sub_group_name).count() == 0:
+                #     BoltSubGroups.objects.create(name=sub_group_name,group=group)
 
-                subgroup = BoltSubGroups.objects.get(name=sub_group_name)
-
-
+                subgroup = BoltSubGroups.objects.get(pk=subgroup_pk)
 
 
-                BoltItems(product=pd,price=price,stock_nia=nia_stock,stock_spintex=spintex_stock,stock_osu=osu_stock,group=group.pk,subgroup=subgroup.pk).save()
-                success_response['message'] = "Product Added"
+
+
+                if BoltItems.objects.filter(product=pd).count() == 0:
+                    BoltItems(product=pd,price=price,stock_nia=nia_stock,stock_spintex=spintex_stock,stock_osu=osu_stock,group=group,subgroup=subgroup,image=image).save()
+                    success_response['message'] = "Product Added"
+                else:
+                    raise Exception(f"Product Exist with barcode {pd.barcode}")
 
             elif module == 'bill':
                 header = data.get('header')
@@ -2707,6 +2711,23 @@ ORDER BY
                 for item in items:
                     item.price = item.product.price
                     item.save()
+
+            elif module == 'shelf':
+                barcode = data.get('barcode')
+                product = Products.objects.get(barcode=barcode)
+                item_code = product.code
+                product.shelf = data.get('shelf')
+                product.save()
+
+                # update shelf in product master
+                # conn = ret_cursor()
+                # cursor = conn.cursor()
+                # cursor.execute(f"UPDATE prod_mast set shelf = '{shelf}' where item_code = '{item_code}'")
+                # conn.commit()
+                # conn.close()
+
+                success_response['message'] = "Shelf Changed"
+
 
             elif module == 'mark2bolt':
                 category = data.get('category')

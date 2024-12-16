@@ -101,6 +101,15 @@
                                     </div>
                                     <input type="text" id="sold" class="form-control rounded-0" readonly placeholder="Prod">
                                 </div>
+                                <div class="input-group mb-2">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text rounded-0">SHELF</span>
+                                    </div>
+                                    <input type="text" id="shelf" class="form-control rounded-0" readonly placeholder="Shelf">
+                                    <div class="input-group-append">
+                                        <button onclick="retail.changeShelfScreen(`${$('#barcode').val()}`)" class="btn btn-sm btn-info">CHANGE</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

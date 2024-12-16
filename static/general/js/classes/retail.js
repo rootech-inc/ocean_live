@@ -1650,7 +1650,7 @@ class Retail {
         let product = this.getCardProduct(s,filter);
         if(anton.IsRequest(product)){
             let message = product['message'][0];
-            console.table(message)
+
             $('#previous').val(message['previous'])
             $('#next').val(message['next'])
             $('#image').attr('src',`${message['image']}`)
@@ -1667,7 +1667,9 @@ class Retail {
             let live_product = this.getProduct(message['barcode'])['message'][0];
 
 
+
             anton.setValues(live_product)
+            anton.setValues(message)
             console.table(live_product)
 
         } else {
@@ -1723,6 +1725,32 @@ class Retail {
         } else {
             kasa.info("Operation Canceled")
         }
+    }
+
+    changeShelfScreen(barcode) {
+        let form = "";
+        form += fom.text('shelf','',true,'2')
+        amodal.setBodyHtml(form)
+        amodal.setTitleText('CHANGE SHELF')
+        amodal.setFooterHtml(`<button onclick="retail.changeShelf('${barcode}')" class="btn btn-success w-100">CHANGE</button>`)
+        amodal.show()
+    }
+
+    changeShelf(barcode) {
+        let payload = {
+            module:'shelf',
+            data:{
+                barcode:barcode,
+                shelf:$('#shelf').val()
+            }
+        }
+
+        kasa.response(api.call('PATCH',payload,'/retail/api/'));
+        amodal.hide()
+
+        // load product
+        this.loadCard(barcode,'barcode')
+
     }
 }
 
