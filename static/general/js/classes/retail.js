@@ -1796,26 +1796,41 @@ class Retail {
 
             console.table(payload)
 
-            let response = api.call('VIEW',payload,'/retail/api/');
-            console.table(response)
-            if(anton.IsRequest(response)){
-                let message = response.message;
-                let ht = ``;
+            loader.show()
+            // let response = api.call('VIEW',payload,'/retail/api/');
+            let response = api.v2('VIEW',payload,'/retail/api/');
 
-                if(payload['data']['export'] === 'excel'){
-                    anton.viewFile(`/${message}`)
-                } else {
-                    let header = ['Barcode','Name','Moved','Sold']
+            // console.table(response)
+            // console.table(response)
+            //
+            response.then(function(res){
+                console.table(res)
+                if(anton.IsRequest(res)){
+                    let message = res.message;
+                    let ht = ``;
 
-                    let rows = ``;
-                    for (let i = 0; i < message.length; i++) {
-                        rows += `<tr><td>${message[i]['barcode']}</td><td>${message[i]['name']}</td><td>${message[i]['moved']}</td><td>${message[i]['sold']}</td></tr>`
+                    if(payload['data']['export'] === 'excel'){
+                        loader.hide()
+                        anton.viewFile(`/${message}`)
+                    } else {
+                        let header = ['Barcode','Name','Moved','Sold']
+
+                        let rows = ``;
+                        for (let i = 0; i < message.length; i++) {
+                            rows += `<tr><td>${message[i]['barcode']}</td><td>${message[i]['name']}</td><td>${message[i]['moved']}</td><td>${message[i]['sold']}</td></tr>`
+                        }
+                        reports.render(header,rows,`Slow Moving Items above ${payload['data']['quantity']} for the past ${payload['data']['days']} days`)
+                        // kasa.info("Preview Not Configured")
+                        loader.hide()
                     }
-                    reports.render(header,rows,`Slow Moving Items above ${payload['data']['quantity']} for the past ${payload['data']['days']} days`)
-                    // kasa.info("Preview Not Configured")
-                }
 
-            }
+                }
+            }).catch(function(err){
+                console.log("Responsed error")
+                console.table(err)
+            })
+
+
 
         }
     }

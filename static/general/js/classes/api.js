@@ -49,6 +49,31 @@ class Api {
         return result
     }
 
+    async v2(method, data, int = '/api/') {
+        try {
+            const response = await fetch(int, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json; charset=utf-8'
+                },
+                body: JSON.stringify(data)
+            });
+
+            // Check if the response is ok (status in the range 200-299)
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            // Parse the JSON response
+            const result = await response.json();
+            console.log(result);
+            return result;
+        } catch (error) {
+            console.error('Error:', error);
+            return error;
+        }
+}
+
     view(data){
         return this.call('VIEW',data)
     }
