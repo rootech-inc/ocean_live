@@ -1752,6 +1752,73 @@ class Retail {
         this.loadCard(barcode,'barcode')
 
     }
+
+    slowMovingItemsScreen(){
+        let form = ``;
+        let loc_payload = {
+            module:'location_master',
+            data:{}
+        }
+        let locations = api.call('VIEW',loc_payload,'/retail/api/')
+        let l_arr = []
+        l_arr.push({val:'*',desc:'All'})
+        let locs = locations['message'];
+        for(let l = 0; l < locs.length; l++){
+            let lc = locs[l]
+            l_arr.push({val:lc['code'],desc:lc['name']})
+        }
+        form += fom.selectv2('location',l_arr,'',true)
+        form += fom.number('quantity','how many quantity moved',true)
+        form += fom.number('days','how many days movement?',true)
+
+        let b1 = fom.selectv2('stock_type',[{val:'',desc:'All'},{val:'1',desc:"Active"},{val:'0',desc:"Discontinued"}],'',true)
+        let b2 = fom.selectv2('export',[{val:'json',desc:'Preview'},{val:'excel',desc:"Excel Export"}],'',true)
+
+        let fb = `<div class="row"><div class="col-sm-6">${b1}</div><div class="col-sm-6">${b2}</div></div>`;
+        form += fb;
+
+
+        amodal.setBodyHtml(form)
+        amodal.setTitleText('SLOW MOVING ITEMS')
+        amodal.setFooterHtml(`<button onclick="retail.slowMovingItems()" class="btn btn-success w-100">GENERATE</button>`)
+        amodal.show()
+    }
+
+    slowMovingItems() {
+        let ids = ['export','quantity','days'];
+        if(anton.validateInputs(ids)){
+            let payload = {
+                module:'slow_moving_items',
+                data:anton.Inputs(ids)
+            }
+
+            payload['data']['location'] = $('#location').val()
+
+            console.table(payload)
+
+            let response = api.call('VIEW',payload,'/retail/api/');
+            console.table(response)
+            if(anton.IsRequest(response)){
+                let message = response.message;
+                let ht = ``;
+
+                if(payload['data']['export'] === 'excel'){
+                    anton.viewFile(`/${message}`)
+                } else {
+                    let header = ['Barcode','Name','Moved','Sold']
+
+                    let rows = ``;
+                    for (let i = 0; i < message.length; i++) {
+                        rows += `<tr><td>${message[i]['barcode']}</td><td>${message[i]['name']}</td><td>${message[i]['moved']}</td><td>${message[i]['sold']}</td></tr>`
+                    }
+                    reports.render(header,rows,`Slow Moving Items above ${payload['data']['quantity']} for the past ${payload['data']['days']} days`)
+                    // kasa.info("Preview Not Configured")
+                }
+
+            }
+
+        }
+    }
 }
 
 const retail = new Retail();

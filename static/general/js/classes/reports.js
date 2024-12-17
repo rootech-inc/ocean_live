@@ -146,7 +146,7 @@ class Reports {
                 th += `<th>${header[h]}</th>`
             }
 
-            let table = `<table class="table table-sm table-bordered"><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>`
+            let table = `<table class="table table-sm table-bordered datatable"><thead><tr>${th}</tr></thead><tbody>${rows}</tbody></table>`
             this.menu = card.getBody()
             card.setTitle(report_title)
             card.setBody(table)

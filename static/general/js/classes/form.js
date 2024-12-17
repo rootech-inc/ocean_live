@@ -98,6 +98,10 @@ class Form {
 
         return this.select('location',l_optons,'',true)
     }
+
+    number(ini,comment='',required=false,max_val=100){
+        return this.input('number',ini,comment,required,max_val)
+    }
 }
 
 const fom = new Form()

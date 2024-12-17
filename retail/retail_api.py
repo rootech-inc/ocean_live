@@ -1311,64 +1311,249 @@ def interface(request):
                     success_response['message'] = file_name
 
             elif module == 'slow_moving_items':
-                loc = data.get('loc') or ''
-                days = data.get('days')
+                print(data)
+                loc = data.get('location') or ''
+                if loc == '*':
+                    loc = ""
+
+                act_loc = f"%{loc}%"
+                print(act_loc)
+                days = int(data.get('days'))
                 export = data.get('export')
+                quantity = data.get('quantity',1)
+                is_active = data.get('stock_type',1)
+                from datetime import timedelta
+                date_from = timezone.now().date() - timedelta(days=days)
+                date_to = timezone.now().date()
                 if export == 'excel':
                     import openpyxl
                     book = openpyxl.Workbook()
                     sheet = book.active
-                    sheet['A1'] = "SLOW MOVING ITEMS"
-                    sheet['A2'] = "BARCODE"
-                    sheet["B3"] = "NAME"
-                    sheet['C3'] = "AVAILABLE QUANTITY"
-                    sheet['D2'] = "SOLD QUANTITY"
-                    sh_row = 3
+                    hd = ["ITEMCODE", "BARCODE", "NAME", "MOVE_QTY", "SOLD"]
+                    sheet.merge_cells('A1:E1')
+                    sheet['A1'] = f"{str(date_from)} - {str(date_to)} ({days} days) for location {loc} above {quantity} units"
+                    sheet.append(hd)
 
                 query = f"exec dbo.Sp_slow_moving_rept N'%',N'%',N'%',N'',N'Zade',N'AA001',N'SOO216',N'',N'YWS195','2023-11-13 00:00:00',N'30',N'%',N'%',N'%','2023-08-15 00:00:00','2023-11-13 00:00:00',N'ALL'"
                 #print(query)
-                server = f"{RET_DB_HOST}"
-                database = RET_DB_NAME
-                username = RET_DB_USER
-                password = RET_DB_PASS
-                driver = '{ODBC Driver 17 for SQL Server}'  # Change this to the driver you're using
-                connection_string = f"DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}"
-                connection = pyodbc.connect(connection_string)
+
 
                 conn = ret_cursor()
                 cursor = conn.cursor()
-                cursor.execute("""
-                EXEC dbo.Sp_slow_moving_rept ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-                """,
-                               '001', '%', '%', '', 'ZWAN', 'AA001', 'SOO216', '', 'YWS195', '2024-06-22 00:00:00',
-                               '30', '%', '%', '%', '2024-05-23 00:00:00', '2024-06-22 00:00:00', 'ALL')
-                # Fetch all rows from the executed stored procedure
-                rows = cursor.fetchall()
-                #print(rows)
-                arr = []
-                for row in rows:
-                    #print(row)
-                    barcode = row[2]
-                    item_code = row[0]
-                    item_ref = row[1]
-                    name = row[3]
-                    av_stock = row[17]
-                    sol_stock = row[21]
-                    if export == 'json':
-                        obj = {
-                            'barcode': barcode,
-                            'item_code': item_code,
-                            'item_ref': item_ref,
-                            'name': name,
-                            'available': av_stock,
-                            'sold': sol_stock
-                        }
-                    elif export == 'excel':
-                        sheet[f"A{sh_row}"] = barcode
-                        sheet[f"B{sh_row}"] = name
-                        sheet[f"C{sh_row}"] = av_stock
-                        sheet[f"D{sh_row}"] = sol_stock
 
+                cursor.execute(f"""
+                            DECLARE @ls_doc_type varchar(20) = ''
+                DECLARE @ldt_dtfrom varchar(20) = '{date_from}'
+                DECLARE @ls_loc varchar(20) = '{act_loc}'
+                DECLARE @ldt_dtto varchar(20) = '{date_to}'
+                DECLARE @ls_group varchar(20) = '%%'
+                DECLARE @ls_subgroup varchar(20) = '%%'
+                DECLARE @supp_code varchar(20) = '%%'
+                DECLARE @barcode varchar(20) = '%%'
+
+
+                SELECT 
+                    prod_mast.item_code,
+                    prod_mast.item_ref, 
+                    prod_mast.barcode, 
+                    prod_mast.item_des, 
+                    prod_mast.last_net_cost,     
+                    prod_mast.packing, 
+                    prod_mast.group_code, 
+                    prod_mast.sub_group, 
+                    prod_mast.family_code, 
+                    group_mast.group_des AS group_name,   
+                    sub_group.sub_group_des AS sub_group_name, 
+                    prod_mast.sub_subgroup,   
+                    sub_subgroup.sub_subgroup_des AS sub_subgroup_name,
+
+                    -- Conditional Columns Based on @ls_doc_type
+                    ISNULL(
+                        CASE 
+                            WHEN @ls_doc_type = 'Whole Sales' THEN (
+                                SELECT SUM(ABS(qty)) 
+                                FROM exp_tran2 
+                                WHERE doc_date BETWEEN @ldt_dtfrom AND @ldt_dtto
+                                  AND item_code = prod_mast.item_code 
+                                  AND doc_type IN ('IN', 'TR', 'AD', 'PR') 
+                                  AND loc_id LIKE @ls_loc 
+                                  AND tran_io = 'O'
+                            )
+                            WHEN @ls_doc_type = 'POS Sales' THEN (
+                                SELECT SUM(ABS(qty)) 
+                                FROM exp_tran2 
+                                WHERE doc_date BETWEEN @ldt_dtfrom AND @ldt_dtto
+                                  AND item_code = prod_mast.item_code 
+                                  AND doc_type IN ('TR', 'PI', 'AD', 'PR') 
+                                  AND loc_id LIKE @ls_loc 
+                                  AND tran_io = 'O'
+                            )
+                            ELSE (
+                                SELECT SUM(ABS(qty)) 
+                                FROM exp_tran2 
+                                WHERE doc_date BETWEEN @ldt_dtfrom AND @ldt_dtto
+                                  AND item_code = prod_mast.item_code 
+                                  AND doc_type IN ('IN', 'TR', 'PI', 'AD', 'PR') 
+                                  AND loc_id LIKE @ls_loc 
+                                  AND tran_io = 'O'
+                            )
+                        END, 0) AS move_qty,
+
+                    -- First Receive Date
+                    ISNULL((
+                        SELECT MIN(doc_date) 
+                        FROM exp_tran2 
+                        WHERE item_code = prod_mast.item_code 
+                          AND doc_type IN ('GR', 'TR', 'OB', 'AD', 'PR') 
+                          AND loc_id LIKE @ls_loc 
+                          AND tran_io = 'I'
+                    ), NULL) AS first_rec_date,
+
+                    -- Latest Receive Date
+                    ISNULL((
+                        SELECT MAX(doc_date) 
+                        FROM exp_tran2 
+                        WHERE item_code = prod_mast.item_code 
+                          AND doc_type IN ('GR', 'TR', 'OB', 'AD', 'PR') 
+                          AND loc_id LIKE @ls_loc 
+                          AND tran_io = 'I'
+                    ), NULL) AS rec_date,
+
+                    -- Latest Sales Date
+                    ISNULL((
+                        SELECT MAX(doc_date) 
+                        FROM exp_tran2 
+                        WHERE item_code = prod_mast.item_code 
+                          AND doc_type IN (
+                            CASE 
+                                WHEN @ls_doc_type = 'Whole Sales' THEN 'IN'
+                                WHEN @ls_doc_type = 'POS Sales' THEN 'TR'
+                                ELSE 'IN'
+                            END, 'TR', 'PI', 'AD', 'PR'
+                          ) 
+                          AND loc_id LIKE @ls_loc 
+                          AND tran_io = 'O'
+                    ), NULL) AS sales_date,
+
+                    -- Quantity
+                    ISNULL((
+                        SELECT SUM(qty) 
+                        FROM exp_tran2 
+                        WHERE item_code = prod_mast.item_code 
+                          AND loc_id LIKE @ls_loc 
+                          AND doc_date <= @ldt_dtto
+                    ), 0) AS q_qty,
+
+                    -- Retail
+                    prod_mast.retail1 AS retail,
+
+                    -- Latest Issue Date
+                    ISNULL((
+                        SELECT MAX(doc_date) 
+                        FROM exp_tran2 
+                        WHERE item_code = prod_mast.item_code 
+                          AND doc_type IN (
+                            CASE 
+                                WHEN @ls_doc_type = 'Whole Sales' THEN 'IN'
+                                WHEN @ls_doc_type = 'POS Sales' THEN 'TR'
+                                ELSE 'IN'
+                            END, 'TR', 'PI', 'AD', 'PR'
+                          ) 
+                          AND loc_id LIKE @ls_loc 
+                          AND qty < 0
+                    ), NULL) AS iss_date,
+
+                    -- Move Quantity (Current)
+                    ISNULL((
+                        SELECT SUM(ABS(qty)) 
+                        FROM exp_tran2 
+                        WHERE item_code = prod_mast.item_code 
+                          AND doc_type IN (
+                            CASE 
+                                WHEN @ls_doc_type = 'Whole Sales' THEN 'IN'
+                                WHEN @ls_doc_type = 'POS Sales' THEN 'TR'
+                                ELSE 'IN'
+                            END, 'TR', 'PI', 'AD', 'PR'
+                          ) 
+                          AND loc_id LIKE @ls_loc
+                    ), 0) AS move_qty_curr,
+
+                    -- S Quantity
+                    ISNULL((
+                        SELECT SUM(ABS(qty)) 
+                        FROM exp_tran2 
+                        WHERE doc_date BETWEEN @ldt_dtfrom AND @ldt_dtto 
+                          AND item_code = prod_mast.item_code 
+                          AND doc_type IN (
+                            CASE 
+                                WHEN @ls_doc_type = 'Whole Sales' THEN 'IN'
+                                WHEN @ls_doc_type = 'POS Sales' THEN 'PI'
+                                ELSE 'IN'
+                            END, 'PI'
+                          ) 
+                          AND loc_id LIKE @ls_loc
+                    ), 0) AS s_qty
+
+                FROM 
+                    prod_mast
+                LEFT JOIN group_mast 
+                    ON group_mast.group_code = prod_mast.group_code
+                LEFT JOIN sub_group 
+                    ON sub_group.group_code = prod_mast.group_code 
+                   AND sub_group.sub_group = prod_mast.sub_group
+                LEFT JOIN sub_subgroup 
+                    ON sub_subgroup.group_code = prod_mast.group_code 
+                   AND sub_subgroup.sub_group = prod_mast.sub_group 
+                   AND sub_subgroup.sub_subgroup = prod_mast.sub_subgroup
+                WHERE 
+                    (prod_mast.group_code LIKE @ls_group)
+                    AND (prod_mast.sub_group LIKE @ls_subgroup)
+                    AND (prod_mast.supp_code LIKE @supp_code)
+                    AND (prod_mast.barcode LIKE @barcode) 
+                    AND (prod_mast.item_type LIKE '%{is_active}%')
+
+
+
+
+
+                            """)
+
+                # Fetch column names for the query
+                column_names = [desc[0] for desc in cursor.description]
+
+                results = cursor.fetchall()
+                arr = []
+                for row in results:
+                    row_data = dict(zip(column_names, row))  # Pair column names with their values
+                    item_code = row_data['item_code']
+                    barcode = row_data['barcode'].strip()
+                    name = row_data['item_des'].rstrip() if row_data['item_des'] and len(row_data['item_des']) > 0 else \
+                    row_data['item_des']
+                    packing = row_data['packing']
+                    group_name = row_data['group_name'].strip() if row_data['group_name'] and len(
+                        row_data['group_name']) > 0 else row_data['group_name']
+                    sub_group_name = row_data['sub_group_name'].strip() if row_data['sub_group_name'] and len(
+                        row_data['sub_group_name']) > 0 else row_data['sub_group_name']
+                    sub_subgroup_name = row_data['sub_subgroup_name'].strip() if row_data['sub_subgroup_name'] and len(
+                        row_data['sub_subgroup_name']) > 0 else row_data['sub_subgroup_name']
+                    move_qty = row_data['move_qty']
+                    first_rec_date = row_data['first_rec_date']
+                    rec_date = row_data['rec_date']
+                    sales_date = row_data['sales_date']
+                    s_qty = row_data['s_qty']
+
+                    if int(move_qty) == int(quantity):
+                        li = [item_code, barcode, name, move_qty, s_qty]
+
+                        if export == 'json':
+                            arr.append({
+                                'barcode':barcode,'itemcode':item_code,'name':name,'moved':move_qty,'sold':s_qty
+                            })
+
+                        if export == 'excel':
+                            sheet.append(li)
+
+                conn.close()
                 if export == 'json':
                     success_response['message'] = arr
                 elif export == 'excel':
