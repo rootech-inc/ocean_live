@@ -2770,7 +2770,9 @@ ORDER BY
                         "Level 1 - Category",
                         "Level 2 - Subcategory",
                         "Provider IDs",
-                        "Sub-category code"
+                        "Sub-category code",
+                        "Description en-US",
+                        "Description en-GH"
                     ]
                     writer.writerow(header)
                     pw.writerow(["SKU","Selling price","Provier IDs"])
@@ -2788,7 +2790,9 @@ ORDER BY
                             item.group.name,
                             item.subgroup.name,
                             str(providers_id),
-                            f"{item.group.name}/{item.subgroup.name}"
+                            f"{item.group.name}/{item.subgroup.name}",
+                            item.description,
+                            item.description
                         ]
 
                         stock = get_stock(item.product.code)
@@ -2918,6 +2922,7 @@ ORDER BY
                 category = data.get('category')
                 sub_category = data.get('sub_category')
                 barcode = data.get('barcode')
+                description = data.get('description')
 
                 group = BoltGroups.objects.get(pk=category)
                 sub = BoltSubGroups.objects.get(pk=sub_category)
@@ -2933,6 +2938,7 @@ ORDER BY
                     product = product,
                     group = group,
                     subgroup = sub,stock_nia = stock_nia,stock_spintex = stock_spintex,stock_osu = stock_osu,
+                    description = description
                 )
 
                 success_response['message'] = "Product Marked"

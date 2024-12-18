@@ -71,6 +71,7 @@ class BoltItems(models.Model):
     group_changed = models.BooleanField(default=False)
 
     image = models.ImageField(upload_to='static/uploads/dolphine/bolt/', null=True,default='static/uploads/dolphine/bolt/default.png')
+    description = models.TextField(null=True,blank=True)
 
     def stock(self):
         obj = {}

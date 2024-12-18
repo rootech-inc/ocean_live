@@ -1415,8 +1415,9 @@ class Retail {
        let category = fom.selectv2('category',gob,'',true)
         let sub_category = fom.selectv2('sub_category',[],'',true)
         let name_frm = `<input class="form-control rounded-0" readonly value="${product}">`
+        let descriptio = fom.textarea('description',2,true)
         form += `
-            <div class="row"><div class="col-sm-6">${image_form}</div><div class="col-sm-6">${name_frm}${category}${sub_category}</div></div>
+            <div class="row"><div class="col-sm-6">${image_form}</div><div class="col-sm-6">${name_frm}${category}${sub_category}${descriptio}</div></div>
         `
 
 
@@ -1461,6 +1462,8 @@ class Retail {
                 module:'mark2bolt',
                 data:anton.Inputs(ids)
             }
+
+            payload.data['description'] = $('#description').val();
 
             payload['data']['barcode'] = barcode;
 
