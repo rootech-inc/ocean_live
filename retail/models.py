@@ -96,6 +96,11 @@ class ProductSupplier(models.Model):
     country = models.TextField()
     created_on = models.DateTimeField(auto_now_add=True)
 
+    def obj(self):
+        return {
+            'code':self.code,
+            'name':self.name
+        }
 
 class ProductGroup(models.Model):
     code = models.CharField(unique=True, max_length=10, null=False, blank=False)

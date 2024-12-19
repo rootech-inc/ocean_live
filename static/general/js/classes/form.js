@@ -8,7 +8,7 @@ class Form {
                 <div class="input-group mb-2">
                 <label class="w-100 text-info" for="${ini}">${ini.toUpperCase().replace('_',' ')} ${req}</label>
                 <input type="${type}" maxlength="${max_value}" id="${ini}" name="${ini}" required="${required}" class="form-control w-100 rounded-0"  />
-                <small class="text-info">${comment}</small>
+                <small class="text-muted">${comment}</small>
                 </div>
                 `
     }
@@ -42,7 +42,7 @@ class Form {
             req = `<span class="text-danger">*</span>`
         }
         return `
-                <label class="text-info" for="${ini}">${ini.toUpperCase().replace('_',' ')} ${req}</label>
+                <label class="text-muted" for="${ini}">${ini.toUpperCase().replace('_',' ')} ${req}</label>
                 <select id="${ini}" name="${ini}" required="${required}" class="form-control mb-2 rounded-0"><${options}</select><i class="text-muted">${comment}</i>
                 `
     }

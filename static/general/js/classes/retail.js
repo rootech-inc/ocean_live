@@ -1757,6 +1757,14 @@ class Retail {
 
     }
 
+    getSuppliers(){
+        let payload = {
+            module:'suppliers',data:{}
+        }
+
+        return api.call('VIEW',payload,'/retail/api/')
+    }
+
     slowMovingItemsScreen(){
         let form = ``;
         let loc_payload = {
@@ -1764,6 +1772,20 @@ class Retail {
             data:{}
         }
         let locations = api.call('VIEW',loc_payload,'/retail/api/')
+        let suppliers = this.getSuppliers()
+        console.table(suppliers)
+        let supp_arr = []
+        supp_arr.push({val:'',desc:"All"})
+        if(anton.IsRequest(suppliers)){
+            let sups = suppliers.message;
+            for(let s = 0; s < sups.length; s++){
+                let sup = sups[s];
+                console.table(sup)
+                supp_arr.push({
+                    val:sup.code,desc:sup.name
+                })
+            }
+        }
         let l_arr = []
         l_arr.push({val:'*',desc:'All'})
         let locs = locations['message'];
@@ -1771,14 +1793,31 @@ class Retail {
             let lc = locs[l]
             l_arr.push({val:lc['code'],desc:lc['name']})
         }
-        form += fom.selectv2('location',l_arr,'',true)
-        form += fom.number('quantity','how many quantity moved',true)
-        form += fom.number('days','how many days movement?',true)
+        // form += fom.selectv2('location',l_arr,'',true)
+        let t1 = fom.selectv2('location',l_arr,'',true)
+        let t2 = fom.selectv2('supplier',supp_arr,'',true)
+        form += `<div class="row"><div class="col-sm-6">${t1}</div><div class="col-sm-6">${t2}</div></div>`;
+        let quantity = fom.number('quantity','how many quantity moved',true)
+        let days = fom.number('days','how many days movement?',true)
+        let nums = `<hr><div class="row"><div class="col-sm-6">${quantity}</div><div class="col-sm-6">${days}</div></div>`;
+        form += nums
+
+        let operators = []
+        operators.push({val:'==',desc:'Moved Quanaity Equal To Quantity'})
+        operators.push({val:'>',desc:"Move Quantity Greater Than Quantity"})
+        operators.push({val:'<',desc:"Move Quantity  Less Quantity"})
+        operators.push({val:'<=',desc:"Move Quantity Less or Equal to Quantity"})
+        operators.push({val:'>=',desc:"Move Quantity Greater or Equal to Quantity"})
+
+        let f1 =  fom.selectv2('operator',operators,'Analyric direction',true)
+        let f2 = fom.selectv2('focus',[{val:'sold',desc:'Sold Quantity'},{val:'moved',desc:'Moved Quantity'}],'Movemetn Focus',true)
+        let fe = `<hr><div class="row"><div class="col-sm-6">${f1}</div><div class="col-sm-6">${f2}</div></div>`;
+        form += fe
 
         let b1 = fom.selectv2('stock_type',[{val:'',desc:'All'},{val:'1',desc:"Active"},{val:'0',desc:"Discontinued"}],'',true)
         let b2 = fom.selectv2('export',[{val:'json',desc:'Preview'},{val:'excel',desc:"Excel Export"}],'',true)
 
-        let fb = `<div class="row"><div class="col-sm-6">${b1}</div><div class="col-sm-6">${b2}</div></div>`;
+        let fb = `<hr><div class="row"><div class="col-sm-6">${b1}</div><div class="col-sm-6">${b2}</div></div>`;
         form += fb;
 
 
@@ -1789,7 +1828,7 @@ class Retail {
     }
 
     slowMovingItems() {
-        let ids = ['export','quantity','days'];
+        let ids = ['export','quantity','days','operator','focus'];
         if(anton.validateInputs(ids)){
             let payload = {
                 module:'slow_moving_items',
@@ -1797,47 +1836,46 @@ class Retail {
             }
 
             payload['data']['location'] = $('#location').val()
+            payload['data']['supplier'] = $('#supplier').val()
 
             console.table(payload)
 
             loader.show()
-            // let response = api.call('VIEW',payload,'/retail/api/');
-            let response = api.v2('VIEW',payload,'/retail/api/');
 
-            // console.table(response)
-            // console.table(response)
-            //
-            response.then(function(res){
-                console.table(res)
-                if(anton.IsRequest(res)){
-                    let message = res.message;
-                    let ht = ``;
+            // Making the API call
+            api.v2('VIEW', payload, '/retail/api/')
+                .then((res) => {
+                    console.table(res)
+                    if (anton.IsRequest(res)) {
+                        let message = res.message;
+                        let ht = ``;
 
-                    if(payload['data']['export'] === 'excel'){
-                        loader.hide()
-                        anton.viewFile(`/${message}`)
-                    } else {
-                        let header = ['Barcode','Name','Moved','Sold']
-
-                        let rows = ``;
-                        for (let i = 0; i < message.length; i++) {
-                            rows += `<tr><td>${message[i]['barcode']}</td><td>${message[i]['name']}</td><td>${message[i]['moved']}</td><td>${message[i]['sold']}</td></tr>`
+                        if (payload['data']['export'] === 'excel') {
+                            loader.hide()
+                            anton.viewFile(`/${message}`)
+                        } else {
+                            let header = ['Barcode', 'Name', 'Moved', 'Sold']
+                            let rows = ``;
+                            for (let i = 0; i < message.length; i++) {
+                                rows += `<tr><td>${message[i]['barcode']}</td><td>${message[i]['name']}</td><td>${message[i]['moved']}</td><td>${message[i]['sold']}</td></tr>`
+                            }
+                            reports.render(header, rows, `Slow Moving Items above ${payload['data']['quantity']} for the past ${payload['data']['days']} days`)
+                            loader.hide()
+                            amodal.hide()
                         }
-                        reports.render(header,rows,`Slow Moving Items above ${payload['data']['quantity']} for the past ${payload['data']['days']} days`)
-                        // kasa.info("Preview Not Configured")
+                    } else {
+                        kasa.response(res)
                         loader.hide()
                     }
-
-                }
-            }).catch(function(err){
-                console.log("Responsed error")
-                console.table(err)
-            })
-
-
-
+                })
+                .catch((err) => {
+                    console.log("Responsed error")
+                    console.table(err)
+                    loader.hide() // Make sure loader is hidden even on error
+                })
         }
     }
+
 }
 
 const retail = new Retail();

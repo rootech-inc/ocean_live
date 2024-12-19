@@ -138,3 +138,16 @@ def format_currency(amount):
         return locale.currency(amount, grouping=True).strip(locale.localeconv()['currency_symbol']).strip()
     except Exception as e:
         return amount
+
+
+
+def get_client_ip(request):
+    """Extract the client's IP address from the request."""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        # Behind a proxy, get the first IP in the list
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        # Direct IP
+        ip = request.META.get('REMOTE_ADDR')
+    return ip

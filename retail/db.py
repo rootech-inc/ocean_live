@@ -11,7 +11,7 @@ def ret_cursor(host=RET_DB_HOST, port=RET_DB_PORT, db=RET_DB_NAME, user=RET_DB_U
     username = user
     password = password
     driver = '{ODBC Driver 17 for SQL Server}'  # Change this to the driver you're using
-    connection_string = f"DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}"
+    connection_string = f"DRIVER={driver};SERVER={server},{RET_DB_PORT};DATABASE={database};UID={username};PWD={password}"
     connection = pyodbc.connect(connection_string)
     return connection
 

@@ -677,7 +677,27 @@ class Crm {
             for(let x = 0; x < cmps.length; x++){
                 let row = cmps[x];
                 console.table(row)
-                rows += `<tr><td>${row['type']}</td><td>${row['title']}</td><td>${row['date']}</td><td>OWNER</td><td>ACTION</td></tr>`
+                rows += `<tr><td>${row['type']}</td><td>${row['title']}</td><td>${row['date']}</td><td>${row['heat']}</td><td>
+                        <div class="dropdown dropleft">
+                          <button class="btn btn-primary" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fa fa-arrow-left"></i>
+                          </button>
+                          <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <!-- Title -->
+                            <h6 class="dropdown-header">Menu Title</h6>
+                            <!-- Links -->
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="crm.approval_request('${row['pk']}')">Send For Approval</a>
+                            <a class="dropdown-item" href="#link2">Schedule</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="crm.deleteCampaign('${row['pk']}')">Delete</a>
+                            <!-- Divider -->
+                            <div class="dropdown-divider"></div>
+                            <!-- Additional links or items can go here -->
+                            
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="crm.prevCamp('${row['pk']}')">Preview</a>
+                            <a class="dropdown-item" href="#link4">Update Content</a>
+                          </div>
+                        </div>
+</td></tr>`
             }
             $('tbody').html(rows);
         } else {
@@ -862,6 +882,43 @@ class Crm {
         } else{
             kasa.error("Asset Not Selected")
         }
+    }
+
+    prevCamp(pk) {
+        let campaign = this.Campaigns(pk);
+        if(anton.IsRequest(campaign)){
+            let res = campaign.message[0];
+            amodal.setTitleText(res['title'])
+            amodal.setBodyHtml(res['message'])
+            amodal.setSize('L')
+            amodal.setFooterHtml(`<button onclick="crm.approval_request('${pk}')" class="btn btn-success w-100">SEEK APPROVAL</button>`)
+            amodal.show()
+
+        } else {
+            kasa.response(campaign)
+        }
+    }
+
+    approval_request(pk) {
+        let payload = {
+            module:'request_campaing_approval',
+            data:{
+                key:pk
+            }
+        }
+
+        kasa.confirm(api.call('PATCH',payload,'/crm/api/')['message'],1,'here')
+    }
+
+    deleteCampaign(pk) {
+        let payload = {
+            module:'campaign',
+            data:{
+                pk:pk
+            }
+        }
+
+        kasa.confirm(api.call('DELETE',payload,'/crm/api/')['message'],1,'here')
     }
 }
 

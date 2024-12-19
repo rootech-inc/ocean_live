@@ -631,6 +631,14 @@ def interface(request):
                 success_response['message'] = arr
                 response = success_response
 
+            elif module == 'suppliers':
+                suppliers = ProductSupplier.objects.all().order_by('name')
+                for supplier in suppliers:
+                    arr.append(supplier.obj())
+
+                success_response['message'] = arr
+                response = success_response
+
             elif module == 'sample':
                 samples = SampleHd.objects.all()
 
@@ -1322,6 +1330,10 @@ def interface(request):
                 export = data.get('export')
                 quantity = data.get('quantity',1)
                 is_active = data.get('stock_type',1)
+                operator = data.get('operator','=')
+                focus = data.get('focus','moved')
+                supplier = data.get('supplier','')
+
                 from datetime import timedelta
                 date_from = timezone.now().date() - timedelta(days=days)
                 date_to = timezone.now().date()
@@ -1348,7 +1360,7 @@ def interface(request):
                 DECLARE @ldt_dtto varchar(20) = '{date_to}'
                 DECLARE @ls_group varchar(20) = '%%'
                 DECLARE @ls_subgroup varchar(20) = '%%'
-                DECLARE @supp_code varchar(20) = '%%'
+                DECLARE @supp_code varchar(20) = '%{supplier}%'
                 DECLARE @barcode varchar(20) = '%%'
 
 
@@ -1524,6 +1536,7 @@ def interface(request):
                 results = cursor.fetchall()
                 arr = []
                 for row in results:
+                    print(row)
                     row_data = dict(zip(column_names, row))  # Pair column names with their values
                     item_code = row_data['item_code']
                     barcode = row_data['barcode'].strip()
@@ -1542,7 +1555,21 @@ def interface(request):
                     sales_date = row_data['sales_date']
                     s_qty = row_data['s_qty']
 
-                    if int(move_qty) == int(quantity):
+                    # operators = {
+                    #     "==": operator.eq,
+                    #     "!=": operator.ne,
+                    #     "<": operator.lt,
+                    #     "<=": operator.le,
+                    #     ">": operator.gt,
+                    #     ">=": operator.ge,
+                    # }
+
+                    ev = f"{quantity} {operator} {move_qty}"
+                    if focus == 'sold':
+                        ev = f"{quantity} {operator} {s_qty}"
+
+                    print(ev)
+                    if eval(ev):
                         li = [item_code, barcode, name, move_qty, s_qty]
 
                         if export == 'json':

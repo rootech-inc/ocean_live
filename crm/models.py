@@ -195,7 +195,8 @@ class Campaigns(models.Model):
             'type': self.type,
             'description': self.description,
             'message': self.message_template,
-            'date':self.created_on
+            'date':self.created_on,
+            'heat':CampaignSense.objects.filter(campaign=self).count()
         }
 
 
@@ -211,3 +212,10 @@ class CampaignTargets(models.Model):
 
     class Meta:
         unique_together = (('campaign', 'contact'),)
+
+
+class CampaignSense(models.Model):
+    campaign = models.ForeignKey(Campaigns,on_delete=models.CASCADE)
+    source = models.TextField()
+    created_on = models.DateTimeField(auto_now_add=True)
+

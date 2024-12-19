@@ -10,10 +10,11 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
 
-from admin_panel.anton import make_md5_hash, is_valid_email, is_valid_phone_number, md5only
+from admin_panel.anton import make_md5_hash, is_valid_email, is_valid_phone_number, md5only, get_client_ip
 from admin_panel.models import Emails, MailQueues, MailSenders, MailAttachments, Reminder, Sms, SmsApi
 from cmms.models import CarModel, SalesDeals, SalesCustomers
-from crm.models import Logs, CrmUsers, Sector, Positions, FollowUp, Campaigns, LogValidity, CampaignTargets
+from crm.models import Logs, CrmUsers, Sector, Positions, FollowUp, Campaigns, LogValidity, CampaignTargets, \
+    CampaignSense
 
 
 @csrf_exempt
@@ -196,6 +197,8 @@ def api_interface(request):
                 description = data.get('description')
                 title = data.get('title')
                 c_type = data.get('type')
+                # make call back link from title
+                # callback = title.to_lower().replace(' ','-')
                 uni = ''
                 if c_type == 'sms':
                     sms_api = data.get('sms_api')
@@ -246,11 +249,14 @@ def api_interface(request):
                     if c_type == 'email':
                         contact = log.email
 
-                    CampaignTargets.objects.create(
-                        campaign=camp,
-                        contact=contact,
-                        name=log.customer,
-                    )
+                    try:
+                        CampaignTargets.objects.create(
+                            campaign=camp,
+                            contact=contact,
+                            name=log.customer,
+                        )
+                    except Exception as e:
+                        pass
 
                 success_response['message'] = f"Campaign Created SSuccessfully"
                 response = success_response
@@ -350,6 +356,21 @@ def api_interface(request):
 
                 success_response['message'] = lgo
                 response = success_response
+
+            elif module == 'campaign_sense':
+                key = data.get('key')
+                camp = Campaigns.objects.get(uni=key)
+                ip = get_client_ip(request)
+
+                CampaignSense.objects.create(
+                    campaign=camp,
+                    source = ip
+                )
+
+                success_response['message'] = "Sensed"
+                response = success_response
+
+
 
             elif module == 'get_crm_contact':
                 clients = Logs.objects.all()
@@ -648,6 +669,40 @@ def api_interface(request):
                 success_response['message'] = f"FOLLOWED UP date adjusted to {ext_date} ans new log created"
                 response = success_response
 
+            elif module == 'request_campaing_approval':
+                key = data.get('key')
+                cp = Campaigns.objects.get(pk=key)
+                sender_pk = cp.sender
+                li = ""
+                if cp.type == 'email':
+                    api = MailSenders.objects.get(pk=sender_pk)
+                    # text_recipeients = [
+                    #     'solomon@snedaghana.com',
+                    #     'bharat@snedaghana.com',
+                    #     'aj@snedaghana.com',
+                    #     'sambeasare@hotmail.com',
+                    #     'sales2@snedamotors.com'
+                    # ]
+
+                    text_recipeients = [
+                        'solomon@snedaghana.com',
+                        'rootech.inc@proton.me'
+                    ]
+
+                    for rec in text_recipeients:
+                        MailQueues.objects.create(
+                            sender=api,
+                            recipient=rec,
+                            body=cp.message_template,
+                            subject=cp.subject,
+                            mail_key = make_md5_hash(f"{rec,cp.message_template}")
+                        )
+
+                        li += f"{rec},"
+
+                success_response['message'] = f"Approval request sent to {li}"
+
+
             elif module == 'band_user':
                 user_pk = data.get('pk')
                 user = User.objects.get(pk=user_pk)
@@ -704,6 +759,13 @@ def api_interface(request):
             else:
                 response = {'message': f'NO MODULE {module}', 'status_code': 404}
 
+        elif method == 'DELETE':
+            if module == 'campaign':
+                pk = data.get('pk')
+                Campaigns.objects.get(pk=pk).delete()
+
+                success_response['message'] = "Campaign Deleted"
+                response = success_response
 
     except Exception as e:
         error_type, error_instance, traceback = sys.exc_info()
