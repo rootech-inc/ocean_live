@@ -12,14 +12,16 @@
     </div>
     <div class="card-body overflow-hidden p-2">
         <div class="container h-100 overflow-auto">
+
             <div class="row h-100">
                 <div class="col-sm-4">
 
                     <div class="input-group mb-2">
                         <label class="w-100 text-info" for="type">Type</label>
                         <select name="" id="type" class="form-control rounded-0">
-                            <option value="auto">AUTO</option>
-                            <option value="custom">CUSTOM</option>
+                            <option value="">Select Type</option>
+                            <option value="email">EMAIL</option>
+                            <option value="sms">SMS</option>
                         </select>
                     </div>
 
@@ -32,25 +34,19 @@
                         <label class="text-info w-100" for="description">Description</label>
                         <textarea id="description" class="form-control rounded-0" cols="30" rows="5"></textarea>
                     </div>
-
                     <hr>
-                    <div class="w-100 shadow p-2">
+                    <button id="see_clients" class="btn btn-info w-100">PREVIEW CLIENTS</button>
 
-                        <label class="text-info" for="sms_api">Select SMS APi</label>
-                        <select name="" id="sms_api" class="form-control rounded-0 mb-2">
-                            {% for sm in smsapis %}
-                                <option value="{{ sm.pk }}">{{ sm.sender_id }}</option>
-                            {% endfor %}
-                        </select>
-                        <label class="text-info" for="sms_template">SMS Template</label>
-                        <textarea id="sms_template" class="form-control rounded-0" cols="30" rows="3"></textarea>
-                    </div>
+
 
                 </div>
                 <div class="col-sm-8 h-100">
-
-                    <hr>
-                    <div class="w-100 shadow p-2">
+{#                    <div id="main_screen h-100">#}
+{#                        <div class="w-100 h-100 d-flex flex-wrap justify-content-center align-content-center">#}
+{#                            <p class="enc">Select Type</p>#}
+{#                        </div>#}
+{#                    </div>#}
+                    <div id="email_screen" style="display: none;" class="w-100 shadow p-2">
                         <label class="text-info" for="em_sender">Select Email Sender</label>
                         <select name="" id="em_sender" class="form-control rounded-0 mb-2">
                             {% for em in mss %}
@@ -63,6 +59,18 @@
                         <textarea id="email_template" class="form-control rounded-0" cols="30" rows="10"></textarea>
                         <button onclick="crm.previewCampaignEmailTemplate()" class="btn mt-2 btn-info">PREVIEW</button>
                     </div>
+
+                    <div id="sms_screen" style="display: none" class="w-100 shadow p-2">
+
+                        <label class="text-info" for="sms_api">Select SMS APi</label>
+                        <select name="" id="sms_api" class="form-control rounded-0 mb-2">
+                            {% for sm in smsapis %}
+                                <option value="{{ sm.pk }}">{{ sm.sender_id }}</option>
+                            {% endfor %}
+                        </select>
+                        <label class="text-info" for="sms_template">SMS Template</label>
+                        <textarea id="sms_template" class="form-control rounded-0" cols="30" rows="3"></textarea>
+                    </div>
                 </div>
             </div>
         </div>
@@ -72,5 +80,82 @@
         let tr = `<tr><td>STATUS</td><td>TITLE</td><td>DATE CREATED</td><td>OWNER</td><td>ACTION</td></tr>`;
 
         $('tbody').html(tr);
+
+        $('#type').change(function(){
+            let tp = $('#type').val();
+            console.log("CHange")
+            if(tp === 'email'){
+                anton.hide(['sms_screen','main_screen'])
+                anton.show(['email_screen'])
+            }
+            if(tp === 'sms'){
+                anton.hide(['email_screen','main_screen'])
+                anton.show(['sms_screen'])
+            }
+        });
+
+        $('#see_clients').click(function () {
+            let select = $('#type').val();
+            let payload = {
+                module:"get_crm_contact",
+                data:{}
+            }
+            if(select === 'email'){
+                payload['data']['type'] = 'email'
+            } else if(select === 'sms'){
+                payload['data']['type'] = 'phone'
+            } else {
+                kasa.error("Cannot get type")
+                throw new Error("Unknown Type Selection")
+            }
+
+            let response = api.v2('VIEW',payload,'/crm/api/');
+            response.then(function (res) {
+                if(anton.IsRequest(res)){
+                    let message = res['message'];
+                    let tr = ``;
+
+
+                    for (let i = 0; i < message.length; i++) {
+                        let row = message[i];
+                        let cont;
+                        if(select === 'email'){
+                            cont = row['email'].split('@')[0] + "@**********.com";
+                        }
+
+                        if(select === 'sms'){
+
+                            cont = row['phone'].replace('0','*').replace('5','*').replace('3','***@$#:');
+                        }
+                        tr += `<tr>
+                                    <td>${row['name']}</td>
+                                    <td>${cont}</td>
+                                </tr>`
+                    }
+
+                    let html = `
+                        <table class = 'table table-bordered'>
+                            <thead>
+                                <tr>
+                                    <th>NAME</th>
+                                    <th>CONTACT</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tr}
+                            </tbody>
+                        </table>
+                    `
+
+                    amodal.setTitleText(`Target Clients (${message.length} ${select}s)`)
+                    amodal.setBodyHtml(html);
+                    amodal.setSize('L')
+                    amodal.show()
+                } else {
+                    kasa.response(res)
+                }
+            })
+            console.table(payload)
+        })
     </script>
 {% endblock %}

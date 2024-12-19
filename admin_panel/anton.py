@@ -1,6 +1,7 @@
 import hashlib
 
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 from admin_panel.models import UserAddOns, UserSettings, Emails, Sms, SmsApi
 from ocean import settings
@@ -87,7 +88,7 @@ def remove_html_tags(text):
 
 def make_md5_hash(text):
     from datetime import datetime
-    current_datetime = datetime.now()
+    current_datetime = timezone.now()
     formatted_datetime = current_datetime.strftime("%Y_%m_%d_%H_%M_%S")
     new_text = f"{text}{formatted_datetime}"
     return hashlib.md5(new_text.encode('utf-8')).hexdigest()

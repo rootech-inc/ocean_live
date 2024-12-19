@@ -10,10 +10,10 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
 
-from admin_panel.anton import make_md5_hash, is_valid_email, is_valid_phone_number
+from admin_panel.anton import make_md5_hash, is_valid_email, is_valid_phone_number, md5only
 from admin_panel.models import Emails, MailQueues, MailSenders, MailAttachments, Reminder, Sms, SmsApi
 from cmms.models import CarModel, SalesDeals, SalesCustomers
-from crm.models import Logs, CrmUsers, Sector, Positions, FollowUp, Campaigns, LogValidity
+from crm.models import Logs, CrmUsers, Sector, Positions, FollowUp, Campaigns, LogValidity, CampaignTargets
 
 
 @csrf_exempt
@@ -192,17 +192,45 @@ def api_interface(request):
                 success_response['message'] = "Position added"
 
             elif module == "campaign":
+
                 description = data.get('description')
-                email_template = data.get('email_template')
-                sms_template = data.get('sms_template')
                 title = data.get('title')
                 c_type = data.get('type')
-                subject = data.get('subject')
+                uni = ''
+                if c_type == 'sms':
+                    sms_api = data.get('sms_api')
+                    sms_template = data.get('sms_template')
 
-                uni = make_md5_hash(f"{description, email_template, sms_template, title}")
+                    uni = make_md5_hash(f"{description, sms_api, sms_template, title}")
 
-                Campaigns(title=title, type=c_type, description=description, email_template=email_template,
-                          sms_template=sms_template, uni=uni).save()
+                    Campaigns.objects.create(
+                        uni=uni,
+                        title=title,
+                        type=c_type,
+                        subject="SMS",
+                        description=description,
+                        sender=sms_api,
+                        message_template=sms_template,
+                    )
+
+
+                if c_type == 'email':
+                    sender = data.get('em_sender')
+                    subject = data.get('subject')
+                    email_template = data.get('email_template')
+                    uni = make_md5_hash(f"{description, sender, email_template, title}")
+
+                    Campaigns.objects.create(
+                        uni=uni,
+                        title=title,
+                        type=c_type,
+                        subject=subject,
+                        description=description,
+                        sender=sender,
+                        message_template=email_template,
+                    )
+
+
 
                 camp = Campaigns.objects.get(uni=uni)
 
@@ -210,37 +238,26 @@ def api_interface(request):
                 sms_tot = 0
                 em_tot = 0
 
-                if c_type == 'auto':
-                    tot = + 1
-                    # populate emails
-                    logs = Logs.objects.all()
-                    for lo in logs:
-                        em = lo.email
-                        tel = lo.phone.replace('+233', '0')
+                # que transactions
+                for log in Logs.objects.all():
+                    contact = ''
+                    if c_type == 'sms':
+                        contact = log.phone
+                    if c_type == 'email':
+                        contact = log.email
 
-                        # Que Email
-                        MailQueues(
-                            sender=MailSenders.objects.get(pk=data.get('em_sender')),
-                            recipient=em,
-                            body=email_template,
-                            subject=subject,
-                        ).save()
-                        em_tot = + 1
+                    CampaignTargets.objects.create(
+                        campaign=camp,
+                        contact=contact,
+                        name=log.customer,
+                    )
 
-                        # que sms
-                        if len(tel) == 10:
-                            Sms(
-                                api=SmsApi.objects.get(pk=data.get('sms_api')),
-                                to=tel,
-                                message=sms_template,
-                            ).save()
-                            sms_tot = + 1
-
-                    success_response['message'] = f"Total: {tot}, Emails Sent: {em_tot}, SMS Sent: {sms_tot}"
-                    response = success_response
+                success_response['message'] = f"Campaign Created SSuccessfully"
+                response = success_response
 
         elif method == 'VIEW':
             arr = []
+
             if module == 'log':
                 from django.db.models import Q
                 from datetime import datetime
@@ -332,6 +349,19 @@ def api_interface(request):
                     lgo = file_name
 
                 success_response['message'] = lgo
+                response = success_response
+
+            elif module == 'get_crm_contact':
+                clients = Logs.objects.all()
+                ty = data.get('type')
+                for log in clients:
+                    if ty == 'email' and is_valid_email(log.email):
+                        arr.append(log.contact())
+
+                    if ty == 'phone' and is_valid_phone_number(log.phone):
+                        arr.append(log.contact())
+
+                success_response['message'] = arr
                 response = success_response
 
             elif module == 'generate_log_report':

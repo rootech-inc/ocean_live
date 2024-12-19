@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
+from admin_panel.anton import make_md5_hash
 from admin_panel.models import GeoCity, GeoCitySub
 
 
@@ -123,6 +124,16 @@ class Logs(models.Model):
                 'is_valid':log.is_valid,
             })
 
+    def contact(self):
+        return {
+            'name':self.customer,
+            'email':make_md5_hash(self.email.strip()),
+            'phone':make_md5_hash(self.phone.strip()),
+            'address':self.address,
+            'company':self.company
+        }
+
+
 class LogValidity(models.Model):
     log = models.ForeignKey(Logs, on_delete=models.SET_NULL, null=True)
     part = models.CharField(max_length=255,null=False)
@@ -169,10 +180,12 @@ class Campaigns(models.Model):
     uni = models.CharField(unique=True, max_length=65)
     title = models.TextField()
     type = models.TextField()
+    subject = models.TextField()
     description = models.TextField()
-    email_template = models.TextField()
-    sms_template = models.TextField()
+    sender = models.IntegerField(null=False, blank=False)
+    message_template = models.TextField()
     created_on = models.DateTimeField(auto_now_add=True)
+    is_approved = models.BooleanField(default=False)
 
     def obj(self):
         return {
@@ -181,16 +194,20 @@ class Campaigns(models.Model):
             'title': self.title,
             'type': self.type,
             'description': self.description,
-            'email_template': self.email_template,
-            'sms_template': self.sms_template,
+            'message': self.message_template,
             'date':self.created_on
         }
+
 
 
 class CampaignTargets(models.Model):
     campaign = models.ForeignKey(Campaigns, on_delete=models.CASCADE)
     contact = models.CharField(max_length=65)
     name = models.TextField()
+    is_sent = models.BooleanField(default=False)
+    tried_response = models.TextField(default="Que")
+    last_tried = models.DateTimeField(auto_now_add=True)
+    created_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = (('campaign', 'contact'),)

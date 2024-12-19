@@ -636,7 +636,19 @@ class Crm {
     }
 
     saveCampaign() {
-        let ids = ['type','title','description','sms_template','email_template','subject','em_sender','sms_api'];
+        let ids = ['type','title','description'];
+        let type = $('#type').val()
+        if(type === 'email'){
+            ids.push('em_sender')
+            ids.push('subject')
+            ids.push('email_template')
+        }
+
+        if(type === 'sms'){
+            ids.push('sms_api')
+            ids.push('sms_template')
+        }
+
         if(anton.validateInputs(ids)){
             let payload = {
                 module:'campaign',

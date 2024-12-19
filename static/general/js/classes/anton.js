@@ -199,6 +199,22 @@ class Anton {
 
             return input.files.length > 0;
     }
+
+    hide(list = []) {
+        for (let i = 0; i < list.length; i++) {
+            let el = list[i];
+            console.log(`Hiding #${el}`)
+            $(`#${el}`).fadeOut('fast')
+        }
+    }
+
+    show(list = []) {
+        for (let i = 0; i < list.length; i++) {
+            let el = list[i];
+            console.log(`Showing #${el}`)
+            $(`#${el}`).fadeIn('fast')
+        }
+    }
 }
 
 class LineCalculate {

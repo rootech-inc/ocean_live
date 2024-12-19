@@ -1470,6 +1470,7 @@ class Retail {
             let mark = api.call('PATCH',payload,'/retail/api/');
             if(anton.IsRequest(mark)){
                 $('#bolt_img_form').submit()
+                this.changeShelfScreen(barcode)
             } else {
                 kasa.response(mark)
             }
@@ -1870,7 +1871,7 @@ $(document).on('change', '#bolt_image_input', function() {
                 processData: false, // Prevent jQuery from processing data
                 success: function(response) {
                     console.table(response)
-                    kasa.confirm(response.message,1,'here')
+                    kasa.info(response.message)
                 },
                 error: function(xhr) {
                     $('#response').html('<p>Error: ' + xhr.responseText + '</p>');
