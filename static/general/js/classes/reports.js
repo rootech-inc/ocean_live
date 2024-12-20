@@ -138,6 +138,8 @@ class Reports {
     }
 
     render(header = [],rows = '',report_title = ''){
+        console.table(header)
+
         if(header.length < 1){
             kasa.error("INVALID HEADER LENDER : REPORT CANNOT RENDER")
         } else {
@@ -507,6 +509,7 @@ class Reports {
 
     retailTransferResult() {
         let id = ['entry_no','doc']
+        loader.show()
         if(anton.validateInputs(id)){
             let data = anton.Inputs(id);
             let payload = {
@@ -514,8 +517,8 @@ class Reports {
                 data:data
             }
 
-            let response = api.call('VIEW',payload,'/retail/api/')
-            if(anton.IsRequest(response)){
+            api.v2('VIEW',payload,'/retail/api/').then(response => {
+                if(anton.IsRequest(response)){
                 if(data['doc'] === 'excel'){
                     kasa.html(`<a href="/${response['message']}">DOWNLOAD</a>`)
                 }
@@ -551,8 +554,14 @@ class Reports {
                     amodal.hide()
                 }
             } else {
-                kasa.response(response)
-            }
+                    kasa.response(response)
+                }
+            }).catch(error => {
+                kasa.error(error)
+            }).finally(() => {
+                loader.hide()
+            })
+
         } else {
             kasa.error("Invalid Form")
         }

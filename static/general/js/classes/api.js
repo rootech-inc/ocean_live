@@ -50,6 +50,9 @@ class Api {
     }
 
     async v2(method, data, int = '/api/') {
+        console.log(data)
+        console.log(int)
+        console.log(method)
         try {
             const response = await fetch(int, {
                 method: method,

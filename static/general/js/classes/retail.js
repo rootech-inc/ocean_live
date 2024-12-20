@@ -416,20 +416,26 @@ class Retail {
     materialRequestCompare() {
         let fields = ['doc','mr_no'];
         if(anton.validateInputs(fields)){
+            let dt = anton.Inputs(fields);
+            console.table(dt)
             let payload = {
                 module:'mr_check',
                 data:anton.Inputs(fields)
             };
+            loader.show();
+            amodal.hide();
+            api.v2('VIEW',payload,'/retail/api/').then(view => {
 
-            let view = api.call('VIEW',payload,'/retail/api/');
-            if(anton.IsRequest(view)){
+                if(anton.IsRequest(view)){
                 let message = view['message'];
-                let doc_type = $('#doc').val();
+
+                let doc_type = dt['doc'];
                 let mr = $('#mr_no').val()
                 if(doc_type === 'excel'){
                     kasa.html(`<a href="/${message}">DOWNLOAD FILE</a>`)
                 }
                 else if (doc_type === 'JSON'){
+                    console.table(message)
                     let header,transactions;
                     header = message['header'];
                     transactions = message['transactions'];
@@ -463,15 +469,26 @@ class Retail {
                             </tr>
                         `
                     }
-                    amodal.hide()
+
+                    console.log("Header here")
+                    console.table(rep_header)
+                    console.log("Header here")
                     reports.render(rep_header,rows,`MATERIAL REQUEST CHECK FOR ${mr}`)
+                    amodal.hide()
                 }
                 else {
-                    kasa.info("Invalid Render Configuration")
+                    kasa.info(`Invalid Render Configuration ${doc_type}`)
                 }
-            } else {
+            }
+            else {
                 kasa.response(view)
             }
+            }).catch(err => {
+                kasa.response(err)
+            }).finally(() => {
+                loader.hide();
+            })
+
         } else {
             kasa.error("Invalid Field")
         }
@@ -508,12 +525,13 @@ class Retail {
             <option value="excel">Excel</option>
         `,"",true)
         amodal.setTitleText("Stock Check")
-        amodal.setBodyHtml(form)
-        amodal.setFooterHtml(`<button onclick="retail.stockReport()" class="btn btn-success w-100">CHECK</button>`)
+        amodal.setBodyHtml(`REPORT DISABLED FOR NOW`)
+        //amodal.setFooterHtml(`<button onclick="retail.stockReport()" class="btn btn-success w-100">CHECK</button>`)
         amodal.show()
     }
 
     stockReport() {
+
         let fields = ['doc','filter']
         if(anton.validateInputs(fields)){
             let data = anton.Inputs(fields)
@@ -521,28 +539,39 @@ class Retail {
                 module:'see_stock_monitor',
                 data:data
             }
-            let generate = api.call('VIEW',payload,'/retail/api/')
-            if(anton.IsRequest(generate)){
-                let response = generate['message'];
-                if (data['doc'] === 'excel'){
-                    kasa.html(`<a href="/${response}">DOWNLOAD REPORT</a>`)
-                } else if (data['doc']){
-                    let rows = ''
-                    for(let r = 0; r < response.length; r++){
-                        let row = response[r]
-                        rows += `
-                            <tr><td>${row['loc_code']}</td><td>${row['loc_name']}</td><td>${row['barcode']}</td><td>${row['item_name']}</td><td>${row['stock']}</td></tr>
-                        `
-                    }
+            loader.show()
+            api.v2('VIEW',payload,'/retail/api/').then(generate => {
+                console.log('OKAY')
+                amodal.hide()
 
-                    reports.render(['LOC_CODE',"LOC_NAME","BARCODE","NAME","STOCK"],rows,`STOCK REPORT FOR ${data['filter']} ITEMS`)
+                console.table(generate)
+                if(anton.IsRequest(generate)){
+                    let response = generate['message'];
+                    if (data['doc'] === 'excel'){
+                        kasa.html(`<a href="/${response}">DOWNLOAD REPORT</a>`)
+                    } else if (data['doc']){
+                        let rows = ''
+                        for(let r = 0; r < response.length; r++){
+                            let row = response[r]
+                            rows += `
+                                <tr><td>${row['loc_code']}</td><td>${row['loc_name']}</td><td>${row['barcode']}</td><td>${row['item_name']}</td><td>${row['stock']}</td></tr>
+                            `
+                        }
+
+                        reports.render(['LOC_CODE',"LOC_NAME","BARCODE","NAME","STOCK"],rows,`STOCK REPORT FOR ${data['filter']} ITEMS`)
+                    } else {
+                        kasa.error("Unknown Document Rendering Format")
+                    }
                 } else {
-                    kasa.error("Unknown Document Rendering Format")
+                    kasa.response(generate)
                 }
-            } else {
-                kasa.response(generate)
-            }
-            amodal.hide()
+            }).catch(err => {
+                kasa.response(err)
+            }).finally(() => {
+                loader.hide()
+            })
+
+
         } else {
             kasa.error("Invalid Form")
         }
@@ -623,40 +652,52 @@ class Retail {
                 data:anton.Inputs(ids)
             }
 
-            let result = api.call('VIEW',payload,this.interface);
-            if(anton.IsRequest(result)){
-                let doc = $('#document').val();
-                if(doc === 'json'){
-                    let header = ['EXPIRY DATE','GRN','BARCODE','ITEM CODE','ITEM NAME','WAREHOUSE',"SPINTEX",'NIA',"OSU",'STOCK']
-                    let tr = '';
-                    let res = result.message;
-                    for(let m = 0; m < res.length; m++){
-                        let row = res[m];
-                        tr += `
-                            <tr>
-                                <td>${row['expiry_date']}</td>
-                                <td>${row['grn']}</td>
-                                <td>${row['barcode']}</td>
-                                <td>${row['item_code']}</td>
-                                <td>${row['item_des']}</td>
-                                <td>${row['warehouse_stock']}</td>
-                                <td>${row['spintex_stock']}</td>
-                                <td>${row['osu_stock']}</td>
-                                <td>${row['nia_stock']}</td>
-                                <td>${row['stock']}</td>
-</tr>
-                        `
-                    }
-                    reports.render(header,tr,'EXPIRY REPORT')
-                    amodal.hide()
-                }
+            loader.show()
+            api.v2('VIEW',payload,this.interface)
+                .then(result => {
+                    if(anton.IsRequest(result)){
+                        let doc = $('#document').val();
+                        if(doc === 'json'){
+                            let header = ['EXPIRY DATE','GRN','BARCODE','ITEM CODE','ITEM NAME','WAREHOUSE',"SPINTEX",'NIA',"OSU",'STOCK']
+                            let tr = '';
+                            let res = result.message;
+                            for(let m = 0; m < res.length; m++){
+                                let row = res[m];
+                                tr += `
+                                    <tr>
+                                        <td>${row['expiry_date']}</td>
+                                        <td>${row['grn']}</td>
+                                        <td>${row['barcode']}</td>
+                                        <td>${row['item_code']}</td>
+                                        <td>${row['item_des']}</td>
+                                        <td>${row['warehouse_stock']}</td>
+                                        <td>${row['spintex_stock']}</td>
+                                        <td>${row['osu_stock']}</td>
+                                        <td>${row['nia_stock']}</td>
+                                        <td>${row['stock']['total']}</td>
+                                    </tr>
+                                `
+                            }
+                            console.table(header)
+                            reports.render(header,tr,'EXPIRY REPORT')
+                            amodal.hide()
+                        }
 
-                if(doc === 'excel'){
-                    kasa.html(`<a href="/${result.message}">DOWNLOAD FILE</a>`)
-                }
-            } else {
-                kasa.response(result);
-            }
+                        if(doc === 'excel'){
+                            kasa.html(`<a href="/${result.message}">DOWNLOAD FILE</a>`)
+                        }
+                    } else {
+                        kasa.response(result);
+                    }
+
+                })
+                .catch(err => {
+                    kasa.response(err)
+                })
+                .finally(() => {
+                    loader.hide()
+                })
+
         } else {
             kasa.error("Invalid Form")
         }
@@ -731,7 +772,8 @@ class Retail {
                 let message = response.message
                 let rows = ``;
                 let v = $('#view').val()
-                if(v == 'excel'){
+
+                if(v === 'excel'){
                     kasa.html(`<a href="/${message}">DOWNLOAD</a>`)
                 } else {
                     for (let i = 0; i < message.length; i++) {
@@ -1303,13 +1345,45 @@ class Retail {
             data:anton.Inputs(ids)
         }
 
-        let fet = api.call('VIEW',payload,'/retail/api/');
+        loader.show()
+        amodal.hide()
+        api.v2('VIEW',payload,'/retail/api/').then(res => {
+            console.table(res)
+            if(inps['export'] === 'excel'){
+                anton.viewFile(`/${res['message']}`)
+            } else if(inps['export'] === 'json'){
+                let tr = "";
+                let message = res['message'];
+                console.table(message)
+                for(let i = 0; i < message.length; i++){
+                    let r = message[i];
+                    let barcode, name,quantity;
+                    barcode = r[0];
+                    name = r[1];
+                    quantity = r[2];
+                    tr += `
+                        <tr>
+                            <td>${barcode}</td>
+                            <td>${name}</td>
+                            <td>${quantity}</td>
+                        </tr>
+                    `;
 
-        if(inps['export'] === 'excel'){
-            anton.viewFile(`/${fet['message']}`)
-        } else {
-            kasa.info('preview')
-        }
+                }
+
+                reports.render(['BARCODE',"NAME","QUANTITY"],tr,`Stock Report for ${inps['loc_id']} adn group ${inps['category']} with status ${inps['status']}`)
+            }
+            else {
+                kasa.info('configure preview')
+            }
+        }).catch(err => {
+            kasa.response(err)
+        }).finally(() => {
+            loader.hide()
+
+        })
+
+
 
     }
 

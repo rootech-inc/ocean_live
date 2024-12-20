@@ -673,7 +673,7 @@ def interface(request):
                 sheet.append(header)
                 for row in cursor:
                     item_code,barcode,name,retail,prev_price1,pchange_date,user_id=row
-                    percentage_margin = format_currency(percentage_difference(prev_price1,retail)).replace('$','')
+                    percentage_margin = str(format_currency(percentage_difference(prev_price1,retail))).replace('$','') + "%"
                     #print(item_code,barcode,name,retail,prev_price1,pchange_date,user_id)
                     if doc == 'excel':
                         li = [barcode,name,prev_price1,retail,percentage_margin,user_id]
@@ -1954,6 +1954,7 @@ def interface(request):
 
             elif module == 'see_stock_monitor':
                 arr = []
+                print(data)
                 filter = data.get('filter')
                 loc_code = data.get('loc_code','*')
                 #print(filter)
@@ -2076,8 +2077,8 @@ def interface(request):
 
                     # connect to branch and get sold
                     loc = Locations.objects.get(code=loc_id)
-                    pos_cursor = ret_cursor(loc.ip_address, '', loc.db, loc.db_user, loc.db_password)
-                    inv_cursor = ret_cursor('192.168.2.4', '', 'SMSEXPV17', 'sa', 'sa@123456')
+                    pos_cursor = ret_cursor(loc.ip_address, '', loc.db, loc.db_user, loc.db_password).cursor()
+                    inv_cursor = ret_cursor('192.168.2.4', '', 'SMSEXPV17', 'sa', 'sa@123456').cursor()
                     # get transactions
                     trans_query = cursor.execute(
                         f"select item_code,RTRIM(item_des) as 'name',total_units,barcode from request_tran where entry_no = '{mr_no}'")

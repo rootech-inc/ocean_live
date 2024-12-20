@@ -69,11 +69,11 @@ def get_stock(item_code):
         'kitchen': kicthen,
         'warehouse': warehouse,
         'total':all,
-        # '202': nia,
-        # '205': osu,
-        # '001': spintex,
-        # '201': kicthen,
-        # '999': warehouse,
+        '202': nia,
+        '205': osu,
+        '001': spintex,
+        '201': kicthen,
+        '999': warehouse,
     }
 
 
