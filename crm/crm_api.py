@@ -679,13 +679,13 @@ def api_interface(request):
                     # text_recipeients = [
                     #     'solomon@snedaghana.com',
                     #     'bharat@snedaghana.com',
-                    #     'aj@snedaghana.com',
+                    #     'ajay@snedaghana.com',
                     #     'sambeasare@hotmail.com',
                     #     'sales2@snedamotors.com'
                     # ]
 
                     text_recipeients = [
-                        'solomon@snedaghana.com',
+                        'ajay@snedaghana.com',
                         'rootech.inc@proton.me'
                     ]
 
@@ -694,7 +694,7 @@ def api_interface(request):
                             sender=api,
                             recipient=rec,
                             body=cp.message_template,
-                            subject=cp.subject,
+                            subject=f"Campaign Approval Request: {cp.subject}",
                             mail_key = make_md5_hash(f"{rec,cp.message_template}")
                         )
 
