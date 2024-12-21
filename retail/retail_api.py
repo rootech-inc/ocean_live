@@ -2384,7 +2384,7 @@ def interface(request):
                     sales_arr = []
                     for d in labels:
                         sales = BillHeader.objects.filter(loc=location,bill_date=d,pay_mode='BOLT').aggregate(Sum('bill_amt'))
-                        sales_arr.append(sales['bill_amt__sum'])
+                        sales_arr.append(sales['bill_amt__sum'] or 0)
 
                     sales_data.update({location.descr:sales_arr})
 
