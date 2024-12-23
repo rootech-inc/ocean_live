@@ -677,7 +677,7 @@ class Crm {
             for(let x = 0; x < cmps.length; x++){
                 let row = cmps[x];
                 console.table(row)
-                rows += `<tr><td>${row['type']}</td><td>${row['title']}</td><td>${row['date']}</td><td>${row['heat']}</td><td>
+                rows += `<tr><td>${row['type']}</td><td>${row['title']}</td><td>${row['date']}</td><td>${row['is_scheduled']}</td><td>${row['heat']}</td><td>
                         <div class="dropdown dropleft">
                           <button class="btn btn-primary" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fa fa-arrow-left"></i>
@@ -687,7 +687,7 @@ class Crm {
                             <h6 class="dropdown-header">Menu Title</h6>
                             <!-- Links -->
                             <a class="dropdown-item" href="javascript:void(0)" onclick="crm.approval_request('${row['pk']}')">Send For Approval</a>
-                            <a class="dropdown-item" href="#link2">Schedule</a>
+                            <a class="dropdown-item" href="javascript:void(0)" onclick="crm.scheduleCampaignScreen('${row['pk']}')">Schedule</a>
                             <a class="dropdown-item" href="javascript:void(0)" onclick="crm.deleteCampaign('${row['pk']}')">Delete</a>
                             <!-- Divider -->
                             <div class="dropdown-divider"></div>
@@ -714,6 +714,48 @@ class Crm {
         }
 
         return api.call('VIEW',payload,'/crm/api/')
+    }
+
+    scheduleCampaign(pk){
+        let ids = ['schedule_date'];
+        if(anton.validateInputs(ids)){
+            let payload = {
+                module:'schedule_campaign',
+                data:{
+                    campaing_pk:pk
+                }
+            }
+            payload['data']['schedule_date'] = $('#schedule_date').val()
+            console.table(payload)
+            let sch = api.call('PATCH',payload,'/crm/api/');
+            console.table(sch)
+           kasa.confirm(sch['message'],1,'here')
+        } else {
+            kasa.error("Invalid Form")
+        }
+
+    }
+
+    unScheduleCampaign(pk){
+        let payload = {
+            module:'unschedule_campaign',
+            data:{
+                campaing_pk:pk
+            }
+        }
+
+        kasa.confirm(api.call('PUT',payload,'/crm/api/')['message'],1,'here')
+    }
+
+    sendCampaign(pk){
+        let payload = {
+            module:'send_campaign',
+            data:{
+                campaing_pk:pk
+            }
+        }
+
+        kasa.confirm(api.call('PUT',payload,'/crm/api/')['message'],1,'here')
     }
 
     extendFollowUpScreen(pk){
@@ -919,6 +961,14 @@ class Crm {
         }
 
         kasa.confirm(api.call('DELETE',payload,'/crm/api/')['message'],1,'here')
+    }
+
+    scheduleCampaignScreen(pk) {
+        let form = fom.date_local('schedule_date','date time when message should go',true);
+        amodal.setTitleText("Schedule Campaign")
+        amodal.setBodyHtml(form)
+        amodal.setFooterHtml(`<button onclick="crm.scheduleCampaign('${pk}')" class="btn btn-success w-100">SCHEDULE</button>`)
+        amodal.show()
     }
 }
 

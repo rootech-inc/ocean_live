@@ -3,6 +3,7 @@ import sys
 from decimal import Decimal
 
 import pyodbc
+import requests
 from django.contrib.auth.models import User
 from django.db.models import Q, Sum
 from django.http import JsonResponse
@@ -1012,39 +1013,88 @@ def interface(request):
                     db_pass = loc.db_password
                     db_user = loc.db_user
 
-                    pos_cursor = ret_cursor(loc.ip_address, '', loc.db, loc.db_user, loc.db_password)
-                    q11 = f"SELECT bill_date,tran_time,line_no,billRef,tran_code,prod_id,RTRIM(tran_desc),prod_id,tran_qty,unit_price,tran_amt FROM bill_tran where ocean_sync is null and tran_type in ('S','V')"
-                    pos_cursor.execute(q11)
+                    # address = loc.get('server')
+                    # user = loc.get('user')
+                    # key = loc.get('key')
+                    # db = loc.get('db')
+                    # loc = loc.get('loc')
+
+                    conn = ret_cursor(host,'',db,db_user,db_pass)
+                    cursor = conn.cursor()
+
+                    cursor.execute(
+                        "SELECT bill_no,billRef,bill_date,bill_end_time,bill_amt FROM bill_header where bill_type = 'S' and ocean_sync = 0")
+
+                    for row in cursor.fetchall():
+                        bill_no, billRef, bill_date, bill_end_time, bill_amt = row
+
+                        pay_method = "Unknonw"
+                        transactions = []
+                        cursor.execute(
+                            f"SELECT RTRIM(tran_code),RTRIM(tran_desc),tran_qty,unit_price,tran_type,tran_time,prod_id FROM bill_tran where billRef = '{billRef}' and tran_valid = 'Y'")
+
+                        for trow in cursor.fetchall():
+                            barcode, desc, qty, unit_price, tran_type, tran_time, prod_id = trow
+
+                            if tran_type == 'S':
+                                ti = {"barcode": barcode, "name": desc, "quantity": str(qty), "price": str(unit_price),
+                                      "time": tran_time, "prod_id": prod_id, 'tran_type': tran_type}
+                                transactions.append(ti)
+
+                            cursor.execute(
+                                f"SELECT tran_desc from bill_tran where billRef = '{billRef}' and tran_type = 'P'")
+
+                            pay_method = cursor.fetchone()[0]
+
+                        li = [bill_no, billRef, bill_date, bill_end_time, pay_method]
+                        print(li)
+
+                        payload = {}
+                        header = {}
+                        header['loc_id'] = loc.code
+                        header['bill_no'] = str(bill_no)
+                        header['bill_ref'] = billRef
+                        header['pay_mode'] = pay_method
+                        header['bill_date'] = str(bill_date).split(' ')[0]
+                        header['bill_end_time'] = str(bill_end_time)
+                        header['bill_time'] = str(bill_end_time)
+                        header['bill_amt'] = str(bill_amt)
+
+                        data = {}
+
+                        payload['module'] = 'bill'
+                        data['header'] = header
+                        data['transactions'] = transactions
+                        payload['data'] = data
 
 
-                    for row in pos_cursor.fetchall():
-                        bill_date,tran_time,line_no,bill_ref,tran_code,prod_id,tran_desc,prod_id,tran_qty,unit_price,tran_amt = row
+                        url = "http://192.168.2.60/retail/api/"
 
-                        #print(bill_date,tran_time,line_no,bill_ref,tran_code,prod_id,tran_desc,prod_id,tran_qty,unit_price,tran_amt)
-                        RetailSales.objects.filter(
-                            location=loc,
-                            bill_date=bill_date,
-                            tran_time=tran_time,
-                            item_code=prod_id,
-                            bill_ref=bill_ref,
-                        ).delete()
+                        payloadx = json.dumps(payload)
+                        headers = {
+                            'Content-Type': 'application/json'
+                        }
 
-                        RetailSales(
-                            location=loc,
-                            bill_date=bill_date,
-                            tran_time=tran_time,
-                            line_no=line_no,
-                            bill_ref=bill_ref,
-                            barcode=tran_code,
-                            item_code=prod_id,
-                            name=tran_desc,
-                            tran_qty=tran_qty,
-                            unit_price=unit_price,
-                            tran_amt=tran_amt
-                        ).save()
+                        response = requests.request("PUT", url, headers=headers, data=payloadx)
+                        json_response = json.loads(response.text)
+                        status_code = json_response.get('status_code')
+                        message = json_response.get('message')
+                        # print(status_code,message)
+                        if status_code == 200:
+                            print(pay_method, billRef, message, "SUCCESS")
+                            # update bill
+                            update_query = f"UPDATE bill_header set ocean_sync = 1 where billRef = '{billRef}'"
+                            print(update_query)
+                            cursor.execute(update_query)
+                            cursor.commit()
+                        else:
+                            print(billRef, message)
 
-                        pos_cursor.execute(f"UPDATE bill_tran set ocean_sync = 1 where prod_id = '{prod_id}' and billRef = '{bill_ref}' and line_no = '{line_no}'")
-                        pos_cursor.commit()
+
+
+
+
+                    conn.close()
 
             elif module == 'sales':
                 loc_id = data.get('loc','*')
@@ -2421,14 +2471,21 @@ def interface(request):
                     # get sales
                     sales_arr = []
                     for d in labels:
+
                         s_q = f"SELECT inv_amt FROM pos_tran_hd where location_id = '{code}' and entry_date = '{d}'"
                         #print(s_q)
                         cursor.execute(s_q)
                         row = cursor.fetchone()
-                        if row is None:
-                            sales = 0.00
+
+                        # dheck if d is today yyyy-mm-dd
+                        if d == now().date():
+                            sales = BillHeader.objects.filter(loc__code=code,bill_date=d).aggregate(Sum('bill_amt'))['bill_amt__sum'] or 0
                         else:
-                            sales = row[0]
+
+                            if row is None:
+                                sales = 0.00
+                            else:
+                                sales = row[0]
                         sales_arr.append(sales)
 
                     obj = {

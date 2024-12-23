@@ -360,11 +360,13 @@ def api_interface(request):
             elif module == 'campaign_sense':
                 key = data.get('key')
                 camp = Campaigns.objects.get(uni=key)
-                ip = get_client_ip(request)
+                ip = get_client_ip(request),
+                tail = data.get('tail', '')
 
                 CampaignSense.objects.create(
                     campaign=camp,
-                    source = ip
+                    source = ip,
+                    tail=tail
                 )
 
                 success_response['message'] = "Sensed"
@@ -702,6 +704,79 @@ def api_interface(request):
 
                 success_response['message'] = f"Approval request sent to {li}"
 
+            elif module == 'schedule_campaign':
+                print(data)
+                campaing_pk = data.get('campaing_pk')
+                campaign = Campaigns.objects.get(pk=campaing_pk)
+                campaign.is_scheduled = True
+                schedule_date = data.get('schedule_date')
+                campaign.schedule_date = schedule_date
+                campaign.save()
+
+                success_response['message'] = f"Scheduled to {schedule_date}"
+                response = success_response
+
+            elif module == 'unschedule_campaign':
+                campaing_pk = data.get('campaing_pk')
+                campaign = Campaigns.objects.get(pk=campaing_pk)
+                campaign.is_scheduled = False
+                campaign.save()
+            elif module == 'send_campaign':
+
+                ripe_campaigns = Campaigns.objects.filter(is_sent=False,schedule_date__lte=timezone.now(),is_scheduled=True)
+                pass_cunt = 0
+                failded_cunt = 0
+                for campaign in ripe_campaigns:
+
+                    pending = campaign.pending()
+                    message = campaign.message_template
+                    message.replace('-key-',campaign.uni)
+
+
+                    camp_type = campaign.type
+                    sender_pk = campaign.sender
+                    subject = campaign.subject
+
+                    if not campaign.is_sent:
+                        # send campaigns
+                        for target in pending:
+                            try:
+                                message.replace('-tail-',target.contactc)
+                                if camp_type == 'email':
+                                    if is_valid_email(target.contact):
+                                        mail_sender = MailSenders.objects.get(pk=sender_pk)
+                                        mail_queue = MailQueues.objects.create(
+                                            sender=mail_sender,
+                                            recipient=target.contact,
+                                            body=message,
+                                            subject=subject,
+                                            mail_key=make_md5_hash(f"{target.email},{message}")
+                                        )
+
+                                if camp_type == 'sms':
+                                    if is_valid_phone_number(target.contact):
+                                        api = SmsApi.objects.get(pk=sender_pk)
+                                        Sms.objects.create(
+                                            sender=api,
+                                            message=message,
+                                            to=target.contact,
+                                        )
+
+
+                                target.tried_response = "Message Delivered"
+
+                                target.is_sent = True
+                                pass_cunt += 1
+                            except Exception as e:
+                                target.tried_response = f"{e}"
+                                failded_cunt += 1
+                            finally:
+                                target.last_tried = timezone.now()
+                                target.save()
+                    campaign.is_sent = True
+
+                success_response['message'] = f"{pass_cunt} / {pass_cunt + failded_cunt} sent"
+                response = success_response
 
             elif module == 'band_user':
                 user_pk = data.get('pk')

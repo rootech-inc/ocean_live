@@ -186,6 +186,9 @@ class Campaigns(models.Model):
     message_template = models.TextField()
     created_on = models.DateTimeField(auto_now_add=True)
     is_approved = models.BooleanField(default=False)
+    is_scheduled = models.BooleanField(default=False)
+    schedule_date = models.DateTimeField(null=True, blank=True)
+    is_sent = models.BooleanField(default=False)
 
     def obj(self):
         return {
@@ -196,8 +199,13 @@ class Campaigns(models.Model):
             'description': self.description,
             'message': self.message_template,
             'date':self.created_on,
-            'heat':CampaignSense.objects.filter(campaign=self).count()
+            'heat':CampaignSense.objects.filter(campaign=self).count(),
+            'is_scheduled':self.is_scheduled,
+            'shc':self.schedule_date,
         }
+
+    def pending(self):
+        return CampaignTargets.objects.filter(campaign=self,is_sent=False)
 
 
 
@@ -210,6 +218,7 @@ class CampaignTargets(models.Model):
     last_tried = models.DateTimeField(auto_now_add=True)
     created_on = models.DateTimeField(auto_now_add=True)
 
+
     class Meta:
         unique_together = (('campaign', 'contact'),)
 
@@ -217,5 +226,6 @@ class CampaignTargets(models.Model):
 class CampaignSense(models.Model):
     campaign = models.ForeignKey(Campaigns,on_delete=models.CASCADE)
     source = models.TextField()
+    tail = models.TextField(blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
 
