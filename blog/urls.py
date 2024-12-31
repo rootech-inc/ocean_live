@@ -35,6 +35,7 @@ urlpatterns = [
     path('finder/', views.finder, name='finder'),
     path('article_convo/',views.article_convo, name='article_convo'),
     path('load_convo/',views.load_convo,name='load_convo'),
-    path('api/',blog_api.interface,name='blog_api')
+    path('api/',blog_api.interface,name='blog_api'),
+    path('print/<uni>/',views.print_article,name='print_article')
 
 ]

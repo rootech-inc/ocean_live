@@ -53,6 +53,10 @@ def article(request, title):
 
     context = {
         'page_title': 'Ocean | Article | ' + str(title),
+        'page':{
+            'description':this_article.intro,
+            'keywords':this_article.meta,
+        },
         'search_form': search_form,
         'article': this_article,
         'nav': True
@@ -401,3 +405,8 @@ def handler404(request, *args, **argv):
     response = render(request, '404.html', {})
     response.status_code = 404
     return response
+
+
+def print_article(request,uni):
+    art = articles.objects.get(uni=uni)
+    return render(request,'blog/print-page.html',context={'article':art})

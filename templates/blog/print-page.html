@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ article.title}}</title>
+    <style>
+        #print-section {
+            {#margin: 20px;#}
+            {#padding: 20px;#}
+            {#border: 1px solid #ccc;#}
+        }
+    </style>
+</head>
+<body>
+{#    <div id="content">#}
+{#        <h1>My Website</h1>#}
+{#        <p>This content is on the main page.</p>#}
+{#    </div>#}
+
+    <div id="print-section">
+        <h1>{{ article.title }}</h1>
+        {{ article.article | safe }}
+    </div>
+
+
+
+    <script>
+        function printSpecificSection() {
+            const section = document.getElementById('print-section').innerHTML;
+            const originalContent = document.body.innerHTML;
+
+            document.body.innerHTML = section;
+            window.print();
+            document.body.innerHTML = originalContent;
+        }
+        printSpecificSection();
+    </script>
+</body>
+</html>

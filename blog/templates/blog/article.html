@@ -12,11 +12,11 @@
                 <span onclick="location.href='{% url 'edit_article' article.uni %}'" class="badge bg-info pointer">edit</span>
             {% endif %}
             <hr>
-        <div class="article-header mb-5 text-light" style="background: url('{{ article.image.url }}')">
-            <div class="w-100 h-100 bg_trans_30 d-flex flex-wrap align-content-center justify-content-center">
-
-            </div>
-        </div>
+{#        <div class="article-header mb-5 text-light" style="background: url('{{ article.image.url }}')">#}
+{#            <div class="w-100 h-100 bg_trans_30 d-flex flex-wrap align-content-center justify-content-center">#}
+{##}
+{#            </div>#}
+{#        </div>#}
         <div class="row d-flex flex-wrap justify-content-between no-gutters">
             <!-- ARTICLE -->
             <section class="col-sm-12 text-justify" style="font-size: large">
@@ -31,7 +31,11 @@
         </div>
     </div>
 
-
+    {% if request.user.is_superuser %}
+    <div class="card-footer bg-light mb-0 mt-2 border-top border-danger text-center text-danger font-weight-bold h-fit w-100 d-flex flex-wrap align-content-center justify-content-center py-2 px-2 overflow-auto py-2 bg-light">
+        <button onclick="windowPopUp(`/blog/print/{{ article.uni }}/`,100,100)"   class="btn btn-info">PRINT</button>
+    </div>
+    {% endif %}
 
     <script>
         load_convo_message()
