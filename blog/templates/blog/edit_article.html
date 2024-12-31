@@ -21,12 +21,7 @@
                         <div class="input-group-prepend bg-light border-0">
                             <span class="input-group-text bg-light border-0 text-danger">Meta</span>
                         </div>
-                        <select name="meta" class="form-control rounded-0 border-danger" id="">
-                            {% for meta in meta_dat %}
-                                <option value="{{ meta.tag_code }}">{{ meta.tag_dec }}</option>
-                            {% endfor %}
-
-                        </select>
+                        <input type="text" name="meta" value="{{ article.meta }}" class="form-control rounded-0 border-danger" id="">
                     </div>
 
 {#                    <input type="file" accept="image/jpeg" name="post_img">#}

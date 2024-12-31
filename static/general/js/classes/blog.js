@@ -11,7 +11,13 @@ class Blog {
             payload['data']['owner'] = $('#mypk').val()
 
             let response = api.call('PUT',payload,'/blog/api/')
-            kasa.response(response)
+            if(anton.IsRequest(response)){
+                // redirect to view
+                window.location.href = '/blog/view/'+response.message
+            } else {
+                kasa.response(response)
+            }
+
 
         } else {
             kasa.error("Please Fill All Fields");

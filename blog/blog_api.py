@@ -38,7 +38,7 @@ def interface(request):
                 content = data.get('content')
                 author = User.objects.get(pk=owner)
                 tags = data.get('tags')
-                uni = make_md5_hash(f"{title}{content}{tags}")
+                uni = f"{tags} {title}".replace(' ','-').lower().replace(':','-')
 
                 # Save the object and get the pk
                 new_article = articles(uni=uni, article=content, author=author, tag=tags, title=title)
