@@ -33,16 +33,10 @@ def is_valid_password(password):
     # If all checks pass, the password is considered valid
     return True
 
-
-
-import re
-
-
 def is_valid_email(email):
     pattern = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
     # Check if keyword "none" is in email (case-insensitive) or if it matches the regex
     return re.match(pattern, email) is not None and "none" not in email.lower()
-import re
 
 def is_valid_phone_number(phone):
     import re

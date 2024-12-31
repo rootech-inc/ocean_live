@@ -741,7 +741,7 @@ def api_interface(request):
                         # send campaigns
                         for target in pending:
                             try:
-                                message.replace('-tail-',target.contactc)
+                                message.replace('-tail-',target.contact)
                                 if camp_type == 'email':
                                     if is_valid_email(target.contact):
                                         mail_sender = MailSenders.objects.get(pk=sender_pk)
@@ -750,7 +750,7 @@ def api_interface(request):
                                             recipient=target.contact,
                                             body=message,
                                             subject=subject,
-                                            mail_key=make_md5_hash(f"{target.email},{message}")
+                                            mail_key=make_md5_hash(f"{target.contact},{message}")
                                         )
 
                                 if camp_type == 'sms':
@@ -769,6 +769,7 @@ def api_interface(request):
                                 pass_cunt += 1
                             except Exception as e:
                                 target.tried_response = f"{e}"
+                                print(e)
                                 failded_cunt += 1
                             finally:
                                 target.last_tried = timezone.now()

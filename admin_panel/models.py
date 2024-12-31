@@ -142,7 +142,7 @@ class Emails(models.Model):
         cc = self.cc.rstrip(',')
         return cc.split(',')
 
-
+# MAIL SMTP
 class MailSenders(models.Model):
     host = models.TextField()
     port = models.TextField()
@@ -168,7 +168,7 @@ class MailSenders(models.Model):
 class MailGroup(models.Model):
     name = models.CharField(max_length=66, unique=True, null=False, blank=False)
 
-
+# MAILS TO SEND
 class MailQueues(models.Model):
     group = models.ForeignKey(MailGroup, on_delete=models.SET_NULL, default=None, null=True)
     sender = models.ForeignKey(MailSenders, on_delete=models.CASCADE)
@@ -191,7 +191,7 @@ class MailQueues(models.Model):
     def copied(self):
         return len(self.cc.split(','))
 
-
+# MAIL ATTACHMENTS
 class MailAttachments(models.Model):
     mail = models.ForeignKey(MailQueues, on_delete=models.CASCADE)
     attachment = models.FileField(upload_to='static/attachments/')

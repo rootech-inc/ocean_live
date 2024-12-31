@@ -133,12 +133,13 @@ def save_article(request):
             page_title = form.cleaned_data['page_title']
             article_desc_raw_htm = form.cleaned_data['article_desc']
 
+            meta = form.cleaned_data['tags']
             article_into = remove_tags(article_desc_raw_htm[0:200])
-            uni = make_md5(page_title + str(article_desc_raw_htm))
+            uni = f"{meta} {page_title}".replace(' ','-').lower()
             owner = 'anton'
             post_img = form.cleaned_data['post_img']
 
-            meta = form.cleaned_data['meta']
+
 
             if articles.objects.filter(uni=uni):
                 return HttpResponse("article exist")
@@ -249,7 +250,7 @@ def edit_article(request, uni):
     context = {
         'page_title': 'Ocean | Article | Edit',
         'search_form': search_form, 'form': form,
-        'article': this_article, 'meta_dat': meta_data,
+        'article': this_article, 'meta_dat': articles.meta,
         'nav':True,
 
     }
