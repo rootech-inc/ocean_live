@@ -1932,7 +1932,7 @@ class Retail {
                             let rows = ``;
                             for (let i = 0; i < message.length; i++) {
                                 rows += `<tr><td>${message[i]['barcode']}</td><td>${message[i]['name']}</td><td>${message[i]['moved']}</td><td>${message[i]['sold']}</td></tr>`
-                            }
+                      thon      }
                             reports.render(header, rows, `Slow Moving Items above ${payload['data']['quantity']} for the past ${payload['data']['days']} days`)
                             loader.hide()
                             amodal.hide()
