@@ -13,7 +13,7 @@ from admin_panel.anton import md5only, remove_html_tags, generate_random_passwor
 from admin_panel.cron_exe import execute_script
 from admin_panel.models import DocApprovals, GeoCity, GeoCitySub, Reminder, SmsApi, UserAddOns, EvatCredentials, \
     Locations, \
-    Departments, TicketTrans, Sms, TicketHd, MailSenders, MailQueues, MailAttachments
+    Departments, TicketTrans, Sms, TicketHd, MailSenders, MailQueues, MailAttachments, BusinessEntityTypes
 from blog.anton import make_md5
 from reports.models import DepartmentReportMailQue
 from servicing.models import ServiceCard
@@ -286,6 +286,17 @@ def index(request):
                     MailQueues(sender=sender, recipient=email, subject=subject, body=body, cc='').save()
 
                 success_response['message'] = "Mail Added To Broadcast"
+                response = success_response
+
+            elif module == 'entity_type':
+                entity_type_name = data.get('entity_type_name')
+                entity_type_descr = data.get('entity_type_descr')
+                BusinessEntityTypes.objects.create(
+                    entity_type_name = entity_type_name,
+                    entity_type_descr = entity_type_descr
+                )
+
+                success_response['message'] = "Entity Type Created"
                 response = success_response
 
 

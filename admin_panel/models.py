@@ -413,6 +413,10 @@ class AdjTran(models.Model):
         return ProductMaster.objects.get(pk=self.product).descr
 
 
+class BusinessEntityTypes(models.Model):
+    entity_type_name = models.CharField(max_length=255, unique=True)
+    entity_type_descr = models.TextField()
+
 class Locations(models.Model):
     code = models.CharField(max_length=3, unique=True)
     descr = models.TextField()

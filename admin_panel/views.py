@@ -2561,3 +2561,12 @@ def log500(request):
         return redirect('home')
 
 
+def organization(request):
+    context = {
+        'nav': True,
+        'page': {
+            'title': 'Organization'
+        },
+        'locations':Locations.objects.all().order_by('descr')
+    }
+    return render(request,'console/organization.html',context=context)
