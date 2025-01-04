@@ -264,7 +264,7 @@ def edit_article(request, uni):
 def edit_save(request):
     # validate for
     if request.method == 'POST':
-        form = EdArticle(request.POST, request.FILES)
+        form = EdArticle(request.POST)
         if form.is_valid():
             # get form details
             page_title = form.cleaned_data['page_title']

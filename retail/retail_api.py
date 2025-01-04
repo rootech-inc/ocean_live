@@ -1179,7 +1179,7 @@ def interface(request):
 
                 success_response['message'] = grps
 
-            elif module == 'price_change':
+            elif module == 'bolt_price_change':
                 send = data.get('send_mail') or 'no'
                 rate_inc = data.get('rate_at', 20)
                 conn = ret_cursor()
@@ -1191,143 +1191,69 @@ def interface(request):
                 sheet['B1'] = "NAME"
                 sheet['C1'] = "PRICE"
                 sheet_row = 2
+                providers_id = ""
 
-                spintex_stock_book = openpyxl.Workbook()
-                spintex_stock_sheet = spintex_stock_book.active
+                from datetime import datetime
+                current_datetime = datetime.now()
+                formatted_datetime = current_datetime.strftime("%Y_%m_%d_%H_%M_%S")
 
-                spintex_stock_sheet['A1'] = "SKU"
-                spintex_stock_sheet['B1'] = "NAME"
-                spintex_stock_sheet['C1'] = "STOCK STATUS"
-                spintex_stock_row = 2
+                price_change_file = f"static/general/tmp/price_changes_as_of_{formatted_datetime}.csv"
 
-                osu_stock_book = openpyxl.Workbook()
-                osu_stock_sheet = osu_stock_book.active
+                for bolt_id in BOLT_PROVIDER_ID:
+                    print(bolt_id)
+                    row = BOLT_PROVIDER_ID[bolt_id]
+                    providers_id += f"{row.get('id')},"
 
-                osu_stock_sheet['A1'] = "SKU"
-                osu_stock_sheet['B1'] = "NAME"
-                osu_stock_sheet['C1'] = "STOCK STATUS"
-                osu_stock_row = 2
+                # remove last comma
+                providers_id = providers_id[:-1]
 
-                nia_stock_book = openpyxl.Workbook()
-                nia_stock_sheet = nia_stock_book.active
-                nia_stock_sheet['A1'] = "SKU"
-                nia_stock_sheet['B1'] = "NAME"
-                nia_stock_sheet['C1'] = "STOCK STATUS"
-                nia_stock_row = 2
+                import csv
+                with open(price_change_file,mode='w',newline="") as file:
+                    writer = csv.writer(file)
+                    hd = ['SKU','Price','Location']
+                    writer.writerow(["SKU","Selling price","Provier IDs"])
+                    all = BoltItems.objects.all().count()
+                    x = 1
+                    for item in BoltItems.objects.all():
+                        print(f"{x} / {all}")
+                        x += 1
+                        barcode = item.product.barcode.replace('.0', '')
+                        # print(data)
+                        # get product detail
 
-                for item in BoltItems.objects.all():
-                    barcode = item.product.barcode.replace('.0', '')
-
-                    # get product detail
-
-                    product = cursor.execute(
-                        f"SELECT retail1,item_code,item_type from prod_mast where barcode = '{barcode}'").fetchone()
-                    if product is not None:
-                        price, item_code, item_type = product
-                        if price != item.price:
-                            # #print("CHANGE")
-                            sheet[f"A{sheet_row}"] = barcode
-                            sheet[f"B{sheet_row}"] = item.item_des
-                            sheet[f"C{sheet_row}"] = Decimal(product[0]) / Decimal((1 - rate_inc / 100))
-                            sheet_row += 1
+                        product = cursor.execute(
+                            f"SELECT retail1,item_code,item_type from prod_mast where barcode = '{barcode}'").fetchone()
+                        if product is not None:
+                            price, item_code, item_type = product
+                            new_price = Decimal(product[0]) / Decimal((1 - rate_inc / 100))
+                            pl = [barcode,new_price,providers_id]
+                            writer.writerow(pl)
+                            # sheet[f"A{sheet_row}"] = barcode
+                            # sheet[f"B{sheet_row}"] = item.product.name
+                            # sheet[f"C{sheet_row}"] =
+                            # sheet[f"D{sheet_row}"] = providers_id
+                            # sheet_row += 1
                             item.price = price
 
-                        # check stock and discontinues
-                        stock = get_stock(item_code)
-                        spintex = stock['spintex']
-                        nia = stock['nia']
-                        osu = stock['osu']
 
-                        stock_spintex = 1 if spintex > 0 or item_type == '2' else 0
-                        stock_osu = 1 if osu > 0 or item_type == '2' else 0
-                        stock_nia = 1 if nia > 0 or item_type == '2' else 0
 
-                        if stock_spintex != item.stock_spintex:
-                            # change stock standing
-
-                            spintex_stock_sheet[f"A{spintex_stock_row}"] = barcode
-                            spintex_stock_sheet[f"B{spintex_stock_row}"] = item.product.name
-                            spintex_stock_sheet[f"C{spintex_stock_row}"] = stock_spintex
-                            item.stock_spintex = spintex
-
-                            spintex_stock_row += 1
-
-                        if stock_osu != item.stock_osu:
-                            # change stock standing
-
-                            osu_stock_sheet[f"A{osu_stock_row}"] = barcode
-                            osu_stock_sheet[f"B{osu_stock_row}"] = item.product.name
-                            osu_stock_sheet[f"C{osu_stock_row}"] = stock_osu
-                            item.stock_osu = stock_osu
-
-                            osu_stock_row += 1
-
-                        if stock_nia != item.stock_nia:
-                            # change stock standing
-
-                            nia_stock_sheet[f"A{nia_stock_row}"] = barcode
-                            nia_stock_sheet[f"B{nia_stock_row}"] = item.product.name
-                            nia_stock_sheet[f"C{nia_stock_row}"] = stock_nia
-                            item.stock_nia = stock_nia
-
-                            nia_stock_row += 1
 
                 price_count = sheet_row - 2
-                nia_count = nia_stock_row - 2
-                spintex_count = spintex_stock_row - 2
-                osu_count = osu_stock_row - 2
-
-                tr = ""
-                if price_count > 0:
-                    tr += f"<tr><td><strong>PRICE CHANGE</strong></td><td>{price_count}</td></tr>"
-                if spintex_count > 0:
-                    tr += f"<tr><td><strong>SPINTEX STOCK</strong></td><td>{spintex_count}</td></tr>"
-                if nia_count > 0:
-                    tr += f"<tr><td><strong>NIA</strong></td><td>{nia_count}</td></tr>"
-                if osu_count > 0:
-                    tr += f"<tr><td><strong>OSU STOCK</strong></td><td>{osu_count}</td></tr>"
-
-                html = f"<table>{tr}</table>"
-
 
 
                 from datetime import datetime
                 current_datetime = datetime.now()
                 formatted_datetime = current_datetime.strftime("%Y_%m_%d_%H_%M_%S")
 
-                price_change_file = f"static/general/bolt_price_changes/price_changes_as_of_{formatted_datetime}.xlsx"
-                spintex_stock_change_file = f"static/general/bolt_price_changes/spintex_stock_change_as_of_{formatted_datetime}.xlsx"
-                osu_stock_change_file = f"static/general/bolt_price_changes/osu_stock_change_as_of_{formatted_datetime}.xlsx"
-                nia_stock_change_file = f"static/general/bolt_price_changes/nia_stock_change_as_of_{formatted_datetime}.xlsx"
+                # price_change_file = f"static/general/tmp/price_changes_as_of_{formatted_datetime}.xlsx"
 
-                worksheet.save(price_change_file)
-                spintex_stock_book.save(spintex_stock_change_file)
-                osu_stock_book.save(osu_stock_change_file)
-                nia_stock_book.save(nia_stock_change_file)
 
-                if send == 'yes':
-                    if price_count > 0 or spintex_count > 0 or nia_count > 0 or osu_count > 0:
-                        Emails(sent_to="solomon@snedaghana.com", subject='BOLT UPDATE', body=html,
-                               attachments=f"{price_change_file},{spintex_stock_change_file},"
-                                           f"{osu_stock_change_file},{nia_stock_change_file}").save()
+                # worksheet.save(price_change_file)
+
+
 
                 success_response['message'] = {
-                    'price_change': {
-                        'file': price_change_file,
-                        'count': sheet_row - 2
-                    },
-                    'spintex_stock_change': {
-                        'file': spintex_stock_change_file,
-                        'count': spintex_stock_row - 2
-                    },
-                    'osu_stock_change_file': {
-                        'file': osu_stock_change_file,
-                        'count': osu_stock_row - 2
-                    },
-                    'nia_stock_change_file': {
-                        'file': nia_stock_change_file,
-                        'count': nia_stock_row - 2
-                    }
+                    'price_change': price_change_file
                 }
 
             elif module == 'export_items':
@@ -2425,23 +2351,48 @@ def interface(request):
                 start_date = now().date() - timedelta(days=7)
                 end_date = now().date()
                 date_range = [start_date + timedelta(days=x) for x in range(0, (end_date - start_date).days + 1)]
+                # date_range.append('Total')
                 labels = []
                 sales_data = {}
+
+                total_arr = []
+                total_sales = 0
+
+
                 for dr in date_range:
                     labels.append(dr)
+                    total_sales = BillHeader.objects.filter(bill_date=dr, pay_mode='BOLT').aggregate(Sum('bill_amt'))['bill_amt__sum'] or 0
+                    total_arr.append(total_sales)
+
 
                 for location in locations:
+
                     sales_arr = []
+
                     for d in labels:
-                        sales = BillHeader.objects.filter(loc=location,bill_date=d,pay_mode='BOLT').aggregate(Sum('bill_amt'))
+
+                        sales = BillHeader.objects.filter(loc=location, bill_date=d, pay_mode='BOLT').aggregate(
+                                Sum('bill_amt'))
                         sales_arr.append(sales['bill_amt__sum'] or 0)
+
 
                     sales_data.update({location.descr:sales_arr})
 
+
+
+
+
+
+                # sales_data.update({"Total":total_arr})
                 arr = {
                     "labels": labels,
-                    "dataset": sales_data
+                    "dataset": sales_data,
+                    "totalset":{"Total Sales":total_arr}
                 }
+
+                print(arr)
+
+
                 success_response['message'] = arr
                 response = success_response
 
@@ -2945,6 +2896,75 @@ ORDER BY
                     }
                 }
 
+            elif module == 'bolt_stock_update':
+                import os
+                import zipfile
+                import shutil
+                import csv
+                items = BoltItems.objects.all().order_by('product__name')
+                time_ext = str(timezone.now()).replace(':', '_').replace(' ', '_')
+                folder = f"static/general/tmp/{time_ext}"
+
+                spintex_stock_file = f"static/general/tmp/bot_{time_ext}_spintex_stock.csv"
+                nia_stock_file = f"static/general/tmp/bot_{time_ext}_nia_stock.csv"
+                osu_stock_file = f"static/general/tmp/bot_{time_ext}_osu_stock.csv"
+                providers_id = ""
+                for bolt_id in BOLT_PROVIDER_ID:
+                    print(bolt_id)
+                    row = BOLT_PROVIDER_ID[bolt_id]
+                    providers_id += f"{row.get('id')},"
+
+                # remove last comma
+                providers_id = providers_id[:-1]
+                print(providers_id)
+
+
+
+
+                # Create the folder if it doesn't exist
+                if not os.path.exists(folder):
+                    os.makedirs(folder)
+
+                with open(spintex_stock_file, mode='w', newline='', encoding="utf-8") as spintex_stock,\
+                        open(nia_stock_file, mode='w', newline='', encoding="utf-8") as nia_stock,\
+                        open(osu_stock_file, mode='w', newline='', encoding="utf-8") as osu_stock:
+                    stock_header = ['sku', 'quantity', 'address']
+
+                    spintex = csv.writer(spintex_stock)
+                    nia = csv.writer(nia_stock)
+                    osu = csv.writer(osu_stock)
+                    
+                    nia.writerow(stock_header)
+                    osu.writerow(stock_header)
+                    spintex.writerow(stock_header)
+
+                    for item in items:
+                        stock = get_stock(item.product.code)
+                        sp_stk = [
+                            item.product.barcode,
+                            stock.get('spintex', 5) if stock.get('spintex') > 0 else 5,
+                            BOLT_PROVIDER_ID.get('001')['address']
+                        ]
+                        ni_stk = [
+                            item.product.barcode,
+                            stock.get('nia', 5) if stock.get('nia') > 0 else 5,
+                            BOLT_PROVIDER_ID.get('202')['address']
+                        ]
+                        os_stk = [
+                            item.product.barcode,
+                            stock.get('osu', 5) if stock.get('osu') > 0 else 5,
+                            BOLT_PROVIDER_ID.get('205')['address']
+                        ]
+
+                        nia.writerow(ni_stk)
+                        spintex.writerow(sp_stk)
+                        osu.writerow(os_stk)
+                
+                success_response['message'] = {
+                    "spintex":spintex_stock_file,
+                    "nia":nia_stock_file,
+                    "osu":osu_stock_file
+                }
             elif module == 'stock':
                 item_code = data.get('item_code')
                 success_response['message'] = get_stock(item_code)

@@ -413,8 +413,7 @@ def interface(request):
             elif module == 'findjob':
                 jobstring = data.get('jobstring')
                 cards = ServiceCard.objects.filter(Q(remarks__icontains=jobstring) | Q(cardno__icontains=jobstring) |
-                                                   Q(ticket__title__icontains=jobstring) |
-                                                   Q(technician__username__icontains=jobstring))
+                                                   Q(ticket__title__icontains=jobstring))
 
                 if cards.count() > 0:
                     cardx = []

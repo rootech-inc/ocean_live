@@ -3,7 +3,7 @@
 {% block body %}
     <div class="container-fluid">
         <div class="row">
-            <div class="col-sm-12 col-md-4 col-lg-3">
+            <div class="col-sm-12 col-md-3 col-lg-4">
                 <div class="card">
                     <div class="card-body p-2">
                         <h5 class="text-muted">Metric</h5>
@@ -21,6 +21,20 @@
                     </div>
                 </div>
             </div>
+
+            <div class="col-sm-12">
+                  <div class="card">
+                    <div class="card-body">
+                      <h5 class="card-title">BOLT WEEKLY TOTAL</h5>
+
+                      <!-- Line Chart -->
+                      <canvas id="legendCart" style="max-height: 400px;"></canvas>
+
+                      <!-- End Line CHart -->
+
+                    </div>
+                  </div>
+                </div>
 
             <div class="col-sm-6">
                   <div class="card">
@@ -43,54 +57,107 @@
     <script>
 
     // Function to generate a random RGB color
-function getRandomRGBColor() {
+        function getRandomRGBColor() {
     const r = Math.floor(Math.random() * 256); // Random value between 0 and 255
     const g = Math.floor(Math.random() * 256); // Random value between 0 and 255
     const b = Math.floor(Math.random() * 256); // Random value between 0 and 255
     return `rgb(${r}, ${g}, ${b})`;
 }
         // line labels
-        let sales_graph_week = retail.bolt_graph_week();
-        console.table(sales_graph_week)
-        let lables = []
-        let dataset = []
-        if(anton.IsRequest(sales_graph_week)){
-            let data = sales_graph_week.message;
-            labels = data['labels']
-            let obj = data['dataset'];
 
-            for (let key in obj) {
-                if (obj.hasOwnProperty(key)) {
-                    let st = obj[key]
-                    let set_data = [];
-                    for(let s = 0; s < st.length; s++){
-                        set_data.push(st[s])
+        function load_sales_graph_week() {
+            let sales_graph_week = retail.bolt_graph_week();
+            console.table(sales_graph_week)
+            let lables = []
+            let dataset = []
+            if(anton.IsRequest(sales_graph_week)){
+                let data = sales_graph_week.message;
+                labels = data['labels']
+                let obj = data['dataset'];
+
+                for (let key in obj) {
+                    if (obj.hasOwnProperty(key)) {
+                        let st = obj[key]
+                        let set_data = [];
+                        for(let s = 0; s < st.length; s++){
+                            set_data.push(st[s])
+                        }
+                        dataset.push({
+                        label: `${key}`,
+                            data: st,
+                            fill: false,
+                            borderColor: getRandomRGBColor(),
+                            tension: 0.1
+                    })
                     }
-                    dataset.push({
-                    label: `${key}`,
-                                    data: st,
-                                    fill: false,
-                                    borderColor: getRandomRGBColor(),
-                                    tension: 0.1
-                })
                 }
             }
-        }
-                        document.addEventListener("DOMContentLoaded", () => {
-                          new Chart(document.querySelector('#lineChart'), {
-                            type: 'line',
-                            data: {
-                              labels: labels,
-                              datasets: dataset
-                            },
-                            options: {
-                              scales: {
-                                y: {
-                                  beginAtZero: true
-                                }
-                              }
+            document.addEventListener("DOMContentLoaded", () => {
+                new Chart(document.querySelector('#lineChart'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: dataset
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
                             }
-                          });
-                        });
-                      </script>
+                        }
+                    }
+                });
+            });
+        }
+
+        function load_main_graph_week() {
+            let sales_graph_week = retail.bolt_graph_week();
+            console.table(sales_graph_week)
+            let lables = []
+            let dataset = []
+            if(anton.IsRequest(sales_graph_week)){
+                let data = sales_graph_week.message;
+                labels = data['labels']
+                let obj = data['totalset'];
+
+                for (let key in obj) {
+                    if (obj.hasOwnProperty(key)) {
+                        let st = obj[key]
+                        let set_data = [];
+                        for(let s = 0; s < st.length; s++){
+                            set_data.push(st[s])
+                        }
+                        dataset.push({
+                        label: `${key}`,
+                            data: st,
+                            fill: false,
+                            borderColor: getRandomRGBColor(),
+                            tension: 0.1
+                    })
+                    }
+                }
+            }
+            document.addEventListener("DOMContentLoaded", () => {
+                new Chart(document.querySelector('#legendCart'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: dataset
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        load_main_graph_week();
+        load_sales_graph_week();
+
+
+    </script>
 {% endblock %}
