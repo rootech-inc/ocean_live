@@ -2560,13 +2560,14 @@ def log500(request):
         messages.success(request, "Page Error has been reported")
         return redirect('home')
 
-
+@login_required()
 def organization(request):
     context = {
         'nav': True,
         'page': {
             'title': 'Organization'
         },
-        'locations':Locations.objects.all().order_by('descr')
+        'locations':Locations.objects.all().order_by('descr'),
+        'e_types':BusinessEntityTypes.objects.all().order_by('entity_type_name'),
     }
     return render(request,'console/organization.html',context=context)

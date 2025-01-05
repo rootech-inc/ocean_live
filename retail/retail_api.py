@@ -17,7 +17,7 @@ from scipy.ndimage import sobel
 from sympy import Product
 
 from admin_panel.anton import format_currency
-from admin_panel.models import Emails, Locations
+from admin_panel.models import Emails, Locations, BusinessEntityTypes
 from inventory.views import transfer
 from ocean.settings import RET_DB_HOST, RET_DB_USER, RET_DB_PASS, RET_DB_NAME, BOLT_PROVIDER_ID, BOLT_MARGIN
 from retail.db import ret_cursor, get_stock, updateStock, percentage_difference
@@ -706,6 +706,25 @@ def interface(request):
                 success_response['message'] = arr
                 response = success_response
 
+            elif module == 'menu':
+                entity = data.get('entity','*')
+                to = data.get('to')
+                if entity == '*':
+                    items = BoltItems.objects.all()
+                else:
+                    items = BoltItems.objects.filter(entity_id=entity)
+
+                if to:
+                    items = items.exclude(menu_id=to)
+                tot = items.count()
+                x = 1
+                for item in items:
+                    print(f"{x} / {tot}")
+                    arr.append(item.obj())
+                    x += 1
+
+                success_response['message'] = arr
+                response = success_response
 
             elif module == 'butch_live_monitor':
                 records = ButchSales.objects.filter(is_checked=False)
@@ -3005,6 +3024,16 @@ ORDER BY
                 for item in items:
                     item.price = item.product.price
                     item.save()
+
+            elif module == 'menu_transfer':
+                to_pk = data.get('to')
+                items = data.get('items')
+                entity = BusinessEntityTypes.objects.get(pk=to_pk)
+                for item in items:
+                    BoltItems.objects.filter(product__barcode=item).update(menu=entity)
+                    
+                success_response['message'] = f"Entity updated for {len(items)} products"
+                response = success_response
 
             elif module == 'shelf':
                 barcode = data.get('barcode')

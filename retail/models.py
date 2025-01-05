@@ -7,6 +7,7 @@ from django.db.models import ForeignKey, Sum
 from django.utils import timezone
 from sympy.logic.inference import valid
 
+import admin_panel.models
 from admin_panel.models import Locations
 from blog.anton import make_md5
 
@@ -54,6 +55,7 @@ class BoltSubGroups(models.Model):
 
 
 class BoltItems(models.Model):
+    menu = models.ForeignKey(admin_panel.models.BusinessEntityTypes,on_delete=models.SET_NULL,null=True,blank=True)
     product = models.OneToOneField('Products', on_delete=models.CASCADE,null=True)
     price = models.DecimalField(max_digits=10, decimal_places=3,default=0.000)
 
@@ -72,6 +74,13 @@ class BoltItems(models.Model):
 
     image = models.ImageField(upload_to='static/uploads/dolphine/bolt/', null=True,default='static/uploads/dolphine/bolt/default.png')
     description = models.TextField(null=True,blank=True)
+
+    def obj(self):
+        return {
+            "product":self.product.obj(),
+            'group':self.group.name,
+            'subgroup':self.subgroup.name,
+        }
 
     def stock(self):
         obj = {}

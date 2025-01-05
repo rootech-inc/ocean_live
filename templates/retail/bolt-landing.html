@@ -50,6 +50,35 @@
                   </div>
                 </div>
 
+            <div class="col-sm-6">
+                <div class="card">
+                    <div class="card-header">
+                        <strong class="card-title">Menus</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>MENU</th>
+                                        <th>Products</th>
+                                        <th>Sales</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="menu_body">
+                                    <tr><td colspan="3">
+                                        <div class="spinner-border spinner-border-sm" role="status">
+                                          <span class="visually-hidden">Loading...</span>
+                                        </div>
+
+                                    </td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -58,11 +87,11 @@
 
     // Function to generate a random RGB color
         function getRandomRGBColor() {
-    const r = Math.floor(Math.random() * 256); // Random value between 0 and 255
-    const g = Math.floor(Math.random() * 256); // Random value between 0 and 255
-    const b = Math.floor(Math.random() * 256); // Random value between 0 and 255
-    return `rgb(${r}, ${g}, ${b})`;
-}
+            const r = Math.floor(Math.random() * 256); // Random value between 0 and 255
+            const g = Math.floor(Math.random() * 256); // Random value between 0 and 255
+            const b = Math.floor(Math.random() * 256); // Random value between 0 and 255
+            return `rgb(${r}, ${g}, ${b})`;
+        }
         // line labels
 
         function load_sales_graph_week() {
@@ -154,9 +183,36 @@
                 });
             });
         }
-
         load_main_graph_week();
         load_sales_graph_week();
+        async function load_menus() {
+            await api.v2('VIEW', {module: 'entity_type'}, '/adapi/').then(res => {
+                if(anton.IsRequest(res)){
+                    let entities = res.message;
+                    let tr = '';
+                    for(let m = 0; m < entities.length; m++){
+                        const ent = entities[m]
+                        tr += `
+                            <tr><td><a href="/retail/bolt/menu/${ent['name']}/">${ent['name']}</a></td><td>${ent['bolt_menu']['menu'].length}</td><td></td></tr>
+                        `
+                    }
+
+                    $('#menu_body').html(tr)
+                } else {
+                    kasa.error("Cannot Load Menu")
+                }
+            })
+        }
+
+        {#load_main_graph_week();#}
+        {#load_sales_graph_week();#}
+
+        $(document).ready(function(){
+
+
+            // load menus
+            load_menus()
+        })
 
 
     </script>

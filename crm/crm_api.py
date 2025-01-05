@@ -775,6 +775,7 @@ def api_interface(request):
                                 target.last_tried = timezone.now()
                                 target.save()
                     campaign.is_sent = True
+                    campaign.save()
 
                 success_response['message'] = f"{pass_cunt} / {pass_cunt + failded_cunt} sent"
                 response = success_response

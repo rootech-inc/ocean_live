@@ -337,6 +337,19 @@ def index(request):
                     success_response['message'] = cts
                     response = success_response
 
+            elif module == 'entity_type':
+                arr = []
+                for et in BusinessEntityTypes.objects.all():
+                    arr.append({
+                        'pk': et.pk,
+                        'name': et.entity_type_name,
+                        'descr': et.entity_type_descr,
+                        'bolt_menu':et.bolt_menu()
+                    })
+
+                success_response['message'] = arr
+                response = success_response
+
             elif module == 'doc_app_auth':
                 pin = data.get('pin')
                 doc_type = data.get('doc_type')
@@ -782,7 +795,24 @@ def index(request):
                 success_response['message'] = "All Passwords Reset"
                 response = success_response
 
+            elif module == 'change_entity_type':
+                mypk = data.get('mypk')
+                entity_type_id = data.get('entity_type')
+                entity_type = BusinessEntityTypes.objects.get(pk=entity_type_id)
+                loc_pk = data.get('loc_pk')
+                location = Locations.objects.get(pk=loc_pk)
+                location.entity = entity_type
+                location.save()
 
+                print(data)
+
+                success_response['message'] = "ENTITY TYPE CHANGED"
+                response = success_response
+
+
+            else:
+                response['status_code'] = 503
+                response['message'] = f"UNKNOWN MODULE ( METHOD : {method}, MODULE : {module} )"
         elif method == 'DELETE':  # delete
 
             if module == 'location':
@@ -792,9 +822,10 @@ def index(request):
                 success_response['message'] = "LOCATION DELETED"
                 response = success_response
 
+
         else:
             response['status_code'] = 503
-            response['message'] = f"UKNOWN REQUEST METHOD ({method})"
+            response['message'] = f"UKNOWN REQUEST METHOD ({module})"
 
     except Exception as e:
         error_type, error_instance, traceback = sys.exc_info()

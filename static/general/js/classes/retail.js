@@ -1950,6 +1950,165 @@ class Retail {
         }
     }
 
+    async migrateBoltItems(stage) {
+        switch (stage) {
+
+            case 'from':
+                loader.show()
+                // show select from menu
+                let et_load = {
+                module: 'entity_type',
+                data: {}
+            }
+                await api.v2('VIEW', et_load, '/adapi/').then(
+                    response => {
+                        if(anton.IsRequest(response)){
+                            let ets = response.message;
+                            let et_arr = [];
+                             let from_locations = [{val:'*',desc:'All'}];
+                            for(let e = 0; e < ets.length; e++){
+                                let et = ets[e];
+                                et_arr.push({
+                                    val:et['pk'],desc:et['name']
+                                })
+                                from_locations.push({
+                                    val:et['pk'],desc:et['name']
+                                })
+                            }
+                           
+                            
+                            let et_form = fom.selectv2('from',from_locations,'Which location you want to migrate from',true)
+                            et_form += fom.selectv2('to',et_arr,'Which location you want to migrate to',true)
+                            amodal.setBodyHtml(et_form)
+                            amodal.setTitleText('Migrate Bolt Items')
+                            amodal.setFooterHtml(`<button id="load_from_items" class="btn btn-success w-100">Select Items</button>`)
+                            loader.hide()
+                            amodal.show()
+
+
+                            $('#load_from_items').click(async function () {
+                                let ids = ['from', 'to']
+                                if (anton.validateInputs(ids)) {
+                                    let from = $('#from').val();
+                                    let to = $('#to').val();
+                                    if (from === to) {
+                                        kasa.error("From and To cannot be the same")
+                                    } else {
+                                        // get menu of from
+                                        let from_menu_payload = {
+                                            module: 'menu',
+                                            data: {
+                                                entity: from,
+                                                to:to
+                                            }
+                                        }
+
+                                        loader.show()
+                                        amodal.hide()
+                                        await api.v2('VIEW', from_menu_payload, '/retail/api/').then(
+                                            response => {
+                                                if (anton.IsRequest(response)) {
+                                                    let menu = response.message;
+                                                    let tr = ``;
+                                                    for(let mi = 0; mi < menu.length; mi++){
+                                                        const item = menu[mi]
+                                                        const product = item['product']
+                                                        const group = item['group']
+                                                        const subgroup = item['subgroup']
+
+                                                        let row = `row_${mi}`
+                                                        let check = `check_${mi}`
+                                                        let barcode = `barcode_${mi}`
+                                                        let image = product['image']
+                                                        tr += `
+                                                            <tr id="${row}">
+                                                                <td><input id="${check}" type="checkbox" class="menu_item"></td>
+                                                                <td id="${barcode}">${product['barcode']}</td>
+                                                                <td>${product.name}</td>
+                                                                <td>${group}</td>
+                                                                <td>${subgroup}</td>
+                                                            </tr>
+                                                        `
+                                                    }
+                                                    let html = `
+                                                        <table class="table"><thead><tr><th><button id="check_all"><i  class="fa fa-check"></i></button></th><th>BARCODE</th><th>NAME</th><th>GROUP</th><th>SUBGROUP</th></tr></thead><tbody>${tr}</tbody></table>
+                                                    `
+
+                                                    amodal.setBodyHtml(html)
+                                                    amodal.setTitleText('Select items for migration')
+                                                    amodal.setFooterHtml(`<button id="migrate_items_button" class="btn btn-success w-100">Migrate</button>`)
+                                                    amodal.show()
+                                                    amodal.setSize('XL')
+
+                                                    $('#check_all').click(function(){
+                                                        let checkboxes = $('.menu_item')
+                                                        for(let i = 0; i < checkboxes.length; i++){
+                                                            checkboxes[i].checked = true
+                                                        }
+                                                    })
+
+                                                    $('#migrate_items_button').click(async function () {
+                                                        let items = []
+                                                        loader.show()
+                                                        let checkboxes = $('.menu_item')
+                                                        for (let i = 0; i < checkboxes.length; i++) {
+                                                            let checkbox = checkboxes[i]
+                                                            if (checkbox.checked) {
+                                                                let id = checkbox.id
+                                                                let line = id.split('_')[1]
+                                                                let bc = $(`#barcode_${line}`).text()
+                                                                items.push(bc)
+                                                            }
+                                                        }
+
+                                                        let payload = {
+                                                            module: 'menu_transfer',
+                                                            data: {
+                                                                to: to,
+                                                                items: items
+                                                            }
+                                                        }
+                                                        await api.v2('PATCH', payload, '/retail/api/').then(
+                                                            response => {
+                                                                if (anton.IsRequest(response)) {
+                                                                    kasa.success('Items Migrated')
+                                                                    amodal.hide()
+                                                                    location.reload()
+                                                                } else {
+                                                                    kasa.response(response)
+                                                                    loader.hide()
+                                                                }
+                                                            }
+                                                        )
+                                                    })
+                                                    
+                                                } else {
+                                                    kasa.response(response)
+                                                }
+                                                loader.hide()
+                                                
+                                            }
+                                        ).catch(err => {
+                                            kasa.error(err)
+                                            loader.hide()
+                                        })
+
+                                    }
+                                } else {
+                                    kasa.error("Invalid Form")
+                                }
+
+                            })
+                        }
+                    }
+                ).catch(err => {
+                    kasa.error(err)
+                })
+                break;
+            default:
+            // do nothing
+        }
+    }
 }
 
 const retail = new Retail();
@@ -1990,3 +2149,5 @@ $(document).on('change', '#bolt_image_input', function() {
                 }
             });
         });
+
+

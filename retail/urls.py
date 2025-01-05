@@ -29,6 +29,7 @@ urlpatterns = [
     path('bolt/categories/', views.bolt_groups, name='bolt_groups'),
     path('bolt/category/<pk>/', views.bolt_category, name='bolt_category'),
     path('bolt/upload_image/',views.bolt_upload_image,name='bolt_upload_image'),
+    path('bolt/menu/<entity>/',views.bolt_menu,name='bolt_menu'),
     path('products/<int:page>/', views.products, name='products'),
     path('products/<int:category>/', views.products, name='retail_product_group'),
     path('products/card/', views.product_card, name='retail_product_card'),

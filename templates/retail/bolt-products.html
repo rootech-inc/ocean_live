@@ -1,7 +1,8 @@
 {% extends 'retail/base.html' %}
 {% load static %}
 {% block body %}
-    <div class="card-header">
+    <div class="card h-100">
+        <div class="card-header">
         <div class="w-100 h-100 d-flex flex-wrap">
             <div class="w-25 h-100"><strong class="card-title">BOLT ITEMS</strong></div>
             <div class="w-75 h-100 d-flex flex-wrap justify-content-end align-content-center">
@@ -12,9 +13,10 @@
 {#                <button onclick="retail.sync2bolt()" style="border-radius: 0 !important" class="btn btn-outline-info">sync2bolt</button>#}
                 <div class="dropdown dropleft">
                     <button class="btn btn-secondary" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fa fa-arrow-down"></i> Menu
+                        Menu
                     </button>
                     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <a class="dropdown-item" onclick="retail.migrateBoltItems('from')" href="javascript:void(0)">Make Migration</a>
                         <a class="dropdown-item" onclick="retail.boldUploadScreen()" href="javascript:void(0)"><i class="bx bx-upload"></i> UPLOAD BATCH</a>
                         <a class="dropdown-item" onclick="retail.markProducts()" href="javascript:void(0)"><i class="bx bx-checkbox-checked"></i> MARK UPDATE</a>
                         <a class="dropdown-item" onclick="retail.checkPrices()" href="javascript:void(0)">PRICE CHANG</a>
@@ -29,7 +31,7 @@
             </div>
         </div>
     </div>
-    <div class="card-body overflow-auto">
+        <div class="card-body overflow-auto">
         <table class="table datatable">
             <thead>
                 <tr>
@@ -83,5 +85,6 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
     </div>
 {% endblock %}

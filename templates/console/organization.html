@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+
+{% block body %}
+    <div class="card-header">
+        <div class="w-100 d-flex flex-wrap justify-content-between align-items-center">
+                                <div class="w-50"><strong class="card-title">Entities</strong></div>
+                                <div class="w-50 d-flex flex-wrap justify-content-end">
+                                    <button id="new_location_button" style="margin-right: 5px" class="btn btn-sm btn-info"><i class="fa fa-plus"></i> New Location</button>
+                                    <button id="entity_type" class="btn btn-info btn-sm"><i class="fa fa-plus"></i> Entity Type</button>
+                                </div>
+                            </div>
+    </div>
+
+    <div class="card-body overflow-auto">
+        <div class="container p-2">
+            <div class="row">
+
+                <div class="col-sm-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="w-100 d-flex">
+                                <div class="w-50"><strong class="card-title">Entity Type</strong></div>
+                                <div class="w-50">
+                                    <button id="entity_type" class="btn btn-info btn-sm"><i class="fa fa-plus"></i> Entity Type</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for e in e_types %}
+                                            <tr><td>{{ e.entity_type_name }}</td><td></td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-12">
+                    <div class="card">
+
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="mb-0 datatable">
+                                    <thead>
+                                        <tr><th>NAME</th><th>ADDRESS</th><th>Entity</th><th>EVAT</th><th>ACTION</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for location in locations %}
+                                            <tr>
+                                                <td>{{ location.descr }}</td>
+                                                <td>{{ location.server_location }}</td>
+                                                <td>{{ location.ent }}</td>
+                                                <td>{{ location.evat }}</td>
+                                                <td>
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+
+                                                        </button>
+                                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                                            <a class="dropdown-item" onclick="setEvat(`{{ location.pk }}`)" href="javascript:void(0)">Evat Endpoint</a>
+                                                            <a class="dropdown-item" onclick="setBusinessUnit(`{{ location.pk }}`)" href="javascript:void(0)">Set Entity Type</a>
+                                                            <a class="dropdown-item" href="#">Something else here</a>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function newLocation() {
+            let form ='';
+            form += fom.number('code','Location Code related to software used',true)
+            form += fom.text('descr','Location Description',true)
+            form += fom.text('server_ip','Server IP Address',true)
+            form += fom.text('server_location','Server Physical Location',true)
+            form += fom.text('db','Database Name',true)
+            form += fom.text('db_user','Database User',true)
+            form += fom.password('db_password','<PASSWORD>',true)
+            form += fom.select('type','Location Type',true,[{'pk':'1','name':'Main'},{'pk':'2','name':'Branch'}])
+
+
+
+            Swal.fire({
+              title: 'NEW LOCATION',
+              html: `
+                <input id="code" type="number" autocomplete="off" placeholder="CODE" class="form-control rounded-0 mb-2">
+                <select name="type" id="type" class="form-control rounded-0 mb-2">
+
+                </select>
+                <input id="descr" type="text" autocomplete="off" placeholder="DESCRIPTION" class="form-control rounded-0 mb-2">
+                <input id="server_ip" type="text" autocomplete="off" placeholder="SERVER IP ADDRESS" class="form-control rounded-0 mb-2">
+                <input id="server_location" autocomplete="off" type="text" placeholder="SERVER PHYSICAL LOCATION" class="form-control rounded-0 mb-2">
+                <input id="db" autocomplete="off" placeholder="DATABASE NAME" type="text" class="form-control rounded-0 mb-2">
+                <input id="db_user" autocomplete="off" class="form-control rounded-0 mb-2" placeholder="DB USER">
+                <input id="db_password" type="password" autocomplete="off" class="form-control rounded-0 mb-2" placeholder="DB PASSWORD">
+
+              `,
+
+              focusConfirm: false,
+              confirmButtonText: 'Submit',
+                showCancelButton: true,
+                cancelButtonText:'CANCEL',
+                confirmButtonColor:'#19541b',
+              preConfirm: () => {
+                const server_ip = document.getElementById('server_ip').value
+                const server_location = document.getElementById('server_location').value;
+                const code = document.getElementById('code').value;
+                const descr = document.getElementById('descr').value;
+                const db = document.getElementById('db').value;
+                const db_user = document.getElementById('db_user').value;
+                const db_password = document.getElementById('db_password').value;
+
+                if (!server_ip || !server_location || !code || !descr || !db || !db_user || !db_password) {
+                  Swal.showValidationMessage(`Please fill all fields`)
+                }
+
+                return {server_ip: server_ip, server_location: server_location, code: code, descr: descr, db_user:db_user,db_password:db_password,db:db}
+              },
+            }).then((result) => {
+                  if (result.isConfirmed) {
+                      let data = result.value
+                      data['owner'] = $('#mypk').val()
+                      let payload = {
+                          'module':'location',
+                          data:data
+                      };
+                      let response = api.call('PUT',payload,'/adapi/')
+                      kasa.info(response['message'])
+                      console.table(payload)
+                    console.log(result.value)
+                  }
+                })
+        }
+
+        async function setBusinessUnit(location) {
+            let form = "";
+            let et_load = {
+                module: 'entity_type',
+                data: {}
+            }
+
+            await api.v2('VIEW', et_load, '/adapi/').then(response => {
+                if(anton.IsRequest(response)){
+                    let ets = response.message;
+                    let etfo = [];
+                    for(let e = 0; e < ets.length; e++){
+                        etfo.push({
+                            'val':ets[e].pk,
+                            'desc':ets[e].name
+                        })
+                    }
+                    form += fom.selectv2('entity_type', etfo, '',true)
+                    amodal.setTitleText("SET ENTITY TYPE")
+                    amodal.setBodyHtml(form)
+                    amodal.setFooterHtml(`<button id="change_loc_entity" class="btn btn-success w-100">CHANGE</button>`)
+                    amodal.show()
+                    $('#change_loc_entity').click(async function () {
+                        let ids = ['mypk', 'entity_type'];
+                        if (anton.validateInputs(ids)) {
+                            let payload = {
+                                'module': 'change_entity_type',
+                                data: anton.Inputs(ids)
+                            };
+                            payload['data']['loc_pk'] = location
+
+                            await api.v2('PATCH', payload, '/adapi/').then(resp => {
+                                if (anton.IsRequest(resp)) {
+                                    kasa.confirm(resp.message,1,'here')
+                                } else {
+                                    kasa.response(resp)
+                                }
+                            })
+                        }
+                    })
+                } else {
+                    kasa.response(response)
+                }
+            })
+        }
+
+
+        function setEvat(location) {
+
+            let payload = {
+                'module':'evat_credentials',
+                'data':{}
+            }
+
+            let response = api.call('VIEW',payload,'/adapi/');
+
+            if(response['status_code'] === 200){
+
+                let keys = response['message'];
+
+                if(keys.length > 0){
+                    let ops = {}
+                    for (let i = 0; i < keys.length; i++) {
+                        let key = keys[i]
+                        ops[key['pk']] = key['server_location']
+                    }
+                    Swal.fire({
+                      title: 'CHANGE EVAT CREDENTIAL',
+                      input: 'select',
+                      inputOptions: ops,
+                      inputPlaceholder: 'Select an option',
+                      showCancelButton: true,
+                      inputValidator: (value) => {
+                        return new Promise((resolve) => {
+                          if (value !== '') {
+                            resolve();
+                          } else {
+                            resolve('Please select an option');
+                          }
+                        })
+                      }
+                    }).then((result) => {
+                      if (result.isConfirmed) {
+                          let data = {
+                              'evat_key':result.value,
+                              'loc_key':location
+                          };
+                          let payload = {
+                              'module':'change_evat_engine',
+                              data:data
+                          };
+
+                          let response = api.call('PATCH',payload,'/adapi/')
+                          kasa.info(response['message'])
+                      }
+                    });
+
+                } else {
+                    kasa.info("CREATE EVAT CREDENTIALS")
+                }
+
+            } else {
+                kasa.error(`CANNOT LOAD CREDENTIALS : ${response['message']}`)
+            }
+
+
+        }
+
+        function deleteLocation(pk) {
+            let payload = {
+                'module':'location',
+                data: {
+                    'pk':pk
+                }
+            }
+
+            if(confirm("ARE YOU SURE")){
+                kasa.confirm(
+                    api.call('DELETE',payload,'/adapi/')['message'],1,'/company/locations/'
+                )
+            }
+
+        }
+        $(document).ready(function (){
+            $('#new_location_button').click(function (){
+                newLocation()
+            });
+
+            $('#entity_type').click(function() {
+                let form = "";
+                form += fom.text('entity_type_name', 'Entity Type Name', true)
+                form += fom.textarea('entity_type_descr', 3, true)
+
+                amodal.setTitleText("NEW ENTITY TYPE")
+                amodal.setBodyHtml(form)
+                amodal.setFooterHtml(`<button id="save_entity_type" class="btn btn-success w-100">SAVE</button>`)
+                amodal.show()
+
+                $('#save_entity_type').click(function () {
+                    let ids = ['entity_type_name', 'entity_type_descr']
+                    if(anton.validateInputs(ids)){
+                        let payload = {
+                            'module': 'entity_type',
+                            data: anton.Inputs(ids)
+                        }
+                        console.table(payload)
+                        let response = api.call('PUT', payload, '/adapi/')
+                        kasa.info(response['message'])
+                    } else {
+                        kasa.error("Invalid Form")
+                    }
+
+
+                });
+            })
+        })
+    </script>
+{% endblock %}
