@@ -60,6 +60,9 @@ class Modal {
         $('#g_modal').modal('hide')
     }
 
+    setTitleHtml(html) {
+        $('#g_modal_title').html(html)
+    }
 }
 
 const amodal = new Modal()

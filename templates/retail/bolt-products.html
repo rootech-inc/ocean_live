@@ -17,6 +17,7 @@
                     </button>
                     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <a class="dropdown-item" onclick="retail.migrateBoltItems('from')" href="javascript:void(0)">Make Migration</a>
+                        <a class="dropdown-item" id="add_items_to_menu" href="javascript:void(0)">Add To Menu</a>
                         <a class="dropdown-item" onclick="retail.boldUploadScreen()" href="javascript:void(0)"><i class="bx bx-upload"></i> UPLOAD BATCH</a>
                         <a class="dropdown-item" onclick="retail.markProducts()" href="javascript:void(0)"><i class="bx bx-checkbox-checked"></i> MARK UPDATE</a>
                         <a class="dropdown-item" onclick="retail.checkPrices()" href="javascript:void(0)">PRICE CHANG</a>
@@ -87,4 +88,93 @@
         </table>
     </div>
     </div>
+
+
+    <script>
+        $(document).ready(function(){
+            $('#add_items_to_menu').click(function(){
+                let menu = location.href.split('/')[6].toLowerCase()
+
+                let decider_html = `
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <button id="select_menu_items" style='height:100px; border-radius:0' class="btn w-100 btn-outline-primary"><i class="fa fa-check-square"></i> SELECT</button>
+                            </div>
+                            <div class="col-sm-6">
+                                <button id="upload_menu_items" style='height:100px; border-radius:0' class="btn w-100 btn-outline-secondary"><i class="fa fa-upload"></i> IMPORT</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                amodal.setBodyHtml(decider_html)
+                amodal.setTitleText("ADD ITEMS TO MENU")
+                amodal.show()
+
+                // handle select
+                $('#select_menu_items').click(async function () {
+                    loader.show()
+                    amodal.hide()
+                    let payload = {
+                        module: 'entity_prod_mast',
+                        data: {
+                            entity_name: menu,
+                            filter_flag:'not_on_bolt'
+                        }
+                    }
+
+                    await api.v2('VIEW', payload, '/retail/api/').then(response => {
+                        if(anton.IsRequest(response)){
+                            let tr = ""
+                            let items = response.message;
+                            for(let t = 0; t < items.length; t++){
+                                const item = items[t];
+                                tr += `
+                                    <tr>
+                                        <td><input type="checkbox" class="check_item_for_bolt_select"></td>
+                                        <td>${item.barcode}</td>
+                                        <td>${item.name}</td>
+                                        <td>${item.price}</td>
+
+                                    </tr>`
+                            }
+                            let table = `
+                                <table class="table datatable table-bordered table-striped table-hover">
+                                   <thead><tr><th><button class="btn btn-sm"><i class="fa fa-check-square"></i></button></th><th>BARCODE</th><th>NAME</th><th>PRICE</th></tr></thead>
+                                    <tbody>
+                                    ${tr}
+                                    </tbody>
+                                </table>
+                            `
+                            let card = `
+
+                                <div style="height: 75vh !important; overflow: auto" class="card">
+                                    <div class='card-header'>
+
+                                    </div>
+                                    <div class="card-body overflow-auto">${table}</div>
+                                </div>
+                                `
+                            amodal.setBodyHtml(card)
+                            amodal.setTitleHtml(`
+                                Select Items
+                            `)
+                            amodal.setSize('XL')
+                            amodal.show()
+                            console.table(items)
+                            loader.hide()
+                        } else {
+                            loader.hide()
+                            kasa.response(response)
+                        }
+                    }).catch(error => {
+                        kasa.error(error)
+                    })
+
+                })
+
+            })
+        })
+    </script>
 {% endblock %}

@@ -70,7 +70,7 @@
                                                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                                             <a class="dropdown-item" onclick="setEvat(`{{ location.pk }}`)" href="javascript:void(0)">Evat Endpoint</a>
                                                             <a class="dropdown-item" onclick="setBusinessUnit(`{{ location.pk }}`)" href="javascript:void(0)">Set Entity Type</a>
-                                                            <a class="dropdown-item" href="#">Something else here</a>
+                                                            <a class="dropdown-item sync_inventory" entity-pk="{{ location.entity.pk }}" href="javascript:void(0)">Sync Inventory</a>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -308,6 +308,35 @@
 
                 });
             })
+
+            $('.sync_inventory').on('click', async function (event) {
+                event.preventDefault(); // Prevent the default action (e.g., navigating the link)
+
+                // Get the value of the custom attribute `entity-pk`
+                let entityPkValue = $(this).attr('entity-pk');
+
+                let payload = {
+                    module: 'sync_inventory',
+                    'data': {
+                        enityt_pk: entityPkValue
+                    }
+                }
+
+                loader.show()
+
+                await api.v2('PUT', payload, '/adapi/').then(response => {
+                    if (anton.IsRequest(response)) {
+                        kasa.confirm(response.message, 1, 'here')
+                    } else {
+                        kasa.response(response)
+                    }
+                    loader.hide()
+                }).catch(error => {
+                    kasa.error(error)
+                    loader.hide()
+                })
+
+            });
         })
     </script>
 {% endblock %}

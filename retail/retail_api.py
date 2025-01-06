@@ -706,6 +706,24 @@ def interface(request):
                 success_response['message'] = arr
                 response = success_response
 
+            elif module == 'entity_prod_mast':
+                entity_name = data.get('entity_name')
+                filter_flag = data.get('filter_flag','*')
+                entity = BusinessEntityTypes.objects.get(entity_type_name=entity_name)
+                items = Products.objects.filter(entity=entity)
+
+
+                for item in items:
+                    if filter_flag == 'not_on_bolt':
+                        if not item.is_on_bolt():
+                            arr.append(item.obj())
+                    else:
+                        arr.append(item.obj())
+
+
+                success_response['message'] = arr
+                response = success_response
+
             elif module == 'menu':
                 entity = data.get('entity','*')
                 to = data.get('to')
@@ -2567,6 +2585,7 @@ ORDER BY
                 conn.close()
                 success_response['message'] = arr
                 response = success_response
+
 
             elif module == 'prod':
                 pk = data.get('pk','*')

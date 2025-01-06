@@ -15,7 +15,10 @@ from admin_panel.models import DocApprovals, GeoCity, GeoCitySub, Reminder, SmsA
     Locations, \
     Departments, TicketTrans, Sms, TicketHd, MailSenders, MailQueues, MailAttachments, BusinessEntityTypes
 from blog.anton import make_md5
+from ocean.settings import RET_DB_HOST, RET_DB_USER, RET_DB_PASS, RET_DB_NAME, REST_DB_NAME
 from reports.models import DepartmentReportMailQue
+from retail.db import ret_cursor
+from retail.models import ProductSupplier, ProductGroup, ProductSubGroup, Products
 from servicing.models import ServiceCard
 from taskmanager.models import Tasks, TaskTransactions
 
@@ -58,6 +61,189 @@ def index(request):
 
                     GeoCitySub(name=name, owner=User.objects.get(pk=us_pk), city=GeoCity.objects.get(pk=city)).save()
                     response = success_response
+
+            elif module == 'sync_inventory':
+
+                enityt_pk = data.get('enityt_pk')
+                entity = BusinessEntityTypes.objects.get(pk=enityt_pk)
+                e_type = entity.entity_type_name.lower()
+                print(e_type)
+                db_config = {}
+                if e_type == 'retail':
+
+                    db_config['host'] = RET_DB_HOST
+                    db_config['user'] = RET_DB_USER
+                    db_config['password'] = RET_DB_PASS
+                    db_config['db'] = RET_DB_NAME
+
+                    supplier_query = "select supp_code as 'code',supp_name as 'name',contact as 'person',phone1 as 'phone',address1 as 'email',address2 as 'city',country_id as 'country' from supplier"
+                    group_query = f"select group_code,group_des from group_mast"
+                    sub_group_query = f"SELECT group_code,(select group_des from group_mast where group_code = sub_group.group_code) as 'group', sub_group,sub_group_des from sub_group"
+                    products_query = "SELECT item_code, barcode, item_des, (SELECT group_des FROM group_mast WHERE group_mast.group_code = prod_mast.group_code) AS 'group', (SELECT sub_group_des FROM sub_group WHERE sub_group.group_code = prod_mast.group_code AND sub_group.sub_group = prod_mast.sub_group) AS 'sub_group', (SELECT supp_name FROM supplier WHERE supplier.supp_code = prod_mast.supp_code) AS 'supplier', retail1 FROM prod_mast WHERE item_type != 0"
+
+                elif e_type == 'restautant':
+                    db_config['host'] = RET_DB_HOST
+                    db_config['user'] = RET_DB_USER
+                    db_config['password'] = RET_DB_PASS
+                    db_config['db'] = REST_DB_NAME
+
+                    supplier_query = "select supp_code as 'code',supp_name as 'name',contact as 'person',phone1 as 'phone',address1 as 'email',address2 as 'city',country_id as 'country' from supplier"
+                    group_query = f"select group_code,group_des from group_mast"
+                    sub_group_query = f"SELECT group_code,(select group_des from group_mast where group_code = sub_group.group_code) as 'group', sub_group,sub_group_des from sub_group"
+                    products_query = "SELECT item_code, barcode, item_des, (SELECT group_des FROM group_mast WHERE group_mast.group_code = prod_mast.group_code) AS 'group', (SELECT sub_group_des FROM sub_group WHERE sub_group.group_code = prod_mast.group_code AND sub_group.sub_group = prod_mast.sub_group) AS 'sub_group', (SELECT supp_name FROM supplier WHERE supplier.supp_code = prod_mast.supp_code) AS 'supplier', retail1 FROM prod_mast WHERE item_type != 0"
+
+                else:
+                    raise Exception("Invalid Entity Type")
+
+                    # sync suppliers
+
+                conn = ret_cursor(db_config['host'], '', db_config['db'], db_config['user'], db_config['password'])
+                cursor = conn.cursor()
+                cursor.execute(supplier_query)
+                counts = 0
+                not_counted = 0
+                mk = 1
+                fetch = cursor.fetchall()
+                mklen = len(fetch)
+                for supplier in fetch:
+                        print(f"Supplier {mk} / {mklen}")
+                        code = supplier[0].strip()
+                        name = supplier[1].strip()
+                        person = supplier[2].strip() if supplier[2] is not None else supplier[2]
+                        phone = '' if supplier[3] is None else supplier[3].strip()
+                        email = '' if supplier[4] is None else supplier[4].strip()
+                        city = '' if supplier[5] is None else supplier[5].strip()
+                        country = '' if supplier[6] is None else supplier[6].strip()
+
+                        try:
+                            if ProductSupplier.objects.filter(code=code,entity=entity).exists():
+                                ProductSupplier.objects.filter(code=code).update( name=name, phone=phone,
+                                                                      person=person,
+                                                                      email=email, city=city,
+                                                                      country=country,entity=entity)
+                            else:
+                                ProductSupplier.objects.create(code=code, name=name, phone=phone,
+                                                                                 person=person,
+                                                                                 email=email, city=city,
+                                                                                 country=country,entity=entity)
+                            counts = counts + 1
+                        except Exception as e:
+                            not_counted = not_counted + 1
+
+                        mk += 1
+
+                    # sync groups
+
+                # groups
+                mk = 1
+
+
+                cursor.execute(group_query)
+                count = 0
+                not_counted = 0
+                fetch = False
+                fetch = cursor.fetchall()
+                mklen = len(fetch)
+                for group in fetch:
+                        print(f"Group {mk} / {mklen}")
+                        mk += 1
+                        code, name = group[0].strip(), group[1].strip()
+                        try:
+                            if ProductGroup.objects.filter(code=code,entity=entity).exists():
+                                # update
+                                ProductGroup.objects.filter(code=code).update(name=name,entity=entity)
+                            else:
+                                get, add = ProductGroup.objects.get_or_create(code=code, name=name,entity=entity)
+                            count = count + 1
+                        except Exception as e:
+                            not_counted = not_counted + 1
+
+                    # sync sub groups
+
+                # sub group
+
+                cursor.execute(sub_group_query)
+                count = 0
+                not_counted = 0
+                errors = []
+                fetch = False
+                fetch = cursor.fetchall()
+                mklen = len(fetch)
+
+                for sub_group in fetch:
+                        print(f"Subgroup {mk} / {mklen}")
+                        mk += 1
+                        group_code, group_des, sub_group_code, sub_group_des = sub_group[0], sub_group[1].strip(), \
+                            sub_group[2].strip(), sub_group[3].strip()
+                        group, add = ProductGroup.objects.get_or_create(code=group_code, name=group_des,entity=entity)
+
+                        if add:
+                            group = ProductGroup.objects.get(code=group_code, name=group_des,entity=entity)
+
+                        try:
+                            if ProductSubGroup.objects.filter(group=group,entity=entity).exists():
+                                ProductSubGroup.objects.filter(group=group, code=sub_group_code).update(
+                                                                      name=sub_group_des,entity=entity)
+                            else:
+                                sub, create = ProductSubGroup.objects.get_or_create(group=group, code=sub_group_code,
+                                                                                name=sub_group_des,entity=entity)
+                            count = count + 1
+                        except Exception as e:
+                            errors.append(e)
+                            not_counted = not_counted + 1
+
+                    # sync products
+
+
+                # products
+                cursor.execute(products_query)
+                saved = 0
+                not_synced = 0
+                error = []
+                mk = 1
+                fetch = cursor.fetchall()
+                mklen = len(fetch)
+                for product in fetch:
+                        print(f"Product {mk} / {mklen}")
+                        mk += 1
+                        code = product[0]
+                        barcode = str(product[1]).strip()
+                        item_des = product[2].strip()
+                        group = product[3]
+                        # print(product[4])
+                        try:
+                            sub_group = product[4].strip()
+                        except Exception as e:
+                            sub_group = product[4]
+
+                        supplier = product[5]
+                        retail1 = product[6]
+
+                        # add to products
+                        subgroup = ProductSubGroup.objects.get(code='999')
+                        if ProductSubGroup.objects.filter(code=sub_group,entity=entity).count() == 1:
+                            subgroup = ProductSubGroup.objects.get(name=sub_group,entity=entity)
+                            # delete product
+                        if Products.objects.filter(code=code,entity=entity).exists():
+                            # update
+                            prod = Products.objects.get(code=code,entity=entity)
+                            prod.barcode = barcode
+                            prod.name = item_des
+                            prod.price = retail1
+                            prod.subgroup = subgroup
+                            prod.entity = entity
+                            prod.save()
+                        else:
+                            # save new
+                            Products.objects.get_or_create(subgroup=subgroup, name=item_des, barcode=barcode,
+                                                           code=code, price=retail1,entity=entity)
+                            saved = saved + 1
+                        # else:
+                        #     not_synced = not_synced + 1
+                        #     error.append(f"{barcode} - {item_des} # sub group {sub_group} / does not exist")
+
+                conn.close()
+
 
             elif module == 'set_loc_manager':
                 mana_pk = data.get('manager')
