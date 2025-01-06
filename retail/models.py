@@ -7,11 +7,12 @@ from django.db.models import ForeignKey, Sum
 from django.utils import timezone
 from sympy.logic.inference import valid
 
+import admin_panel.models
 from admin_panel.models import Locations
 from blog.anton import make_md5
 
 from ocean import settings
-
+from ocean.settings import DEBUG
 
 
 # CLERKS
@@ -54,6 +55,7 @@ class BoltSubGroups(models.Model):
 
 
 class BoltItems(models.Model):
+    menu = models.ForeignKey(admin_panel.models.BusinessEntityTypes,on_delete=models.SET_NULL,null=True,blank=True)
     product = models.OneToOneField('Products', on_delete=models.CASCADE,null=True)
     price = models.DecimalField(max_digits=10, decimal_places=3,default=0.000)
 
@@ -72,6 +74,13 @@ class BoltItems(models.Model):
 
     image = models.ImageField(upload_to='static/uploads/dolphine/bolt/', null=True,default='static/uploads/dolphine/bolt/default.png')
     description = models.TextField(null=True,blank=True)
+
+    def obj(self):
+        return {
+            "product":self.product.obj(),
+            'group':self.group.name,
+            'subgroup':self.subgroup.name,
+        }
 
     def stock(self):
         obj = {}
@@ -95,6 +104,10 @@ class ProductSupplier(models.Model):
     city = models.TextField()
     country = models.TextField()
     created_on = models.DateTimeField(auto_now_add=True)
+    entity = models.ForeignKey(admin_panel.models.BusinessEntityTypes,on_delete=models.SET_NULL,null=True,blank=True )
+
+    class Meta:
+        unique_together = (('code','entity'),)
 
     def obj(self):
         return {
@@ -103,10 +116,15 @@ class ProductSupplier(models.Model):
         }
 
 class ProductGroup(models.Model):
-    code = models.CharField(unique=True, max_length=10, null=False, blank=False)
+    code = models.CharField(unique=False, max_length=10, null=False, blank=False)
     name = models.CharField(unique=True, max_length=60)
     created_on = models.DateTimeField(auto_now_add=True)
     edited_on = models.DateTimeField(auto_now=True)
+
+    entity = models.ForeignKey(admin_panel.models.BusinessEntityTypes, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        unique_together = (('code','entity'),)
 
     def subgroups(self):
         return ProductSubGroup.objects.filter(group=self)
@@ -117,18 +135,19 @@ class ProductSubGroup(models.Model):
     code = models.CharField(unique=False, max_length=10)
     name = models.CharField(unique=False, max_length=60)
     created_on = models.DateTimeField(auto_now_add=True)
+    entity = models.ForeignKey(admin_panel.models.BusinessEntityTypes, on_delete=models.SET_NULL, null=True, blank=True)
 
     def products(self):
         return Products.objects.filter(subgroup=self)
 
     class Meta:
-        unique_together = (('group', 'code'),)
+        unique_together = (('group', 'code','entity'),)
 
 
 class Products(models.Model):
     subgroup = models.ForeignKey(ProductSubGroup, on_delete=models.CASCADE)
-    code = models.CharField(unique=True, max_length=60)
-    barcode = models.CharField(unique=True, max_length=100, null=False, blank=False)
+    code = models.CharField(unique=False, max_length=60)
+    barcode = models.CharField(unique=False, max_length=100, null=False, blank=False)
     name = models.CharField(unique=False, max_length=100)
     price = models.DecimalField(decimal_places=3, max_digits=60)
     stock_monitor = models.BooleanField(default=False)
@@ -136,6 +155,10 @@ class Products(models.Model):
                               default='static/uploads/dolphine/bolt/default.png')
     allowed_on_bolt = models.BooleanField(default=True)
     shelf = models.IntegerField(default=0)
+    entity = models.ForeignKey(admin_panel.models.BusinessEntityTypes, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        unique_together = (('subgroup', 'code','entity'),)
 
     def obj(self):
         image_url = ""
@@ -157,15 +180,15 @@ class Products(models.Model):
         }
 
     def is_on_bolt(self):
-        barcode = self.barcode.strip()
-        if BoltItems.objects.filter(barcode=barcode).exists():
+
+        if BoltItems.objects.filter(product=self).exists():
             return True
         else:
             return False
 
     def live_stock(self):
         from retail.db import get_stock
-        return get_stock(self.code)
+        return get_stock(self.code) if DEBUG is False else {}
 
     def stock(self):
         arr = []

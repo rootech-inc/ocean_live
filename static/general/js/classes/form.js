@@ -57,11 +57,11 @@ class Form {
 
         let req = ''
         if(required){
-            req = `<span class="text-danger">*</span>`
+            req = `<span class="text-danger">*</span><br>`
         }
         return `
                 <label class="text-info" for="${ini}">${ini.toUpperCase().replace('_',' ')} ${req}</label>
-                <select id="${ini}" name="${ini}" required="${required}" class="form-control mb-2 rounded-0"><${opxt}</select><i class="text-muted">${comment}</i>
+                <select id="${ini}" name="${ini}" required="${required}" class="form-control mb-2 rounded-0"><${opxt}</select><i class="text-muted">${comment}</i><br>
                 `
     }
 
@@ -101,6 +101,10 @@ class Form {
 
     number(ini,comment='',required=false,max_val=100){
         return this.input('number',ini,comment,required,max_val)
+    }
+
+    password(ini,comment='',required=false,max_val=100) {
+        return this.input('password',ini,comment,required,max_val)
     }
 }
 

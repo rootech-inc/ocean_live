@@ -391,3 +391,14 @@ def bolt_landing(request):
         },
     }
     return render(request, 'retail/bolt-landing.html', context=context)
+
+@login_required()
+def bolt_menu(request,entity):
+    context = {
+        'nav': True,
+        'page': {
+            'title': f"{entity} Bolt Menu"
+        },
+        'items': BoltItems.objects.filter(menu__entity_type_name=entity).order_by('product__name')[:2]
+    }
+    return render(request, 'retail/bolt-products.html', context=context)

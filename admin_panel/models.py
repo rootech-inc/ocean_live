@@ -413,6 +413,25 @@ class AdjTran(models.Model):
         return ProductMaster.objects.get(pk=self.product).descr
 
 
+class BusinessEntityTypes(models.Model):
+    entity_type_name = models.CharField(max_length=255, unique=True)
+    entity_type_descr = models.TextField()
+
+    def bolt_menu(self):
+        from retail.models import BoltItems
+        is_bolt = False
+        menu_items = []
+        if BoltItems.objects.filter(menu=self).exists():
+            is_bolt = True
+
+            for item in BoltItems.objects.filter(menu=self)[:1]:
+                menu_items.append(item.obj())
+
+        return {
+            "is_bolt":is_bolt,
+            "menu":menu_items
+        }
+
 class Locations(models.Model):
     code = models.CharField(max_length=3, unique=True)
     descr = models.TextField()
@@ -422,6 +441,7 @@ class Locations(models.Model):
     db = models.TextField(null=True)
     db_user = models.TextField(null=True)
     db_password = models.TextField(null=True)
+    entity = models.ForeignKey('BusinessEntityTypes', on_delete=models.SET_NULL,null=True,blank=True)
 
     created_by = models.IntegerField(default=0)
     created_on = models.DateTimeField(auto_now_add=True)
@@ -464,6 +484,8 @@ class Locations(models.Model):
         else:
             return "NOT SET"
 
+    def ent(self):
+        return self.entity.entity_type_name if self.entity else "NOT SET"
 
 class TransferHD(models.Model):
     entry_no = models.CharField(max_length=10, unique=True,null=False)
