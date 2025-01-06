@@ -254,7 +254,7 @@ def edit_article(request, uni):
     context = {
         'page_title': 'Ocean | Article | Edit',
         'search_form': search_form, 'form': form,
-        'article': this_article, 'meta_dat': articles.meta,
+        'article': this_article, 'meta_dat': this_article.meta,
         'nav':True,
 
     }
@@ -264,7 +264,7 @@ def edit_article(request, uni):
 def edit_save(request):
     # validate for
     if request.method == 'POST':
-        form = EdArticle(request.POST, request.FILES)
+        form = EdArticle(request.POST)
         if form.is_valid():
             # get form details
             page_title = form.cleaned_data['page_title']
@@ -284,7 +284,8 @@ def edit_save(request):
 
 
         else:
-            return HttpResponse('Form Not Valid')
+            errors = form.errors.as_json()
+            return HttpResponse(f"Form is not valid: {errors}", content_type="application/json")
             # throw error
     else:
         return HttpResponse("Not Posted Form")
