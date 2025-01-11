@@ -53,7 +53,7 @@
             <tbody>
                 {% for item in items %}
                     <tr id="row_{{ item.product.barcode }}" class="{% if item.is_sync == False %}text-warning{% endif %}">
-                        <td><img onclick="windowPopUp(`{{ item.image.url }}`,'',600,600)" src="{{ item.image.url }}" alt="" style="width: 50px" class="img-fluid"></td>
+                        <td><img onclick="windowPopUp(`{{ item.image.img_url }}`,'',600,600)" src="{{ item.image.img_url }}" alt="" style="width: 50px" class="img-fluid"></td>
                         <td>{{ item.group.name }} </td>
                     <td>{{ item.subgroup.name }}</td>
                         <td>{{ item.product.barcode }}</td>
@@ -124,16 +124,19 @@
                         }
                     }
 
+
                     await api.v2('VIEW', payload, '/retail/api/').then(response => {
                         if(anton.IsRequest(response)){
                             let tr = ""
                             let items = response.message;
                             for(let t = 0; t < items.length; t++){
                                 const item = items[t];
+                                let line = t + 1;
+
                                 tr += `
                                     <tr>
-                                        <td><input type="checkbox" class="check_item_for_bolt_select"></td>
-                                        <td>${item.barcode}</td>
+                                        <td><input id="check_${line}" type="checkbox" class="check_item_for_bolt_select"></td>
+                                        <td id="barcode_${line}">${item.barcode}</td>
                                         <td>${item.name}</td>
                                         <td>${item.price}</td>
 
@@ -150,20 +153,104 @@
                             let card = `
 
                                 <div style="height: 75vh !important; overflow: auto" class="card">
-                                    <div class='card-header'>
 
-                                    </div>
                                     <div class="card-body overflow-auto">${table}</div>
+
                                 </div>
                                 `
+
                             amodal.setBodyHtml(card)
                             amodal.setTitleHtml(`
                                 Select Items
                             `)
                             amodal.setSize('XL')
-                            amodal.show()
-                            console.table(items)
-                            loader.hide()
+
+                            // get categories
+                            let categories = retail.boltCategories(`{{entity.pk}}`);
+                            if(anton.IsRequest(categories)){
+                                let options = '';
+                                for(let t = 0; t < categories.message.length; t++){
+                                    const category = categories.message[t];
+                                    options += `<option value="${category.pk}">${category.name}</option>`
+                                }
+
+
+
+                                amodal.setFooterHtml(`
+                                    <select name="" id="group" class="form-control w-25 rounded-0 form-control-sm">
+                                       <option seleted disabled>Group</option>
+                                       ${options}
+                                    </select>
+                                    <select name="" disabled id="sub_group" class="form-control w-25 rounded-0 form-control-sm">
+                                       <option value="">Sub Group</option>
+                                    </select>
+                                    <button disabled class="btn btn-primary rounded-0" id="add_items_to_menu">ADD</button>
+                                `)
+                                amodal.show()
+                                {#console.table(items)#}
+                                loader.hide()
+
+                                $('#group').change(function(){
+                                    let group = $(this).val();
+                                    $('#sub_group').prop('disabled', false)
+
+                                    let subs = retail.getBoltSubGroups(group,`{{ entity.pk }}`);
+                                    console.table(subs)
+                                    if(anton.IsRequest(subs)){
+                                        let sbs = subs.message;
+                                        let subop = ``;
+                                        for(let t = 0; t < sbs.length; t++){
+                                            const sub = sbs[t];
+                                            subop += `<option value="${sub.pk}">${sub.name}</option>`
+                                        }
+                                        if(sbs.length > 0){
+                                            $('#add_items_to_menu').prop('disabled', false)
+                                        }
+                                        $('#sub_group').html(subop)
+
+                                        // add to button
+
+                                        $('#add_items_to_menu').click(function () {
+                                            let sub = $('#sub_group').val();
+                                            let items = []
+                                            $('.check_item_for_bolt_select:checked').each(function () {
+                                                // get this is
+                                                let id = $(this).attr('id');
+                                                let line = id.split('_')[1];
+                                                let barcode = $('#barcode_' + line).text();
+                                                let add_load = {
+                                                    module: 'bolt_item',
+                                                    data: {
+                                                        item_code: barcode,
+                                                        group: group,
+                                                        sub_group: sub,
+                                                        entity: `{{ entity.pk }}`
+                                                    }
+                                                }
+
+                                                let resp  = api.call('PUT', add_load, '/retail/api/')
+                                                console.table(resp)
+
+                                            })
+
+
+                                            amodal.hide()
+                                            loader.hide()
+                                        })
+
+                                    } else {
+                                        kasa.response(subs)
+                                    }
+
+                                })
+
+                            } else {
+                                kasa.response(categories)
+                                loader.hide()
+                                new Error('Categories Not Found')
+                            }
+
+
                         } else {
                             loader.hide()
                             kasa.response(response)

@@ -60,10 +60,12 @@ def interface(request):
                 group_pk = data.get('group')
                 subgroup_pk = data.get('sub_group')
                 image = data.get('image')
+                entity_id = data.get('entity')
+                entity = BusinessEntityTypes.objects.get(id = entity_id)
                 #print(item_code)
-                if Products.objects.filter(barcode=item_code).count() == 0:
+                if Products.objects.filter(barcode=item_code,entity=entity).count() == 0:
                     item_code = f"0{item_code}"
-                pd = Products.objects.get(barcode=item_code)
+                pd = Products.objects.get(barcode=item_code,entity=entity)
                 price = pd.price
                 item_code = pd.code
 
@@ -79,18 +81,18 @@ def interface(request):
                 # if BoltGroups.objects.filter(name=group_name).count() == 0:
                 #     BoltGroups.objects.create(name=group_name)
 
-                group = BoltGroups.objects.get(pk=group_pk)
+                group = BoltGroups.objects.get(pk=group_pk,entity=entity)
 
                 # if BoltSubGroups.objects.filter(name=sub_group_name).count() == 0:
                 #     BoltSubGroups.objects.create(name=sub_group_name,group=group)
 
-                subgroup = BoltSubGroups.objects.get(pk=subgroup_pk)
+                subgroup = BoltSubGroups.objects.get(pk=subgroup_pk,entity=entity)
 
 
 
 
-                if BoltItems.objects.filter(product=pd).count() == 0:
-                    BoltItems(product=pd,price=price,stock_nia=nia_stock,stock_spintex=spintex_stock,stock_osu=osu_stock,group=group,subgroup=subgroup,image=image).save()
+                if BoltItems.objects.filter(product=pd,menu=entity).count() == 0:
+                    BoltItems(product=pd,price=price,stock_nia=nia_stock,stock_spintex=spintex_stock,stock_osu=osu_stock,group=group,subgroup=subgroup,image=image,menu=entity).save()
                     success_response['message'] = "Product Added"
                 else:
                     raise Exception(f"Product Exist with barcode {pd.barcode}")
@@ -293,19 +295,21 @@ def interface(request):
 
             elif module == 'bolt_group':  # add bolt group
                 name = data.get('name')
+                entity = data.get('entity')
+                ent = BusinessEntityTypes.objects.get(entity_type_name=entity)
                 subs = data.get('subs')
                 print(subs)
                 try:
-                    if BoltGroups.objects.filter(name=name).count() == 0:
-                        BoltGroups(name=name).save()
+                    if BoltGroups.objects.filter(name=name,entity=ent).count() == 0:
+                        BoltGroups(name=name,entity=ent).save()
 
-                    group = BoltGroups.objects.get(name=name)
+                    group = BoltGroups.objects.get(name=name,entity=ent)
                     for sub in subs:
                         print(sub)
-                        if BoltSubGroups.objects.filter(name=sub,group=group).count() == 0:
-                            BoltSubGroups.objects.create(group=group, name=sub)
+                        if BoltSubGroups.objects.filter(name=sub,group=group,entity=ent).count() == 0:
+                            BoltSubGroups.objects.create(group=group, name=sub,entity=ent)
 
-                    success_response['message'] = BoltGroups.objects.get(name=name).pk
+                    success_response['message'] = BoltGroups.objects.get(name=name,entity=ent).pk
 
                 except Exception as e:
                     success_response['status_code'] = 500
@@ -1186,11 +1190,14 @@ def interface(request):
 
             elif module == 'bolt_group':
                 pk = data.get('key') or '*'
+                entity = BusinessEntityTypes.objects.get(pk=data.get('entity'))
                 grps = []
                 if pk == '*':
                     groups = BoltGroups.objects.all().order_by('name')
                 else:
                     groups = BoltGroups.objects.filter(pk=pk).order_by('name')
+
+                groups = groups.filter(entity=entity)
 
                 for group in groups:
                     grps.append({
@@ -1202,11 +1209,13 @@ def interface(request):
 
             elif module == 'bolt_sub_group':
                 pk = data.get('key') or '*'
+                entity_pk = data.get('entity')
+                entity = BusinessEntityTypes.objects.get(pk=entity_pk)
                 grps = []
                 if pk == '*':
-                    groups = BoltSubGroups.objects.all().order_by('name')
+                    groups = BoltSubGroups.objects.filter(entity=entity).order_by('name')
                 else:
-                    groups = BoltSubGroups.objects.filter(group_id=pk).order_by('name')
+                    groups = BoltSubGroups.objects.filter(group_id=pk,entity=entity).order_by('name')
 
                 for group in groups:
                     grps.append({

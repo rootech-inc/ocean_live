@@ -1391,6 +1391,23 @@ class Retail {
         let form = "";
         form += fom.text('name','',true)
 
+        let entites = api.call('VIEW',{
+            module:'entity_type',data:{}
+        },'/adapi/')
+
+        console.table(entites)
+
+        let arr = [];
+        for(let e = 0; e < entites.message.length; e++){
+            let ent = entites.message[e];
+            arr.push({
+                val:ent['pk'],
+                desc:ent['name']
+            })
+        }
+
+        form += fom.selectv2('entity',arr,'',true)
+
         amodal.setBodyHtml(form)
         amodal.setTitleText('NEW BOLT GROUP')
         amodal.setFooterHtml(`<button onclick="retail.saveBoltCategory()" class="btn btn-success w-100">SAVE</button>`)
@@ -1398,7 +1415,7 @@ class Retail {
     }
 
     saveBoltCategory() {
-        let ids = ['mypk','name']
+        let ids = ['mypk','name','entity']
         if(anton.validateInputs(ids)){
             let payload = {
                 module:'bolt_group',
@@ -1433,7 +1450,7 @@ class Retail {
 
     }
 
-    getBoltGroups(pk='*'){
+    getBoltGroups(pk='*',entity='*'){
         let payload = {
             module:'bolt_group',
             data:{
@@ -1444,13 +1461,15 @@ class Retail {
         return api.call('VIEW', payload, '/retail/api/')
     }
 
-    getBoltSubGroups(pk){
+    getBoltSubGroups(pk,entity='*'){
         let payload = {
                 module:'bolt_sub_group',
                 data:{
-                    key:pk
+                    key:pk,
+                    entity:entity
                 }
-            }
+        }
+        console.table(payload)
 
         return api.call('VIEW', payload, '/retail/api/')
     }
@@ -2109,6 +2128,23 @@ class Retail {
             // do nothing
         }
     }
+
+    getGroups(menu) {
+        return api.call('VIEW',{module:'entity_groups',data:{menu:menu}},'/retail/api/')
+    }
+
+    boltCategories(menu) {
+        let payload = {
+            module:'bolt_group',
+            data:{
+                entity:menu
+            }
+        }
+
+        return api.call('VIEW',payload,'/retail/api/')
+    }
+
+
 }
 
 const retail = new Retail();

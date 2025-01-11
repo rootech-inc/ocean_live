@@ -5,10 +5,10 @@ from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from sympy import Product
 
-from admin_panel.models import Locations, SmsApi, Sms
+from admin_panel.models import Locations, SmsApi, Sms, BusinessEntityTypes
 from cmms.extra import db
 from retail.forms import NewClerk
-from retail.models import Clerk, BoltItems, BoltGroups, Products, RecipeProduct
+from retail.models import Clerk, BoltItems, BoltGroups, Products, RecipeProduct, BoltSubGroups
 
 
 @login_required()
@@ -394,11 +394,13 @@ def bolt_landing(request):
 
 @login_required()
 def bolt_menu(request,entity):
+    # BoltSubGroups.objects.all().update(entity=BusinessEntityTypes.objects.get(entity_type_name='Retail'))
     context = {
         'nav': True,
         'page': {
             'title': f"{entity} Bolt Menu"
         },
-        'items': BoltItems.objects.filter(menu__entity_type_name=entity).order_by('product__name')[:2]
+        'items': BoltItems.objects.filter(menu__entity_type_name=entity).order_by('product__name'),
+        'entity':BusinessEntityTypes.objects.get(entity_type_name=entity)
     }
     return render(request, 'retail/bolt-products.html', context=context)

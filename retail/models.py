@@ -41,6 +41,9 @@ class BoltGroups(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     edited_on = models.DateTimeField(auto_now=True)
 
+    entity = models.ForeignKey(admin_panel.models.BusinessEntityTypes, on_delete=models.CASCADE, null=False, blank=False,related_name='bolt_groups')
+
+
     def items(self):
         return BoltItems.objects.filter(group=self)
 
@@ -50,8 +53,10 @@ class BoltSubGroups(models.Model):
     name = models.CharField(unique=False, max_length=266)
     group = models.ForeignKey(BoltGroups, on_delete=models.CASCADE)
 
+    entity = models.ForeignKey(admin_panel.models.BusinessEntityTypes, on_delete=models.CASCADE, null=False, blank=False)
+
     class Meta:
-        unique_together = ('group', 'name')
+        unique_together = ('group', 'name','entity')
 
 
 class BoltItems(models.Model):
@@ -81,6 +86,13 @@ class BoltItems(models.Model):
             'group':self.group.name,
             'subgroup':self.subgroup.name,
         }
+
+    def img_url(self):
+        if self.image and hasattr(self.image, 'url'):
+            evidence_url = self.image.url
+        else:
+            evidence_url = '/static/uploads/dolphine/bolt/default.png'
+
 
     def stock(self):
         obj = {}
@@ -117,7 +129,7 @@ class ProductSupplier(models.Model):
 
 class ProductGroup(models.Model):
     code = models.CharField(unique=False, max_length=10, null=False, blank=False)
-    name = models.CharField(unique=True, max_length=60)
+    name = models.CharField(unique=False, max_length=60)
     created_on = models.DateTimeField(auto_now_add=True)
     edited_on = models.DateTimeField(auto_now=True)
 

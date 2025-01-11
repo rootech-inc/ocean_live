@@ -81,7 +81,8 @@ def index(request):
                     sub_group_query = f"SELECT group_code,(select group_des from group_mast where group_code = sub_group.group_code) as 'group', sub_group,sub_group_des from sub_group"
                     products_query = "SELECT item_code, barcode, item_des, (SELECT group_des FROM group_mast WHERE group_mast.group_code = prod_mast.group_code) AS 'group', (SELECT sub_group_des FROM sub_group WHERE sub_group.group_code = prod_mast.group_code AND sub_group.sub_group = prod_mast.sub_group) AS 'sub_group', (SELECT supp_name FROM supplier WHERE supplier.supp_code = prod_mast.supp_code) AS 'supplier', retail1 FROM prod_mast WHERE item_type != 0"
 
-                elif e_type == 'restautant':
+
+                elif e_type == 'restaurant':
                     db_config['host'] = RET_DB_HOST
                     db_config['user'] = RET_DB_USER
                     db_config['password'] = RET_DB_PASS
@@ -90,7 +91,9 @@ def index(request):
                     supplier_query = "select supp_code as 'code',supp_name as 'name',contact as 'person',phone1 as 'phone',address1 as 'email',address2 as 'city',country_id as 'country' from supplier"
                     group_query = f"select group_code,group_des from group_mast"
                     sub_group_query = f"SELECT group_code,(select group_des from group_mast where group_code = sub_group.group_code) as 'group', sub_group,sub_group_des from sub_group"
-                    products_query = "SELECT item_code, barcode, item_des, (SELECT group_des FROM group_mast WHERE group_mast.group_code = prod_mast.group_code) AS 'group', (SELECT sub_group_des FROM sub_group WHERE sub_group.group_code = prod_mast.group_code AND sub_group.sub_group = prod_mast.sub_group) AS 'sub_group', (SELECT supp_name FROM supplier WHERE supplier.supp_code = prod_mast.supp_code) AS 'supplier', retail1 FROM prod_mast WHERE item_type != 0"
+                    products_query = "SELECT item_code, barcode, item_des, (SELECT group_des FROM group_mast WHERE group_mast.group_code = prod_mast.group_code) AS 'group', (SELECT sub_group_des FROM sub_group WHERE sub_group.group_code = prod_mast.group_code AND sub_group.sub_group = prod_mast.sub_group) AS 'sub_group', (SELECT supp_name FROM supplier WHERE supplier.supp_code = prod_mast.supp_code) AS 'supplier', (select top 1 retail from price_lev where price_group = '201' and item_code = prod_mast.item_code) as 'retail' FROM prod_mast WHERE item_type = 5"
+                    print(products_query)
+
 
                 else:
                     raise Exception("Invalid Entity Type")
@@ -175,6 +178,8 @@ def index(request):
                         mk += 1
                         group_code, group_des, sub_group_code, sub_group_des = sub_group[0], sub_group[1].strip(), \
                             sub_group[2].strip(), sub_group[3].strip()
+
+                        print(sub_group)
                         group, add = ProductGroup.objects.get_or_create(code=group_code, name=group_des,entity=entity)
 
                         if add:
@@ -196,6 +201,7 @@ def index(request):
 
 
                 # products
+                print(products_query)
                 cursor.execute(products_query)
                 saved = 0
                 not_synced = 0
@@ -203,6 +209,7 @@ def index(request):
                 mk = 1
                 fetch = cursor.fetchall()
                 mklen = len(fetch)
+                print(mklen)
                 for product in fetch:
                         print(f"Product {mk} / {mklen}")
                         mk += 1
@@ -217,7 +224,8 @@ def index(request):
                             sub_group = product[4]
 
                         supplier = product[5]
-                        retail1 = product[6]
+                        retail1 = product[6] if product[6] is not None else 0
+                        print(retail1)
 
                         # add to products
                         subgroup = ProductSubGroup.objects.get(code='999')

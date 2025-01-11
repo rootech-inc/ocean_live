@@ -13,7 +13,7 @@ class Blog {
             let response = api.call('PUT',payload,'/blog/api/')
             if(anton.IsRequest(response)){
                 // redirect to view
-                window.location.href = '/blog/view/'+response.message
+                window.location.href = '/blog/view/'+response.message+'/'
             } else {
                 kasa.response(response)
             }
