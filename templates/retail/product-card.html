@@ -15,6 +15,7 @@
                     </button>
                 </div>
                 <div class="w-50 d-flex flex-wrap justify-content-end align-content-center">
+                    <select name="" id="entity" class="form-control form-control-sm rounded-0 w-50" style="margin-right: .2em"></select>
                     <div class="dropdown dropleft">
                     <button class="btn btn-secondary" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="bx bx-arrow-to-left"></i><i class="bx bx-menu"></i>
@@ -118,7 +119,7 @@
                         <div class="card">
                             <div class="card-header">
                                 <strong class="card-title">Image</strong>
-                                <button onclick="retail.changeBoltImage(`${$('#barcode').val()}`);retail.loadCard(`${$('#barcode').val()}`,'barcode')" class="btn btn-sm btn-info">CHANGE</button>
+                                <button onclick="retail.changeBoltImage(`${$('#barcode').val()}`);retail.loadCard(`${$('#barcode').val()}`,'barcode',`${$('#entity').val()}`)" class="btn btn-sm btn-info">CHANGE</button>
                             </div>
                             <div class="card-body text-center p-2">
                                 <img src="" style="width: 200px" id="image" alt="" class="img-fluid img-thumbnail">
@@ -177,14 +178,18 @@
 
             next = 0;
             previous = 0;
-            retail.loadCard(`{{ pk }}`)
+            {#retail.loadCard(`{{ pk }}`)#}
 
             $('#previous').click(function(){
-                retail.loadCard($(this).val())
+                let entity = $('#entity').val();
+                let val = $(this).val();
+                console.log(val)
+                retail.loadCard($(this).val(),'pk',entity)
             })
 
             $('#next').click(function(){
-                retail.loadCard($(this).val())
+                let entity = $('#entity').val();
+                retail.loadCard($(this).val(),'pk',entity)
             })
 
             // barcode search
@@ -194,14 +199,48 @@
                 $('#searchQuery').val('')
             });
 
+            async function loadEnties() {
+                let payload = {
+                    module: 'entity_type',
+                    data: {}
+                };
+
+                await api.v2('VIEW', payload, '/adapi/').then(response => {
+                    if(anton.IsRequest(response)){
+                        $('#entity').prop('disabled',false);
+                        let message = response.message;
+                        let options = `<option selected disabled>Select Entity</option>`;
+                        for (let i = 0; i < message.length; i++) {
+                            let entity = message[i];
+                            options += `<option value="${entity['pk']}">${entity['name']}</option>`
+                        }
+
+                        $('#entity').html(options)
+                    } else {
+                        $('#entity').prop('disabled',true)
+                    }
+                })
+            }
+
             $(document).ready(function() {
+
                 $(document).on('keypress', '#searchQuery', function(event) {
                     if (event.which === 13) {
                         let string = $('#searchQuery').val();
-                        retail.loadCard(string,'barcode')
+                        retail.loadCard(string,'barcode',$('#entity').val())
                         $('#searchQuery').val('')
                     }
                 });
+
+                loadEnties();
+
+                $('#entity').change(function(){
+                    let entity = $(this).val();
+                    retail.loadCard('*','pk',entity)
+                })
+
+
+
             });
 
 

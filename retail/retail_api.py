@@ -2599,10 +2599,18 @@ ORDER BY
             elif module == 'prod':
                 pk = data.get('pk','*')
                 filter = data.get('filter','pk')
+                entity_pk = data.get('entity')
+                ini = data.get('ini','ini')
+
+                print(data)
+                entity = BusinessEntityTypes.objects.get(pk=entity_pk)
+                # if ini == 'ini':
+                #     pk = Products.objects.filter(entity=entity).last().pk
+
                 if pk == '*':
-                    prods = Products.objects.all()
+                    prods = Products.objects.filter(entity=entity).order_by('-pk')[:1]
                 else:
-                    prods = Products.objects.filter(pk=pk) if filter == 'pk' else Products.objects.filter(barcode=pk)
+                    prods = Products.objects.filter(pk=pk,entity=entity) if filter == 'pk' else Products.objects.filter(barcode=pk,entity=entity)
 
                 for prod in prods:
                     print(prod.obj())
@@ -3085,6 +3093,8 @@ ORDER BY
                 sub_category = data.get('sub_category')
                 barcode = data.get('barcode')
                 description = data.get('description')
+                menu_pk = data.get('menu')
+                menu = BusinessEntityTypes.objects.get(pk=menu_pk)
 
                 group = BoltGroups.objects.get(pk=category)
                 sub = BoltSubGroups.objects.get(pk=sub_category)
@@ -3100,7 +3110,7 @@ ORDER BY
                     product = product,
                     group = group,
                     subgroup = sub,stock_nia = stock_nia,stock_spintex = stock_spintex,stock_osu = stock_osu,
-                    description = description
+                    description = description,menu=menu
                 )
 
                 success_response['message'] = "Product Marked"

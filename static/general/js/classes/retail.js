@@ -1478,7 +1478,8 @@ class Retail {
         let payload = {
             module:'bolt_group',
             data:{
-                pk:"*"
+                pk:"*",
+                entity:$('#entity').val(),
             }
         }
 
@@ -1528,7 +1529,8 @@ class Retail {
             let payload = {
                 module:'bolt_sub_group',
                 data:{
-                    key:$('#category').val()
+                    key:$('#category').val(),
+                    entity:$('#entity').val()
                 }
             }
 
@@ -1555,6 +1557,8 @@ class Retail {
                 module:'mark2bolt',
                 data:anton.Inputs(ids)
             }
+
+            payload['data']['menu'] = $('#entity').val();
 
             payload.data['description'] = $('#description').val();
 
@@ -1742,15 +1746,27 @@ class Retail {
         }
     }
 
-    loadCard(s,filter='pk') {
+    loadCard(s = '*',filter='pk',entity='*') {
         console.log(s)
-        let product = this.getCardProduct(s,filter);
+        let product = this.getCardProduct(s,filter,entity);
         if(anton.IsRequest(product)){
             let message = product['message'][0];
-
+            console.table(product)
             $('#previous').val(message['previous'])
             $('#next').val(message['next'])
             $('#image').attr('src',`${message['image']}`)
+
+            if(message['previous'] === 0){
+                $('#previous').attr('disabled',true)
+            } else {
+                $('#previous').attr('disabled',false)
+            }
+
+            if(message['next'] === 0){
+                $('#next').attr('disabled',true)
+            } else {
+                $('#next').attr('disabled',false)
+            }
 
             let stock = message['stock'];
 
@@ -1774,12 +1790,13 @@ class Retail {
         }
     }
 
-    getCardProduct(pk='*',filter='pk') {
+    getCardProduct(pk='*',filter='pk',entity='*') {
         return api.call("VIEW",{
             module:'prod',
             data:{
                 pk:pk,
-                filter:filter
+                filter:filter,
+                entity:entity
             },
 
         },'/retail/api/');

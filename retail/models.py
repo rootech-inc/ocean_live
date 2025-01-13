@@ -175,7 +175,7 @@ class Products(models.Model):
     def obj(self):
         image_url = ""
         if BoltItems.objects.filter(product=self).exists():
-            image_url = BoltItems.objects.filter(product=self).first().image.url
+            image_url = BoltItems.objects.filter(product=self).first().image.url if BoltItems.objects.filter(product=self).first().image else 'static/uploads/dolphine/bolt/default.png'
         else:
             image_url = self.image.url if self.image else 'static/uploads/dolphine/bolt/default.png'
         return {
@@ -185,8 +185,8 @@ class Products(models.Model):
             'price':self.price,
             'stock_monitor':self.stock_monitor,
             'image':image_url,
-            'next':Products.objects.filter(pk__gt=self.pk).first().pk if Products.objects.filter(pk__gt=self.pk).exists() else 0,
-            'previous': Products.objects.filter(pk__lt=self.pk).last().pk if Products.objects.filter(pk__lt=self.pk).exists() else 0,
+            'next':Products.objects.filter(pk__gt=self.pk,entity=self.entity).first().pk if Products.objects.filter(pk__gt=self.pk,entity=self.entity).exists() else 0,
+            'previous': Products.objects.filter(pk__lt=self.pk,entity=self.entity).last().pk if Products.objects.filter(pk__lt=self.pk,entity=self.entity).exists() else 0,
             'stock':self.live_stock(),
             'shelf':self.shelf,
         }
