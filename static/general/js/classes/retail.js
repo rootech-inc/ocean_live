@@ -2162,6 +2162,67 @@ class Retail {
     }
 
 
+    async boltPriceChange(entity_id) {
+        let rate_at = prompt("Margin Increment?")
+        loader.show()
+        let payload = {
+            module: 'bolt_price_change',
+            data: {
+                rate_at: parseInt(rate_at),
+                entity_id:entity_id
+            }
+        }
+
+        await api.v2('VIEW', payload, '/retail/api/').then(response => {
+            if(anton.IsRequest(response)) {
+                console.log(response)
+                anton.viewFile(`/${response.message['price_change']}`)
+            } else {
+                kasa.error(response)
+            }
+            loader.hide()
+        }).catch(err => {
+            kasa.error(err)
+            loader.hide()
+        })
+    }
+
+    async bolt_stock_update(entity_pk) {
+        let payload = {
+            module: 'bolt_stock_update',
+            data: {
+                entity_pk: entity_pk
+            }
+        }
+
+        loader.show()
+
+        await api.v2('VIEW', payload, '/retail/api/').then(response => {
+            if (anton.IsRequest(response)) {
+                let xx = response.message;
+                let spintex = `<a href="/${xx['spintex']}"><i class="fa fa-download"></i> Spintex</a>`
+                let nia = `<a href="/${xx['nia']}"><i class="fa fa-download"></i> NIA</a>`
+                let osu = `<a href="/${xx['osu']}"><i class="fa fa-download"></i> OSU</a>`
+
+                let ht = `
+                    <table class="table table-bordered"><thead><tr><th>LOC</th><th>FILE</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>SPINTEX</strong></td><td>${spintex}</td></tr>
+                        <tr><td><strong>NIA</strong></td><td>${nia}</td></tr>
+                        <tr><td><strong>OSU</strong></td><td>${osu}</td></tr>
+                    </tbody></table>
+                `
+
+                amodal.setBodyHtml(ht)
+                amodal.show()
+                amodal.setTitleText('Stock Update')
+                loader.hide()
+            }
+        }).catch(err => {
+            kasa.error(err)
+            loader.hide()
+        })
+    }
 }
 
 const retail = new Retail();
