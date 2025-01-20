@@ -62,7 +62,7 @@
                                     <tr>
                                         <th>MENU</th>
                                         <th>Products</th>
-                                        <th>Sales</th>
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="menu_body">
@@ -193,7 +193,20 @@
                     for(let m = 0; m < entities.length; m++){
                         const ent = entities[m]
                         tr += `
-                            <tr><td><a href="/retail/bolt/menu/${ent['name']}/">${ent['name']}</a></td><td>${ent['bolt_menu']['menu'].length}</td><td></td></tr>
+                            <tr><td><a href="/retail/bolt/menu/${ent['name']}/">${ent['name']}</a></td><td>${ent['bolt_menu']['menu'].length}</td><td>
+
+                                    <div class="dropdown">
+                                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            --
+                                        </button>
+                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                            <a class="dropdown-item" onclick="retail.boltPriceChange('${ent.pk}')" href="javascript:void(0)">Export Price Change</a>
+                                            <a class="dropdown-item" href="javascript:void(0)" onclick="retail.bolt_stock_update('${ent.pk}')">Export Stock Level</a>
+                                            <a class="dropdown-item" href="#">Something else here</a>
+                                        </div>
+                                    </div>
+
+                                    </td></tr>
                         `
                     }
 

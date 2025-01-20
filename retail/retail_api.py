@@ -1228,6 +1228,7 @@ def interface(request):
             elif module == 'bolt_price_change':
                 send = data.get('send_mail') or 'no'
                 rate_inc = data.get('rate_at', 20)
+                entity_id = data.get('entity_id',1)
                 conn = ret_cursor()
                 cursor = conn.cursor()
                 import openpyxl
@@ -1260,7 +1261,7 @@ def interface(request):
                     writer.writerow(["SKU","Selling price","Provier IDs"])
                     all = BoltItems.objects.all().count()
                     x = 1
-                    for item in BoltItems.objects.all():
+                    for item in BoltItems.objects.filter(menu_id=entity_id):
                         print(f"{x} / {all}")
                         x += 1
                         barcode = item.product.barcode.replace('.0', '')
@@ -2956,6 +2957,7 @@ ORDER BY
                 import zipfile
                 import shutil
                 import csv
+
                 items = BoltItems.objects.all().order_by('product__name')
                 time_ext = str(timezone.now()).replace(':', '_').replace(' ', '_')
                 folder = f"static/general/tmp/{time_ext}"
@@ -2997,12 +2999,12 @@ ORDER BY
                         stock = get_stock(item.product.code)
                         sp_stk = [
                             item.product.barcode,
-                            stock.get('spintex', 5) if stock.get('spintex') > 0 else 5,
+                            stock.get('spintex', 0) if stock.get('spintex') > 0 else 0,
                             BOLT_PROVIDER_ID.get('001')['address']
                         ]
                         ni_stk = [
                             item.product.barcode,
-                            stock.get('nia', 5) if stock.get('nia') > 0 else 5,
+                            stock.get('nia', 0) if stock.get('nia') > 0 else 0,
                             BOLT_PROVIDER_ID.get('202')['address']
                         ]
                         os_stk = [

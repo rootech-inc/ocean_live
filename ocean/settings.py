@@ -98,7 +98,7 @@ DATABASE_ENGINE = os.environ.get('DB_ENGINE', 'django.db.backends.mysql')
 DATABASE_NAME = os.environ.get('DB_NAME', 'ocean')
 DATABASE_USER = os.environ.get('DB_USER', 'root')
 DATABASE_PASSWORD = os.environ.get('DB_PASSWORD', 'Sunderland@411')
-DATABASE_HOST = os.environ.get('DB_HOST', '127.0.0.1')
+DATABASE_HOST = os.environ.get('DB_HOST', '192.168.2.60')
 DATABASE_PORT = os.environ.get('DB_PORT', '3306')
 BOLT_MARGIN = os.environ.get('BOLT_MARGIN',25)
 
@@ -230,15 +230,17 @@ OLD_DB_NAME = 'PROC_CMMS_V1'
 # DB_PORT = '1433'
 # DB_NAME = 'PROC_CMMS_V1'
 
-RET_DB_HOST = '192.168.1.2'
-RET_DB_HOST = '127.0.0.1'
+RET_DB_HOST = '192.168.2.4'
 RET_DB_NAME = 'SMSEXPV17'
 RET_DB_USER = 'sa'
 RET_DB_PASS = 'sa@123456'
 RET_DB_PORT = '1433'
 
-
+REST_DB_HOST = '192.168.2.4'
 REST_DB_NAME = 'SMSEXP_REST_2022'
+REST_DB_USER = 'sa'
+REST_DB_PASS = 'sa@123456'
+REST_DB_PORT = '1433'
 
 
 # approvers email
