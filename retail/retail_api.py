@@ -23,7 +23,8 @@ from ocean.settings import RET_DB_HOST, RET_DB_USER, RET_DB_PASS, RET_DB_NAME, B
 from retail.db import ret_cursor, get_stock, updateStock, percentage_difference
 from retail.models import BoltItems, BoltGroups, ProductSupplier, ProductGroup, ProductSubGroup, Products, Stock, \
     RecipeGroup, RecipeProduct, Recipe, StockHd, StockMonitor, RawStock, ButcheryLiveTransactions, ButchSales, \
-    StockToSend, TranHd, TranTr, RetailSales, SampleHd, SampleTran, BoltSubGroups, BillHeader, BillTrans
+    StockToSend, TranHd, TranTr, RetailSales, SampleHd, SampleTran, BoltSubGroups, BillHeader, BillTrans, StockFreezeHd, \
+    StockFreezeTrans, StockFreezeCount
 from retail.prodMast import ProdMaster
 from retail.retail_tools import create_recipe_card
 
@@ -314,6 +315,56 @@ def interface(request):
                 except Exception as e:
                     success_response['status_code'] = 500
                     success_response['message'] = str(e)
+
+
+            elif module == 'stock_freeze':
+                entry_no = data.get('entry')
+
+                conn = ret_cursor()
+                cursor = conn.cursor()
+                cursor.execute(f"select loc_id,ref_no,ld_date,remarks from stock_keep_hd where ref_no = '{entry_no}'")
+                hd = cursor.fetchone()
+
+                if hd is None:
+                    raise Exception(f'No Record Found for {entry_no}')
+                else:
+                    StockFreezeHd.objects.filter(entry_no=entry_no).delete()
+                    print(hd)
+                    loc_id,ref_no,entry_date,remarks = hd
+                    location = Locations.objects.get(code=loc_id)
+                    StockFreezeHd.objects.create(
+                        loc=location,
+                        entry_no=entry_no,
+                        remarks=remarks,
+                        frozen_date=entry_date
+                    )
+
+                    inhd = StockFreezeHd.objects.get(entry_no=entry_no)
+
+                    # get transactions
+                    cursor.execute(f"select RTRIM(tr.barcode) as 'barcode',qty_avail,tr.avg_cost,pm.retail1,RTRIM(pm.item_des) as 'name' from stock_keep_tran tr join prod_mast pm on pm.item_code = tr.item_code where ref_no = '{entry_no}'")
+
+                    rows = cursor.fetchall()
+                    ct = 1
+                    rl = len(rows)
+                    for row in rows:
+                        print(ct,"/",rl)
+                        ct += 1
+                        barcode,quantity,cost,retail,name = row
+                        # print(barcode,quantity,cost,retail,name)
+                        StockFreezeTrans.objects.create(
+                            ref = inhd,
+                            barcode = barcode,
+                            name=name,
+                            qty=quantity,
+                            retail=retail,
+                            cost=cost,
+                        )
+
+
+                    conn.close()
+                    success_response['message'] = f"Stock Freeze Retrieved"
+                    response = success_response
 
 
 
@@ -632,6 +683,19 @@ def interface(request):
                 locations = Locations.objects.all()
                 for location in locations:
                     arr.append(location.obj())
+
+                success_response['message'] = arr
+                response = success_response
+
+            elif module == 'stock_freeze_hd':
+                entry_no = data.get('entry_no','*')
+                if entry_no == '*':
+                    hd = StockFreezeHd.objects.all()
+                else:
+                    hd = StockFreezeHd.objects.get(ref_no=entry_no)
+
+                for row in hd:
+                    arr.append(row.obj())
 
                 success_response['message'] = arr
                 response = success_response
@@ -3050,6 +3114,15 @@ ORDER BY
 
                 success_response['message'] = file_name
 
+            elif module == 'stock_count':
+                ref = data.get('ref')
+                hd = StockFreezeHd.objects.get(entry_no=ref)
+                counts = StockFreezeCount.objects.filter(ref=hd)
+                for ct in counts:
+                    arr.append(ct.obj())
+
+                success_response['message'] = arr
+                response = success_response
 
             else:
                 raise Exception("No View Module")

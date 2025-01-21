@@ -597,3 +597,47 @@ class BillTrans(models.Model):
     def transactions(self):
         pass
 
+
+class StockFreezeHd(models.Model):
+    loc = models.ForeignKey(Locations,on_delete=models.CASCADE)
+    entry_no = models.CharField(max_length=20,unique=True,null=False,blank=False)
+    remarks = models.TextField()
+    frozen_date = models.DateTimeField()
+
+    def obj(self):
+        return {
+            'pk':self.pk,
+            'entry_no':self.entry_no,
+            'remarks':self.remarks,
+            'frozen_date':self.frozen_date,
+            'loc':self.loc.descr,
+            'counted':StockFreezeTrans.objects.filter(ref=self,is_counted=True).count(),
+            'not_counted':StockFreezeTrans.objects.filter(ref=self,is_counted=False).count(),
+        }
+
+class StockFreezeTrans(models.Model):
+    ref = models.ForeignKey(StockFreezeHd,on_delete=models.CASCADE)
+    barcode = models.CharField(max_length=30)
+    name = models.CharField(max_length=255)
+    qty = models.DecimalField(decimal_places=3,max_digits=10,default=0.000)
+    retail = models.DecimalField(decimal_places=3,max_digits=10,default=0.000)
+    cost = models.DecimalField(decimal_places=3,max_digits=10,default=0.000)
+    counted = models.DecimalField(decimal_places=3,max_digits=10,default=0.000)
+    is_counted = models.BooleanField(default=False)
+
+class StockFreezeCount(models.Model):
+    ref = models.ForeignKey(StockFreezeHd,on_delete=models.CASCADE)
+    barcode = models.CharField(max_length=30)
+    quantity = models.DecimalField(decimal_places=3,max_digits=10,default=0.000)
+    image = models.ImageField('static/uploads/dolphine/stock_take/')
+    counted_by = models.ForeignKey(User,on_delete=models.CASCADE)
+
+    def obj(self):
+        return {
+            'pk':self.pk,
+            'barcode':self.barcode,
+            'quantity':self.quantity,
+            'counted_by':self.counted_by.get_full_name(),
+        }
+
+

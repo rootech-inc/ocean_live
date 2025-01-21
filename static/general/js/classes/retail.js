@@ -324,21 +324,32 @@ class Retail {
         amodal.show()
     }
 
-    retrieveStock(){
-        let ids = ['mypk','entry'];
-        if(anton.validateInputs(ids)){
+    async retrieveStock() {
+        let ids = ['mypk', 'entry'];
+        if (anton.validateInputs(ids)) {
             let payload = {
-                module:'retrieve_frozen_stock',
-                data:anton.Inputs(ids)
+                module: 'stock_freeze',
+                data: anton.Inputs(ids)
             }
 
-            let ret = api.call("PUT",payload,'/retail/api/');
-            if(anton.IsRequest(ret)){
-                console.table(ret)
-            } else {
-                kasa.response(ret)
-            }
-            
+            loader.show()
+
+            await api.v2("PUT", payload, '/retail/api/').then(response => {
+                if (anton.IsRequest(response)) {
+                    kasa.confirm(response['message'],1,'here')
+                    loader.hide()
+                } else {
+                    kasa.response(response)
+                    loader.hide()
+                }
+            }).catch(error => {
+                kasa.error(error)
+                loader.hide()
+            })
+
+            amodal.hide()
+
+
         } else {
             kasa.error("Fill All Fields")
         }
@@ -2222,6 +2233,72 @@ class Retail {
             kasa.error(err)
             loader.hide()
         })
+    }
+
+    async loadStockFreeze() {
+        let payload = {
+            module: 'stock_freeze_hd',
+            data:{
+                entry_no:'*'
+            }
+        }
+
+        await api.v2('VIEW',payload, '/retail/api/').then(response => {
+            let message = response.message;
+            if(anton.IsRequest(response)) {
+               let tr = ``;
+                for (let i = 0; i < message.length; i++) {
+                    let row = message[i];
+                    tr += `
+                        <tr>
+                            <td>${row['loc']}</td>
+                            <td>${row['entry_no']}</td>
+                            <td>${row['remarks']}</td>
+                            <td>${row['counted']} / ${row['not_counted']}</td>
+                            <th>
+                                <div class="dropdown">
+                                  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    
+                                  </button>
+                                  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    <a class="dropdown-item" onclick="location.href='/retail/stock-count/${row['entry_no']}/'" href="javascript:void(0)">Count</a>
+                                    <a class="dropdown-item" href="#">Another action</a>
+                                    <a class="dropdown-item" href="#">Something else here</a>
+                                  </div>
+                                </div>
+                            </th>
+                        </tr>
+                    `
+                }
+
+                let tb = `
+                    <table class="table datatable">
+                        <thead>
+                            <tr>
+                                <th>LOCATION</th>
+                                <th>ENTRY</th>
+                                <th>REMARKS</th>
+                                <th>COUNTED</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stock_tr">
+                            ${tr}
+                        </tbody>
+                    </table>
+                        `
+                $('.table-response').html(tb)
+            } else {
+                kasa.response(response)
+            }
+
+        }).catch(err => {
+            kasa.error(err)
+        })
+    }
+
+    getStockFreeze(s) {
+        return api.v2('VIEW',{module:'stock_freeze',data:{entry_no:s}});
     }
 }
 

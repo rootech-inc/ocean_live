@@ -1,0 +1,195 @@
+{% extends 'retail/base.html' %}
+{% load static %}
+
+{% block body %}
+
+    <div class="container border-info h-100">
+        <div class="row h-100">
+            <div class="col-sm-3">
+                <form id="stock_image_form" enctype="multipart/form-data" action="{% url 'upload_stock_image' %}" class="card">
+
+                    <div class="card-header">
+                        <input type="hidden" name="reference" value="{{ ref_no }}">
+                        <input type="text" placeholder="barcode" name="barcode" class="form-control rounded-0" id="barcode">
+                    </div>
+
+                    <div class="card-body">
+                        <hr>
+                        <input placeholder="Quantity" disabled type="number" name="quantity" class="form-control rounded-0" id="quantity">
+
+                            {% csrf_token %}
+                            <input type="file" accept="image/*" disabled id="image" name="image" class="mt-2 form-control rounded-0">
+
+                        <hr>
+                        <p class="card-text"><strong>Name: </strong><span id="name"></span></p>
+
+
+
+                    </div>
+
+                    <div class="card-footer">
+                        <button type="button" class="btn btn-success w-100" id="add" disabled>Add</button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-sm-5 h-50">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <strong class="card-title">Counts</strong>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+
+                                    <th>Image</th>
+                                    <th>Barcode</th>
+                                    <th>Quantity</th>
+                                    <th>By</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+         let ref_no = `{{ ref_no }}`
+         function clearFields(){
+             $('#barcode').val('')
+             $('#quantity').val('')
+             $('#quantity').attr('disabled',true)
+             $('#add').attr('disabled',true)
+             $('#barcode').focus()
+
+         }
+
+         async function loadCounted(ref_no) {
+             let payload = {
+                 module: 'stock_count',
+                 data: {
+                     ref: ref_no
+                 }
+             }
+
+             await api.v2('VIEW', payload, '/retail/api/').then(response => {
+                 if(anton.IsRequest(response)){
+                     let rows = response.message;
+                     let rr = "";
+                 }
+             }).catch(err => {kasa.error(err)})
+         }
+
+        $(document).ready(function (){
+            // if barcode key is entered check if it is enter key or not
+            $('#barcode').keypress(async function (event) {
+                // Check if Enter key is pressed (key code 13)
+                if (event.which == 13) {
+                    // Your code here - what should happen when Enter is pressed
+                    console.log('Enter key pressed');
+
+                    // Get the barcode value
+                    var barcodeValue = $(this).val();
+
+                    // get product
+                    let payload = {
+                        "module": "prod_master",
+                        "data": {
+                            "doc": "json",
+                            item_code: barcodeValue
+                        }
+                    }
+                    $('#add').attr('disabled',true)
+                    $('#quantity').attr('disabled',true)
+                    $('#image').attr('disabled',true)
+                    await api.v2('VIEW',payload,'/retail/api/').then(response => {
+                        if(anton.IsRequest(response)){
+                            let message = response.message;
+                            if(message.length > 1){
+                                kasa.error("Returned Morethan 2 Items")
+                            } else {
+                                let pd = message[0];
+                                let name = pd['name']
+                                let group_name = pd['group_name']
+                                let sub_group_name = pd['sub_group_name']
+                                $('#name').text(name)
+                                console.table(message)
+                                $('#add').attr('disabled',false)
+                                $('#quantity').attr('disabled',false)
+                                $('#quantity').focus()
+                                $('#image').attr('disabled',false)
+                            }
+                        } else {
+                            kasa.response(response)
+                        }
+                    })
+                }
+            });
+
+            $('#add').click(async function () {
+    let ids = ['barcode', 'quantity'];
+
+    if (anton.validateInputs(ids) && anton.isInputFiles('image')) {
+        // Make count payload
+        let payload = {
+            module: 'stock_count_item',
+            data: anton.Inputs(ids)
+        };
+        payload["data"]['ref_no'] = ref_no;
+
+        // Handle form submission using AJAX
+        let formData = new FormData($('#stock_image_form')[0]); // Convert the form into FormData
+
+        try {
+            let response = await fetch($('#stock_image_form').attr('action'), {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            let result = await response.json(); // Parse the JSON response if applicable
+            if(anton.IsRequest(result)){
+                clearFields()
+            } else {
+                kasa.response(result)
+            }
+        } catch (err) {
+            kasa.error(err.message || err);
+        }
+    } else {
+        kasa.info("Invalid Form");
+    }
+});
+
+            loadCounted(ref_no)
+
+        })
+
+          $(document).on('submit', '#stock_image_form', function(e) {
+            e.preventDefault(); // Prevent the default form submission
+            console.log("Sending Image")
+            const form = $(this);
+            const formData = new FormData(form[0]); // Create FormData object from the form
+
+            $.ajax({
+                type: 'POST', // Or use form.attr('method') if you want it dynamic
+                url: form.attr('action'), // Form action or current page URL
+                data: formData,
+                contentType: false, // Prevent jQuery from setting content type
+                processData: false, // Prevent jQuery from processing data
+                success: function(response) {
+                    console.table(response)
+                    kasa.info(response.message)
+                },
+                error: function(xhr) {
+                    $('#response').html('<p>Error: ' + xhr.responseText + '</p>');
+                }
+            });
+        });
+    </script>
+{% endblock %}
