@@ -43,7 +43,8 @@
                                 <tr>
 
                                     <th>Image</th>
-                                    <th>Barcode</th>
+                                    <th>Barcode</th
+                                    <th>Name</th>
                                     <th>Quantity</th>
                                     <th>By</th>
                                 </tr>
@@ -78,6 +79,19 @@
                  if(anton.IsRequest(response)){
                      let rows = response.message;
                      let rr = "";
+                     for (let i = 0; i < rows.length; i++) {
+                         let r = rows[i];
+                         rr += `
+                            <tr>
+                                <td></td>
+                                <td>${r['barcode']}</td>
+                                <td>${r['quantity']}</td>
+                                <td>${r['counted_by']}</td>
+                            </tr>
+                         `
+                     }
+
+                     $('tbody').html(rr)
                  }
              }).catch(err => {kasa.error(err)})
          }

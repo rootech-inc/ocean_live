@@ -632,12 +632,18 @@ class StockFreezeCount(models.Model):
     image = models.ImageField('static/uploads/dolphine/stock_take/')
     counted_by = models.ForeignKey(User,on_delete=models.CASCADE)
 
+    def img_url(self):
+        if self.image and self.image.storage.exists(self.image.name):
+            return self.image.url
+        return None
+
     def obj(self):
         return {
             'pk':self.pk,
             'barcode':self.barcode,
             'quantity':self.quantity,
             'counted_by':self.counted_by.get_full_name(),
+            'image':self.img_url(),
         }
 
 
