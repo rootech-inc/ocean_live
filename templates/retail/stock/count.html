@@ -43,12 +43,14 @@
                                 <tr>
 
                                     <th>Image</th>
-                                    <th>Barcode</th
-                                    <th>Name</th>
+                                    <th>Barcode</th>
                                     <th>Quantity</th>
                                     <th>By</th>
                                 </tr>
                             </thead>
+                            <tbody>
+
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -79,11 +81,16 @@
                  if(anton.IsRequest(response)){
                      let rows = response.message;
                      let rr = "";
-                     for (let i = 0; i < rows.length; i++) {
+                     let lt = 10;
+                     if (rows.length <= 10){
+                        lt = rows.length
+                     }
+
+                     for (let i = 0; i < lt; i++) {
                          let r = rows[i];
                          rr += `
                             <tr>
-                                <td></td>
+                                <td><img onclick="windowPopUp('${r['image']}','',500,500)" src="${r['image']}" style="width:20px" alt="" class="img-fluid"></td>
                                 <td>${r['barcode']}</td>
                                 <td>${r['quantity']}</td>
                                 <td>${r['counted_by']}</td>
@@ -92,11 +99,17 @@
                      }
 
                      $('tbody').html(rr)
+                     console.log(rr)
                  }
              }).catch(err => {kasa.error(err)})
          }
 
         $(document).ready(function (){
+
+            setInterval(function () {
+                loadCounted(ref_no)
+            },1000)
+
             // if barcode key is entered check if it is enter key or not
             $('#barcode').keypress(async function (event) {
                 // Check if Enter key is pressed (key code 13)

@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import F
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
@@ -9,7 +10,7 @@ from admin_panel.models import Locations, SmsApi, Sms, BusinessEntityTypes
 from cmms.extra import db
 from retail.forms import NewClerk
 from retail.models import Clerk, BoltItems, BoltGroups, Products, RecipeProduct, BoltSubGroups, StockFreezeCount, Stock, \
-    StockFreezeHd
+    StockFreezeHd, StockFreezeTrans
 
 
 @login_required()
@@ -316,7 +317,9 @@ def upload_stock_image(request):
             barcode=barcode, image=file,
             ref=ref, quantity=quantity,counted_by=request.user
         )
-
+        StockFreezeTrans.objects.filter(barcode=barcode).update(
+            counted=F('counted') + quantity
+        )
         # return to previous page
         return JsonResponse({'status_code':200,'message': 'Form submitted successfully!'})
 

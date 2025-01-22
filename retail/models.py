@@ -629,7 +629,7 @@ class StockFreezeCount(models.Model):
     ref = models.ForeignKey(StockFreezeHd,on_delete=models.CASCADE)
     barcode = models.CharField(max_length=30)
     quantity = models.DecimalField(decimal_places=3,max_digits=10,default=0.000)
-    image = models.ImageField('static/uploads/dolphine/stock_take/')
+    image = models.ImageField(upload_to='static/uploads/dolphine/stock_take/')
     counted_by = models.ForeignKey(User,on_delete=models.CASCADE)
 
     def img_url(self):
