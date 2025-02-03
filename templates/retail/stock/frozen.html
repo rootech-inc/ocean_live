@@ -13,28 +13,7 @@
 
     <div class="card-body">
         <div class="table-response">
-            <table class="table datatable">
-                <thead>
-                    <tr>
-                        <th>LOCATION</th>
-                        <th>ENTRY</th>
-                        <th>REMARKS</th>
-                        <th>STATISTICS</th>
-                        <th>ACTIONS</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>001 - SPINTEX SHOP</td>
-                        <td>STOCKFREEZE001</td>
-                        <td>NONE</td>
-                        <td>1000 / 1000</td>
-                        <th>
-                            <i class="fa fa-eye text-info pointer" title="Count"></i>
-                        </th>
-                    </tr>
-                </tbody>
-            </table>
+
         </div>
     </div>
 
@@ -44,6 +23,8 @@
             $('#retrieve').click(function(){
                 retail.retrieveSockFreezeScreen();
             });
+
+            retail.loadStockFreeze()
         });
     </script>
 {% endblock %}

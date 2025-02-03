@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import F
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
@@ -8,7 +9,8 @@ from sympy import Product
 from admin_panel.models import Locations, SmsApi, Sms, BusinessEntityTypes
 from cmms.extra import db
 from retail.forms import NewClerk
-from retail.models import Clerk, BoltItems, BoltGroups, Products, RecipeProduct, BoltSubGroups
+from retail.models import Clerk, BoltItems, BoltGroups, Products, RecipeProduct, BoltSubGroups, StockFreezeCount, Stock, \
+    StockFreezeHd, StockFreezeTrans
 
 
 @login_required()
@@ -292,6 +294,34 @@ def stock(request):
     }
 
     return render(request,'retail/stock/frozen.html',context=context)
+
+@login_required()
+def stock_count(request,ref_no):
+    context = {
+        'nav': True,
+        'ref_no': ref_no
+    }
+
+    return render(request, 'retail/stock/count.html', context=context)
+
+@login_required()
+def upload_stock_image(request):
+    if request.method == 'POST':
+        barcode = request.POST['barcode']
+        file = request.FILES['image']
+        reference = request.POST['reference']
+        ref = StockFreezeHd.objects.get(entry_no=reference)
+        quantity = request.POST['quantity']
+
+        StockFreezeCount.objects.create(
+            barcode=barcode, image=file,
+            ref=ref, quantity=quantity,counted_by=request.user
+        )
+        StockFreezeTrans.objects.filter(barcode=barcode).update(
+            counted=F('counted') + quantity
+        )
+        # return to previous page
+        return JsonResponse({'status_code':200,'message': 'Form submitted successfully!'})
 
 @login_required()
 def stock_monitor(request):
