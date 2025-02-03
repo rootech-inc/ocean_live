@@ -98,7 +98,7 @@ def interface(request):
                     raise Exception(f"Product Exist with barcode {pd.barcode}")
 
             elif module == 'moves':
-                move_type = data.get('type')
+                move_type = data.get('type','')
                 print(data)
                 if move_type == 'CB':
                     from datetime import datetime, timedelta
