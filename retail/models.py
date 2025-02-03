@@ -175,7 +175,7 @@ class Products(models.Model):
         unique_together = (('subgroup', 'code','entity'),)
 
     def obj(self,date=timezone.now().date()):
-        image_url = ""
+        image_url = "none"
         if BoltItems.objects.filter(product=self).exists():
             image_url = BoltItems.objects.filter(product=self).first().image.url if BoltItems.objects.filter(product=self).first().image else 'static/uploads/dolphine/bolt/default.png'
         else:
