@@ -4,10 +4,58 @@
 
 
 {% block body %}
-    <div class="card-header">
-        <div class="w-100 d-flex flex-wrap">
-            <div class="w-50"></div>
-            <div class="w-50"><button onclick="retail.addButchMonitorScreen()" class="btn btn-info">ADD</button></div>
+    <div class="card h-100">
+        <div class="card-header">
+            <div class="w-100 d-flex flex-wrap">
+                <div class="w-50 d-flex flex-wrap">
+                    <button style="border-radius: 0 !important" onclick="retail.addButchMonitorScreen()" class="btn btn-primary">ADD ITEM</button>
+                    <button style="border-radius: 0 !important"  onclick="location.href = '/retail/retail_butch_cb/'" class="btn btn-info">CLOSING BALANCE</button>
+                </div>
+                <div class="w-50 d-flex flex-wrap justify-content-end">
+
+                    <input id="date" type="date" style="width: fit-content; margin-left: 5px" class="form-control rounded-0">
+                </div>
+            </div>
+        </div>
+        <div class="card-body overflow-auto ">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead class="thead-dark">
+                        <tr><th>BARCODE</th><th>NAME</th><th>OB</th><th>PURC</th><th class="text-primary">TOT. IN</th><th>TRAN</th><th>ADJ</th><th>SOLD</th><th class="text-success">TOTAL OUT</th><th>SYS. BAL</th><th>PHY BAL.</th><th class="text-info">DIFF</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>123</td>
+                            <td>Egg</td>
+                            <td>12OB</td>
+                            <td>20PUR</td>
+                            <td class="text-primary">31TIN</td>
+                            <td>10TR</td>
+                            <td>ADJ</td>
+                            <td>SOLD</td>
+                            <td class="text-success">TOTOUT</td>
+                            <td>CLOSIN</td>
+                            <td class="text-info">DIFF</td>
+
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+
+    <script>
+        $(document).ready(function (){
+            $('#date').val(today)
+            retail.loadButchMonitors('view')
+
+            $('#date').change(function (){
+                console.table($(this).val())
+                retail.loadButchMonitors('view')
+            });
+
+
+
+        })
+    </script>
 {% endblock %}

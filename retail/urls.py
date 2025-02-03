@@ -40,6 +40,7 @@ urlpatterns = [
     path('stock/', views.stock, name='retail_stock'),
     path('stock/monitoring/',views.stock_monitor,name='stock_monitor'),
     path('retail_butch_moni/',views.retail_butch_moni,name='retail_butch_moni'),
+    path('retail_butch_cb/',views.retail_butch_cb,name='retail_butch_cb'),
     path('stock-to-send/',views.stock_to_send,name='stock_to_send'),
     path('price-change/',views.retail_price_change,name='retail_price_change'),
     path('samples',views.samples,name='samples')

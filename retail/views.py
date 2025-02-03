@@ -301,12 +301,19 @@ def stock_monitor(request):
 
     return render(request, 'retail/stock/minotoring.html', context=context)
 
-
+@login_required()
 def retail_butch_moni(request):
     context = {
         'nav': True
     }
     return render(request, 'retail/butch.html', context=context)
+
+@login_required()
+def retail_butch_cb(request):
+    context = {
+        'nav': True
+    }
+    return render(request, 'retail/butch-cb.html', context=context)
 
 
 def stock_to_send(request):

@@ -1,0 +1,68 @@
+{% extends 'retail/base.html' %}
+{% load static %}
+
+
+
+{% block body %}
+    <div class="card h-100">
+        <div class="card-header">
+            <div class="w-100 d-flex flex-wrap">
+                <div class="w-50">
+                    <label for="target_date">Target Date</label>
+                    <input type="date" id="target_date" class="form-control rounded-0">
+                </div>
+                <div class="w-50 d-flex flex-wrap justify-content-end">
+                    <button style="height: fit-content"  class="btn btn-warning">CANCEL</button>
+                    <button id="sav" style="height: fit-content"  class="btn btn-info">SAVE</button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body overflow-auto ">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead class="thead-dark">
+                        <tr><th>SN</th><th>BARCODE</th><th>NAME</th><th>BALANCE</th></tr>
+                    </thead>
+                    <tbody id="tb">
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function (){
+            retail.loadButchMonitors('edit')
+
+            $('#sav').click(async function () {
+                let transactions = [];
+
+                $('#tb tr').each(function () {
+                    let barcode = $(this).find('[id^="barcode_"]').text().trim();
+                    let qty = $(this).find('[id^="qty_"]').val();
+
+                    transactions.push({barcode: barcode, quantity: qty});
+                });
+
+                let payload = {
+                    module: 'moves',
+                    data: {
+                        type:'CB',
+                        target_date: $('#target_date').val(),
+                        transactions: transactions
+                    }
+                };
+
+                if (anton.validateInputs(['target_date'])) {
+                    await api.v2('PUT', payload, '/retail/api/').then(response => {
+                        kasa.confirm(response['message'],1,'/retail/retail_butch_moni/')
+                    }).catch(err => kasa.error(err))
+                } else {
+                    kasa.error("Set Date")
+                }
+            });
+
+        })
+    </script>
+{% endblock %}

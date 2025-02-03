@@ -23,7 +23,7 @@ from ocean.settings import RET_DB_HOST, RET_DB_USER, RET_DB_PASS, RET_DB_NAME, B
 from retail.db import ret_cursor, get_stock, updateStock, percentage_difference
 from retail.models import BoltItems, BoltGroups, ProductSupplier, ProductGroup, ProductSubGroup, Products, Stock, \
     RecipeGroup, RecipeProduct, Recipe, StockHd, StockMonitor, RawStock, ButcheryLiveTransactions, ButchSales, \
-    StockToSend, TranHd, TranTr, RetailSales, SampleHd, SampleTran, BoltSubGroups, BillHeader, BillTrans
+    StockToSend, TranHd, TranTr, RetailSales, SampleHd, SampleTran, BoltSubGroups, BillHeader, BillTrans, ProductMoves
 from retail.prodMast import ProdMaster
 from retail.retail_tools import create_recipe_card
 
@@ -97,6 +97,81 @@ def interface(request):
                 else:
                     raise Exception(f"Product Exist with barcode {pd.barcode}")
 
+            elif module == 'moves':
+                move_type = data.get('type')
+                print(data)
+                if move_type == 'CB':
+                    from datetime import datetime, timedelta
+                    # closing balance
+                    target_date = data.get('target_date')
+                    # add one day from target date to get next Opening Balance
+                    date_obj = datetime.strptime(target_date, "%Y-%m-%d")
+                    ob_date = date_obj + timedelta(days=1)
+
+                    transactions = data.get('transactions')
+                    for transaction in transactions:
+                        barcode = transaction['barcode']
+                        quantity = transaction['quantity']
+
+                        product = Products.objects.get(barcode=barcode)
+                        ProductMoves.objects.create(
+                            move_type = move_type,
+                            quantity=quantity,
+                            product=product,
+                            date=date_obj
+                        )
+                        ProductMoves.objects.create(
+                            move_type='OB',
+                            quantity=quantity,
+                            product=product,
+                            date=ob_date
+                        )
+
+                else:
+                    products = Products.objects.all()
+                    lg_ct = 1
+                    all_ct = products.count()
+                    for product in products.order_by('name'):
+                        print(lg_ct,"/",all_ct, product.name)
+                        lg_ct = lg_ct + 1
+                        # GRN
+                        if move_type == 'GR':
+                            g_query = f"select hd.entry_no,hd.grn_date,total_units,tr.line_no from grn_tran tr join grn_hd hd on hd.entry_no = tr.entry_no  where tr.ocean is null and hd.posted = 1 and tr.item_ref = '{product.barcode}'"
+
+                        elif move_type == 'TR':
+                            g_query = f"select hd.entry_no,hd.entry_date,total_units,tr.line_no from tran_tr tr join tran_hd hd on hd.entry_no = tr.entry_no  where tr.ocean is null and hd.posted = 1 and tr.item_ref = '{product.barcode}'"
+
+                        elif move_type == 'AD':
+                            g_query = f"select hd.entry_no,hd.entry_date,total_units,tr.line_no from adj_tran tr join adj_hd hd on hd.entry_no = tr.entry_no  where tr.ocean is null and hd.posted = 1 and tr.item_ref = '{product.barcode}'"
+
+                        conn = ret_cursor()
+                        cursor = conn.cursor()
+                        cursor.execute(g_query)
+                        for grn_row in cursor.fetchall():
+                            ref,ent_date,quantity,line_no = grn_row
+                            # li = [ref,ent_date,quantity,line_no]
+                            # print(move_type,li)
+                            ProductMoves.objects.create(
+                                product=product,
+                                ref=ref,
+                                quantity=quantity,
+                                date=ent_date,
+                                move_type=move_type
+                            )
+
+                            update_q = ""
+                            if move_type == "GR":
+                                upd_query = f"UPDATE grn_tran set ocean = 1 where entry_no = '{ref}' and item_ref = '{product.barcode}' and line_no = '{line_no}'"
+                            if move_type == "TR":
+                                upd_query = f"UPDATE tran_tr set ocean = 1 where entry_no = '{ref}' and item_ref = '{product.barcode}' and line_no = '{line_no}'"
+                            if move_type == 'AD':
+                                upd_query = f"UPDATE adj_tran set ocean = 1 where entry_no = '{ref}' and item_ref = '{product.barcode}' and line_no = '{line_no}'"
+
+                            # print(upd_query)
+                            cursor.execute(upd_query)
+                            cursor.commit()
+
+                        conn.close()
             elif module == 'bill':
                 header = data.get('header')
                 transactions = data.get('transactions')
@@ -131,6 +206,14 @@ def interface(request):
                     if tran_type == 'S':
                         product = Products.objects.get(code=prod_id)
                         BillTrans.objects.create(bill=bill,product=product,quantity=quantity,time=time,price=price)
+                        ProductMoves.objects.create(
+                            move_type='SI',
+                            product=product,
+                            ref=bill_ref,
+                            quantity=quantity,
+                            date=bill_date,
+                            remark=f"POS Sales from {location.descr}"
+                        )
 
 
 
@@ -242,7 +325,12 @@ def interface(request):
 
                 success_response['message'] = "DONE"
                 response = success_response
-
+            elif module == 'mark_butch':
+                barcodes = data.get('barcode').split(',')
+                for barcode in barcodes:
+                    if Products.objects.filter(barcode=barcode).exists():
+                        Products.objects.filter(barcode=barcode).update(is_butch=True)
+                response = success_response
             elif module == 'kofi_ghana':
                 #print(data)
                 location = data.get('location')
@@ -633,6 +721,15 @@ def interface(request):
                 for location in locations:
                     arr.append(location.obj())
 
+                success_response['message'] = arr
+                response = success_response
+
+            elif module == 'butch_items':
+                target_date = data.get('target_date',timezone.now().date())
+                for item in Products.objects.filter(is_butch=True).order_by('name'):
+                    obj = item.obj(target_date)
+
+                    arr.append(obj)
                 success_response['message'] = arr
                 response = success_response
 

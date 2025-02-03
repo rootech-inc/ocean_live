@@ -169,10 +169,12 @@ class Products(models.Model):
     shelf = models.IntegerField(default=0)
     entity = models.ForeignKey(admin_panel.models.BusinessEntityTypes, on_delete=models.SET_NULL, null=True, blank=True)
 
+    is_butch = models.BooleanField(default=False)
+
     class Meta:
         unique_together = (('subgroup', 'code','entity'),)
 
-    def obj(self):
+    def obj(self,date=timezone.now().date()):
         image_url = ""
         if BoltItems.objects.filter(product=self).exists():
             image_url = BoltItems.objects.filter(product=self).first().image.url if BoltItems.objects.filter(product=self).first().image else 'static/uploads/dolphine/bolt/default.png'
@@ -189,6 +191,7 @@ class Products(models.Model):
             'previous': Products.objects.filter(pk__lt=self.pk,entity=self.entity).last().pk if Products.objects.filter(pk__lt=self.pk,entity=self.entity).exists() else 0,
             'stock':self.live_stock(),
             'shelf':self.shelf,
+            'moves':self.moves(date),
         }
 
     def is_on_bolt(self):
@@ -201,6 +204,21 @@ class Products(models.Model):
     def live_stock(self):
         from retail.db import get_stock
         return get_stock(self.code) if DEBUG is False else {}
+
+    def moves(self,date=timezone.now().date()):
+        obj = {}
+        if ProductMoves.objects.filter(product=self,date=date).exists():
+            obj = ProductMoves.objects.get(product=self,date=date).day_data(target_date=date)
+        else:
+            # loop through types and make it 0 in obj
+            for choice in ProductMoves.move_type_choices:
+                choice_type = choice[0]
+                print(choice_type)
+                try:
+                    obj[choice_type] = 0
+                except Exception as e:
+                    pass
+        return obj
 
     def stock(self):
         arr = []
@@ -223,6 +241,39 @@ class RawStock(models.Model):
     # class Meta:
     #     unique_together = (('loc_id', 'prod_id'),)
 
+class ProductMoves(models.Model):
+    product = models.ForeignKey(Products, on_delete=models.CASCADE)
+    ref = models.CharField(max_length=100, null=False, blank=False)
+    move_type_choices = [
+        ('OB','Opening Balance'),
+        ('GR','Goods Received'),
+        ('TR','Transfer'),
+        ('AD','Adjusted'),
+        ('CL','Closing Balance'),
+        ('PR','Purchase Receipt'),
+        ('SI','Sales Invoice'),
+        ('SO','Sales Order'),
+        ('CR','Credit Note'),
+        ('DB','Debit Note'),
+        ('CB','Closing Balance')
+    ]
+    move_type = models.CharField(max_length=2, choices=move_type_choices,null=False,blank=False)
+    quantity = models.DecimalField(decimal_places=3, max_digits=60)
+    date = models.DateField(null=False, blank=False,default=timezone.now().date())
+    time = models.TimeField(null=False, blank=False,auto_now=True)
+    remark = models.TextField(null=True, blank=True)
+
+    def day_data(self,target_date=timezone.now().date()):
+        # loop through choices
+        arr = {}
+
+        for choice in self.move_type_choices:
+            # get choice type
+
+            choice_type = choice[0]
+            # get sum of quantity base on dat and update arr
+            arr[choice_type] = ProductMoves.objects.filter(move_type=choice_type,date=target_date,product=self.product).aggregate(sum=Sum('quantity'))['sum'] if ProductMoves.objects.filter(move_type=choice_type,date=target_date).exists() else 0
+        return arr
 
 class Stock(models.Model):
     product = models.ForeignKey(Products, on_delete=models.CASCADE)
@@ -349,6 +400,7 @@ class StockHd(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
     edited_on = models.DateTimeField(auto_now=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
+
 
 
 class ButchSales(models.Model):

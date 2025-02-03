@@ -708,17 +708,17 @@ class Retail {
             module:'location_master',
             data:{}
         }
-        let locations = api.call('VIEW',loc_payload,'/retail/api/')
-        let locs = locations.message
-        let l_optons = ""
-        for(let l = 0; l < locs.length; l++){
-            let lc = locs[l]
-            l_optons += `<option value="${lc['pk']}">${lc['code']} - ${lc['name']}</option>`
-        }
+        // let locations = api.call('VIEW',loc_payload,'/retail/api/')
+        // let locs = locations.message
+        // let l_optons = ""
+        // for(let l = 0; l < locs.length; l++){
+        //     let lc = locs[l]
+        //     l_optons += `<option value="${lc['pk']}">${lc['code']} - ${lc['name']}</option>`
+        // }
         let form   = '';
-        form += fom.select('location',`${l_optons}`,'',true)
+        // form += fom.select('location',`${l_optons}`,'',true)
         form += fom.text('barcode','',true)
-        form += fom.text('quantity','',true)
+        // form += fom.text('quantity','',true)
 
         amodal.setBodyHtml(form);
         amodal.show();
@@ -727,10 +727,10 @@ class Retail {
     }
 
     addButchMon() {
-        let ids = ['location','barcode','quantity'];
+        let ids = ['barcode'];
         if(anton.validateInputs(ids)){
             let payload = {
-                module:'kofi_ghana',
+                module:'mark_butch',
                 data:anton.Inputs(ids)
             }
 
@@ -2222,6 +2222,86 @@ class Retail {
             kasa.error(err)
             loader.hide()
         })
+    }
+
+    async loadButchMonitors(view='view') {
+        let payload = {
+            module: 'butch_items',
+            data: {
+                target_date:$('#date').val()
+            }
+        }
+
+        await api.v2('VIEW', payload, '/retail/api/').then(response => {
+            if(anton.IsRequest(response)) {
+                let items = response.message;
+                let tr = ``
+                for(let i = 0; i < items.length; i++){
+                    let item = items[i];
+                    let barcode = item['barcode']
+                    let name = item['name']
+                    let image = item['image']
+                    let price = item['price']
+                    let moves = item['moves'];
+                    let ob = moves['OB'];
+                    let pur = parseFloat(moves['GR']).toFixed(2)
+                    let tra = moves['TR']
+                    let ad = moves['AD'];
+                    let si = moves['SI']
+                    let tot_in = parseFloat(ob) + parseFloat(pur)
+                    let tot_out = parseFloat(tra) + parseFloat(ad) + parseFloat(si)
+                    let sys_difference = parseFloat(tot_in) - parseFloat(tot_out)
+                    let cb = moves['CB'];
+
+                    let leg_diff = parseFloat(cb) - parseFloat(sys_difference);
+
+
+                    // let quantity = item['quantity']
+                    // let sold = item['sold']
+                    // let moved = item['moved']
+                    if(view === 'view'){
+                         tr += `
+                        <tr>
+                            <td>${barcode}</td>
+                            <td>${name}</td>
+                            <td>${ob}</td>
+                            <td>${pur}</td>
+                            <td class="text-primary">${tot_in.toFixed(2)}</td>
+                            <td>${tra.toFixed(2)}</td>
+                            <td>${ad.toFixed(2)}</td>
+                            <td>${si.toFixed(2)}</td>
+                            <td class="text-success">${tot_out.toFixed(2)}</td>
+                            <td>${sys_difference}</td>
+                            <td>${cb}</td>
+                            <td class="text-info">${leg_diff.toFixed(2)}</td>
+
+                        </tr>
+                    `
+                    }
+
+                    if(view === 'edit'){
+                        let line = i + 1;
+
+                         tr += `
+                        <tr id = 'row_${line}'>
+                            <td>${line}</td>
+                            <td id = 'barcode_${line}'>${barcode}</td>
+                            <td>${name}</td>
+                            <td><input id ='qty_${line}' type="number" value="0" class="form-control text-right" style="width: 200px" ></td>
+
+                        </tr>
+                    `
+                    }
+
+
+                }
+                $('tbody').empty()
+                $('tbody').html(tr)
+            } else {
+                kasa.response(response)
+            }
+        })
+
     }
 }
 
