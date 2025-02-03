@@ -1,5 +1,6 @@
 import json
 import sys
+from datetime import date
 from decimal import Decimal
 
 import pyodbc
@@ -204,7 +205,8 @@ def interface(request):
                     print(prod_id)
                     print(tran_type)
                     if tran_type == 'S':
-                        product = Products.objects.get(code=prod_id)
+                        product = Products.objects.get(barcode=barcode)
+                        print(prod_id)
                         BillTrans.objects.create(bill=bill,product=product,quantity=quantity,time=time,price=price)
                         ProductMoves.objects.create(
                             move_type='SI',
@@ -2541,6 +2543,20 @@ def interface(request):
                 response = success_response
 
 
+            elif module == 'revenue':
+                target_date = data.get('date')
+                entities = BusinessEntityTypes.objects.all()
+                revenue = Decimal(0.00)
+                for entity in entities:
+                    arr.append(entity.obj())
+                    revenue += entity.obj()['revenue']
+
+                success_response['message'] = {
+                    'revenue':format_currency(revenue),
+                    'breakdown':arr
+                }
+                response = success_response
+
             elif module == 'sales_graph_week':
                 from django.utils.timezone import now
                 loc_q = "SELECT br_code,RTRIM(br_name) from branch"
@@ -3148,6 +3164,27 @@ ORDER BY
                 success_response['message'] = file_name
 
 
+            elif module == 'check_bolt_expiry':
+                ent_pk = data.get('entity')
+                entity = BusinessEntityTypes.objects.get(pk=ent_pk)
+                items = BoltItems.objects.filter(menu=entity,is_expired=True)
+                import openpyxl
+                book = openpyxl.Workbook()
+                sheet = book.active
+                hd = ["BARCODE","NAME","EXPIRY DATE"]
+                sheet.append(hd)
+                for item in items:
+                    arr.append(item.obj())
+                    li = [item.product.barcode,item.product.name,item.exp_date]
+                    sheet.append(li)
+
+                book.save('static/general/tmp/bolt_expity.xlsx')
+
+                success_response['message'] = {
+                    'excel':'static/general/tmp/bolt_expity.xlsx',
+                    'json':arr
+                }
+                response = success_response
             else:
                 raise Exception("No View Module")
 
@@ -3159,6 +3196,51 @@ ORDER BY
                 for item in items:
                     item.price = item.product.price
                     item.save()
+
+            elif module == 'check_bolt_expiry':
+                ent_pk = data.get('entity')
+                entity = BusinessEntityTypes.objects.get(pk=ent_pk)
+                conn = ret_cursor()
+                cursor = conn.cursor()
+                for item in BoltItems.objects.filter(menu=entity):
+                    product = item.product
+                    barcode = product.barcode
+                    itemcode = product.code
+
+                    qu = f"select top(1) grn_date,hd.entry_no,tr.exp_date from grn_tran tr join grn_hd hd on hd.entry_no = tr.entry_no where tr.item_ref = '{barcode}' order by hd.grn_date desc"
+                    cursor.execute(qu)
+                    row = cursor.fetchone()
+                    exp_date = '2099-01-01'
+                    grn_date = exp_date
+                    entry_no = ''
+                    is_expired = False
+                    today = timezone.now().date()
+                    from datetime import datetime
+
+                    if row:
+                        grn_date,entry_no,exp_date = row
+                        # get difference between dates
+
+                        if not exp_date or exp_date == 'NULL':
+                            exp_date = datetime.strptime('2099-01-01', '%Y-%m-%d').date()
+                        else:
+                            print(str(exp_date).split(' ')[0])
+                            exp_date = datetime.strptime(str(exp_date).split(' ')[0], '%Y-%m-%d').date()
+                        lx = [today,exp_date]
+                        print(lx)
+                        if exp_date < today:
+                            is_expired = True
+                    li = [barcode,grn_date,entry_no,exp_date,is_expired]
+                    print(li)
+                    item.is_expired = is_expired
+                    item.exp_date = exp_date
+                    item.save()
+
+
+                    # li = [barcode,itemcode]
+
+                conn = ret_cursor()
+
 
             elif module == 'menu_transfer':
                 to_pk = data.get('to')

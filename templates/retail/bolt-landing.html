@@ -202,7 +202,7 @@
                                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                             <a class="dropdown-item" onclick="retail.boltPriceChange('${ent.pk}')" href="javascript:void(0)">Export Price Change</a>
                                             <a class="dropdown-item" href="javascript:void(0)" onclick="retail.bolt_stock_update('${ent.pk}')">Export Stock Level</a>
-                                            <a class="dropdown-item" href="#">Something else here</a>
+                                            <a class="dropdown-item expiry" entity='${ent.pk}' href="javascript:void(0)">Expiry</a>
                                         </div>
                                     </div>
 
@@ -211,6 +211,10 @@
                     }
 
                     $('#menu_body').html(tr)
+                    $('.expiry').click(function(){
+                        let entity = $(this).attr('entity');
+                        retail.boltExpityExport(entity)
+                    })
                 } else {
                     kasa.error("Cannot Load Menu")
                 }
@@ -225,6 +229,8 @@
 
             // load menus
             load_menus()
+
+
         })
 
 

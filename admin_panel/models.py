@@ -1,5 +1,6 @@
 import os.path
 import pathlib
+from decimal import Decimal
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -417,6 +418,9 @@ class BusinessEntityTypes(models.Model):
     entity_type_name = models.CharField(max_length=255, unique=True)
     entity_type_descr = models.TextField()
 
+    def revenue(self,target_date=timezone.now().date()):
+        from retail.models import BillHeader as bh
+        return Decimal(bh.objects.filter(loc__entity=self,bill_date=target_date).aggregate(Sum('bill_amt'))['bill_amt__sum'] or 0.00)
     def bolt_menu(self):
         from retail.models import BoltItems
         is_bolt = False
@@ -430,6 +434,13 @@ class BusinessEntityTypes(models.Model):
         return {
             "is_bolt":is_bolt,
             "menu":menu_items
+        }
+
+    def obj(self):
+        return {
+            'name':self.entity_type_name,
+            'descr':self.entity_type_descr,
+            'revenue':self.revenue(),
         }
 
 class Locations(models.Model):

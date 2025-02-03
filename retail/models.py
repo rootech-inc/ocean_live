@@ -77,6 +77,9 @@ class BoltItems(models.Model):
     is_sync = models.BooleanField(default=False)
     group_changed = models.BooleanField(default=False)
 
+    exp_date = models.DateField(null=False, blank=False)
+    is_expired = models.BooleanField(default=False)
+
     image = models.ImageField(upload_to='static/uploads/dolphine/bolt/', null=True,default='static/uploads/dolphine/bolt/default.png')
     description = models.TextField(null=True,blank=True)
 
@@ -85,6 +88,8 @@ class BoltItems(models.Model):
             "product":self.product.obj(),
             'group':self.group.name,
             'subgroup':self.subgroup.name,
+            'is_expired':self.is_expired,
+            'exp_date':self.exp_date,
         }
 
     def img_url(self):
@@ -207,17 +212,27 @@ class Products(models.Model):
 
     def moves(self,date=timezone.now().date()):
         obj = {}
-        if ProductMoves.objects.filter(product=self,date=date).exists():
-            obj = ProductMoves.objects.get(product=self,date=date).day_data(target_date=date)
-        else:
-            # loop through types and make it 0 in obj
-            for choice in ProductMoves.move_type_choices:
+        for choice in ProductMoves.move_type_choices:
+            choice_type = choice[0]
+            if ProductMoves.objects.filter(product=self, date=date,move_type=choice_type).exists():
+                val = ProductMoves.objects.filter(move_type=choice_type, date=date, product_id=self.pk).aggregate(
+                    sum=Sum('quantity'))['sum'] if ProductMoves.objects.filter(move_type=choice_type,
+                                                                               date=date).exists() else 0
+                if val == 'null':
+                    val = 0
+
+                print(val)
+                obj[choice_type] = f"{val:.2f}"
+
+            else:
                 choice_type = choice[0]
                 print(choice_type)
                 try:
-                    obj[choice_type] = 0
+                    val = 0
+                    obj[choice_type] = f"{val:.2f}"
                 except Exception as e:
                     pass
+
         return obj
 
     def stock(self):

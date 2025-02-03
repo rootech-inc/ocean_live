@@ -2244,7 +2244,9 @@ class Retail {
                     let price = item['price']
                     let moves = item['moves'];
                     let ob = moves['OB'];
-                    let pur = parseFloat(moves['GR']).toFixed(2)
+                    let pur = parseFloat(moves['GR'])
+                    if(pur === null){pur = 0}
+
                     let tra = moves['TR']
                     let ad = moves['AD'];
                     let si = moves['SI']
@@ -2267,11 +2269,11 @@ class Retail {
                             <td>${ob}</td>
                             <td>${pur}</td>
                             <td class="text-primary">${tot_in.toFixed(2)}</td>
-                            <td>${tra.toFixed(2)}</td>
-                            <td>${ad.toFixed(2)}</td>
-                            <td>${si.toFixed(2)}</td>
+                            <td>${tra}</td>
+                            <td>${ad}</td>
+                            <td>${si}</td>
                             <td class="text-success">${tot_out.toFixed(2)}</td>
-                            <td>${sys_difference}</td>
+                            <td>${sys_difference.toFixed(2)}</td>
                             <td>${cb}</td>
                             <td class="text-info">${leg_diff.toFixed(2)}</td>
 
@@ -2302,6 +2304,50 @@ class Retail {
             }
         })
 
+    }
+
+    async boltExpityExport(entity) {
+        let payload = {
+            module: 'check_bolt_expiry',
+            data: {
+                entity: entity,
+            }
+        }
+
+        loader.show()
+        await api.v2('VIEW', payload, '/retail/api/').then(response => {
+            if(anton.IsRequest(response)) {
+                let message = response.message;
+                let js = message.json;
+                let xl = message.excel
+
+                let tr = "";
+                for (let i = 0; i < js.length; i++) {
+                    let row = js[i];
+                    tr += `
+                        <tr><td>${row['product']['barcode']}</td><td>${row['product']['name']}</td><td>${row['exp_date']}</td></tr>
+                    `
+                }
+
+                let ht = `
+                    <table class="table table-sm"><thead><tr><th>SKU</th><th>NAME</th><th>EXPIRY DATE</th></tr></thead><tbody>${tr}</tbody></table>
+                `
+
+                amodal.setFooterHtml(`<a href="/${xl}" class="btn btn-success"><i class="fa fa-download"></i> Download</a>`)
+                amodal.setBodyHtml(ht)
+                amodal.setTitleText('Bolt Expiry')
+                amodal.setSize('L')
+                amodal.show()
+                console.table(js)
+                loader.hide()
+            } else {
+                kasa.response(response)
+                loader.hide()
+            }
+        }).catch(err => {
+            kasa.error(err)
+            loader.hide()
+        })
     }
 }
 

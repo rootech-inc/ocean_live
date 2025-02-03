@@ -96,10 +96,37 @@ class Sales {
         $('#g_modal').modal('show')
     }
 
-    total(day=today){
-        let sales_summary = JSON.parse(apiv2('sales','today',{'day':day}));
-        console.table(sales_summary)
-        $("#total").text(sales_summary.message)
+    async total(day = today) {
+        let payload = {
+            module: 'revenue',
+            data: {
+                date: today
+            }
+        }
+
+        await api.v2('VIEW', payload, '/retail/api/').then((response) => {
+
+            if(anton.IsRequest(response)){
+                let detail = response['message']
+                $('.display-3').text(`₵${detail['revenue']}`)
+
+                let breakdown = detail['breakdown']
+                console.table(breakdown)
+
+                let tr = ""
+                for (let i = 0; i < breakdown.length; i++) {
+                    let ent = breakdown[i]
+                    tr += `<tr><td>${ent['name']}</td><td>${ent['revenue']}</td></tr>`
+                }
+
+                $('.ent').html(tr)
+            }
+        }).catch((error) => {
+            kasa.error(error)
+        })
+        // let sales_summary = JSON.parse(apiv2('sales', 'today', {'day': day}));
+        // console.table(sales_summary)
+        // $("#total").text(sales_summary.message)
     }
 
     viewAssetGroups(){
