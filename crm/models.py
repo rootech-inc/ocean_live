@@ -133,6 +133,41 @@ class Logs(models.Model):
             'company':self.company
         }
 
+    def obj(self):
+        return {
+            'pk':self.pk,
+            'customer':self.customer,
+            'success':self.success,
+            'phone':self.phone,
+            'subject':self.subject,
+            'description':self.description,
+            'owner':self.owner.get_full_name(),
+            'created_date':self.created_date,
+            'entry_date':self.entry_date,
+            'created_time':self.created_time,
+            'company':self.company,
+            'position':self.position.name,
+            'email':self.email,
+            'sector':{
+                'pk':self.sector.pk,
+                'name':self.sector.name
+            },
+            'city':{
+                'pk':self.city.pk,
+                'name':self.city.name
+            },
+            'suburb':{
+                'pk':self.suburb.pk,
+                'name':self.suburb.name
+            },
+            'address':self.address,
+            'position':{
+                'pk':self.position.pk,
+                'name':self.position.name
+            },
+            'google_sync':self.google_sync,
+            'validity':self.validity,
+        }
 
 class LogValidity(models.Model):
     log = models.ForeignKey(Logs, on_delete=models.SET_NULL, null=True)

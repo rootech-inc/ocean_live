@@ -10,10 +10,11 @@ from crm.models import Logs, CrmUsers, FollowUp
 # Create your views here.
 @login_required()
 def base(request):
-    if request.user.is_superuser:
-        logs = Logs.objects.filter(created_date=timezone.now().date()).order_by('-pk')
-    else:
-        logs = Logs.objects.filter(owner=request.user, created_date=timezone.now().date()).order_by('-pk')
+    # if request.user.is_superuser:
+    #     logs = Logs.objects.filter(created_date=timezone.now().date()).order_by('-pk')
+    # else:
+    #     logs = Logs.objects.filter(owner=request.user, created_date=timezone.now().date()).order_by('-pk')
+    logs = Logs.objects.filter(owner=request.user, created_date=timezone.now().date()).order_by('-pk')
     context = {
         'nav': True,
         'page': {

@@ -11,7 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 
 from admin_panel.anton import make_md5_hash, is_valid_email, is_valid_phone_number, md5only, get_client_ip
-from admin_panel.models import Emails, MailQueues, MailSenders, MailAttachments, Reminder, Sms, SmsApi
+from admin_panel.models import Emails, GeoCity, GeoCitySub, MailQueues, MailSenders, MailAttachments, Reminder, Sms, SmsApi
 from cmms.models import CarModel, SalesDeals, SalesCustomers
 from crm.models import Logs, CrmUsers, Sector, Positions, FollowUp, Campaigns, LogValidity, CampaignTargets, \
     CampaignSense
@@ -267,7 +267,7 @@ def api_interface(request):
             if module == 'log':
                 from django.db.models import Q
                 from datetime import datetime
-
+                pk = data.get('pk')
                 doc = data.get('doc', 'JSON')
                 # Define your filters
                 owner_filter = data.get('owner',
@@ -287,6 +287,9 @@ def api_interface(request):
                 if owner_filter != '*':
                     queryset = queryset.filter(owner__id=owner_filter)
 
+                if pk is not None and pk != '*':
+                    queryset = queryset.filter(pk=pk)
+
                 if flag_filter is not None and flag_filter != '*':
                     queryset = queryset.filter(flag=flag)
 
@@ -298,6 +301,8 @@ def api_interface(request):
 
                 if sector_filter is not None and sector_filter != '*':
                     queryset = queryset.filter(sector_id=sector_filter)
+                
+
 
                 lgo = []
                 if doc == 'JSON':
@@ -315,8 +320,15 @@ def api_interface(request):
                             'success': l.success,
                             'phone': l.phone
                         }
+                        try:    
+                            print('--------------------------------')
+                            print(l.obj())
+                            print('--------------------------------')
+                            lgo.append(l.obj())
+                        except Exception as e:
+                            print(e)
 
-                        lgo.append(obj)
+                        
                 elif doc == 'excel':
                     import openpyxl
                     book = openpyxl.Workbook()
@@ -669,6 +681,28 @@ def api_interface(request):
                 folo.save()
 
                 success_response['message'] = f"FOLLOWED UP date adjusted to {ext_date} ans new log created"
+                response = success_response
+
+            elif module == 'log':
+                pk = data.get('pk')
+                log = Logs.objects.get(pk=pk)
+                log.sector = Sector.objects.get(pk=data.get('sector'))
+                log.company = data.get('company_name')
+                log.city = GeoCity.objects.get(pk=data.get('city'))
+                log.suburb = GeoCitySub.objects.get(pk=data.get('suburb'))
+                log.position = Positions.objects.get(pk=data.get('position'))
+                log.phone = data.get('phone')
+                log.email = data.get('email')
+                log.subject = data.get('subject')
+                log.description = data.get('details')
+                log.flag = data.get('flag')
+                log.customer = data.get('contact_person')
+                log.address = data.get('address')
+                log.subject = data.get('subject')
+                log.save()
+
+                success_response['message'] = f"LOG UPDATED"
+                print(success_response)
                 response = success_response
 
             elif module == 'request_campaing_approval':

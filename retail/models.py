@@ -77,7 +77,7 @@ class BoltItems(models.Model):
     is_sync = models.BooleanField(default=False)
     group_changed = models.BooleanField(default=False)
 
-    exp_date = models.DateField(null=False, blank=False)
+    exp_date = models.DateField(null=True, blank=True,default=timezone.now().date())
     is_expired = models.BooleanField(default=False)
 
     image = models.ImageField(upload_to='static/uploads/dolphine/bolt/', null=True,default='static/uploads/dolphine/bolt/default.png')
@@ -179,6 +179,14 @@ class Products(models.Model):
     class Meta:
         unique_together = (('subgroup', 'code','entity'),)
 
+    def cardex(self):
+        arr = []
+        for move in ProductMoves.objects.filter(product_id=self.pk):
+            arr.append(move.obj())
+
+        print(arr)
+        return arr
+
     def obj(self,date=timezone.now().date()):
         image_url = "none"
         if BoltItems.objects.filter(product=self).exists():
@@ -197,6 +205,7 @@ class Products(models.Model):
             'stock':self.live_stock(),
             'shelf':self.shelf,
             'moves':self.moves(date),
+            'cardex':self.cardex()
         }
 
     def is_on_bolt(self):
@@ -221,12 +230,12 @@ class Products(models.Model):
                 if val == 'null':
                     val = 0
 
-                print(val)
+
                 obj[choice_type] = f"{val:.2f}"
 
             else:
                 choice_type = choice[0]
-                print(choice_type)
+
                 try:
                     val = 0
                     obj[choice_type] = f"{val:.2f}"
@@ -257,6 +266,7 @@ class RawStock(models.Model):
     #     unique_together = (('loc_id', 'prod_id'),)
 
 class ProductMoves(models.Model):
+    location = models.ForeignKey(Locations, on_delete=models.SET_NULL, null=True, blank=True)
     product = models.ForeignKey(Products, on_delete=models.CASCADE)
     ref = models.CharField(max_length=100, null=False, blank=False)
     move_type_choices = [
@@ -270,13 +280,28 @@ class ProductMoves(models.Model):
         ('SO','Sales Order'),
         ('CR','Credit Note'),
         ('DB','Debit Note'),
-        ('CB','Closing Balance')
+        ('CB','Closing Balance'),
+        ("SR","STOCK RESET")
     ]
     move_type = models.CharField(max_length=2, choices=move_type_choices,null=False,blank=False)
     quantity = models.DecimalField(decimal_places=3, max_digits=60)
     date = models.DateField(null=False, blank=False,default=timezone.now().date())
     time = models.TimeField(null=False, blank=False,auto_now=True)
     remark = models.TextField(null=True, blank=True)
+
+    def obj(self):
+        return {
+            "location":{
+                "code":self.location.code,
+                "name":self.location.descr,
+            },
+            "ref":self.ref,
+            "qty":self.quantity,
+            "date":self.date,
+            "time":self.time,
+            "remark":self.remark,
+            "move_type":self.move_type
+        }
 
     def day_data(self,target_date=timezone.now().date()):
         # loop through choices

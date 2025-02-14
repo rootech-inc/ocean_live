@@ -68,12 +68,6 @@ class Crm {
                 form += region
                 form += fom.textarea('address',3,true)
 
-
-
-                //form += fom.select('sector',sec_options,'',true);
-                //form += fom.input('text','company_name','',true);
-                //form += fom.input('text','contact_person','',true);
-                //form += fom.select('position',post_options,'',true);
                 let flag = `<label class="text-info" for="flag">FLAG </label>
                 <select id="flag" onchange="followUpCheck()" name="flag" class="form-control mb-2 rounded-0"><
                                     <option value="0" selected disabled>Select Flag</option>
@@ -253,6 +247,224 @@ class Crm {
         //   }
         // });
 
+    }
+
+    getLog(pk){
+        let payload = {
+            module:'log',
+            data:{
+                pk:pk
+            }
+        }
+        return api.call('VIEW',payload,'/crm/api/');
+    }
+
+    editLog(pk){
+        let response = this.getLog(pk);
+        if(anton.IsRequest(response)){
+            let msg = response['message'];
+            let log = msg[0];
+            console.table(log)
+            let sector_pk = log['sector']['pk'];
+            let city_pk = log['city']['pk'];
+            let suburb_pk = log['suburb']['pk'];
+            let position_pk = log['position']['pk'];
+            let form = '';
+            let sectors = this.getSector('*');
+            if(anton.IsRequest(sectors)){
+                let sec_options = ``
+                let secs = sectors['message'];
+                let sel_option = ``
+                for(let sc = 0;  sc < secs.length; sc++){
+                    let sec = secs[sc];
+                    if(sec['pk'] == sector_pk){
+                        console.log(`${sec['name']} selected`)
+                        // append  to sec_options
+                        sec_options += `<option value="${sec['pk']}" selected>${sec['name']}</option>`
+                        sel_option = `<option value="${sec['pk']}" selected>${sec['name']}</option>`
+                    } else {
+                        sec_options += `<option value="${sec['pk']}" >${sec['name']}</option>`
+                    }
+                }
+
+                let positions = this.getPosition('*');
+                if(anton.IsRequest(positions)){
+                    let posts = positions['message'];
+                    let post_options = ``;
+                    let sel_position = ``
+                    for(let po = 0; po < posts.length; po++){
+                        let post = posts[po];
+                        if(post['pk'] == position_pk){
+                            console.log(`${post['name']} selected`)
+                            post_options += `<option value="${post['pk']}" selected>${post['name']}</option>`   
+                            sel_position = `<option value="${post['pk']}" selected>${post['name']}</option>`
+                        } else {
+                            post_options += `<option value="${post['pk']}">${post['name']}</option>`    
+                        }
+                    }
+
+                    // Build form sections
+                    let sector = fom.select('sector', sec_options, '', true);
+                    let comp_name = fom.input('text', 'company_name', '', true);
+                    let secomp = `<div class="row">
+                        <div class="col-sm-6">${sector}</div>
+                        <div class="col-sm-6">${comp_name}</div>
+                    </div>`;
+                    
+                    let cpay = {
+                        module:'geo',
+                        data:{
+                            part:'city',
+                            key:'*'
+                        }
+                    }
+                    let city_options = ``
+                    
+                    let city_reponse = api.call('VIEW',cpay,'/adapi/');
+                    // console.table(city_reponse)
+                    if(anton.IsRequest(city_reponse)){
+                        let city = city_reponse['message'];
+                        
+                        for(let c = 0; c < city.length; c++){
+                            let cty = city[c];
+                            
+                            if(cty['pk'] == city_pk){
+                                console.log(`${cty['name']} selected`)
+                                city_options += `<option value="${cty['pk']}" selected>${cty['name']}</option>`
+                            } else {
+                                city_options += `<option value="${cty['pk']}">${cty['name']}</option>`
+                            }
+                            
+                        }
+                    } else {
+                        kasa.response(city_reponse)
+                        return;
+                    }
+
+                    let city = `<label class="text-info" for="city">CITY</label>
+                        <select class="form-control rounded-0" id="city" onchange="crm.loadSuburbForLog()">${city_options}</select>`
+                    let area = fom.select('suburb','','',true)
+
+                    let region = `<div class="row"> 
+                        <div class="col-sm-6">${city}</div>
+                        <div class="col-sm-6">${area}</div>
+                    </div>`
+
+                    let cont_per = fom.input('text','contact_person','',true);
+                    let pos = fom.select('position',post_options,'',true);
+                    let phone = fom.text('phone','',true,10);
+                    let email = fom.email('email','',true);
+                    let contact = `
+                        <div class="row">
+                            <div class="col-sm-6">${cont_per}</div>
+                            <div class="col-sm-6">${pos}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-6">${phone}</div>
+                            <div class="col-sm-6">${email}</div>
+                        </div>
+                        <hr>
+                    `
+
+                    let flag = `<label class="text-info" for="flag">FLAG </label>
+                        <select id="flag" onchange="followUpCheck()" name="flag" class="form-control mb-2 rounded-0">
+                            <option value="0" selected disabled>Select Flag</option>
+                            <option value="success">Reachable</option>
+                            <option value="unreachable">Unreachable</option>
+                        </select>`;
+                    let flag_option = ``
+                    if(log['flag'] == 'success'){
+                        flag_option = `<option value="success" selected>Reachable</option>
+                        <option value="unreachable">Unreachable</option>`
+                    } else {
+                        flag_option = `<option value="unreachable" selected>Unreachable</option>
+                        <option value="success">Reachable</option>
+                        `
+                    }
+                    let f_date = `<div id="f_date"></div>`
+
+                    let ff = `
+                        <div class="row">
+                            <div class="col-sm-6">${flag}</div>
+                            <div class="col-sm-6">${f_date}</div>
+                        </div><hr>
+                    `
+
+                    let sub_options = `
+                        <option value="Car Sales">Car Sales</option>
+                        <option value="Spare Parts">Spare Parts</option>
+                        <option value="Servicing">Servicing</option>
+                        <option value="Other">Others</option>
+                    `
+
+                    // Assemble the complete form
+                    form += secomp;
+                    form += contact;
+                    form += region;
+                    form += fom.textarea('address',3,true);
+                    form += ff;
+                    form += fom.select('subject',sub_options,'',true);
+                    form += fom.textarea('details',5,true);
+
+                    // Display the form
+                    amodal.setTitleText("Edit Log");
+                    amodal.setBodyHtml(form);
+                    amodal.setSize('L')
+                    amodal.setFooterHtml(`<button onclick="crm.saveEditLog('${pk}')" class="btn btn-success">SAVE</button>`)
+                    amodal.show()
+
+                    // Populate form with existing values
+                    $("#email").val(log['email']);
+                    $('#address').val(log['address']);
+                    $('#sector').val(log['sector']);
+                    $('#company_name').val(log['company']);
+                    $('#contact_person').val(log['customer']);
+                    $('#position').val(log['position']);
+                    $('#phone').val(log['phone']);
+                    $('#flag').val(log['flag']);
+                    $('#subject').val(log['subject']);
+                    $('#details').val(log['description']);
+                    $('#sector').prepend(sec_options)
+                    $('#position').prepend(sel_position)
+                    $('#flag').html(flag_option)
+                    
+
+                    // Load city data
+                    this.loadSuburbForLog();
+
+                } else {
+                    kasa.response(positions);
+                    return;
+                }
+            } else {
+                kasa.response(sectors);
+                return;
+            }
+        } else {
+            kasa.response(response);
+        }
+    }
+
+    saveEditLog(pk){
+        let fields = ['sector','company_name','city','suburb','address','flag','subject','details','mypk','position','phone','email','contact_person'];
+        if(anton.validateInputs(fields)){
+            let inputs = anton.Inputs(fields);
+            inputs['email'] = $('#email').val()
+            inputs['pk'] = pk
+            let payload = {
+                module:'log',
+                data:inputs
+            }
+            let save_log = api.call('PATCH',payload,'/crm/api/');
+            console.table(save_log)
+            if(anton.IsRequest(save_log)){
+                kasa.confirm(save_log['message'],1,'here')
+            } else {
+                kasa.response(save_log)
+            }
+        } else {
+            kasa.error("Invalid Form")
+        }
     }
 
     newUser(){

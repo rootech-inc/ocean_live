@@ -128,6 +128,41 @@ def interface(request):
                             date=ob_date
                         )
 
+                elif move_type == 'SR':
+                    transactions = data.get('transactions')
+                    entry_date = timezone.now().date()
+                    loc_id = data.get('loc_id')
+                    location = Locations.objects.get(code=loc_id)
+                    remarks = data.get('remarks')
+
+                    for transaction in transactions:
+                        # print(transaction)
+                        barcode = transaction['barcode']
+                        counted_stock = transaction['quantity']  # The physically counted stock
+
+                        product = Products.objects.get(barcode=barcode)
+
+                        # Get the current stock from ProductMoves
+                        current_stock = \
+                        ProductMoves.objects.filter(product=product, location=location).aggregate(Sum('quantity'))[
+                            'quantity__sum'] or 0
+
+                        # Calculate the adjustment needed
+                        adjustment = counted_stock - current_stock  # Ensure total matches counted stock
+
+                        # Only create adjustment if there's a difference
+                        if adjustment != 0:
+                            ProductMoves.objects.create(
+                                product=product,
+                                location=location,
+                                move_type=move_type,  # Ensure move_type is set correctly
+                                quantity=adjustment,
+                                remark=remarks,
+                                ref="SR"
+                            )
+
+
+
                 else:
                     products = Products.objects.all()
                     lg_ct = 1
@@ -2729,9 +2764,6 @@ ORDER BY
                 for prod in prods:
                     print(prod.obj())
                     arr.append(prod.obj())
-
-
-
                 success_response['message'] = arr
 
 

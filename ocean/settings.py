@@ -58,7 +58,8 @@ INSTALLED_APPS = [
     'retail.apps.RetailConfig',
     'crm.apps.CrmConfig',
     'servicing.apps.ServicingConfig',
-    'maintenance.apps.MaintenanceConfig'
+    'maintenance.apps.MaintenanceConfig',
+    'ssml.apps.SsmlConfig',
 ]
 
 MIDDLEWARE = [

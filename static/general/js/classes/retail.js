@@ -1749,9 +1749,11 @@ class Retail {
     loadCard(s = '*',filter='pk',entity='*') {
         console.log(s)
         let product = this.getCardProduct(s,filter,entity);
+
         if(anton.IsRequest(product)){
             let message = product['message'][0];
-            console.table(product)
+
+
             $('#previous').val(message['previous'])
             $('#next').val(message['next'])
             $('#image').attr('src',`${message['image']}`)
@@ -1780,10 +1782,26 @@ class Retail {
             let live_product = this.getProduct(message['barcode'])['message'][0];
 
 
-
+            let cardex = message['cardex'];
+            let ctr = ""
+            for (let c = 0; c < cardex.length; c++) {
+                let cr = cardex[c];
+                ctr += `
+                    <tr>
+                                                <td>${cr['location']['code']}</td>
+                                                <td>${cr['move_type']}</td>
+                                                <td>${cr['ref']}</td>
+                                                <td>${cr['date']}</td>
+                                                <td>${cr['qty']}</td>
+                                            </tr>
+                `
+            }
+            $('#cardex_tr').empty()
+            $('#cardex_tr').html(ctr)
+            console.table(cardex)
             anton.setValues(live_product)
             anton.setValues(message)
-            console.table(live_product)
+
 
         } else {
             kasa.response(product)

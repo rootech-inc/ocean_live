@@ -35,6 +35,7 @@ urlpatterns = [
     path('retail/', include('retail.urls')),
     path('crm/', include('crm.urls')),
     path('servicing/', include('servicing.urls')),
-    path('maintainance/', include('maintenance.urls'))
+    path('maintainance/', include('maintenance.urls')),
+    path('ssml/',include('ssml.urls')),
 
 ]

@@ -55,7 +55,7 @@
                             <div class="dropdown-menu" aria-labelledby="dropleftMenuButton">
                                 <a class="dropdown-item text-info" onclick="Swal.fire({title:`{{ log.subject }}`,text:`{{ log.description }}`})" href="javascript:void(0)"><i class="fa fa-eye"></i> Details</a>
                                 <a class="dropdown-item text-success" onclick="crm.createDeal(`{{ log.pk }}`)" href="javascript:void(0)"><i class="fa fa-money-bill"></i> Start Transaction</a>
-{#                                <a class="dropdown-item" href="#">Something else here</a>#}
+                                <a class="dropdown-item" class="text-warning" href="javascript:void(0)" onclick="crm.editLog(`{{ log.pk }}`)"><i class="fa fa-edit"></i> Edit</a>
                             </div>
                         </div>
                         </td>
