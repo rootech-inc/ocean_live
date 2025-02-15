@@ -1,7 +1,9 @@
 import pyodbc
+from django.db.models import Sum
 
+from admin_panel.models import Locations
 from ocean.settings import RET_DB_HOST, RET_DB_PORT, RET_DB_NAME, RET_DB_USER, RET_DB_PASS
-from retail.models import RawStock
+from retail.models import RawStock, ProductMoves
 from retail.views import stock
 
 
@@ -76,6 +78,15 @@ def get_stock(item_code):
         '999': warehouse,
     }
 
+def stock_by_moved(prod_id):
+    obj = {}
+    for location in Locations.objects.all():
+        code = location.code
+        name = location.descr
+        stock = ProductMoves.objects.filter(location=location,product_id=prod_id).aggregate(Sum('quantity'))['quantity__sum'] or 0
+        obj[code] = stock
+
+    return obj
 
 
 def updateStock(item_code):

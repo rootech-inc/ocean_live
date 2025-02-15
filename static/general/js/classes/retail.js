@@ -1771,7 +1771,7 @@ class Retail {
             }
 
             let stock = message['stock'];
-
+            console.table(stock)
             let str = ""
             for (const trKey in stock) {
                 str += `<tr><td>${trKey}</td><td>${stock[trKey]}</td></tr>`
@@ -1783,8 +1783,12 @@ class Retail {
 
 
             let cardex = message['cardex'];
+            let cl = 5;
+            if (cardex.length < cl +1){
+                cl = cardex.length
+            }
             let ctr = ""
-            for (let c = 0; c < cardex.length; c++) {
+            for (let c = 0; c < cl; c++) {
                 let cr = cardex[c];
                 ctr += `
                     <tr>
@@ -1798,7 +1802,7 @@ class Retail {
             }
             $('#cardex_tr').empty()
             $('#cardex_tr').html(ctr)
-            console.table(cardex)
+            // console.table(cardex)
             anton.setValues(live_product)
             anton.setValues(message)
 
@@ -2366,6 +2370,89 @@ class Retail {
             kasa.error(err)
             loader.hide()
         })
+    }
+
+    async resetStockScreen() {
+        // get locations
+        let loc_payload = {
+            module: 'location_master',
+            data: {}
+        }
+        let barcode,name;
+        barcode = $('#barcode').val()
+        name = $('#name').val()
+
+        if(!anton.validateInputs(['barcode','name'])){
+            kasa.error("Select Product")
+            return
+        }
+        await api.v2('VIEW',loc_payload,'/retail/api/').then(response => {
+            if(anton.IsRequest(response)){
+                let locs = response['message'];
+                let tr = "";
+                for(let l = 0; l < locs.length; l++){
+                    let loc = locs[l];
+                    if(loc['type'] === 'retail'){
+                        tr +=  `
+                            <tr id="row_${l}"><td id="code_${l}">${loc['code']}</td><td>${loc['name']}</td><td><input type="text" id="quantity_${l}" value="not_include"></td></tr>
+                        `
+                    }
+
+                }
+
+                let html = `
+                <input type="date" id="as_of_date">
+                    <p>Barcode: ${barcode}</p>
+                    <p>Namr: ${name}</p>
+                    
+                    <hr>
+                    <table class="table table-sm"><thead><tr><th>CODE</th><th>DESCR</th><th>PHYSICAL</th></tr></thead><tbody id="rs_body">${tr}</tbody></table>
+                `
+                amodal.setBodyHtml(html)
+                amodal.setTitleText("Stock Reset")
+                amodal.show()
+                amodal.setFooterHtml(`<button class="btn btn-warning" id="reset_stock">RESET</button>`)
+                $('#reset_stock').click(function(){
+                    if(!anton.validateInputs(['as_of_date'])){
+                        kasa.error("Select Date")
+                        return
+                    }
+                    $('#rs_body tr').each(function (){
+                        let id = $(this).attr('id');
+                        let line = id.split('_')[1];
+                        let qty = $(`#quantity_${line}`).val();
+                        if(qty !== 'not_include'){
+                            let payload = {
+                                "module":"moves",
+                                "data":{
+                                    "type":"SR",
+                                    "loc_id":$(`#code_${line}`).text(),
+                                    "remarks":"Stock Reset Test",
+                                    'entry_date':$('#as_of_date').val(),
+                                    "transactions":[
+                                        {
+                                            "barcode":barcode,
+                                            "quantity":qty
+                                        }
+                                    ]
+                                }
+                            }
+
+
+
+                            console.table(payload)
+                            let send = api.call('PUT',payload,'/retail/api/')
+                            console.table(send)
+                        }
+
+
+                    })
+                    amodal.hide()
+                })
+            } else {
+                kasa.response(response)
+            }
+        }).catch(error => {kasa.error(error)})
     }
 }
 

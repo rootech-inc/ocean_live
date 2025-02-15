@@ -21,7 +21,7 @@ from admin_panel.anton import format_currency
 from admin_panel.models import Emails, Locations, BusinessEntityTypes
 from inventory.views import transfer
 from ocean.settings import RET_DB_HOST, RET_DB_USER, RET_DB_PASS, RET_DB_NAME, BOLT_PROVIDER_ID, BOLT_MARGIN
-from retail.db import ret_cursor, get_stock, updateStock, percentage_difference
+from retail.db import ret_cursor, get_stock, updateStock, percentage_difference, stock_by_moved
 from retail.models import BoltItems, BoltGroups, ProductSupplier, ProductGroup, ProductSubGroup, Products, Stock, \
     RecipeGroup, RecipeProduct, Recipe, StockHd, StockMonitor, RawStock, ButcheryLiveTransactions, ButchSales, \
     StockToSend, TranHd, TranTr, RetailSales, SampleHd, SampleTran, BoltSubGroups, BillHeader, BillTrans, ProductMoves
@@ -130,7 +130,7 @@ def interface(request):
 
                 elif move_type == 'SR':
                     transactions = data.get('transactions')
-                    entry_date = timezone.now().date()
+                    entry_date = data.get('entry_date')
                     loc_id = data.get('loc_id')
                     location = Locations.objects.get(code=loc_id)
                     remarks = data.get('remarks')
@@ -138,13 +138,13 @@ def interface(request):
                     for transaction in transactions:
                         # print(transaction)
                         barcode = transaction['barcode']
-                        counted_stock = transaction['quantity']  # The physically counted stock
+                        counted_stock = Decimal(transaction['quantity'])  # The physically counted stock
 
                         product = Products.objects.get(barcode=barcode)
 
                         # Get the current stock from ProductMoves
                         current_stock = \
-                        ProductMoves.objects.filter(product=product, location=location).aggregate(Sum('quantity'))[
+                        ProductMoves.objects.filter(product=product, location=location,date__lt=entry_date).aggregate(Sum('quantity'))[
                             'quantity__sum'] or 0
 
                         # Calculate the adjustment needed
@@ -158,47 +158,64 @@ def interface(request):
                                 move_type=move_type,  # Ensure move_type is set correctly
                                 quantity=adjustment,
                                 remark=remarks,
-                                ref="SR"
+                                ref="SR",
+                                date=entry_date
                             )
 
 
 
                 else:
-                    products = Products.objects.all()
+                    products = Products.objects.all()[:10]
                     lg_ct = 1
                     all_ct = products.count()
-                    for product in products.order_by('name'):
+                    for product in products:#.order_by('name'):
                         print(lg_ct,"/",all_ct, product.name)
                         lg_ct = lg_ct + 1
                         # GRN
                         if move_type == 'GR':
-                            g_query = f"select hd.entry_no,hd.grn_date,total_units,tr.line_no from grn_tran tr join grn_hd hd on hd.entry_no = tr.entry_no  where tr.ocean is null and hd.posted = 1 and tr.item_ref = '{product.barcode}'"
+                            g_query = f"select hd.entry_no,hd.grn_date,total_units,tr.line_no,hd.loc_id,'' from grn_tran tr join grn_hd hd on hd.entry_no = tr.entry_no  where tr.ocean is null and hd.posted = 1 and tr.item_ref = '{product.barcode}'"
 
                         elif move_type == 'TR':
-                            g_query = f"select hd.entry_no,hd.entry_date,total_units,tr.line_no from tran_tr tr join tran_hd hd on hd.entry_no = tr.entry_no  where tr.ocean is null and hd.posted = 1 and tr.item_ref = '{product.barcode}'"
+                            g_query = f"select hd.entry_no,hd.entry_date,total_units,tr.line_no,hd.loc_from,hd.loc_to  from tran_tr tr join tran_hd hd on hd.entry_no = tr.entry_no  where tr.ocean is null and hd.posted = 1 and tr.item_ref = '{product.barcode}'"
 
                         elif move_type == 'AD':
-                            g_query = f"select hd.entry_no,hd.entry_date,total_units,tr.line_no from adj_tran tr join adj_hd hd on hd.entry_no = tr.entry_no  where tr.ocean is null and hd.posted = 1 and tr.item_ref = '{product.barcode}'"
+                            g_query = f"select hd.entry_no,hd.entry_date,total_units,tr.line_no,hd.loc_id,'' from adj_tran tr join adj_hd hd on hd.entry_no = tr.entry_no  where tr.ocean is null and hd.posted = 1 and tr.item_ref = '{product.barcode}'"
 
                         conn = ret_cursor()
                         cursor = conn.cursor()
                         cursor.execute(g_query)
                         for grn_row in cursor.fetchall():
-                            ref,ent_date,quantity,line_no = grn_row
+                            ref,ent_date,quantity,line_no,loc_id,loc_to = grn_row
                             # li = [ref,ent_date,quantity,line_no]
+                            location = Locations.objects.get(code=loc_id)
                             # print(move_type,li)
+                            sent_qty = 0
+                            if move_type == 'TR':
+                                sent_qty = quantity
+                                quantity = quantity * -1
                             ProductMoves.objects.create(
                                 product=product,
                                 ref=ref,
                                 quantity=quantity,
                                 date=ent_date,
-                                move_type=move_type
+                                move_type=move_type,
+                                location=location,
                             )
+
 
                             update_q = ""
                             if move_type == "GR":
                                 upd_query = f"UPDATE grn_tran set ocean = 1 where entry_no = '{ref}' and item_ref = '{product.barcode}' and line_no = '{line_no}'"
                             if move_type == "TR":
+                                location = Locations.objects.get(code=loc_to)
+                                ProductMoves.objects.create(
+                                    product=product,
+                                    ref=ref,
+                                    quantity=sent_qty,
+                                    date=ent_date,
+                                    move_type=move_type,
+                                    location=location,
+                                )
                                 upd_query = f"UPDATE tran_tr set ocean = 1 where entry_no = '{ref}' and item_ref = '{product.barcode}' and line_no = '{line_no}'"
                             if move_type == 'AD':
                                 upd_query = f"UPDATE adj_tran set ocean = 1 where entry_no = '{ref}' and item_ref = '{product.barcode}' and line_no = '{line_no}'"
@@ -242,6 +259,7 @@ def interface(request):
                     if tran_type == 'S':
                         product = Products.objects.get(barcode=barcode)
                         print(prod_id)
+                        quantity = quantity * -1
                         BillTrans.objects.create(bill=bill,product=product,quantity=quantity,time=time,price=price)
                         ProductMoves.objects.create(
                             move_type='SI',
@@ -3141,20 +3159,21 @@ ORDER BY
                     spintex.writerow(stock_header)
 
                     for item in items:
-                        stock = get_stock(item.product.code)
+                        print(item.product.barcode)
+                        stock = stock_by_moved(item.product.pk)
                         sp_stk = [
                             item.product.barcode,
-                            stock.get('spintex', 0) if stock.get('spintex') > 0 else 0,
+                            stock.get('001'),
                             BOLT_PROVIDER_ID.get('001')['address']
                         ]
                         ni_stk = [
                             item.product.barcode,
-                            stock.get('nia', 0) if stock.get('nia') > 0 else 0,
+                            stock.get('202'),# if stock.get('nia') > 0 else 0,
                             BOLT_PROVIDER_ID.get('202')['address']
                         ]
                         os_stk = [
                             item.product.barcode,
-                            stock.get('osu', 5) if stock.get('osu') > 0 else 5,
+                            stock.get('205'),# 5) if stock.get('osu') > 0 else 5,
                             BOLT_PROVIDER_ID.get('205')['address']
                         ]
 

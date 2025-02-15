@@ -15,6 +15,7 @@ from ocean import settings
 from ocean.settings import DEBUG
 
 
+
 # CLERKS
 class Clerk(models.Model):
     location = models.ForeignKey('admin_panel.Locations', on_delete=models.CASCADE)
@@ -188,6 +189,7 @@ class Products(models.Model):
         return arr
 
     def obj(self,date=timezone.now().date()):
+        from retail.db import stock_by_moved
         image_url = "none"
         if BoltItems.objects.filter(product=self).exists():
             image_url = BoltItems.objects.filter(product=self).first().image.url if BoltItems.objects.filter(product=self).first().image else 'static/uploads/dolphine/bolt/default.png'
@@ -202,7 +204,7 @@ class Products(models.Model):
             'image':image_url,
             'next':Products.objects.filter(pk__gt=self.pk,entity=self.entity).first().pk if Products.objects.filter(pk__gt=self.pk,entity=self.entity).exists() else 0,
             'previous': Products.objects.filter(pk__lt=self.pk,entity=self.entity).last().pk if Products.objects.filter(pk__lt=self.pk,entity=self.entity).exists() else 0,
-            'stock':self.live_stock(),
+            'stock':stock_by_moved(self.pk),
             'shelf':self.shelf,
             'moves':self.moves(date),
             'cardex':self.cardex()

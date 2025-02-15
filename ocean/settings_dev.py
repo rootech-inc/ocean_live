@@ -100,6 +100,7 @@ DATABASE_USER = os.environ.get('DB_USER', 'root')
 DATABASE_PASSWORD = os.environ.get('DB_PASSWORD', 'Sunderland@411')
 DATABASE_HOST = os.environ.get('DB_HOST', '127.0.0.1')
 DATABASE_PORT = os.environ.get('DB_PORT', '3306')
+BOLT_MARGIN = os.environ.get('BOLT_MARGIN',25)
 
 DATABASES = {
     'ex': {
@@ -108,10 +109,10 @@ DATABASES = {
     },
     'default': {
         'ENGINE': DATABASE_ENGINE,
-        'NAME': 'ocean_loc',
+        'NAME': DATABASE_NAME,
         'USER': DATABASE_USER,
         'PASSWORD': DATABASE_PASSWORD,
-        'HOST': '127.0.0.1',
+        'HOST': DATABASE_HOST,
         'PORT': DATABASE_PORT,
         'OPTIONS': {
             "init_command": "SET foreign_key_checks = 0;",
@@ -213,13 +214,13 @@ AUTHENTICATION_BACKENDS = [
 
 # CMMS DATA PARAMETERS
 
-DB_SERVER = '192.168.2.4' if DEBUG is False else '192.168.2.4'
+DB_SERVER = '127.0.0.1' if DEBUG is False else '127.0.0.1'
 DB_PORT = '1237' if DEBUG is False else '1237'
 DB_USER = 'sa'
 DB_PASSWORD = 'sa@123456'
 DB_NAME = 'CMMS'
 
-OLD_DB_SERVER = '192.168.2.4'
+OLD_DB_SERVER = '127.0.0.1'
 OLD_DB_PORT = '1433'
 # DB_USER = 'sa'
 # DB_PASSWORD = 'sa@123456'
@@ -229,12 +230,37 @@ OLD_DB_NAME = 'PROC_CMMS_V1'
 # DB_PORT = '1433'
 # DB_NAME = 'PROC_CMMS_V1'
 
-RET_DB_HOST = '192.168.2.4'
-# RET_DB_HOST = '26.80.117.10'
+RET_DB_HOST = '127.0.0.1'
 RET_DB_NAME = 'SMSEXPV17'
 RET_DB_USER = 'sa'
 RET_DB_PASS = 'sa@123456'
-RET_DB_PORT = ''
+RET_DB_PORT = '1433'
+
+REST_DB_HOST = '127.0.0.1'
+REST_DB_NAME = 'SMSEXP_REST_2022'
+REST_DB_USER = 'sa'
+REST_DB_PASS = 'sa@123456'
+REST_DB_PORT = '1433'
+
 
 # approvers email
 CMMS_PROF_APPROVER = 'uyinsolomon2@gmail.com'
+
+BOLT_PROVIDER_ID = {
+    "001":{
+        "id":"75541",
+        "name":"Spintex",
+        "address":"SNEDA Shopping Centre Limited - Spintex - 520 - 75541"
+    },
+    "202":{
+        "id":"75542",
+        "name":"NIA",
+        "address":"SNEDA Shopping Centre Limited - NIA - 521 - 75542",
+    },
+    "205":{
+        "id":"75550",
+        "name":"OSU",
+        "address":"SNEDA Shopping Centre Limited - Osu - 522 - 75550"
+    }
+}
+
