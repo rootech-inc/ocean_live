@@ -165,65 +165,142 @@ def interface(request):
 
 
                 else:
-                    products = Products.objects.all()[:10]
+                    # products = Products.objects.all()
                     lg_ct = 1
-                    all_ct = products.count()
-                    for product in products:#.order_by('name'):
-                        print(lg_ct,"/",all_ct, product.name)
-                        lg_ct = lg_ct + 1
-                        # GRN
-                        if move_type == 'GR':
-                            g_query = f"select hd.entry_no,hd.grn_date,total_units,tr.line_no,hd.loc_id,'' from grn_tran tr join grn_hd hd on hd.entry_no = tr.entry_no  where tr.ocean is null and hd.posted = 1 and tr.item_ref = '{product.barcode}'"
+                    # all_ct = products.count()
+                    if move_type == 'GR':
+                        g_query = f"select hd.entry_no,hd.grn_date,total_units,tr.line_no,hd.loc_id,'',item_ref,line_no from grn_tran tr join grn_hd hd on hd.entry_no = tr.entry_no  where tr.ocean is null and hd.posted = 1"
 
-                        elif move_type == 'TR':
-                            g_query = f"select hd.entry_no,hd.entry_date,total_units,tr.line_no,hd.loc_from,hd.loc_to  from tran_tr tr join tran_hd hd on hd.entry_no = tr.entry_no  where tr.ocean is null and hd.posted = 1 and tr.item_ref = '{product.barcode}'"
+                    elif move_type == 'TR':
+                        g_query = f"select hd.entry_no,hd.entry_date,total_units,tr.line_no,hd.loc_from,hd.loc_to,item_ref,line_no  from tran_tr tr join tran_hd hd on hd.entry_no = tr.entry_no  where tr.ocean is null and hd.posted = 1"
 
-                        elif move_type == 'AD':
-                            g_query = f"select hd.entry_no,hd.entry_date,total_units,tr.line_no,hd.loc_id,'' from adj_tran tr join adj_hd hd on hd.entry_no = tr.entry_no  where tr.ocean is null and hd.posted = 1 and tr.item_ref = '{product.barcode}'"
+                    elif move_type == 'AD':
+                        g_query = f"select hd.entry_no,hd.entry_date,total_units,tr.line_no,hd.loc_id,'',item_ref,line_no from adj_tran tr join adj_hd hd on hd.entry_no = tr.entry_no  where tr.ocean is null and hd.posted = 1"
+                    conn = ret_cursor()
+                    cursor = conn.cursor()
 
-                        conn = ret_cursor()
-                        cursor = conn.cursor()
-                        cursor.execute(g_query)
-                        for grn_row in cursor.fetchall():
-                            ref,ent_date,quantity,line_no,loc_id,loc_to = grn_row
-                            # li = [ref,ent_date,quantity,line_no]
+                    cursor.execute(g_query)
+                    print(g_query)
+
+                    rows = cursor.fetchall()
+                    all_ct = len(rows)
+                    if len(rows) > 0:
+                        for row in rows:
+                            ref, ent_date, quantity, line_no, loc_id, loc_to, item_ref,line_no = row
+                            item_ref = item_ref.strip()
+
+
+
                             location = Locations.objects.get(code=loc_id)
-                            # print(move_type,li)
                             sent_qty = 0
                             if move_type == 'TR':
                                 sent_qty = quantity
                                 quantity = quantity * -1
-                            ProductMoves.objects.create(
-                                product=product,
-                                ref=ref,
-                                quantity=quantity,
-                                date=ent_date,
-                                move_type=move_type,
-                                location=location,
-                            )
-
-
-                            update_q = ""
-                            if move_type == "GR":
-                                upd_query = f"UPDATE grn_tran set ocean = 1 where entry_no = '{ref}' and item_ref = '{product.barcode}' and line_no = '{line_no}'"
-                            if move_type == "TR":
-                                location = Locations.objects.get(code=loc_to)
+                            if Products.objects.filter(barcode=item_ref).exists():
+                                li = [lg_ct, "/", all_ct, ref, ent_date, quantity, line_no, item_ref]
+                                print(move_type, li)
+                                product = Products.objects.get(barcode=item_ref)
                                 ProductMoves.objects.create(
                                     product=product,
                                     ref=ref,
-                                    quantity=sent_qty,
+                                    quantity=quantity,
                                     date=ent_date,
                                     move_type=move_type,
                                     location=location,
+                                    line_no=line_no
                                 )
-                                upd_query = f"UPDATE tran_tr set ocean = 1 where entry_no = '{ref}' and item_ref = '{product.barcode}' and line_no = '{line_no}'"
-                            if move_type == 'AD':
-                                upd_query = f"UPDATE adj_tran set ocean = 1 where entry_no = '{ref}' and item_ref = '{product.barcode}' and line_no = '{line_no}'"
 
-                            # print(upd_query)
-                            cursor.execute(upd_query)
-                            cursor.commit()
+                                update_q = ""
+                                print("HELLO WORLD")
+                                if move_type == "GR":
+                                    update_q = f"UPDATE grn_tran set ocean = 1 where entry_no = '{ref}' and item_ref = '{product.barcode}' and line_no = '{line_no}'"
+                                if move_type == "TR":
+                                    location = Locations.objects.get(code=loc_to)
+                                    sent_qty = 12
+                                    ProductMoves.objects.create(
+                                        product=product,
+                                        ref=ref,
+                                        quantity=sent_qty,
+                                        date=ent_date,
+                                        move_type=move_type,
+                                        location=location,
+                                        line_no=line_no
+                                    )
+                                    update_q = f"UPDATE tran_tr set ocean = 1 where entry_no = '{ref}' and item_ref = '{product.barcode}' and line_no = '{line_no}'"
+                                if move_type == 'AD':
+                                    update_q = f"UPDATE adj_tran set ocean = 1 where entry_no = '{ref}' and item_ref = '{product.barcode}' and line_no = '{line_no}'"
 
+                                print(update_q)
+                                cursor.execute(update_q)
+                                cursor.commit()
+                                print(update_q)
+                                # raise Exception(update_q)
+                            else:
+                                print(item_ref, "Not Found")
+
+                            lg_ct += 1
+
+                    # for product in products.order_by('name'):
+                    #     # print(lg_ct,"/",all_ct, product.name)
+                    #     lg_ct = lg_ct + 1
+                    #     # GRN
+                    #     if move_type == 'GR':
+                    #         g_query = f"select hd.entry_no,hd.grn_date,total_units,tr.line_no,hd.loc_id,'' from grn_tran tr join grn_hd hd on hd.entry_no = tr.entry_no  where tr.ocean is null and hd.posted = 1 and tr.item_ref = '{product.barcode}'"
+                    #
+                    #     elif move_type == 'TR':
+                    #         g_query = f"select hd.entry_no,hd.entry_date,total_units,tr.line_no,hd.loc_from,hd.loc_to  from tran_tr tr join tran_hd hd on hd.entry_no = tr.entry_no  where tr.ocean is null and hd.posted = 1 and tr.item_ref = '{product.barcode}'"
+                    #
+                    #     elif move_type == 'AD':
+                    #         g_query = f"select hd.entry_no,hd.entry_date,total_units,tr.line_no,hd.loc_id,'' from adj_tran tr join adj_hd hd on hd.entry_no = tr.entry_no  where tr.ocean is null and hd.posted = 1 and tr.item_ref = '{product.barcode}'"
+                    #
+                    #     cursor.execute(upd_query)
+                    #     cursor.commit()
+
+                        # cursor.execute(g_query)
+                        # # print(g_query)
+                        # rows = cursor.fetchall()
+                        # if len(rows) > 0:
+                        #     for grn_row in cursor.fetchall():
+                        #         ref,ent_date,quantity,line_no,loc_id,loc_to = grn_row
+                        #         li = [lg_ct,"/",all_ct,ref,ent_date,quantity,line_no]
+                        #         location = Locations.objects.get(code=loc_id)
+                        #         print(move_type,li)
+                        #         sent_qty = 0
+                        #         if move_type == 'TR':
+                        #             sent_qty = quantity
+                        #             quantity = quantity * -1
+                        #         ProductMoves.objects.create(
+                        #             product=product,
+                        #             ref=ref,
+                        #             quantity=quantity,
+                        #             date=ent_date,
+                        #             move_type=move_type,
+                        #             location=location,
+                        #         )
+                        #
+                        #
+                        #         update_q = ""
+                        #         if move_type == "GR":
+                        #             upd_query = f"UPDATE grn_tran set ocean = 1 where entry_no = '{ref}' and item_ref = '{product.barcode}' and line_no = '{line_no}'"
+                        #         if move_type == "TR":
+                        #             location = Locations.objects.get(code=loc_to)
+                        #             ProductMoves.objects.create(
+                        #                 product=product,
+                        #                 ref=ref,
+                        #                 quantity=sent_qty,
+                        #                 date=ent_date,
+                        #                 move_type=move_type,
+                        #                 location=location,
+                        #             )
+                        #             upd_query = f"UPDATE tran_tr set ocean = 1 where entry_no = '{ref}' and item_ref = '{product.barcode}' and line_no = '{line_no}'"
+                        #         if move_type == 'AD':
+                        #             upd_query = f"UPDATE adj_tran set ocean = 1 where entry_no = '{ref}' and item_ref = '{product.barcode}' and line_no = '{line_no}'"
+                        #
+                        #         # print(upd_query)
+                        #         cursor.execute(upd_query)
+                        #         cursor.commit()
+                        # else:
+                        #     print()
                         conn.close()
             elif module == 'bill':
                 header = data.get('header')
@@ -248,7 +325,7 @@ def interface(request):
                     print(tran)
                     time = tran.get('time')
                     barcode = tran.get('barcode')
-                    quantity = tran.get('quantity')
+                    quantity = Decimal(tran.get('quantity'))
                     price = tran.get('price')
                     prod_id = tran.get('prod_id')
                     tran_type = tran.get('tran_type')
@@ -256,19 +333,22 @@ def interface(request):
                     print(barcode)
                     print(prod_id)
                     print(tran_type)
+                    n_qty = quantity * -1
                     if tran_type == 'S':
                         product = Products.objects.get(barcode=barcode)
-                        print(prod_id)
-                        quantity = quantity * -1
-                        BillTrans.objects.create(bill=bill,product=product,quantity=quantity,time=time,price=price)
+                        print(f"POS Sales from {location.descr}")
+                        print(f"QTY: {n_qty}\nPRICE:{price}")
+                        BillTrans.objects.create(bill=bill,product=product,quantity=n_qty,time=time,price=price)
                         ProductMoves.objects.create(
                             move_type='SI',
                             product=product,
                             ref=bill_ref,
-                            quantity=quantity,
+                            quantity=n_qty,
                             date=bill_date,
-                            remark=f"POS Sales from {location.descr}"
+                            remark=f"POS Sales from {location.descr}",
+                            location=location
                         )
+
 
 
 

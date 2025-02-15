@@ -268,6 +268,7 @@ class RawStock(models.Model):
     #     unique_together = (('loc_id', 'prod_id'),)
 
 class ProductMoves(models.Model):
+    line_no = models.IntegerField(null=False, blank=False)
     location = models.ForeignKey(Locations, on_delete=models.SET_NULL, null=True, blank=True)
     product = models.ForeignKey(Products, on_delete=models.CASCADE)
     ref = models.CharField(max_length=100, null=False, blank=False)
@@ -290,6 +291,9 @@ class ProductMoves(models.Model):
     date = models.DateField(null=False, blank=False,default=timezone.now().date())
     time = models.TimeField(null=False, blank=False,auto_now=True)
     remark = models.TextField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('location', 'product','move_type','quantity','ref','line_no')
 
     def obj(self):
         return {
