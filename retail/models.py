@@ -268,7 +268,8 @@ class RawStock(models.Model):
     #     unique_together = (('loc_id', 'prod_id'),)
 
 class ProductMoves(models.Model):
-    location = models.ForeignKey(Locations, on_delete=models.SET_NULL, null=True, blank=True)
+    line_no = models.IntegerField()
+    location = models.ForeignKey(Locations, on_delete=models.CASCADE, null=False, blank=False)
     product = models.ForeignKey(Products, on_delete=models.CASCADE)
     ref = models.CharField(max_length=100, null=False, blank=False)
     move_type_choices = [
@@ -283,13 +284,18 @@ class ProductMoves(models.Model):
         ('CR','Credit Note'),
         ('DB','Debit Note'),
         ('CB','Closing Balance'),
-        ("SR","STOCK RESET")
+        ("SR","STOCK RESET"),
+        ("SRT","SALES RETURN"),
+        ("PRT", "PURCHASE RETURN"),
     ]
-    move_type = models.CharField(max_length=2, choices=move_type_choices,null=False,blank=False)
+    move_type = models.CharField(max_length=3, choices=move_type_choices,null=False,blank=False)
     quantity = models.DecimalField(decimal_places=3, max_digits=60)
     date = models.DateField(null=False, blank=False,default=timezone.now().date())
     time = models.TimeField(null=False, blank=False,auto_now=True)
     remark = models.TextField(null=True, blank=True)
+
+    class Meta:
+        unique_together = (('product', 'location','line_no','quantity','ref'),)
 
     def obj(self):
         return {

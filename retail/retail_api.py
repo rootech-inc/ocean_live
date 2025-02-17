@@ -162,9 +162,308 @@ def interface(request):
                                 date=entry_date
                             )
 
+                elif move_type == 'IN':
+                    conn = ret_cursor()
+                    cursor = conn.cursor()
+                    print("INVOICES")
+
+                    # get invoice tran
+                    query = "select hd.entry_no,hd.entry_date,tr.total_units,tr.line_no,hd.loc_id,'',tr.item_code,hd.remark from inv_tran tr join inv_hd hd on hd.entry_no = tr.entry_no where ocean is NULL and hd.valid = 1 and hd.posted = 1"
+                    cursor.execute(query)
+                    print(query)
+                    rows = cursor.fetchall()
+                    over_lines = len(rows)
+                    compare_line = 1
+                    for row in rows:
+                        entry_no,entry_date,quantity,line_no,loc_id,loc_to,item_code,remarks = row
+                        log = f"{move_type} : {compare_line} / {over_lines} {item_code}"
+                        # get product
+                        product =  Products.objects.filter(code=item_code)
+                        if product.exists():
+                            location = Locations.objects.get(code=loc_id)
+                            pd = product.last()
+                            quantity = quantity * -1
+                            log += " Exist "
+                            log += str(quantity)
+                            try:
+                                ProductMoves.objects.get_or_create(
+                                    line_no=line_no,
+                                    product=pd,
+                                    quantity=quantity,
+                                    date=entry_date,
+                                    move_type=move_type,
+                                    remark=remarks,
+                                    ref=entry_no,
+                                    location=location
+                                )
+
+                                update_q = f"UPDATE inv_tran set ocean = 1 where item_code = '{item_code}' and entry_no = '{entry_no}' and line_no = {line_no}"
+                                cursor.execute(update_q)
+                                cursor.commit()
+                            except Exception as e:
+                                pass
+                        else:
+                            log += " Does Not Exists"
+                        compare_line += 1
+                        print(log)
+
+                    conn.close()
+
+                elif move_type == 'GR':
+                    conn = ret_cursor()
+                    cursor = conn.cursor()
+                    print("GRN")
+
+                    # get invoice tran
+                    query = ("select hd.entry_no,hd.grn_date,tr.total_units,tr.line_no,hd.loc_id,'',tr.item_code,"
+                             "hd.remark from grn_tran tr join grn_hd hd on hd.entry_no = tr.entry_no where ocean is NULL and hd.valid = 1 and hd.posted = 1")
+                    cursor.execute(query)
+                    print(query)
+                    rows = cursor.fetchall()
+                    over_lines = len(rows)
+                    compare_line = 1
+                    for row in rows:
+                        entry_no, entry_date, quantity, line_no, loc_id, loc_to, item_code, remarks = row
+                        log = f"{move_type} : {compare_line} / {over_lines} {item_code}"
+                        # get product
+                        product = Products.objects.filter(code=item_code)
+                        if product.exists():
+                            location = Locations.objects.get(code=loc_id)
+                            pd = product.last()
+
+                            log += " Exist "
+                            log += str(quantity)
+                            try:
+                                ProductMoves.objects.get_or_create(
+                                    line_no=line_no,
+                                    product=pd,
+                                    quantity=quantity,
+                                    date=entry_date,
+                                    move_type=move_type,
+                                    remark=remarks,
+                                    ref=entry_no,
+                                    location=location
+                                )
+
+                                update_q = f"UPDATE grn_tran set ocean = 1 where item_code = '{item_code}' and entry_no = '{entry_no}' and line_no = {line_no}"
+                                cursor.execute(update_q)
+                                cursor.commit()
+                            except Exception as e:
+                                log += f" {e}"
+                        else:
+                            log += " Does Not Exists"
+                        compare_line += 1
+                        print(log)
+
+                    conn.close()
+
+                elif move_type == 'AD':
+                    conn = ret_cursor()
+                    cursor = conn.cursor()
+                    print("GRN")
+
+                    # get invoice tran
+                    query = ("select hd.entry_no,hd.entry_date,tr.total_units,tr.line_no,hd.loc_id,'',tr.item_code,"
+                             "hd.reason from adj_tran tr join adj_hd hd on hd.entry_no = tr.entry_no where ocean is NULL and hd.valid = 1 and hd.posted = 1")
+                    cursor.execute(query)
+                    print(query)
+                    rows = cursor.fetchall()
+                    over_lines = len(rows)
+                    compare_line = 1
+                    for row in rows:
+                        entry_no, entry_date, quantity, line_no, loc_id, loc_to, item_code, remarks = row
+                        log = f"{move_type} : {compare_line} / {over_lines} {item_code}"
+                        # get product
+                        product = Products.objects.filter(code=item_code)
+                        if product.exists():
+                            location = Locations.objects.get(code=loc_id)
+                            pd = product.last()
+
+                            log += " Exist "
+                            log += str(quantity)
+                            try:
+                                ProductMoves.objects.get_or_create(
+                                    line_no=line_no,
+                                    product=pd,
+                                    quantity=quantity,
+                                    date=entry_date,
+                                    move_type=move_type,
+                                    remark=remarks,
+                                    ref=entry_no,
+                                    location=location
+                                )
+
+                                update_q = f"UPDATE adj_tran set ocean = 1 where item_code = '{item_code}' and entry_no = '{entry_no}' and line_no = {line_no}"
+                                cursor.execute(update_q)
+                                cursor.commit()
+                            except Exception as e:
+                                pass
+                        else:
+                            log += " Does Not Exists"
+                        compare_line += 1
+                        print(log)
+
+                    conn.close()
+
+                elif move_type == 'TR':
+                    conn = ret_cursor()
+                    cursor = conn.cursor()
+                    print("TRANSFER")
+
+                    # get invoice tran
+                    query = "select hd.entry_no,hd.entry_date,tr.total_units,tr.line_no,hd.loc_from,loc_to,tr.item_code,hd.remark from tran_tr tr join tran_hd hd on hd.entry_no = tr.entry_no where ocean is NULL and hd.valid = 1 and hd.posted = 1;"
+                    cursor.execute(query)
+                    print(query)
+                    rows = cursor.fetchall()
+                    over_lines = len(rows)
+                    compare_line = 1
+                    for row in rows:
+                        entry_no, entry_date, quantity, line_no, loc_id, loc_to, item_code, remarks = row
+                        log = f"{move_type} : {compare_line} / {over_lines} {item_code}"
+                        # get product
+                        product = Products.objects.filter(code=item_code)
+                        if product.exists():
+                            location = Locations.objects.get(code=loc_to)
+                            pd = product.last()
+
+                            log += " Exist "
+                            log += str(quantity)
+
+                            try:
+
+                                ProductMoves.objects.get_or_create(
+                                    line_no=line_no,
+                                    product=pd,
+                                    quantity=quantity,
+                                    date=entry_date,
+                                    move_type=move_type,
+                                    remark=remarks,
+                                    ref=entry_no,
+                                    location=location
+                                )
+
+                                locfrom = Locations.objects.get(code=loc_id)
+
+                                ProductMoves.objects.get_or_create(
+                                    line_no=line_no,
+                                    product=pd,
+                                    quantity=quantity * -1,
+                                    date=entry_date,
+                                    move_type=move_type,
+                                    remark=remarks,
+                                    ref=entry_no,
+                                    location=locfrom
+                                )
+
+                                update_q = f"UPDATE tran_tr set ocean = 1 where item_code = '{item_code}' and entry_no = '{entry_no}' and line_no = {line_no}"
+                                cursor.execute(update_q)
+                                cursor.commit()
+                            except Exception as e:
+                                log += f" {e}"
+                        else:
+                            log += " Does Not Exists"
+                        compare_line += 1
+                        print(log)
+
+                    conn.close()
+
+                elif move_type == 'SRT':
+                    conn = ret_cursor()
+                    cursor = conn.cursor()
+                    print("GRN")
+
+                    # get invoice tran
+                    query = "select hd.entry_no,hd.entry_date,tr.total_units,tr.line_no,hd.loc_id,'',tr.item_code,hd.remark from return_tran tr join return_hd hd on hd.entry_no = tr.entry_no where ocean is NULL and hd.valid = 1 and hd.posted = 1;"
+                    cursor.execute(query)
+                    print(query)
+                    rows = cursor.fetchall()
+                    over_lines = len(rows)
+                    compare_line = 1
+                    for row in rows:
+                        entry_no, entry_date, quantity, line_no, loc_id, loc_to, item_code, remarks = row
+                        log = f"{move_type} : {compare_line} / {over_lines} {item_code}"
+                        # get product
+                        product = Products.objects.filter(code=item_code)
+                        if product.exists():
+                            location = Locations.objects.get(code=loc_id)
+                            pd = product.last()
+
+                            log += " Exist "
+                            log += str(quantity)
+                            try:
+                                ProductMoves.objects.get_or_create(
+                                    line_no=line_no,
+                                    product=pd,
+                                    quantity=quantity,
+                                    date=entry_date,
+                                    move_type=move_type,
+                                    remark=remarks,
+                                    ref=entry_no,
+                                    location=location
+                                )
+
+                                update_q = f"UPDATE return_tran set ocean = 1 where item_code = '{item_code}' and entry_no = '{entry_no}' and line_no = {line_no}"
+                                cursor.execute(update_q)
+                                cursor.commit()
+                            except Exeption as e:
+                                pass
+                        else:
+                            log += " Does Not Exists"
+                        compare_line += 1
+                        print(log)
+
+                    conn.close()
+
+                elif move_type == 'PRT':
+                    conn = ret_cursor()
+                    cursor = conn.cursor()
+                    print("PURCHASE RETURN")
+
+                    # get invoice tran
+                    query = "select hd.entry_no,hd.entry_date,tr.total_units * -1 as 'total_units',tr.line_no,hd.loc_id,'',tr.item_code,hd.remark from purch_ret_tran tr join purch_ret_hd hd on hd.entry_no = tr.entry_no where ocean is NULL and hd.valid = 1 and hd.posted = 1;;"
+                    cursor.execute(query)
+                    print(query)
+                    rows = cursor.fetchall()
+                    over_lines = len(rows)
+                    compare_line = 1
+                    for row in rows:
+                        entry_no, entry_date, quantity, line_no, loc_id, loc_to, item_code, remarks = row
+                        log = f"{move_type} : {compare_line} / {over_lines} {item_code}"
+                        # get product
+                        product = Products.objects.filter(code=item_code)
+                        if product.exists():
+                            location = Locations.objects.get(code=loc_id)
+                            pd = product.last()
+
+                            log += " Exist "
+                            log += str(quantity)
+                            try:
+                                ProductMoves.objects.get_or_create(
+                                    line_no=line_no,
+                                    product=pd,
+                                    quantity=quantity,
+                                    date=entry_date,
+                                    move_type=move_type,
+                                    remark=remarks,
+                                    ref=entry_no,
+                                    location=location
+                                )
+
+                                update_q = f"UPDATE purch_ret_tran set ocean = 1 where item_code = '{item_code}' and entry_no = '{entry_no}' and line_no = {line_no}"
+                                cursor.execute(update_q)
+                                cursor.commit()
+                            except Exception as e:
+                                pass
+                        else:
+                            log += " Does Not Exists"
+                        compare_line += 1
+                        print(log)
+
+                    conn.close()
 
 
                 else:
+                    raise Exception("No Document Type")
                     products = Products.objects.all()[:10]
                     lg_ct = 1
                     all_ct = products.count()
