@@ -176,6 +176,7 @@ class Products(models.Model):
     entity = models.ForeignKey(admin_panel.models.BusinessEntityTypes, on_delete=models.SET_NULL, null=True, blank=True)
 
     is_butch = models.BooleanField(default=False)
+    barcodes = models.TextField(null=True, blank=True)
 
     class Meta:
         unique_together = (('subgroup', 'code','entity'),)
@@ -204,10 +205,10 @@ class Products(models.Model):
             'image':image_url,
             'next':Products.objects.filter(pk__gt=self.pk,entity=self.entity).first().pk if Products.objects.filter(pk__gt=self.pk,entity=self.entity).exists() else 0,
             'previous': Products.objects.filter(pk__lt=self.pk,entity=self.entity).last().pk if Products.objects.filter(pk__lt=self.pk,entity=self.entity).exists() else 0,
-            'stock':stock_by_moved(self.pk),
+            'stock':stock_by_moved(self.pk,'*'),
             'shelf':self.shelf,
             'moves':self.moves(date),
-            'cardex':self.cardex()
+            'cardex':[]
         }
 
     def is_on_bolt(self):
@@ -223,26 +224,26 @@ class Products(models.Model):
 
     def moves(self,date=timezone.now().date()):
         obj = {}
-        for choice in ProductMoves.move_type_choices:
-            choice_type = choice[0]
-            if ProductMoves.objects.filter(product=self, date=date,move_type=choice_type).exists():
-                val = ProductMoves.objects.filter(move_type=choice_type, date=date, product_id=self.pk).aggregate(
-                    sum=Sum('quantity'))['sum'] if ProductMoves.objects.filter(move_type=choice_type,
-                                                                               date=date).exists() else 0
-                if val == 'null':
-                    val = 0
-
-
-                obj[choice_type] = f"{val:.2f}"
-
-            else:
-                choice_type = choice[0]
-
-                try:
-                    val = 0
-                    obj[choice_type] = f"{val:.2f}"
-                except Exception as e:
-                    pass
+        # for choice in ProductMoves.move_type_choices:
+        #     choice_type = choice[0]
+        #     if ProductMoves.objects.filter(product=self, date=date,move_type=choice_type).exists():
+        #         val = ProductMoves.objects.filter(move_type=choice_type, date=date, product_id=self.pk).aggregate(
+        #             sum=Sum('quantity'))['sum'] if ProductMoves.objects.filter(move_type=choice_type,
+        #                                                                        date=date).exists() else 0
+        #         if val == 'null':
+        #             val = 0
+        #
+        #
+        #         obj[choice_type] = f"{val:.2f}"
+        #
+        #     else:
+        #         choice_type = choice[0]
+        #
+        #         try:
+        #             val = 0
+        #             obj[choice_type] = f"{val:.2f}"
+        #         except Exception as e:
+        #             pass
 
         return obj
 
@@ -257,6 +258,15 @@ class Products(models.Model):
         return arr
 
 
+class Barcode(models.Model):
+    product = models.ForeignKey(Products, on_delete=models.CASCADE,related_name='barcode_of_barcodes')
+    barcode = models.CharField(max_length=100, unique=True,verbose_name='Barcodefsome_codes')
+
+class Stock(models.Model):
+    product = models.ForeignKey(Products, on_delete=models.CASCADE)
+    location = models.ForeignKey(Locations, on_delete=models.CASCADE)
+    quantity = models.DecimalField(decimal_places=2, max_digits=10, default=0.00)
+
 class RawStock(models.Model):
     loc_id = models.CharField(max_length=3, unique=False, null=False, blank=False)
     prod_id = models.CharField(max_length=20)
@@ -266,6 +276,8 @@ class RawStock(models.Model):
 
     # class Meta:
     #     unique_together = (('loc_id', 'prod_id'),)
+
+
 
 class ProductMoves(models.Model):
     line_no = models.IntegerField()
@@ -279,7 +291,7 @@ class ProductMoves(models.Model):
         ('AD','Adjusted'),
         ('CL','Closing Balance'),
         ('PR','Purchase Receipt'),
-        ('SI','Sales Invoice'),
+        ('SIP','Sales Invoice'),
         ('SO','Sales Order'),
         ('CR','Credit Note'),
         ('DB','Debit Note'),
@@ -287,6 +299,8 @@ class ProductMoves(models.Model):
         ("SR","STOCK RESET"),
         ("SRT","SALES RETURN"),
         ("PRT", "PURCHASE RETURN"),
+        ("PI", "POS SALES"),
+        ("IN", "INVOICE"),
     ]
     move_type = models.CharField(max_length=3, choices=move_type_choices,null=False,blank=False)
     quantity = models.DecimalField(decimal_places=3, max_digits=60)
@@ -323,7 +337,7 @@ class ProductMoves(models.Model):
             arr[choice_type] = ProductMoves.objects.filter(move_type=choice_type,date=target_date,product=self.product).aggregate(sum=Sum('quantity'))['sum'] if ProductMoves.objects.filter(move_type=choice_type,date=target_date).exists() else 0
         return arr
 
-class Stock(models.Model):
+class MoveStock(models.Model):
     product = models.ForeignKey(Products, on_delete=models.CASCADE)
     location = models.CharField(max_length=100, null=False, blank=False)
     quantity = models.DecimalField(decimal_places=2, max_digits=10, default=0.00)

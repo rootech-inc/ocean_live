@@ -428,8 +428,8 @@ class BusinessEntityTypes(models.Model):
         if BoltItems.objects.filter(menu=self).exists():
             is_bolt = True
 
-            for item in BoltItems.objects.filter(menu=self)[:1]:
-                menu_items.append(item.obj())
+            # for item in BoltItems.objects.filter(menu=self)[:1]:
+            #     menu_items.append(item.obj())
 
         return {
             "is_bolt":is_bolt,

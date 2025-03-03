@@ -21,10 +21,11 @@ from admin_panel.anton import format_currency
 from admin_panel.models import Emails, Locations, BusinessEntityTypes
 from inventory.views import transfer
 from ocean.settings import RET_DB_HOST, RET_DB_USER, RET_DB_PASS, RET_DB_NAME, BOLT_PROVIDER_ID, BOLT_MARGIN
-from retail.db import ret_cursor, get_stock, updateStock, percentage_difference, stock_by_moved
+from retail.db import ret_cursor, get_stock, updateStock, percentage_difference, stock_by_moved, stock_by_prod
 from retail.models import BoltItems, BoltGroups, ProductSupplier, ProductGroup, ProductSubGroup, Products, Stock, \
     RecipeGroup, RecipeProduct, Recipe, StockHd, StockMonitor, RawStock, ButcheryLiveTransactions, ButchSales, \
-    StockToSend, TranHd, TranTr, RetailSales, SampleHd, SampleTran, BoltSubGroups, BillHeader, BillTrans, ProductMoves
+    StockToSend, TranHd, TranTr, RetailSales, SampleHd, SampleTran, BoltSubGroups, BillHeader, BillTrans, ProductMoves, \
+    Barcode, MoveStock
 from retail.prodMast import ProdMaster
 from retail.retail_tools import create_recipe_card
 
@@ -60,6 +61,7 @@ def interface(request):
 
                 group_pk = data.get('group')
                 subgroup_pk = data.get('sub_group')
+
                 image = data.get('image')
                 entity_id = data.get('entity')
                 entity = BusinessEntityTypes.objects.get(id = entity_id)
@@ -79,15 +81,15 @@ def interface(request):
 
                 # BoltItems.objects.filter(product=pd).delete()
 
-                # if BoltGroups.objects.filter(name=group_name).count() == 0:
-                #     BoltGroups.objects.create(name=group_name)
+                if BoltGroups.objects.filter(name=group_pk,entity=entity).count() == 0:
+                    BoltGroups.objects.create(name=group_pk,entity=entity)
 
-                group = BoltGroups.objects.get(pk=group_pk,entity=entity)
+                group = BoltGroups.objects.get(name=group_pk,entity=entity)
 
-                # if BoltSubGroups.objects.filter(name=sub_group_name).count() == 0:
-                #     BoltSubGroups.objects.create(name=sub_group_name,group=group)
+                if BoltSubGroups.objects.filter(name=subgroup_pk,group=group,entity=entity).count() == 0:
+                    BoltSubGroups.objects.create(name=subgroup_pk,group=group,entity=entity)
 
-                subgroup = BoltSubGroups.objects.get(pk=subgroup_pk,entity=entity)
+                subgroup = BoltSubGroups.objects.get(name=subgroup_pk,entity=entity,group=group)
 
 
 
@@ -155,11 +157,12 @@ def interface(request):
                             ProductMoves.objects.create(
                                 product=product,
                                 location=location,
-                                move_type=move_type,  # Ensure move_type is set correctly
+                                move_type=move_type,
                                 quantity=adjustment,
                                 remark=remarks,
                                 ref="SR",
-                                date=entry_date
+                                date=entry_date,
+                                line_no=1
                             )
 
                 elif move_type == 'IN':
@@ -200,6 +203,55 @@ def interface(request):
                                 update_q = f"UPDATE inv_tran set ocean = 1 where item_code = '{item_code}' and entry_no = '{entry_no}' and line_no = {line_no}"
                                 cursor.execute(update_q)
                                 cursor.commit()
+                            except Exception as e:
+                                pass
+                        else:
+                            log += " Does Not Exists"
+                        compare_line += 1
+                        print(log)
+
+                    conn.close()
+
+                elif move_type == 'PIXXX':
+                    conn = ret_cursor()
+                    cursor = conn.cursor()
+                    print("PI")
+
+                    # get invoice tran
+                    query = "select hd.entry_no,hd.entry_date,tr.tran_qty, '' as 'line_no',hd.location_id,'' as 'loc_to',tr.prod_id,CONCAT('POS SALES',hd.ref_no) from pos_tran tr join pos_tran_hd hd on hd.entry_no = tr.entry_no where tr.ocean is null and hd.inv_upd = 1 and hd.inv_valid = 1 and hd.location_id = '001'"
+                    cursor.execute(query)
+                    print(query)
+                    rows = cursor.fetchall()
+                    over_lines = len(rows)
+                    compare_line = 1
+                    line_no = 1
+                    for row in rows:
+                        entry_no, entry_date, quantity, x, loc_id, loc_to, item_code, remarks = row
+                        log = f"{move_type} : {compare_line} / {over_lines} {item_code}"
+                        # get product
+                        product = Products.objects.filter(code=item_code)
+                        if product.exists():
+                            location = Locations.objects.get(code=loc_id)
+                            pd = product.last()
+                            quantity = quantity * -1
+                            log += " Exist "
+                            log += str(quantity)
+                            try:
+                                ProductMoves.objects.get_or_create(
+                                    line_no=line_no,
+                                    product=pd,
+                                    quantity=quantity,
+                                    date=entry_date,
+                                    move_type=move_type,
+                                    remark=remarks,
+                                    ref=entry_no,
+                                    location=location
+                                )
+
+                                update_q = f"UPDATE pos_tran set ocean = 1 where prod_id = '{item_code}' and entry_no = '{entry_no}'"
+                                cursor.execute(update_q)
+                                cursor.commit()
+                                line_no += 1
                             except Exception as e:
                                 pass
                         else:
@@ -311,7 +363,7 @@ def interface(request):
                     print("TRANSFER")
 
                     # get invoice tran
-                    query = "select hd.entry_no,hd.entry_date,tr.total_units,tr.line_no,hd.loc_from,loc_to,tr.item_code,hd.remark from tran_tr tr join tran_hd hd on hd.entry_no = tr.entry_no where ocean is NULL and hd.valid = 1 and hd.posted = 1;"
+                    query = "select hd.entry_no,hd.entry_date,tr.total_units,tr.line_no,hd.loc_from,loc_to,tr.item_code,hd.remark from tran_tr tr join tran_hd hd on hd.entry_no = tr.entry_no where ocean is NULL and hd.valid = 1 and hd.posted = 1 and hd.loc_to = '001';"
                     cursor.execute(query)
                     print(query)
                     rows = cursor.fetchall()
@@ -354,6 +406,7 @@ def interface(request):
                                     ref=entry_no,
                                     location=locfrom
                                 )
+                                log += f"{quantity * -1} to {locfrom.code}"
 
                                 update_q = f"UPDATE tran_tr set ocean = 1 where item_code = '{item_code}' and entry_no = '{entry_no}' and line_no = {line_no}"
                                 cursor.execute(update_q)
@@ -405,7 +458,7 @@ def interface(request):
                                 update_q = f"UPDATE return_tran set ocean = 1 where item_code = '{item_code}' and entry_no = '{entry_no}' and line_no = {line_no}"
                                 cursor.execute(update_q)
                                 cursor.commit()
-                            except Exeption as e:
+                            except Exception as e:
                                 pass
                         else:
                             log += " Does Not Exists"
@@ -544,30 +597,44 @@ def interface(request):
 
                 # save transactions
                 for tran in transactions:
-                    print(tran)
-                    time = tran.get('time')
-                    barcode = tran.get('barcode')
-                    quantity = tran.get('quantity')
-                    price = tran.get('price')
-                    prod_id = tran.get('prod_id')
-                    tran_type = tran.get('tran_type')
+                    try:
+                        time = tran.get('time')
+                        barcode = tran.get('barcode')
+                        quantity = Decimal(tran.get('quantity'))
+                        price = tran.get('price')
+                        prod_id = tran.get('prod_id')
+                        tran_type = tran.get('tran_type')
+                        line_no = tran.get('line_no')
+                        # print(tran_type)
 
-                    print(barcode)
-                    print(prod_id)
-                    print(tran_type)
-                    if tran_type == 'S':
-                        product = Products.objects.get(barcode=barcode)
-                        print(prod_id)
-                        quantity = quantity * -1
-                        BillTrans.objects.create(bill=bill,product=product,quantity=quantity,time=time,price=price)
-                        ProductMoves.objects.create(
-                            move_type='SI',
-                            product=product,
-                            ref=bill_ref,
-                            quantity=quantity,
-                            date=bill_date,
-                            remark=f"POS Sales from {location.descr}"
-                        )
+                        if tran_type == 'S':
+                            product = Products.objects.get(barcode=barcode)
+
+                            quantity = quantity * -1
+
+                            print(prod_id)
+                            BillTrans.objects.create(bill=bill, product=product, quantity=quantity, time=time,
+                                                     price=price)
+                            print("Saved Start")
+
+                            # Print before creating ProductMoves to see if the code reaches here
+                            # print(f"Creating ProductMove for product: {product} with quantity: {quantity}")
+
+                            ProductMoves.objects.create(
+                                move_type='PI',
+                                product=product,
+                                ref=bill_ref,
+                                quantity=quantity,
+                                date=bill_date,
+                                remark=f"POS Sales from {location.descr}",
+                                line_no=line_no,
+                                location=location
+                            )
+                            print("Saved Moved")
+
+                    except Exception as e:
+                        print(f"Error processing transaction: {e}")
+
 
 
 
@@ -888,6 +955,35 @@ def interface(request):
                     "errors":error
                 }
                 response = success_response
+
+            elif module == 'sync_retail_barcodes':
+                conn = ret_cursor()
+                cursor = conn.cursor()
+                cursor.execute("SELECT RTRIM(item_code),RTRIM(barcode) FROM barcode")
+                for row in cursor.fetchall():
+                    item_code,barcode = row
+
+                    try:
+                        Barcode.objects.create(
+                            product=Products.objects.get(code=item_code),
+                            barcode=barcode
+                        )
+                        print([item_code, barcode])
+                    except Exception as e:
+                        print(e)
+                        pass
+
+            elif module == 'build_barcode':
+                for product in Products.objects.all():
+                    bars = ""
+                    for barcodes in Barcode.objects.filter(product=product):
+                        barcode = f"{barcodes.barcode},"
+                        bars += barcode
+                    if len(bars) > 0:
+                        bars = bars[:-1]
+                        print(bars)
+                        product.barcode = bars
+                        product.save()
 
             elif module == 'update_stock':
                 products = Products.objects.all()
@@ -2560,7 +2656,7 @@ def interface(request):
                     for tran in trans_query.fetchall():
                         item_code, item_name, request_qty,barcode = tran
                         cursor.execute(
-                            f"select top(1) th.entry_no,th.entry_date,tr.total_units from tran_tr tr  right join tran_hd th on th.entry_no = tr.entry_no where tr.item_code = '{item_code}' order by th.entry_date desc")
+                            f"select top(1) th.entry_no,th.entry_date,tr.total_units from tran_tr tr  right join tran_hd th on th.entry_no = tr.entry_no where tr.item_code = '{item_code}' and th.loc_to='{loc_id}' order by th.entry_date desc")
                         last_tran_row = cursor.fetchone()
 
                         last_tr_entry, last_tran_date, last_tran_qty, sold_qty = ['none', 'none', 0, 0]
@@ -2585,7 +2681,7 @@ def interface(request):
 
                                 # transferd
                                 inv_cursor.execute(
-                                    f"SELECT SUM(total_units) FROM tran_tr where item_code = '{item_code}'  and entry_no in (SELECT entry_no from tran_hd where entry_date between '{last_tran_date}' and '{entry_date}' and loc_from = '{loc_id}' )")
+                                    f"SELECT SUM(total_units) FROM tran_tr where item_code = '{item_code}'  and entry_no in (SELECT entry_no from tran_hd where entry_date between '{last_tran_date}' and '{entry_date}' and loc_from = '{loc_requested}' )")
                                 transfered = inv_cursor.fetchone()[0] or 0
 
                                 total_out = sold_qty + adjusted
@@ -3335,10 +3431,12 @@ ORDER BY
                     osu.writerow(stock_header)
                     spintex.writerow(stock_header)
 
+
                     for item in items:
+                        barcodes = item.product.barcodes if item.product.barcodes else item.product.barcode
                         li = [
                             str(item.product.barcode),
-                            str(item.product.barcode),
+                            str(barcodes),
                             item.product.name,
                             item.product.name,
                             item.group.name,
@@ -3349,20 +3447,22 @@ ORDER BY
                             item.description
                         ]
 
-                        stock = get_stock(item.product.code)
+                        # stock = get_stock(item.product.code)
+                        stock = stock_by_moved(item.product.pk,'*')
+                        print(stock)
                         sp_stk = [
                             item.product.barcode,
-                            stock.get('spintex',5) if stock.get('spintex') > 0 else 5,
+                            stock.get('001') if stock.get('001') > 0 else 0,
                             BOLT_PROVIDER_ID.get('001')['address']
                         ]
                         ni_stk = [
                             item.product.barcode,
-                            stock.get('nia',5)  if stock.get('nia') > 0 else 5,
+                            stock.get('202')  if stock.get('202') > 0 else 0,
                             BOLT_PROVIDER_ID.get('202')['address']
                         ]
                         os_stk = [
                             item.product.barcode,
-                            stock.get('osu',5)  if stock.get('osu') > 0 else 5,
+                            stock.get('205')  if stock.get('205') > 0 else 0,
                             BOLT_PROVIDER_ID.get('205')['address']
                         ]
 
@@ -3375,7 +3475,7 @@ ORDER BY
                         osu.writerow(os_stk)
 
 
-                        original_file = item.image.path
+                        original_file =  item.image.path
                         file_name = os.path.basename(original_file)
 
                         name, ext = os.path.splitext(file_name)
@@ -3414,6 +3514,54 @@ ORDER BY
                     }
                 }
 
+            elif module == 'update_on_bolt':
+                import csv
+                time_ext = str(timezone.now()).replace(':', '_').replace(' ', '_')
+                csv_file = f"static/general/tmp/bot_{time_ext}_file.csv"
+                with open(csv_file, mode='w', newline='', encoding="utf-8") as px:
+                    writer = csv.writer(px)
+                    header = [
+                        "SKU",
+                        "Barcode",
+                        "Name en-GH",
+                        "Name en-US",
+                        "Level 1 - Category",
+                        "Level 2 - Subcategory",
+                        "Provider IDs",
+                        "Sub-category code",
+                        "Description en-US",
+                        "Description en-GH"
+                    ]
+                    writer.writerow(header)
+                    items = BoltItems.objects.all().order_by('product__name')
+                    providers_id = ""
+                    for bolt_id in BOLT_PROVIDER_ID:
+                        print(bolt_id)
+                        row = BOLT_PROVIDER_ID[bolt_id]
+                        providers_id += f"{row.get('id')},"
+
+                    # remove last comma
+                    providers_id = providers_id[:-1]
+                    print(items.count())
+                    for item in items:
+                        barcodes = item.product.barcodes if item.product.barcodes else item.product.barcode
+                        li = [
+                            str(f"{item.product.barcode.split(',')[0]}"),
+                            str(f"{barcodes}"),
+                            item.product.name,
+                            item.product.name,
+                            item.group.name,
+                            item.subgroup.name,
+                            str(providers_id),
+                            f"{item.group.name}/{item.subgroup.name}",
+                            item.description,
+                            item.description
+                        ]
+                        print(item.product.barcode)
+                        writer.writerow(li)
+
+                success_response['message'] = csv_file
+                response = success_response
             elif module == 'bolt_stock_update':
                 import os
                 import zipfile
@@ -3459,20 +3607,22 @@ ORDER BY
 
                     for item in items:
                         print(item.product.barcode)
-                        stock = stock_by_moved(item.product.pk)
+                        stock = stock_by_prod(item.product.pk)
+                        print(stock)
+
                         sp_stk = [
                             item.product.barcode,
-                            stock.get('001'),
+                            stock.get('001') if stock.get('001') > 0 else 0,
                             BOLT_PROVIDER_ID.get('001')['address']
                         ]
                         ni_stk = [
                             item.product.barcode,
-                            stock.get('202'),# if stock.get('nia') > 0 else 0,
+                            stock.get('001') if stock.get('202') > 0 else 0,# if stock.get('nia') > 0 else 0,
                             BOLT_PROVIDER_ID.get('202')['address']
                         ]
                         os_stk = [
                             item.product.barcode,
-                            stock.get('205'),# 5) if stock.get('osu') > 0 else 5,
+                            stock.get('001') if stock.get('205') > 0 else 0,# 5) if stock.get('osu') > 0 else 5,
                             BOLT_PROVIDER_ID.get('205')['address']
                         ]
 
@@ -3485,6 +3635,7 @@ ORDER BY
                     "nia":nia_stock_file,
                     "osu":osu_stock_file
                 }
+
             elif module == 'stock':
                 item_code = data.get('item_code')
                 success_response['message'] = get_stock(item_code)
@@ -3512,6 +3663,24 @@ ORDER BY
                 BoltItems.objects.filter(is_sync=False).update(is_sync=True)
 
                 success_response['message'] = file_name
+
+            elif module == 'mark_stock_update':
+                for product in Products.objects.all():
+                    stock = stock_by_moved(product.pk,'*')
+                    for key, value in stock.items():
+                        loc = Locations.objects.get(code=key)
+                        if MoveStock.objects.filter(product=product,location=loc).exists():
+                            # update
+                            MoveStock.objects.filter(product=product,location=loc).update(quantity=value)
+                            print(f"{product.name} updated")
+                        else:
+                            MoveStock.objects.create(
+                                product=product,
+                                location=loc,
+                                quantity=value
+                            )
+                            print(f"{product.name} created")
+
 
 
             elif module == 'check_bolt_expiry':
