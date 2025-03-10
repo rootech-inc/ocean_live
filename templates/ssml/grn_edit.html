@@ -15,8 +15,8 @@
         </div>
     </div>
 </div>
-<div class="card-body">
-    <div class="container p-1">
+<div class="card-body overflow-hidden">
+    <div class="container p-1 h-100 overflow-hidden">
         <div class="row bg-primary text-light py-4">
             <div class="col-md-4">
                 <div class="form-group row mb-2">
@@ -92,8 +92,8 @@
             </div>
         </div>
 
-        <div class="row my-2">
-            <div class="col-md-12" style="background-color: #fff;">
+        <div class="row my-2 h-75 overflow-auto">
+            <div class="col-md-12" style="background-color: #d0d0d0;">
                 <div class="table-responsive">
                     <table class="table table-bordered table-sm">
                         <thead>
@@ -110,8 +110,8 @@
                         </thead>
                         <tbody id="row_list">
                             {% for transaction in grn_transactions %}
-                                <tr id="row_{{forloop.counter}}" ondblclick="$(this).remove()">
-                                    <td id="row_no_{{forloop.counter}}">{{forloop.counter}}</td>
+                                <tr id="row_{{forloop.counter}}">
+                                    <td class='pointer' ondblclick="$('#row_{{forloop.counter}}').remove()" id="row_no_{{forloop.counter}}">{{forloop.counter}}</td>
                                     <td id="barcode_{{forloop.counter}}">{{transaction.barcode}}</td>
                                     <td id="name_{{forloop.counter}}">{{transaction.name}}</td>
                                     <td><input type="text" id="uom_{{forloop.counter}}" class="form-control" value="{{transaction.uom}}"></td>
@@ -134,7 +134,7 @@
         let next_row = $('#row_list tr').length + 1;
         $('#row_list').append(`
                                     <tr id="row_${next_row}">
-                                        <td id="row_no_${next_row}">${next_row}</td>
+                                        <td class='pointer' ondblclick="$('#row_${next_row}').remove()" id="row_no_${next_row}">${next_row}</td>
                                         <td id="barcode_${next_row}">${barcode}</td>
                                         <td id="name_${next_row}">${name}</td>
                                         <td><input type="text" class="form-control form-control-sm" value="PCS" id="uom_${next_row}"></td>

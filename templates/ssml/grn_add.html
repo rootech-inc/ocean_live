@@ -16,8 +16,8 @@
     </div>
 </div>
 
-<div class="card-body">
-    <div class="container p-1">
+<div class="card-body overflow-hidden">
+    <div class="container p-1 h-100 overflow-hidden">
         <div class="row bg-primary text-light py-4">
             <div class="col-md-4">
                 <div class="form-group row mb-2">
@@ -90,8 +90,8 @@
             </div>
         </div>
 
-        <div class="row my-2">
-            <div class="col-md-12" style="background-color: #fff;">
+        <div class="row my-2 h-75 overflow-auto">
+            <div class="col-md-12" style="background-color: #d0d0d0;">
                 <div class="table-responsive">
                     <table class="table table-bordered table-sm">
                         <thead>
@@ -138,7 +138,7 @@
         let next_row = $('#row_list tr').length + 1;
         $('#row_list').append(`
                                     <tr id="row_${next_row}">
-                                        <td id="row_no_${next_row}">${next_row}</td>
+                                        <td class='pointer' ondblclick="$('#row_${next_row}').remove()" id="row_no_${next_row}">${next_row}</td>
                                         <td id="barcode_${next_row}">${barcode}</td>
                                         <td id="name_${next_row}">${name}</td>
                                         <td><input type="text" class="form-control form-control-sm" value="PCS" id="uom_${next_row}"></td>

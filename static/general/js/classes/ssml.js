@@ -777,13 +777,7 @@ class SSML {
                 let contractor = response.message;
                 console.table(contractor.material);
                 let body = `
-                    <div class='card p-0'>
-                        <div class='card-body p-2'>
-                            <div class='d-flex flex-wrap'>
-                                <button class='btn btn-primary'>Make Returns</button>
-                            </div>
-                        </div>
-                    </div>
+                    
                     <div class="row m-2" id='contractor_print_screen'>
                         <div class="col-md-12" style="background-color:rgba(248, 249, 250, 0.57); padding: 20px; border-radius: 10px; border: 2px dotted #808080;">
                             <div class="row">
@@ -1168,6 +1162,106 @@ class SSML {
             kasa.error(error);
         });
     }
-}
 
+    async loadContractor(contractor_id) {
+        let payload = {
+            module: 'contractor',
+            data: {
+                id: contractor_id
+            }
+        }
+
+        await api.v2('VIEW', payload, '/ssml/api/').then(response => {
+            if(anton.IsRequest(response)) {
+                let contractor = response.message;
+                $('#name').val(contractor.company);
+                $('#owner').val(contractor.owner);
+                $('#link').val(contractor.link);
+                $('#phone').val(contractor.phone);
+                $('#email').val(contractor.email);
+                $('#address').val( contractor.city + ', ' + contractor.postal_code);
+                $('#debit').val(contractor.recievable.total_balance);
+                $('#credit').val(contractor.payable);
+                $('#balance').val(contractor.balance);
+                $('#contractor_id').val(contractor_id);
+
+                // get jobs
+                let payload = {
+                    module: 'service_order',
+                    data: {
+                        id: '*',
+                        contractor: contractor_id,
+                        filter: 'contractor'
+                    }
+                }
+
+                api.v2('VIEW', payload, '/ssml/api/').then(response => {
+                    if(anton.IsRequest(response)) {
+                        let jobs = response.message;
+                        console.log(jobs);
+                        let tr = ``;
+                        jobs.forEach(job => {
+                            let status = job.status == 'completed' ? 'text-success' : 'text-warning';
+                            tr += `
+                                <tr>
+                                    <td>${job.new_meter_no}</td>
+                                    <td>${job.service_date}</td>
+                                    <td>${job.plot.plot_no}-${job.geo_code}</td>
+                                    <td>${job.service_type.name}</td>
+                                    <td>${job.total_amount}</td>
+                                    <td id='status_${job.id}' class='${status}'>${job.status}</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                Action
+                                            </button>
+                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                                <a class="dropdown-item" href="javascript:void(0)" onclick="ssml.closeJob(${job.id})">Close</a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        $('#jobs').html(tr);
+                    } else {
+                        kasa.error(response.message);
+                    }
+                }).catch(error => {
+                    kasa.error(error);
+                });
+            } else {
+                kasa.error(response.message);
+            }
+        }).catch(error => {
+            kasa.error(error);
+        });
+    }
+
+
+    async closeJob(job_id) {
+        let payload = {
+            module: 'close_service_order',
+            data: {
+                id: job_id
+            }
+        }
+
+        if(confirm('Are you sure you want to close this job?')) {
+            await api.v2('PATCH', payload, '/ssml/api/').then(response => {
+                if(anton.IsRequest(response)) {
+                kasa.success(response.message);
+                $('#status_'+job_id).html('Completed');
+                $('#status_'+job_id).attr('class', 'text-success');
+            } else {
+                kasa.error(response.message);
+                }
+            }).catch(error => {
+                kasa.error(error);
+            });
+        } else {
+            kasa.error('Operation Cancelled');
+        }
+    }
+}
 const ssml = new SSML();

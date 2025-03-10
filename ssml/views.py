@@ -242,7 +242,8 @@ def contractors(request):
     }
     context = {
         'page': page,
-        'contractors': Contractor.objects.all()
+        'contractors': Contractor.objects.all(),
+        'last_contractor': Contractor.objects.last()
     }
     return render(request, 'ssml/contractors.html', context)
 

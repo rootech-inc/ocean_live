@@ -649,7 +649,8 @@ class ServiceOrder(models.Model):
             'service_items':self.items(),
             'total_amount':self.total_amount(),
             'materials':self.materials(),
-            'returns':self.returns()
+            'returns':self.returns(),
+            
         }
     
 

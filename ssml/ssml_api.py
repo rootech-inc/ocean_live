@@ -525,29 +525,29 @@ def interface(request):
                     
                     pdf.ln(10)
 
-                    pdf.set_font("Arial", "B", size=10)
-                    pdf.cell(10, 8, txt="LN", ln=False, border=1, align="L")
-                    pdf.cell(25, 8, txt="Barcode", ln=False, border=1, align="L")
-                    pdf.cell(50, 8, txt="Name", ln=False, border=1, align="L")
-                    pdf.cell(18, 8, txt="UOM", ln=False, border=1, align="C")
-                    pdf.cell(18, 8, txt="Pak. Qty", ln=False, border=1, align="C")
-                    pdf.cell(15, 8, txt="Qty", ln=False, border=1, align="C")
-                    pdf.cell(18, 8, txt="Tot. Qty", ln=False, border=1, align="C")
-                    pdf.cell(18, 8, txt="Rate", ln=False, border=1, align="C")
-                    pdf.cell(18, 8, txt="Tot. Amt", ln=True, border=1, align="C")
+                    pdf.set_font("Arial", "B", size=8)
+                    pdf.cell(10, 5, txt="LN", ln=False, border=1, align="L")
+                    pdf.cell(25, 5, txt="Barcode", ln=False, border=1, align="L")
+                    pdf.cell(65, 5, txt="Name", ln=False, border=1, align="L")
+                    pdf.cell(15, 5, txt="UOM", ln=False, border=1, align="C")
+                    pdf.cell(15, 5, txt="Pak. Qty", ln=False, border=1, align="C")
+                    pdf.cell(15, 5, txt="Qty", ln=False, border=1, align="C")
+                    pdf.cell(15, 5, txt="Tot. Qty", ln=False, border=1, align="C")
+                    pdf.cell(15, 5, txt="Rate", ln=False, border=1, align="C")
+                    pdf.cell(15, 5, txt="Tot. Amt", ln=True, border=1, align="C")
 
-                    pdf.set_font("Arial", size=10)
+                    pdf.set_font("Arial", size=8)
                     ln = 1
                     for transaction in IssueTransaction.objects.filter(issue=issue):
-                        pdf.cell(10, 8, txt=str(ln), ln=False, border=1, align="L")
-                        pdf.cell(25, 8, txt=transaction.barcode, ln=False, border=1, align="L")
-                        pdf.cell(50, 8, txt=transaction.name, ln=False, border=1, align="L")
-                        pdf.cell(18, 8, txt=transaction.uom, ln=False, border=1, align="C")
-                        pdf.cell(18, 8, txt=str(transaction.pack_qty), ln=False, border=1, align="C")
-                        pdf.cell(15, 8, txt=str(transaction.qty), ln=False, border=1, align="C")
-                        pdf.cell(18, 8, txt=str(transaction.total_qty), ln=False, border=1, align="C")
-                        pdf.cell(18, 8, txt=str(transaction.rate), ln=False, border=1, align="C")
-                        pdf.cell(18, 8, txt=str(transaction.amount), ln=True, border=1, align="C")
+                        pdf.cell(10, 5, txt=str(ln), ln=False, border=1, align="L")
+                        pdf.cell(25, 5, txt=transaction.barcode, ln=False, border=1, align="L")
+                        pdf.cell(65, 5, txt=transaction.name[:60], ln=False, border=1, align="L")
+                        pdf.cell(15, 5, txt=transaction.uom, ln=False, border=1, align="C")
+                        pdf.cell(15, 5, txt=str(transaction.pack_qty), ln=False, border=1, align="C")
+                        pdf.cell(15, 5, txt=str(transaction.qty), ln=False, border=1, align="C")
+                        pdf.cell(15, 5, txt=str(transaction.total_qty), ln=False, border=1, align="C")
+                        pdf.cell(15, 5, txt=str(transaction.rate), ln=False, border=1, align="C")
+                        pdf.cell(15, 5, txt=str(transaction.amount), ln=True, border=1, align="C")
                         ln += 1
 
                     if Meter.objects.filter(issue=issue).exists():
@@ -760,17 +760,7 @@ def interface(request):
                 transactions.delete()
                 for transaction in data.get('transactions'):
                     material = InventoryMaterial.objects.get(barcode=transaction.get('barcode'))
-                    if GrnTransaction.objects.filter(grn=grn, material=material).exists():
-                        GrnTransaction.objects.filter(grn=grn, material=material).update(
-                            amount=transaction.get('amount'),
-                            pack_qty=transaction.get('pack_qty'),
-                            uom=transaction.get('uom'),
-                            rate=transaction.get('rate'),
-                            qty=transaction.get('qty'),
-                            total_qty=transaction.get('total_qty')
-                        )
-                    else:
-                        GrnTransaction.objects.create(
+                    GrnTransaction.objects.create(
                             grn=grn, 
                             material=material, 
                             barcode=transaction.get('barcode'),
@@ -782,7 +772,7 @@ def interface(request):
                             qty=transaction.get('qty'),
                             total_qty=Decimal(transaction.get('qty')) * Decimal(transaction.get('pack_qty'))    
                         )
-                grn.save()
+                
                 success_response['message'] = "GRN Updated Successfully"
 
             elif module == 'issue':
@@ -897,7 +887,13 @@ def interface(request):
                 return_item.modified_by = User.objects.get(id=data.get('mypk'))
                 return_item.save()
                 success_response['message'] = "Service Order Return Updated Successfully"
-                
+              
+            elif module == 'close_service_order':
+                id = data.get('id')
+                service_order = ServiceOrder.objects.get(id=id)
+                service_order.status = 'completed'
+                service_order.save()
+                success_response['message'] = "Service Order Closed Successfully"
         else:
             success_response['status_code'] = 400
             success_response['message'] = f"Method Not Found"

@@ -16,8 +16,8 @@
     </div>
 </div>
 
-<div class="card-body">
-    <div class="container p-1">
+<div class="card-body overflow-hidden">
+    <div class="container h-100 overflow-auto">
         <div class="row bg-warning text-dark py-4">
             <div class="col-md-4">
                 <div class="form-group row mb-2">
@@ -90,8 +90,8 @@
             </div>
         </div>
 
-        <div class="row my-2">
-            <div class="col-md-12" style="background-color: #fff;">
+        <div class="row my-2 h-75 overflow-auto">
+            <div class="col-md-12" style="background-color: #d0d0d0;">
                 <div class="table-responsive">
                     <table class="table table-bordered table-sm">
                         <thead>
@@ -315,7 +315,8 @@
                             let item_list = '';
                             for(let i = 0; i < material.length; i++){
                                 item_list += `<tr ><td>${material[i].barcode}</td><td>${material[i].name}</td>
-                                                <td><button onclick="addItem('${material[i].barcode}','${material[i].name}')" class="btn btn-sm btn-primary" data-barcode="${material[i].barcode}" data-name="${material[i].name}">Add</button></td></tr>`;
+                                                <td><input type="number" class="form-control form-control-sm" value="1" id="add_qty_${material[i].barcode}"></td>
+                                                <td><button onclick="addItem('${material[i].barcode}','${material[i].name}',$('#add_qty_${material[i].barcode}').val())" class="btn btn-sm btn-primary" data-barcode="${material[i].barcode}" data-name="${material[i].name}">Add</button></td></tr>`;
                             }
                             $('#item_list').html(item_list);
                         } else {
@@ -329,6 +330,7 @@
                     $(document).on('click', '.clickable-row', function() {
                         let barcode = $(this).data('barcode');
                         let name = $(this).data('name');
+                        let qty = $('#add_qty_'+barcode).val();
                         
                         let next_row = $('#row_list tr').length + 1;
                         $('#row_list').append(`
@@ -338,7 +340,7 @@
                                 <td id="name_${next_row}">${name}</td>
                                 <td><input type="text" class="form-control form-control-sm" value="PCS" id="uom_${next_row}"></td>
                                 <td><input type="text" class="form-control form-control-sm" value="1" id="pack_qty_${next_row}"></td>
-                                <td><input type="text" class="form-control form-control-sm" value="1" id="qty_${next_row}"></td>
+                                <td><input type="text" class="form-control form-control-sm" value="${qty}" id="qty_${next_row}"></td>
                                 <td><input type="text" class="form-control form-control-sm" value="0" id="rate_${next_row}"></td>
                                 <td><input type="text" class="form-control form-control-sm" value="0" id="amount_${next_row}"></td>
                             </tr>

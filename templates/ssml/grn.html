@@ -20,7 +20,7 @@
 </div>
 
 <div class="card-body">
-    <div class="container p-1">
+    <div class="container p-1 h-100 overflow-hidden">
         <div class="row bg-primary text-light py-4">
             <div class="col-md-4">
                 <div class="form-group row mb-2">
@@ -88,8 +88,8 @@
             </div>
         </div>
 
-        <div class="row my-2">
-            <div class="col-md-12" style="background-color: #fff;">
+        <div class="row my-2 h-75 overflow-auto">
+            <div class="col-md-12" style="background-color: #d0d0d0;">
                 <div class="table-responsive">
                     
                     <table class="table table-bordered table-sm">
@@ -218,7 +218,8 @@
             let payload = {
                 module:'post_grn',
                 data:{
-                    id:`${$('#grn_id').val()}`
+                    id:`${$('#grn_id').val()}`,
+                    mypk:`${$('#mypk').val()}`
                 }
             }   
             if(confirm("Are you sure?")){
