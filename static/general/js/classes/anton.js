@@ -130,7 +130,10 @@ class Anton {
         $('#g_modal_body').prepend(`<p>${description}</p>`)
         amodal.show()
 
+
     }
+
+    
 
     printPDF(url) {
                 
@@ -213,6 +216,30 @@ class Anton {
             let el = list[i];
             console.log(`Showing #${el}`)
             $(`#${el}`).fadeIn('fast')
+        }
+    }
+
+    pageCenter(url,title,height,width) {
+        // Calculate center position for popup window
+        const left = (screen.width - width) / 2;
+        const top = (screen.height - height) / 2;
+
+        // Open popup window with specified dimensions centered on screen
+        const popup = window.open(url, title, `width=${width},height=${height},left=${left},top=${top},scrollbars=yes`);
+
+        // Focus the popup window and prevent switching back to main window
+        if (popup) {
+            popup.focus();
+            // Add event listener to keep focus on popup
+            window.onblur = function() {
+                if (!popup.closed) {
+                    popup.focus();
+                }
+            };
+            // Remove event listener when popup closes
+            popup.onbeforeunload = function() {
+                window.onblur = null;
+            };
         }
     }
 }

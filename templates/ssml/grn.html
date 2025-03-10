@@ -1,0 +1,276 @@
+{% extends 'ssml/ssmlbase.html' %}
+{% load static %}
+
+{% block body %}
+
+<div class="card-header">
+    <div class="d-flex justify-content-between">
+        <div class="w-50 d-flex">
+            <button id="create_grn" class="btn btn-primary ms-2"><i class="bi bi-plus"></i> New</button>
+            <button id="previous_grn" {% if last_grn_prev_row == 0 %} disabled {% endif %} class="btn btn-info ms-2"><i class="bi bi-caret-left-fill"></i></button>
+            <button id="next_grn" {% if last_grn_next_row == 0 %} disabled {% endif %} class="btn btn-info ms-2"><i class="bi bi-caret-right-fill"></i></button>
+        </div>
+        <div class="w-50 d-flex justify-content-end align-items-center">
+            <button id="edit" class="btn btn-warning ms-2">Edit</button>
+            <button id="post" class="btn btn-success ms-2" {% if last_grn_status == 'Posted' %}disabled{% endif %}>Post</button>
+            <button id="print" class="btn btn-info ms-2"><i class="bi bi-printer"></i></button>
+            
+        </div>
+    </div>
+</div>
+
+<div class="card-body">
+    <div class="container p-1">
+        <div class="row bg-primary text-light py-4">
+            <div class="col-md-4">
+                <div class="form-group row mb-2">
+                    <label for="supplier" class="col-sm-4 col-form-label">Supplier</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" value="" disabled id="supplier" name="supplier">
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label for="grn_no" class="col-sm-4 col-form-label">GRN No</label>
+                    <div class="col-sm-8">
+                        <input type="text" value="" disabled class="form-control" id="grn_no" name="grn_no">
+                        <input type="hidden" value="" id="grn_id" name="grn_id">
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label for="grn_date" class="col-sm-4 col-form-label">GRN Date</label>
+                    <div class="col-sm-8">
+                        <input type="text" value="" disabled class="form-control" id="grn_date" name="grn_date">
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-md-4">
+                <div class="form-group row mb-2">
+                    <label for="total_qty" class="col-sm-4 col-form-label">Total Qty</label>
+                    <div class="col-sm-8">
+                        <input type="text" value="" disabled class="form-control" id="total_qty" name="total_qty">
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label for="total_amount" class="col-sm-4 col-form-label">Amount</label>
+                    <div class="col-sm-8">
+                        <input type="text" value="" disabled class="form-control" id="total_amount" name="total_amount">
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label for="remarks" class="col-sm-4 col-form-label">Remarks</label>
+                    <div class="col-sm-8">
+                        <input type="text" value="" disabled class="form-control" id="remarks" name="remarks">
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-md-4">
+                <div class="form-group row mb-2">
+                    <label for="grn_type" class="col-sm-4 col-form-label">GRN Type</label>
+                    <div class="col-sm-8">
+                        <input type="text" value="" disabled class="form-control" id="grn_type" name="grn_type">
+                    
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label for="grn_status" class="col-sm-4 col-form-label">Status</label>
+                    <div class="col-sm-8">
+                        <input type="text" value="" disabled class="form-control" id="grn_status" name="grn_status">
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label for="created_by" class="col-sm-4 col-form-label">Created By</label>
+                    <div class="col-sm-8">  
+                        <input type="text" value="" disabled class="form-control" id="created_by" name="created_by">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row my-2">
+            <div class="col-md-12" style="background-color: #fff;">
+                <div class="table-responsive">
+                    
+                    <table class="table table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th style="width: 150px;">BARCODE</th>
+                                <th style="width: 300px;">NAME</th>
+                                <th>UOM</th>
+                                <th>PACK QTY</th>
+                                <th>QTY</th>
+                                <th>UNIT. QTY</th>
+                                <th>RATE</th>
+                                <th>AMOUNT</th>
+                            </tr>
+                        </thead>
+                        <tbody id="row_list">
+                            <!-- {% for transaction in last_grn_transactions %}
+                            <tr>
+                                <td>{{forloop.counter}}</td>
+                                <td>{{transaction.barcode}}</td>
+                                <td>{{transaction.name}}</td>
+                                <td>{{transaction.uom}}</td>
+                                <td>{{transaction.pack_qty}}</td>
+                                <td>{{transaction.qty}}</td>
+                                <td>{{transaction.total_qty}}</td>
+                                <td>{{transaction.rate}}</td>
+                                <td>{{transaction.amount}}</td>
+                            </tr>
+                            {% endfor %} -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let next_row = "";
+    let prev_row = "";
+
+    async function load_grn(id){
+        let payload = {
+            module:'grn',
+            data:{
+                id:id
+            }
+        }
+
+        await api.v2('VIEW',payload,'/ssml/api/').then(response => {
+            if(anton.IsRequest(response)){
+                let grn = response.message;
+                $('#supplier').val(grn.supplier.supplier_name);
+                $('#grn_no').val(grn.grn_no);
+                $('#grn_date').val(grn.grn_date);
+                $('#remarks').val(grn.remarks);
+                $('#grn_type').val(grn.grn_type);
+                $('#grn_status').val(grn.status);
+                $('#created_by').val(grn.created_by);
+                $('#total_qty').val(grn.total_qty);
+                $('#total_amount').val(grn.total_amount);
+                $('#grn_id').val(grn.id);
+
+                if(grn.is_posted){
+                    $('#post').attr('disabled',true);
+                    $('#edit').attr('disabled',true);
+                } else {
+                    $('#post').attr('disabled',false);
+                    $('#edit').attr('disabled',false);
+                }
+
+                next_row = grn.next_row;
+                prev_row = grn.prev_row;
+                if(next_row > 0){
+                    $('#next_grn').prop('disabled',false);
+                } else {
+                    $('#next_grn').prop('disabled',true);
+                }
+                if(prev_row > 0){
+                    $('#previous_grn').prop('disabled',false);
+                } else {
+                    $('#previous_grn').prop('disabled',true);
+                }
+
+                let transactions = grn.transactions;
+                let row_list = $('#row_list');
+                row_list.empty();
+                let line = 1;
+                transactions.forEach(transaction => {
+                    console.table(transaction);
+                    let qty = transaction.qty;
+                    let pack_qty = transaction.pack_qty;
+                    console.log(qty);
+                    row_list.append(`<tr>
+                        <td>${line}</td>
+                        <td>${transaction.barcode}</td>
+                        <td>${transaction.name}</td>
+                        <td>${transaction.uom}</td>
+                        <td>${transaction.pack_qty}</td>
+                        <td>${qty}</td>
+                        <td>${transaction.total_qty}</td>
+                        <td>${transaction.rate}</td>
+                        <td>${transaction.amount}</td>
+                    `);
+                    line++;
+                });
+                $('#row_list').append(row_list);
+            } else {
+                kasa.response(response);
+            }
+        }).catch(error => {
+            console.log(error);
+            kasa.response(error);
+        });
+    }
+    $(document).ready(function(){
+
+        load_grn(`{{last_grn.id}}`);
+
+        $('#create_grn').click(function(){
+            window.location.href = '{% url "grn_add" %}';
+        });
+
+        $('#post').click(async function(){
+            let payload = {
+                module:'post_grn',
+                data:{
+                    id:`${$('#grn_id').val()}`
+                }
+            }   
+            if(confirm("Are you sure?")){
+                await api.v2('PATCH',payload,'/ssml/api/').then(response => {
+                    kasa.response(response);
+                    if(anton.IsRequest(response)){
+                        load_grn(`${$('#grn_id').val()}`);
+                    }
+                }).catch(error => {
+                    console.log(error);
+                });
+            } else {
+                kasa.info("Operation Canceled")
+            }
+            
+        })
+
+        $('#previous_grn').click(function(){
+            load_grn(prev_row);
+        });
+
+        $('#next_grn').click(function(){
+            load_grn(next_row);
+        });
+
+        $('#edit').click(function(){
+            window.location.href = '{% url "grn_edit" last_grn.id %}';
+        });
+
+        $('#print').click(async function(){
+            let payload = {
+                module:'print_grn',
+                data:{
+                    id:`${$('#grn_id').val()}`
+                }
+            }
+            await api.v2('VIEW',payload,'/ssml/api/').then(response => {
+                // kasa.response(response);
+                if(anton.IsRequest(response)){
+                    let grn = response.message;
+                    let url = grn;
+                    anton.viewFile(`/${url}`, 'GRN Print');
+                } else {
+                    kasa.response(response);
+                }
+            }).catch(error => {
+                kasa.info(error);
+            });
+        });
+    });
+</script>
+
+
+
+{% endblock %}

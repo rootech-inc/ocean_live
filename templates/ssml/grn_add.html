@@ -1,0 +1,365 @@
+{% extends 'ssml/ssmlbase.html' %}
+{% load static %}
+
+{% block body %}
+
+<div class="card-header">
+    <div class="d-flex justify-content-between">
+        <div class="w-50 d-flex">
+            <h4>GRN</h4>
+        </div>
+        <div class="w-50 d-flex justify-content-end align-items-center">
+            <button class="btn btn-primary" id="supplier_btn">Suppliers</button>
+            <button id="save_grn" class="btn btn-success ms-2"><i class="bi bi-save"></i> Save</button>
+            <button id="add_item" class="btn btn-info ms-2"><i class="bi bi-plus"></i> Item</button>
+        </div>
+    </div>
+</div>
+
+<div class="card-body">
+    <div class="container p-1">
+        <div class="row bg-primary text-light py-4">
+            <div class="col-md-4">
+                <div class="form-group row mb-2">
+                    <label for="supplier" class="col-sm-4 col-form-label">Supplier</label>
+                    <div class="col-sm-8">
+                        <select class="form-control" id="supplier" name="supplier">
+                            <option value="">Select Supplier</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label for="grn_no" class="col-sm-4 col-form-label">GRN No</label>
+                    <div class="col-sm-8">
+                        <input type="text" placeholder="auto generate" disabled class="form-control" id="grn_no" name="grn_no">
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label for="grn_date" class="col-sm-4 col-form-label">GRN Date</label>
+                    <div class="col-sm-8">
+                        <input type="date" class="form-control" id="grn_date" name="grn_date">
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-md-4">
+                <div class="form-group row mb-2">
+                    <label for="total_qty" class="col-sm-4 col-form-label">Total Qty</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="total_qty" name="total_qty">
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label for="total_amount" class="col-sm-4 col-form-label">Total Amount</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="total_amount" name="total_amount">
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label for="remarks" class="col-sm-4 col-form-label">Remarks</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="remarks" name="remarks">
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-md-4">
+                <div class="form-group row mb-2">
+                    <label for="grn_type" class="col-sm-4 col-form-label">GRN Type</label>
+                    <div class="col-sm-8">
+                        <select class="form-control" id="grn_type" name="grn_type">
+                            <option value="MATERIAL">Purchase</option>
+                            <option value="PURCHASE">Purchase</option>
+                            <option value="RETURN">Return</option>
+                            <option value="SAMPLE">Sample</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label for="grn_status" class="col-sm-4 col-form-label">GRN Status</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="grn_status" name="grn_status">
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label for="created_by" class="col-sm-4 col-form-label">Created By</label>
+                    <div class="col-sm-8">
+                        <input type="hidden" class="form-control" value="{{request.user.pk}}" disabled id="created_by" name="created_by">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row my-2">
+            <div class="col-md-12" style="background-color: #fff;">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th style="width: 150px;">BARCODE</th>
+                                <th style="width: 300px;">NAME</th>
+                                <th>UOM</th>
+                                <th>PACK QTY</th>
+                                <th>QTY</th>
+                                <th>RATE</th>
+                                <th>AMOUNT</th>
+                            </tr>
+                        </thead>
+                        <tbody id="row_list">
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function getSuppliers() {
+        api.v2('VIEW', {module: 'supplier',data:{id:'*'}}, '/ssml/api/').then(res => {
+            if(anton.IsRequest(res)){
+                let suppliers = res.message;
+                let supplier_options = '';
+                suppliers.forEach((supplier, index) => {
+                supplier_options += `<option value="${supplier.id}">${supplier.supplier_name}</option>`;
+                });
+                $('#supplier').html(supplier_options);
+            } else {
+                kasa.error(res.message || 'Failed to get suppliers');
+            }
+        }).catch(err => {
+            kasa.error(err.message || 'Failed to get suppliers');
+        });
+    }
+    async function addItem(barcode,name){
+        let next_row = $('#row_list tr').length + 1;
+        $('#row_list').append(`
+                                    <tr id="row_${next_row}">
+                                        <td id="row_no_${next_row}">${next_row}</td>
+                                        <td id="barcode_${next_row}">${barcode}</td>
+                                        <td id="name_${next_row}">${name}</td>
+                                        <td><input type="text" class="form-control form-control-sm" value="PCS" id="uom_${next_row}"></td>
+                                        <td><input type="text" class="form-control form-control-sm" value="1" id="pack_qty_${next_row}"></td>
+                                        <td><input type="text" class="form-control form-control-sm" value="1" id="qty_${next_row}"></td>
+                                        <td><input type="text" class="form-control form-control-sm" value="0" id="rate_${next_row}"></td>
+                                        <td><input type="text" class="form-control form-control-sm" value="0" id="amount_${next_row}"></td>
+                                    </tr>
+                                `);
+    }
+
+    
+    $(document).ready(function () {
+        getSuppliers();
+        $("#supplier_btn").click(function () {
+
+            amodal.setTitleText('Suppliers');
+            amodal.setBodyHtml('<div id="supplier_modal"></div>');
+            amodal.setFooterHtml('<button class="btn btn-primary" id="add_supplier">Add Supplier</button>');
+            amodal.show();
+
+            $("#add_supplier").click(function () {
+                let form = `
+                    <div class="form-group row mb-2">
+                        <label for="supplier_name" class="col-sm-4 col-form-label">Supplier Name</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" id="supplier_name" name="supplier_name">
+                        </div>
+                    </div>
+                    <div class="form-group row mb-2">
+                        <label for="contact_person" class="col-sm-4 col-form-label">Contact Person</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" id="contact_person" name="contact_person">
+                        </div>
+                    </div>
+                    <div class="form-group row mb-2">
+                        <label for="supplier_address" class="col-sm-4 col-form-label">Supplier Address</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" id="supplier_address" name="supplier_address">
+                        </div>
+                    </div>
+                    <div class="form-group row mb-2">
+                        <label for="supplier_phone" class="col-sm-4 col-form-label">Supplier Phone</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" id="supplier_phone" name="supplier_phone">
+                        </div>
+                    </div>
+                    <div class="form-group row mb-2">
+                        <label for="supplier_email" class="col-sm-4 col-form-label">Supplier Email</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" id="supplier_email" name="supplier_email">
+                        </div>
+                    </div>
+                    
+                    
+                    
+                `;
+                amodal.setTitleText('Add Supplier');
+                amodal.setBodyHtml(form);
+                amodal.setFooterHtml('<button class="btn btn-primary" id="save_supplier">Save</button>');
+                amodal.show();
+
+                $("#save_supplier").click(async function () {
+                    let ids = ['supplier_name', 'contact_person', 'supplier_address', 'supplier_phone', 'supplier_email'];
+                    if (anton.validateInputs(ids)) {
+                        let payload = {
+                            module: 'supplier',
+                            data: { 
+                                supplier_name: $('#supplier_name').val(),
+                                contact_person: $('#contact_person').val(),
+                                supplier_address: $('#supplier_address').val(),
+                                supplier_phone: $('#supplier_phone').val(),
+                                supplier_email: $('#supplier_email').val()
+                            }
+                        };
+                        await api.v2('PUT', payload, '/ssml/api/').then(res => {
+                            kasa.response(res);
+                            // getSuppliers();
+                            // amodal.hide();
+                        }).catch(err => {
+                            kasa.error(err.message || 'Failed to add supplier');
+                        });
+                    }
+                });
+            });
+            
+        });
+    
+        $("#add_item").click(function () {
+            let form = `
+                <div class="form-group row mb-2">
+                    <div class="col-sm-12">
+                        <input type="text" class="form-control" id="find_barcode" name="find_barcode">
+                    </div>
+                </div>
+                <div style='height: 30vh; overflow-y: auto;'>
+                    <table class="table table-bordered table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>BARCODE</th><th>NAME</th>
+                            </tr>
+                        </thead>
+                        <tbody id="item_list">
+                            
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            amodal.setTitleText('Add Item');
+            amodal.setBodyHtml(form);
+            amodal.show();
+
+            $("#find_barcode").on('keyup', async function () {
+                let barcode = $(this).val();
+                if(event.keyCode === 13){
+                    let payload = {
+                        module: 'material',
+                        data: {
+                            id: barcode
+                        }
+                    };  
+                    await api.v2('VIEW', payload, '/ssml/api/').then(res => {
+                        if(anton.IsRequest(res)){
+                            let material = res.message;
+                            let item_list = '';
+                            for(let i = 0; i < material.length; i++){
+                                item_list += `<tr ><td>${material[i].barcode}</td><td>${material[i].name}</td>
+                                                <td><button onclick="addItem('${material[i].barcode}','${material[i].name}')" class="btn btn-sm btn-primary" data-barcode="${material[i].barcode}" data-name="${material[i].name}">Add</button></td></tr>`;
+                            }
+                            $('#item_list').html(item_list);
+                        } else {
+                            kasa.error(res.message || 'Failed to get material');
+                        }
+                    }).catch(err => {
+                        kasa.error(err.message || 'Failed to get material');
+                    });
+
+                    
+                    $(document).on('click', '.clickable-row', function() {
+                        let barcode = $(this).data('barcode');
+                        let name = $(this).data('name');
+                        
+                        let next_row = $('#row_list tr').length + 1;
+                        $('#row_list').append(`
+                            <tr id="row_${next_row}">
+                                <td id="row_no_${next_row}">${next_row}</td>
+                                <td id="barcode_${next_row}">${barcode}</td>
+                                <td id="name_${next_row}">${name}</td>
+                                <td><input type="text" class="form-control form-control-sm" value="PCS" id="uom_${next_row}"></td>
+                                <td><input type="text" class="form-control form-control-sm" value="1" id="pack_qty_${next_row}"></td>
+                                <td><input type="text" class="form-control form-control-sm" value="1" id="qty_${next_row}"></td>
+                                <td><input type="text" class="form-control form-control-sm" value="0" id="rate_${next_row}"></td>
+                                <td><input type="text" class="form-control form-control-sm" value="0" id="amount_${next_row}"></td>
+                            </tr>
+                        `);
+                        amodal.hide();
+                    });
+                }
+            });
+        });
+        
+        $('#save_grn').click(async function () {
+            let hd = ['supplier', 'grn_date', 'remarks', 'grn_type', 'created_by'];
+            if(anton.validateInputs(hd)){
+                let payload = {
+                    module: 'grn',
+                    data: anton.Inputs(hd)
+                }
+               
+                
+
+                // check transactions length
+                if($('#row_list tr').length == 0){
+                    kasa.error('Please add at least one item');
+                    return;
+                }
+
+                // make transactions
+                let transactions = [];
+                $('#row_list tr').each(function(){
+                    let row = $(this);
+                    let next_row = row.attr('id').split('_')[1];
+                    let barcode = row.find(`#barcode_${next_row}`).text();
+                    let name = row.find(`#name_${next_row}`).text();
+                    let uom = row.find(`#uom_${next_row}`).val();
+                    let pack_qty = row.find(`#pack_qty_${next_row}`).val();
+                    let qty = row.find(`#qty_${next_row}`).val();
+                    let rate = row.find(`#rate_${next_row}`).val();
+                    let amount = row.find(`#amount_${next_row}`).val();
+                    transactions.push({
+                        barcode: barcode,
+                        name: name,
+                        qty: qty,
+                        rate: rate,
+                        amount: amount,
+                        uom: uom,
+                        pack_qty: pack_qty
+
+                    });
+                });
+                payload.data.transactions = transactions;
+                console.log(payload);
+                await api.v2('PUT', payload, '/ssml/api/').then(res => {
+                    kasa.response(res);
+                    if(anton.IsRequest(res)){
+                        $('#row_list').empty();
+                    }
+                    location.href = '{% url "grn" %}';
+                }).catch(err => {
+                    kasa.error(err.message || 'Failed to save GRN');
+                });
+
+            } else {
+                kasa.error('Please fill all the required fields');
+            }
+
+            
+
+        });
+    });
+</script>
+
+
+{% endblock %}

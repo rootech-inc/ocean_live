@@ -1,0 +1,127 @@
+{% extends 'ssml/ssmlbase.html' %}
+
+{% load static %}
+{% block body %}
+
+<div class="card-header">
+    <div class="d-flex flex-wrap">
+        <button id="add-plot" class="btn btn-primary ms-2">Add Plot</button>
+    </div>
+</div>
+<div class="card-body">
+    <table class="table table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Plot No</th>
+                <th>Contractor</th>
+                <th>Plot Size</th>
+                <th>Plot Status</th>
+                <th>Plot Image</th>
+            </tr>
+        </thead>
+        <tbody id="plots-table"></tbody>
+    </table>
+</div>
+
+
+<script>
+    async function loadPlots(){
+        let payload = {
+            module: 'plot',
+            data: {
+                id: '*'
+            }
+        }
+        await api.v2('VIEW',payload,'/ssml/api/').then(response => {
+            if(anton.IsRequest(response)){
+                let plots = response.message;
+                let table = '';
+                for(let plot of plots){
+                    table += `
+                        <tr>
+                            <td>${plot.plot_no}</td>
+                            <td>${plot.contractor.company}</td>
+                            <td>${plot.plot_size}</td>
+                            <td>${plot.plot_status}</td>
+                            <td><img src="${plot.plot_image}" alt="Plot Image" style="width: 100px; height: 100px;"></td>
+                        </tr>
+                    `;
+                }
+                $('#plots-table').html(table);
+            }
+        }).catch(error => {
+            kasa.error(error);
+        });
+    }
+    $(document).ready(function(){
+        loadPlots();
+        $('#add-plot').click(async function(){
+            let contra_payload = {
+                module: 'contractor',
+                data: {
+                    id: '*'
+                }
+            }
+            await api.v2('VIEW',contra_payload,'/ssml/api/').then(response => {
+                if(anton.IsRequest(response)){
+                    let contractors = response.message;
+                    console.log(contractors);
+                    let contractor_options = '';
+                    for(let contractor of contractors){
+                        contractor_options += `<option value='${contractor.id}'>${contractor.company}</option>`;
+                    }
+
+                    let form = `
+                        <div class='form-group mb-2'>
+                            <label for='plot-no'>Plot No</label>
+                            <input type='text' class='form-control' id='plot-no' name='plot-no'>
+                        </div>
+                        <div class='form-group mb-2'>
+                            <label for='contractor'>Contractor</label>
+                            <select class='form-control' id='contractor' name='contractor'>
+                                ${contractor_options}
+                            </select>
+                        </div>
+                        <div class='form-group mb-2'>
+                            <label for='plot-size'>Plot Size</label>
+                            <input type='text' class='form-control' id='plot-size' name='plot-size'>
+                        </div>
+                        
+                    `
+                    amodal.setTitleText('Add Plot');
+                    amodal.setBodyHtml(form);
+                    amodal.setFooterHtml('<button class="btn btn-success" id="add-plot-btn">Add Plot</button>');
+                    amodal.show();
+
+                    $('#add-plot-btn').click(async function(){
+                        let ids = ['plot-no','contractor','plot-size','mypk'];
+                        if(anton.validateInputs(ids)){
+                            let payload = {
+                                module: 'plot',
+                                data: anton.Inputs(ids)
+                            }
+                            await api.v2('PUT',payload,'/ssml/api/').then(response => {
+                                if(anton.IsRequest(response)){
+                                    kasa.success(response.message);
+                                    amodal.hide();
+                                } else {
+                                    kasa.error(response.message);
+                                }
+                            }).catch(error => {
+                                kasa.error(error);
+                            }); 
+                        } else {
+                            kasa.error('Please fill all the fields');
+                        }
+                    });
+                }
+            }).catch(error => {
+                kasa.error(error);
+            });
+            
+            
+        });
+    });
+</script>
+
+{% endblock %}

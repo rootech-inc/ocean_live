@@ -1,0 +1,423 @@
+{% extends 'ssml/ssmlbase.html' %}
+{% load static %}
+
+{% block body %}
+
+<div class="card-header">
+    <div class="d-flex justify-content-between">
+        <div class="w-50 d-flex">
+            <h4>issue</h4>
+        </div>
+        <div class="w-50 d-flex justify-content-end align-items-center">
+            <button class="btn btn-warning" id="contractor_btn">Contractors</button>
+            <button id="save_issue" class="btn btn-success ms-2"><i class="bi bi-save"></i> Save</button>
+            <button id="add_item" class="btn btn-info ms-2"><i class="bi bi-plus"></i> Item</button>
+        </div>
+    </div>
+</div>
+
+<div class="card-body">
+    <div class="container p-1">
+        <div class="row bg-warning text-dark py-4">
+            <div class="col-md-4">
+                <div class="form-group row mb-2">
+                    <label for="supplier" class="col-sm-4 col-form-label">Contractor</label>
+                    <div class="col-sm-8">
+                        <select class="form-control" id="contractor" name="contractor">
+                            <option value="">Select Contractor</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label for="issue_no" class="col-sm-4 col-form-label">issue No</label>
+                    <div class="col-sm-8">
+                        <input type="text" placeholder="auto generate" disabled class="form-control" id="issue_no" name="issue_no">
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label for="issue_date" class="col-sm-4 col-form-label">issue Date</label>
+                    <div class="col-sm-8">
+                        <input type="date" class="form-control" id="issue_date" name="issue_date">
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-md-4">
+                <div class="form-group row mb-2">
+                    <label for="total_qty" class="col-sm-4 col-form-label">Total Qty</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="total_qty" name="total_qty">
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label for="total_amount" class="col-sm-4 col-form-label">Total Amount</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="total_amount" name="total_amount">
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label for="remarks" class="col-sm-4 col-form-label">Remarks</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="remarks" name="remarks">
+                    </div>
+                </div>
+
+            </div>
+            <div class="col-md-4">
+                <div class="form-group row mb-2">
+                    <label for="issue_type" class="col-sm-4 col-form-label">issue Type</label>
+                    <div class="col-sm-8">
+                        <select class="form-control" id="issue_type" name="issue_type">
+                            <option value="">Select Issue Type</option>
+                            {% for issue_type in issue_types %}
+                                <option value="{{issue_type.0}}">{{issue_type.1}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label for="issue_status" class="col-sm-4 col-form-label">issue Status</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="issue_status" name="issue_status">
+                    </div>
+                </div>
+                <div class="form-group row mb-2">
+                    <label for="created_by" class="col-sm-4 col-form-label">Created By</label>
+                    <div class="col-sm-8">
+                        <input type="hidden" class="form-control" value="{{request.user.pk}}" disabled id="created_by" name="created_by">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row my-2">
+            <div class="col-md-12" style="background-color: #fff;">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th style="width: 150px;">BARCODE</th>
+                                <th style="width: 300px;">NAME</th>
+                                <th>UOM</th>
+                                <th>PACK QTY</th>
+                                <th>QTY</th>
+                                <th>RATE</th>
+                                <th>AMOUNT</th>
+                            </tr>
+                        </thead>
+                        <tbody id="row_list">
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card-footer">
+    <button class="btn btn-primary" id="meters_btn">Meters</button>
+    <div class="modal" id="meters_modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Meters</h5>
+                    <button class="btn btn-info" id="add_meter">Add Meter</button>
+                </div>
+                <div class="modal-body" id="meters_body">
+                   <input id="meter_1" type="text" class="form-control form-control-sm rounded-0 mb-2">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+
+
+    async function getContractors(){
+        await api.v2('VIEW',{module:'contractor',data:{id:'*'}},'/ssml/api/').then(res=>{
+            if(anton.IsRequest(res)){
+                let contractors = res.message;
+                console.table(contractors);
+                let contractor_options = '';
+                contractors.forEach((contractor,index)=>{
+                    contractor_options += `<option value="${contractor.id}">${contractor.company}</option>`;
+                });
+                $("#contractor").html(contractor_options);
+            } else {
+                kasa.response(res);
+            }
+        }).catch(err=>{
+            kasa.error(err);
+        });
+    }
+
+    async function addItem(barcode,name){
+        let next_row = $('#row_list tr').length + 1;
+        $('#row_list').append(`
+                                    <tr id="row_${next_row}">
+                                        <td class='pointer' ondblclick="deleteRow(${next_row})" id="row_no_${next_row}">${next_row}</td>
+                                        <td id="barcode_${next_row}">${barcode}</td>
+                                        <td id="name_${next_row}">${name}</td>
+                                        <td><input type="text" class="form-control form-control-sm" value="PCS" id="uom_${next_row}"></td>
+                                        <td><input type="text" class="form-control form-control-sm" value="1" id="pack_qty_${next_row}"></td>
+                                        <td><input type="text" class="form-control form-control-sm" value="1" id="qty_${next_row}"></td>
+                                        <td><input type="text" class="form-control form-control-sm" value="0" id="rate_${next_row}"></td>
+                                        <td><input type="text" class="form-control form-control-sm" value="0" id="amount_${next_row}"></td>
+                                    </tr>
+                                `);
+    }
+
+    function deleteRow(row_no){
+        $(`#row_${row_no}`).remove();
+    }
+
+
+    $(document).ready(function(){
+
+        getContractors();
+
+        $("#meters_btn").click(function(){
+            $('#meters_modal').modal('show');
+        });
+
+        $("#add_meter").click(function(){
+            let next_meter = $('#meters_body').find('input').length + 1;
+            $('#meters_body').prepend(`<input id="meter_${next_meter}" type="text" class="form-control form-control-sm rounded-0 mb-2">`);
+            // focus on the new meter
+            $('#meter_'+next_meter).focus()
+        })
+
+        $("#contractor_btn").click(function(){
+            amodal.setTitleText('Contractors');
+            amodal.setBodyHtml('<div id="contractor_modal"></div>');
+            amodal.setFooterHtml('<button class="btn btn-primary" id="add_contractor">Add Contractor</button>');
+            amodal.show();
+
+            $("#add_contractor").click(function(){
+                amodal.setTitleText('Add Contractor');
+                let form = `
+                    <div class="form-group mb-2">
+                        <label for="link" class="text-info">Link</label>
+                        <input type="text" class="form-control" id="link" name="link">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="company" class="text-info">Company</label>
+                        <input type="text" class="form-control" id="company" name="company">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="owner" class="text-info">Owner</label>
+                        <input type="text" class="form-control" id="owner" name="owner">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="phone" class="text-info">Phone</label>
+                        <input type="text" class="form-control" id="phone" name="phone">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="email" class="text-info">Email</label>
+                        <input type="email" class="form-control" id="email" name="email">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="country" class="text-info">Country</label>
+                        <input type="text" class="form-control" id="country" name="country">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="city" class="text-info">City</label>
+                        <input type="text" class="form-control" id="city" name="city">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="postal_code" class="text-info">Postal Code</label>
+                        <input type="text" class="form-control" id="postal_code" name="postal_code">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="gh_post_code" class="text-info">Ghana Post Code</label>
+                        <input type="text" class="form-control" id="gh_post_code" name="gh_post_code">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="gh_card_no" class="text-info">Ghana Card No</label>
+                        <input type="text" class="form-control" id="gh_card_no" name="gh_card_no">
+                    </div>
+                    
+                    
+                     
+
+                `;
+                amodal.setBodyHtml(form);
+                amodal.setFooterHtml('<button class="btn btn-primary" id="save_contractor">Save</button>');
+                amodal.show();
+                $("#save_contractor").click(async function(){
+                    let ids = ['link', 'company', 'owner', 'phone', 'email','country','city','postal_code','gh_post_code','gh_card_no','mypk'];
+                    if(anton.validateInputs(ids)){
+                        let payload = {
+                            module: 'contractor',
+                            data: anton.Inputs(ids)
+                        }
+
+                        await api.v2('PUT',payload,'/ssml/api/').then(res=>{
+                            kasa.response(res);
+                        }).catch(err=>{
+                            kasa.error(err);
+                        });
+
+                        
+                    } else {
+                        kasa.error('Please fill all the fields');
+                    }
+                });
+            });
+
+            
+            
+
+        });
+
+
+
+        $("#add_item").click(function () {
+            let form = `
+                <div class="form-group row mb-2">
+                    <div class="col-sm-12">
+                        <input type="text" class="form-control" id="find_barcode" name="find_barcode">
+                    </div>
+                </div>
+                <div style='height: 30vh; overflow-y: auto;'>
+                    <table class="table table-bordered table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>BARCODE</th><th>NAME</th>
+                            </tr>
+                        </thead>
+                        <tbody id="item_list">
+                            
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            amodal.setTitleText('Add Item');
+            amodal.setBodyHtml(form);
+            amodal.show();
+
+            $("#find_barcode").on('keyup', async function () {
+                let barcode = $(this).val();
+                if(event.keyCode === 13){
+                    let payload = {
+                        module: 'material',
+                        data: {
+                            id: barcode
+                        }
+                    };  
+                    await api.v2('VIEW', payload, '/ssml/api/').then(res => {
+                        if(anton.IsRequest(res)){
+                            let material = res.message;
+                            let item_list = '';
+                            for(let i = 0; i < material.length; i++){
+                                item_list += `<tr ><td>${material[i].barcode}</td><td>${material[i].name}</td>
+                                                <td><button onclick="addItem('${material[i].barcode}','${material[i].name}')" class="btn btn-sm btn-primary" data-barcode="${material[i].barcode}" data-name="${material[i].name}">Add</button></td></tr>`;
+                            }
+                            $('#item_list').html(item_list);
+                        } else {
+                            kasa.error(res.message || 'Failed to get material');
+                        }
+                    }).catch(err => {
+                        kasa.error(err.message || 'Failed to get material');
+                    });
+
+                    
+                    $(document).on('click', '.clickable-row', function() {
+                        let barcode = $(this).data('barcode');
+                        let name = $(this).data('name');
+                        
+                        let next_row = $('#row_list tr').length + 1;
+                        $('#row_list').append(`
+                            <tr id="row_${next_row}">
+                                <td id="row_no_${next_row}">${next_row}</td>
+                                <td id="barcode_${next_row}">${barcode}</td>
+                                <td id="name_${next_row}">${name}</td>
+                                <td><input type="text" class="form-control form-control-sm" value="PCS" id="uom_${next_row}"></td>
+                                <td><input type="text" class="form-control form-control-sm" value="1" id="pack_qty_${next_row}"></td>
+                                <td><input type="text" class="form-control form-control-sm" value="1" id="qty_${next_row}"></td>
+                                <td><input type="text" class="form-control form-control-sm" value="0" id="rate_${next_row}"></td>
+                                <td><input type="text" class="form-control form-control-sm" value="0" id="amount_${next_row}"></td>
+                            </tr>
+                        `);
+                        amodal.hide();
+                    });
+                }
+            });
+        });
+
+        $("#save_issue").click(async function(){
+            let hd = ['contractor','issue_date','remarks','issue_type','created_by'];
+            if(anton.validateInputs(hd)){
+                let payload = {
+                    module: 'issue',
+                    data: anton.Inputs(hd)
+                }
+
+                // check if row_list is empty
+                if($('#row_list tr').length == 0){
+                    kasa.error('Please add at least one item');
+                    return;
+                }
+
+                // make transactions
+                let transactions = [];
+                $('#row_list tr').each(function(){
+                        let row = $(this);
+                        let next_row = row.attr('id').split('_')[1];
+                        let barcode = row.find(`#barcode_${next_row}`).text();
+                        let name = row.find(`#name_${next_row}`).text();
+                        let uom = row.find(`#uom_${next_row}`).val();
+                        let pack_qty = row.find(`#pack_qty_${next_row}`).val();
+                        let qty = row.find(`#qty_${next_row}`).val();
+                        let rate = row.find(`#rate_${next_row}`).val();
+                        let amount = row.find(`#amount_${next_row}`).val();
+                        transactions.push({
+                            barcode: barcode,
+                            name: name,
+                            qty: qty,
+                            rate: rate,
+                            amount: amount,
+                            uom: uom,
+                            pack_qty: pack_qty
+
+                        });
+                    });
+
+                payload.data.transactions = transactions;
+                payload.data.meters = $('#meters_body').find('input').map(function(){
+                    if($(this).val().length > 0){
+                        return $(this).val();
+                    }
+                }).get();
+                console.log(payload);
+                
+
+                await api.v2('PUT',payload,'/ssml/api/').then(res=>{
+                    kasa.response(res);
+                    if(anton.IsRequest(res)){
+                        $('#row_list').empty();
+                        location.href = '{% url "issue" %}';
+                    }
+                    
+                }).catch(err=>{
+                    kasa.error(err);
+                });
+            } else {
+                kasa.error('Please fill all the fields');
+            }
+
+            
+            
+            
+        });
+
+
+
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,305 @@
+{% extends 'ssml/ssmlbase.html' %}
+{% load static %}
+
+{% block body %}    
+
+<div class="card-header">
+    <div class="d-flex justify-content-between">
+        <div class="w-50 d-flex">
+            <h4>Services</h4>
+        </div>
+        <div class="w-50 d-flex justify-content-end align-items-center">
+            <button class="btn btn-warning" id="service_type_btn">Service Types</button>
+            <button id="add_service" class="btn btn-success ms-2"><i class="bi bi-plus"></i> Add Service</button>
+        </div>
+    </div>
+</div>
+<div class="card-body p-2">
+    <table class="table table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Code</th>
+                <th>Service</th>
+                <th>Description</th>
+                <th>Rate</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="services-table">
+
+        </tbody>
+    </table>
+</div>
+
+
+<script>
+
+    async function loadServices(){
+        let payload = {
+            module: 'service',
+            data: {
+                id:'*'
+            }
+        }
+
+        await api.v2('VIEW',payload,'/ssml/api/').then(res => {
+            if(anton.IsRequest(res)){
+                let services = res.message;
+                let tr = '';
+                services.forEach(service => {
+                    tr += `<tr><td>${service.code}</td><td>${service.name}</td><td>${service.description}</td><td>${service.rate}</td><td><button class="btn btn-primary" onclick="editService(${service.id})">Edit</button></td></tr>`;
+                });
+
+                $('#services-table').html(tr);
+            } else {
+                kasa.response(res);
+            }
+        }).catch(err => {
+            kasa.error(err);
+        });
+    }
+
+    async function editService(id){
+        let payload = {
+            module: 'service',
+            data: {
+                id:id
+            }
+        }
+
+        await api.v2('VIEW',payload,'/ssml/api/').then(res => {
+            if(anton.IsRequest(res)){
+                let service = res.message;
+                let form = `
+                    <div class="form-group">
+                        <label for="service_name">Service Name  </label>
+                        <input type="text" class="form-control" id="service_name" name="service_name" value="${service.name}">
+                    </div>
+                    <div class="form-group">
+                        <label for="service_description">Service Description</label>
+                        <input type="text" class="form-control" id="service_description" name="service_description" value="${service.description}">
+                    </div>
+                    <div class="form-group">
+                        <label for="service_uom">Service UOM</label>
+                        <input type="text" class="form-control" id="service_uom" name="service_uom" value="${service.uom}">
+                    </div>
+                    <div class="form-group">
+                        <label for="service_rate">Service Rate</label>
+                        <input type="number" class="form-control" id="service_rate" name="service_rate" value="${service.rate}">
+                    </div>
+                `;
+
+                amodal.setTitleText('Edit Service');
+                amodal.setBodyHtml(form);
+                amodal.setFooterHtml('<button class="btn btn-primary mr-auto" id="save_edit_service">Save</button><button class="btn btn-danger" id="delete_service">Delete</button>');
+                amodal.show();
+
+
+                $('#save_edit_service').click(async function(){
+                    let ids = ['service_name','service_description','service_uom','service_rate','mypk'];
+                    if(anton.validateInputs(ids)){
+                        let payload = {
+                            module: 'service',
+                            data: anton.Inputs(ids)
+                        }
+                        payload.data.id = id;
+
+                        await api.v2('PATCH',payload,'/ssml/api/').then(res => {  
+                            if(anton.IsRequest(res)){
+                                kasa.success(res.message);
+                                amodal.hide();
+                                loadServices();
+                            } else {
+                                kasa.response(res);
+                            }
+                        }).catch(err => {
+                            kasa.error(err);
+                        });
+
+                    } else {
+                        kasa.error('Please fill all the fields');
+                    }
+
+                    
+                })
+               
+                $('#delete_service').click(async function(){
+                    let payload = {
+                        module: 'service',
+                        data: {
+                            id:id
+                        }
+                    }
+
+                    if(confirm('Are you sure you want to delete this service?')){
+                        await api.v2('DELETE',payload,'/ssml/api/').then(res => {
+                            if(anton.IsRequest(res)){
+                            kasa.success(res.message);
+                            amodal.hide();
+                            loadServices();
+                            } else {
+                                kasa.response(res);
+                            }
+                        }).catch(err => {
+                            kasa.error(err);
+                        });
+                    } else {
+                        kasa.error('Service not deleted');
+                        amodal.hide();
+                    }
+                })
+            } else {
+                kasa.response(res);
+            }
+        }).catch(err => {
+            kasa.error(err);
+        });
+    }
+    $(document).ready(function(){
+        loadServices();
+
+        $('#service_type_btn').click(async function(){
+           let payload = {
+                module: 'service_type',
+                data: {
+                    id:'*'
+                }
+            }
+
+            await api.v2('VIEW',payload,'/ssml/api/').then(res => {
+                if(anton.IsRequest(res)){
+                    let services_types = res.message;
+                    
+                    let tr = '';
+                    services_types.forEach(service_type => {
+                        tr += `<tr><td>${service_type.name}</td><td>${service_type.description}</td><td><button class="btn btn-primary" onclick="editServiceType(${service_type.id})">Edit</button></td></tr>`;
+                    });
+
+                    let body = `
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="service_types_table">
+                                    ${tr}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    amodal.setTitleText('Service Types');
+                    amodal.setBodyHtml(body);
+                    amodal.setFooterHtml('<button class="btn btn-primary" id="add_service_type">Add Service Type</button>');
+                    amodal.show();
+
+                    $('#add_service_type').click(function(){
+                        let form = `
+                            <div class="form-group">
+                                <label for="service_name">Service Name  </label>
+                                <input type="text" class="form-control" id="service_name" name="service_name">
+                            </div>
+                            <div class="form-group">
+                                <label for="service_description">Service Description</label>
+                                <input type="text" class="form-control" id="service_description" name="service_description">
+                            </div>
+                        `;
+
+                        amodal.setTitleText('Add Service Type');
+                        amodal.setBodyHtml(form);
+                        amodal.setFooterHtml('<button class="btn btn-primary" id="save_service_type">Save</button>');
+                        amodal.show();
+
+                        $('#save_service_type').click(async function(){
+                            let ids = ['service_name','service_description','mypk'];
+                            if(anton.validateInputs(ids)){
+                                let payload = {
+                                    module: 'service_type',
+                                    data: anton.Inputs(ids)
+                                }
+
+                                await api.v2('PUT',payload,'/ssml/api/').then(res => {
+                                    if(anton.IsRequest(res)){
+                                        kasa.success(res.message);
+                                        $('#service_type_btn').click();
+                                    } else {
+                                        kasa.response(res);
+                                    }
+                                }).catch(err => {
+                                    kasa.error(err);
+                                });
+                            }
+                            
+                            
+                        });
+
+
+                    });
+                
+                }
+            }).catch(err => {
+                kasa.error(err);
+            });
+
+            
+        });
+
+        
+        $('#add_service').click(function(){
+            let form = `
+                
+                <div class="form-group">
+                    <label for="service_name">Service Name  </label>
+                    <input type="text" class="form-control" id="service_name" name="service_name">
+                </div>
+                <div class="form-group">
+                    <label for="service_description">Service Description</label>
+                    <input type="text" class="form-control" id="service_description" name="service_description">
+                </div>
+                <div class="form-group">
+                    <label for="service_uom">Service UOM</label>
+                    <input type="text" class="form-control" id="service_uom" name="service_uom">
+                </div>
+                <div class="form-group">
+                    <label for="service_rate">Service Rate</label>
+                    <input type="number" class="form-control" id="service_rate" name="service_rate">
+                </div>
+            `;
+
+            amodal.setTitleText('Add Service');
+            amodal.setBodyHtml(form);
+            amodal.setFooterHtml('<button class="btn btn-primary" id="save_service">Save</button>');
+            amodal.show();
+
+            $('#save_service').click(async function(){
+                let ids = ['service_name','service_description','service_uom','service_rate','mypk'];
+                if(anton.validateInputs(ids)){
+                    let payload = {
+                        module: 'service',
+                        data: anton.Inputs(ids)
+                    }
+
+                    await api.v2('PUT',payload,'/ssml/api/').then(res => {
+                        if(anton.IsRequest(res)){
+                            kasa.success(res.message);
+                        } else {
+                            kasa.response(res);
+                        }
+                    }).catch(err => {
+                        kasa.error(err);
+                    });
+                } else {
+                    kasa.error('Please fill all the fields');
+                }
+
+            });
+        });
+    });
+
+</script>
+
+
+{% endblock %}

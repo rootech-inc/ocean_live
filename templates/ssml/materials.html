@@ -1,0 +1,431 @@
+{% extends 'ssml/ssmlbase.html' %}
+{% load static %}
+
+{% block body %}
+
+<div class="card-header">
+    <div class="d-flex justify-content-between">
+        <div class="w-50">
+            <h4>{{page.page_title}}</h4>
+        </div>
+        <div class="w-50 d-flex justify-content-end">
+            <button id="add-material" class="btn btn-primary">Add Material</button>
+            <button id="groups" class="btn btn-info">Groups</button>
+        </div>
+    </div>
+</div>
+<div class="card-body p-1 overflow-auto">
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>IMG</th>
+                    <th>BARCODE</th>
+                    <th>NAME</th>
+                    <th>VALUE</th>
+                    <th>GROUP</th>
+                    <th>STOCK</th>
+                    <th>REORDER QTY</th>
+                    <th>STATUS</th>
+                    <th>ACTION</th>
+                </tr>
+            </thead>
+            <tbody id="materials-table">
+
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<script>
+    async function getMaterials() {
+        let payload = {
+            module: 'material',
+            data: {
+                id: '*'
+            }
+        };
+        await api.v2('VIEW', payload, '/ssml/api/').then(res => {
+            if (anton.IsRequest(res)) {
+                let materials = res.message;
+                if (materials.length > 0) {
+                    let table = `
+                        `;
+                    materials.forEach(material => {
+                        table += `
+                            <tr>
+                                <td><img onclick="anton.pageCenter('${material.image}', 'Material Image', 500, 500)" src="${material.image}" class="img-fluid img-thumbnail pointer" alt="Material Image" style="width: 30px; height: 30px;"></td>
+                                <td>${material.barcode}</td>
+                                <td>${material.name}</td>
+                                <td>${material.value}</td>
+                                <td>${material.group.name}</td>
+                                <td>${material.stock}</td>
+                                <td>${material.reorder_qty}</td>
+                                <td>${material.status}</td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                            <a class="dropdown-item change-image" href="javascript:void(0)" arial-id="${material.id}"><i class="fas fa-image"></i> Change Image</a>
+                                            <a class="dropdown-item edit-material" href="javascript:void(0)" arial-id="${material.id}"><i class="fas fa-edit"></i> Edit</a>
+                                            <a class="dropdown-item" href="#"><i class="fas fa-trash"></i> Delete</a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    $('#materials-table').html(table);
+                } else {
+                    $('#materials-table').html(`
+                            <tr>
+                                <td colspan="100%" class="text-center">No materials found</td>
+                            </tr>
+                        `);
+                }
+            } else {
+                $('#materials-table').html(`
+                            <tr>
+                                <td colspan="100%" class="text-center">${res.message}</td>
+                            </tr>
+                        `);
+            }
+        }).catch(err => {
+
+            $('#materials-table').html(`
+                            <tr>
+                                <td colspan="100%" class="text-center">${err.message}</td>
+                            </tr>
+                        `);
+        });
+    }
+
+    $(document).ready(function () {
+        
+        document.addEventListener('click', async function (e) {
+            if (e.target.classList.contains('change-image')) {
+                let id = e.target.getAttribute('arial-id');
+                await api.v2('VIEW', {module: 'material', data: {id: id}}, '/ssml/api/').then(res => {
+                    if (anton.IsRequest(res)) {
+                        let material = res.message;
+
+                        let form = `
+                            <div class="text-center mb-3">
+                                                <img src="${material.image}" class="img-fluid" alt="Material Image" style="max-width: 200px; max-height: 200px;">
+                                            </div>
+                                            <form method="post" id="upload-image" enctype="multipart/form-data" action="/ssml/upload_image/" class="form-group">
+                                                <label for="image">Image</label>
+                                                {% csrf_token %}
+                                                <input type="hidden" name="id" value="${material.id}">
+                                                <input type="file" accept="image/*" class="form-control" id="image" name="image_file" value="${material.image}" onchange="document.querySelector('img').src = window.URL.createObjectURL(this.files[0])">
+                                            </form>
+                        `
+                        amodal.setTitleText('Change Image');
+                        amodal.setBodyHtml(form);
+                        amodal.setFooterHtml('<button class="btn btn-primary" id="change_img">Save</button> <button class="btn btn-secondary" id="cancel-material">Cancel</button>');
+                        amodal.show();
+
+                        $('#change_img').click(async function () {
+                            $('#upload-image').submit();
+                        });
+
+                        }
+                })
+                
+            }
+        });
+
+        $('#add-material').click(async function () {
+            // get groups
+            let payload = {
+                module: 'group',
+                data: {
+                    id: '*'
+                }
+            };
+            await api.v2('VIEW', payload, '/ssml/api/').then(res => {
+                if (anton.IsRequest(res)) {
+                    let groups = res.message;
+                    let groupOptions = groups.map(group => `
+                            <option value="${group.id}">${group.name}</option>
+                        `).join('');
+
+
+                    let form = `
+                            <div class="form-group">
+                                <label for="barcode">Barcode</label>
+                                <input type="text" class="form-control" id="barcode" name="barcode">
+                            </div>
+                            <hr>
+                            <div class="form-group">
+                                <label for="name">Name</label>
+                                <input type="text" class="form-control" id="name" name="name">
+                            </div>
+                            <div class="form-group">
+                                <label for="group">Group</label>
+                                <select class="form-control" id="group" name="group">
+                                    ${groupOptions}
+                                </select>
+                            </div>
+                            <hr>
+                            
+                            <div class="form-group">
+                                <label for="reorder_qty">Reorder Qty</label>
+                                <input type="number" class="form-control" id="reorder_qty" name="reorder_qty">
+                            </div>
+                            <hr>
+                            <div class="form-group">
+                                <label for="value">Value</label>
+                                <input type="number" class="form-control" id="value" name="value">
+                            </div>
+                            
+                            
+                        `;
+                    amodal.setTitleText('Add Material');
+                    amodal.setBodyHtml(form);
+                    amodal.setFooterHtml('<button class="btn btn-primary" id="save-material">Save</button> <button class="btn btn-secondary" id="cancel-material">Cancel</button>');
+                    amodal.show();
+
+                    $('#save-material').click(async function () {
+                        let ids = ['barcode', 'name', 'group', 'reorder_qty', 'value'];
+                        if (anton.validateInputs(ids)) {
+                            let payload = {
+                                module: 'material',
+                                data: {
+                                    barcode: $('#barcode').val(),
+                                    name: $('#name').val(),
+                                    group: $('#group').val(),
+                                    reorder_qty: $('#reorder_qty').val(),
+                                    value: $('#value').val()
+                                }
+                            };
+                            await api.v2('PUT', payload, '/ssml/api/').then(res => {
+                                amodal.hide();
+                                kasa.response(res);
+                                getMaterials();
+                            }).catch(err => {
+                                kasa.error(err.message || 'Failed to create material');
+                            });
+                        }
+                    });
+
+                }
+            }).catch(err => {
+                kasa.error(err.message || 'Failed to get groups');
+            });
+
+            $('#cancel-material').click(function () {
+                amodal.hide();
+            });
+        });
+
+        $('#groups').click(async function () {
+            let bd = `
+                `;
+
+            let payliad = {
+                module: 'group',
+                data: {
+                    id: '*'
+                }
+            };
+            await api.v2('VIEW', payliad, '/ssml/api/').then(res => {
+
+                if (anton.IsRequest(res)) {
+                    let groups = res.message;
+                    bd = groups.map(group => `
+                            <tr>
+                                <td>${group.name}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-danger" onclick="">DELETE</button>
+                                </td>
+                            </tr>
+                        `).join('');
+
+                    amodal.setTitleText('Groups');
+                    amodal.setBodyHtml(`
+                            <table class="table table-bordered table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>NAME</th>
+                                        <th>ACTION</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${bd}
+                                </tbody>
+                            </table>
+                        `);
+                    amodal.setFooterHtml('<button id="new-group" class="btn btn-primary">NEW GROUP</button>');
+                    amodal.show();
+
+                } else {
+                    kasa.response(res);
+                }
+            }).catch(err => {
+                kasa.error(err.message || 'Failed to get groups');
+            });
+
+
+
+            $('#new-group').click(function () {
+                amodal.setTitleText('New Group');
+                amodal.setBodyHtml(`
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" class="form-control" id="new_group_name" name="new_group_name">
+                        </div>
+                    `);
+                amodal.setFooterHtml('<button id="save-group" class="btn btn-primary">SAVE</button> <button id="cancel-group" class="btn btn-secondary">CANCEL</button>');
+                // amodal.show();
+                $('#cancel-group').click(function () {
+                    // click groups button
+                    $('#groups').click();
+                });
+                $('#save-group').click(async function () {
+                    let ids = ['new_group_name'];
+                    if (anton.validateInputs(ids)) {
+                        let name = $('#new_group_name').val();
+                        let payload = {
+                            module: 'group',
+                            data: {
+                                name: name
+                            }
+                        };
+                        await api.v2('PUT', payload, '/ssml/api/').then(res => {
+                            if (anton.IsRequest(res)) {
+                                $('#groups').click();
+                            }
+                            kasa.response(res);
+                        }).catch(err => {
+                            kasa.error(err.message || 'Failed to create group');
+                        });
+                    } else {
+                        kasa.error('Please fill all fields');
+                    }
+                });
+            });
+        });
+
+        document.addEventListener('click', async function (e) {
+            if (e.target.classList.contains('edit-material')) {
+                let id = e.target.getAttribute('arial-id');
+
+                // get material
+                let payload = {
+                    module: 'material',
+                    data: {
+                        id: id
+                    }
+                };
+                await api.v2('VIEW', payload, '/ssml/api/').then(async material_res => {
+                    if (anton.IsRequest(material_res)) {
+                        // get groups
+                        let payload = {
+                            module: 'group',
+                            data: {
+                                id: '*'
+                            }
+                        };
+                        await api.v2('VIEW', payload, '/ssml/api/').then(group_res => {
+                            if (anton.IsRequest(group_res)) {
+                                let groups = group_res.message;
+                                let groupOptions = groups.map(group => `
+                                        <option value="${group.id}">${group.name}</option>
+                                    `).join('');
+                                let material = material_res.message;
+                                let form = `
+                                    
+                                    <div class="form-group">
+                                        <label for="barcode">Barcode</label>
+                                        <input type="text" class="form-control" id="barcode" name="barcode" value="${material.barcode}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="name">Name</label>
+                                        <input type="text" class="form-control" id="name" name="name" value="${material.name}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="group">Group</label>
+                                        <select class="form-control" id="group" name="group">
+                                                ${groupOptions}
+                                        </select>
+                                    </div>
+                                    <hr>
+                                    <div class="form-group">
+                                        <label for="reorder_qty">Reorder Qty</label>
+                                        <input type="number" class="form-control" id="reorder_qty" name="reorder_qty" value="${material.reorder_qty}">
+                                    </div>
+                                    <hr>
+                                    <div class="form-group">
+                                        <label for="value">Value</label>
+                                        <input type="number" class="form-control" id="value" name="value" value="${material.value}">
+                                    </div>
+
+                                    
+                                    
+                                    
+                                        
+                                `;
+                                console.table(material);
+                                amodal.setTitleText('Edit Material');
+                                amodal.setBodyHtml(form);
+                                amodal.setFooterHtml('<button class="btn btn-primary" id="save-material">Save</button> <button class="btn btn-secondary" id="cancel-material">Cancel</button>');
+                                amodal.show();
+
+                                $('#save-material').click(async function () {
+                                    let ids = ['barcode', 'name', 'group', 'reorder_qty', 'value'];
+                                    if (anton.validateInputs(ids)) {
+                                        let payload = {
+                                            module: 'material',
+                                            data: {
+                                                id: id,
+                                                barcode: $('#barcode').val(),
+                                                name: $('#name').val(),
+                                                group: $('#group').val(),
+                                                reorder_qty: $('#reorder_qty').val(),
+                                                value: $('#value').val()
+                                            }
+                                        };
+                                        await api.v2('PATCH', payload, '/ssml/api/').then(res => {
+                                            kasa.response(res);
+                                            getMaterials();
+                                            amodal.hide();
+                                            
+                                            $('#upload-image').submit();
+                                        }).catch(err => {
+                                            kasa.error(err.message || 'Failed to update material');
+                                        });
+                                    }
+                                });
+
+                                $('#cancel-material').click(function () {
+                                    amodal.hide();
+                                });
+
+                            } else {
+                                kasa.response(res);
+                            }
+                        }).catch(err => {
+                            kasa.error(err.message || 'Failed to get material');
+                        });
+
+
+
+                    }
+                }).catch(err => {
+                    kasa.error(err.message || 'Failed to get material');
+                });
+            }
+        });
+
+        getMaterials();
+    });
+
+</script>
+
+
+
+{% endblock %}

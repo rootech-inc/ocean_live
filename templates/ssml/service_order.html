@@ -1,0 +1,248 @@
+{% extends 'ssml/ssmlbase.html' %}
+{% load static %}
+
+{% block body %}
+
+<div class="card-header">
+    <div class="d-flex justify-content-between">
+        <div class="w-50 d-flex">
+            <h4>Service Order</h4>
+        </div>
+        <div class="w-50 d-flex justify-content-end align-items-center">
+            <button class="btn btn-warning" id="service_type_btn">Service Types</button>
+            <button id="new_service_order" class="btn btn-success ms-2"><i class="bi bi-plus"></i> New Service Order</button>
+        </div>
+    </div>
+</div>
+<div id="result" class="card-body">
+    
+</div>
+
+
+<script>
+   
+        
+        $(document).ready(function(){
+
+            ssml.LoadServiceOrders();
+
+            $('#service_type_btn').click(async function(){
+                let payload = {
+                        module: 'service_type',
+                        data: {
+                            id:'*'
+                        }
+                    }
+
+                    await api.v2('VIEW',payload,'/ssml/api/').then(res => {
+                        if(anton.IsRequest(res)){
+                            let services_types = res.message;
+                            
+                            let tr = '';
+                            services_types.forEach(service_type => {
+                                tr += `<tr><td>${service_type.name}</td><td>${service_type.description}</td><td><button class="btn btn-primary" onclick="editServiceType(${service_type.id})">Edit</button></td></tr>`;
+                            });
+
+                            let body = `
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Description</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="service_types_table">
+                                            ${tr}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            `;
+                            amodal.setTitleText('Service Types');
+                            amodal.setBodyHtml(body);
+                            amodal.setFooterHtml('<button class="btn btn-primary" id="add_service_type">Add Service Type</button>');
+                            amodal.show();
+
+                            $('#add_service_type').click(function(){
+                                let form = `
+                                    <div class="form-group">
+                                        <label for="service_name">Service Name  </label>
+                                        <input type="text" class="form-control" id="service_name" name="service_name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="service_description">Service Description</label>
+                                        <input type="text" class="form-control" id="service_description" name="service_description">
+                                    </div>
+                                `;
+
+                                amodal.setTitleText('Add Service Type');
+                                amodal.setBodyHtml(form);
+                                amodal.setFooterHtml('<button class="btn btn-primary" id="save_service_type">Save</button>');
+                                amodal.show();
+
+                                $('#save_service_type').click(async function(){
+                                    let ids = ['service_name','service_description','mypk'];
+                                    if(anton.validateInputs(ids)){
+                                        let payload = {
+                                            module: 'service_type',
+                                            data: anton.Inputs(ids)
+                                        }
+
+                                        await api.v2('PUT',payload,'/ssml/api/').then(res => {
+                                            if(anton.IsRequest(res)){
+                                                kasa.success(res.message);
+                                                $('#service_type_btn').click();
+                                            } else {
+                                                kasa.response(res);
+                                            }
+                                        }).catch(err => {
+                                            kasa.error(err);
+                                        });
+                                    }
+                                    
+                                    
+                                });
+
+
+                            });
+                        
+                        }
+                    }).catch(err => {
+                        kasa.error(err);
+                    });
+
+                    
+                });
+
+                
+            $('#new_service_order').click(async function(){
+                
+
+                // get service types
+                let payload = {
+                    module: 'service_type',
+                    data: {
+                        id:'*'
+                    }
+                }
+
+                await api.v2('VIEW',payload,'/ssml/api/').then(res => {
+                    if(anton.IsRequest(res)){
+                        let service_types = res.message;
+                        let service_type_options = '';
+                        service_types.forEach(service_type => {
+                            service_type_options += `<option value="${service_type.id}">${service_type.name}</option>`;
+                        });
+
+                        let form = `
+                            <div class='row'>
+
+                                <div class="form-group mb-3 col-sm-6">
+                                    <label for="service-type">Service Type</label>
+                                    <select class="form-control" id="service-type" name="service-type">
+                                        <option value="">Select Service Type</option>
+                                        ${service_type_options}
+                                    </select>
+                                </div>
+
+                                <div class="form-group mb-3 col-sm-6">
+                                    <label for="service_date">Service Date</label>
+                                    <input type="date" class="form-control" id="service-date" name="service-date">
+                                </div>
+
+                                <div class="form-group mb-3 col-sm-6">
+                                    <label for="contractor">Contractor</label>
+                                    <select class="form-control" id="contractor" name="contractor">
+                                        <option value="">Select Contractor</option>
+                                        {% for contractor in contractors %}
+                                            <option value="{{ contractor.id }}">{{ contractor.company }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="form-group mb-3 col-sm-6">
+                                    <label for="plot">Plot</label>
+                                    <input type="text" class="form-control" id="plot" name="plot">
+                                </div>
+
+                                <div class="form-group mb-3 col-sm-6">
+                                    <label for="geo-code">Geo Code</label>
+                                    <input type="text" class="form-control" id="geo-code" name="geo-code">
+                                </div>
+
+                                <div class="form-group mb-3 col-sm-6">
+                                    <label for="customer">Customer</label>
+                                    <input type="text" class="form-control" id="customer" name="customer">
+                                </div>
+
+                                <div class="form-group mb-3 col-sm-6">
+                                    <label for="customer_no">Customer #</label>
+                                    <input type="text" class="form-control" id="customer_no" name="customer_no">
+                                </div>
+
+                                <div class="form-group mb-3 col-sm-6">
+                                    <label for="old_meter_no">Old Meter No</label>
+                                    <input type="text" class="form-control" id="old_meter_no" name="old_meter_no">
+                                </div>
+
+                                <div class="form-group mb-3 col-sm-6">
+                                    <label for="new_meter_no">New Meter No</label>
+                                    <input type="text" class="form-control" id="new_meter_no" name="new_meter_no">
+                                </div>
+                                
+                            </div>
+
+                            
+                            
+                            
+
+                            
+                        `;
+                        amodal.setTitleText('Add Service Order');
+                        amodal.setBodyHtml(form);
+                        amodal.setFooterHtml('<button class="btn btn-primary" id="add-service-order-btn">Add Service Order</button>');
+                        amodal.setSize('L');
+                        amodal.show();
+
+                        $('#add-service-order-btn').click(async function(){
+                            let ids = ['service-type','service-date','contractor','plot','geo-code','customer','customer_no','old_meter_no','new_meter_no','mypk'];
+                            if(anton.validateInputs(ids)){
+                                let payload = {
+                                    module: 'service_order',
+                                    data: anton.Inputs(ids)
+                                }
+
+                                await api.v2('PUT',payload,'/ssml/api/').then(res => {
+                                    if(anton.IsRequest(res)){
+                                        kasa.success(res.message);
+                                        amodal.hide();
+                                        load_service_orders()
+                                    } else {
+                                        kasa.response(res);
+                                    }
+                                }).catch(err => {
+                                    kasa.error(err);
+                                });
+                            } else {
+                                kasa.error('Please fill all the fields');
+                            }
+                        });
+                        
+
+                    } else {    
+                        kasa.response(res);
+                    }
+                }).catch(err => {
+                    kasa.error(err);
+                    return;
+                });
+
+                
+            });
+        });
+    
+</script>   
+
+
+{% endblock %}
