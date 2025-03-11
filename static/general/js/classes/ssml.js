@@ -765,6 +765,7 @@ class SSML {
     }
 
     async ViewContractor(id) {
+        loader.show();
         let payload = {
             module: 'contractor',
             data: {
@@ -1081,7 +1082,7 @@ class SSML {
     }
 
     async ViewContractorJobs(contractor_id) {
-        loader.show();
+        
         let payload = {
             module: 'service_order',
             data: {
@@ -1164,27 +1165,53 @@ class SSML {
     }
 
     async loadContractor(contractor_id) {
+        loader.show();
         let payload = {
             module: 'contractor',
             data: {
-                id: contractor_id
+                contractor_id: contractor_id
             }
         }
 
-        await api.v2('VIEW', payload, '/ssml/api/').then(response => {
+        await api.v2('VIEW', payload, '/ssml/api/contractor/').then(response => {
             if(anton.IsRequest(response)) {
-                let contractor = response.message;
+                let contractor = response.message[0];
+                console.table(contractor);
                 $('#name').val(contractor.company);
                 $('#owner').val(contractor.owner);
                 $('#link').val(contractor.link);
                 $('#phone').val(contractor.phone);
                 $('#email').val(contractor.email);
                 $('#address').val( contractor.city + ', ' + contractor.postal_code);
-                $('#debit').val(contractor.recievable.total_balance);
+                $('#debit').val(contractor.recievable);
                 $('#credit').val(contractor.payable);
                 $('#balance').val(contractor.balance);
                 $('#contractor_id').val(contractor_id);
 
+                if(contractor.prev_row) {
+                    $('#prev_contractor').attr('onclick', `ssml.loadContractor(${contractor.prev_row})`);
+                    $('#prev_contractor').attr('disabled', false);
+                } else {
+                    $('#prev_contractor').attr('disabled', true);
+                }
+
+                if(contractor.next_row) {
+                    $('#next_contractor').attr('onclick', `ssml.loadContractor(${contractor.next_row})`);
+                    $('#next_contractor').attr('disabled', false);
+                } else {
+                    $('#next_contractor').attr('disabled', true);
+                }
+
+                loader.hide();
+                $('#jobs').html(`
+                    <tr>
+                        <td colspan="7" class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </td>
+                    </tr>
+                `);
                 // get jobs
                 let payload = {
                     module: 'service_order',
@@ -1198,9 +1225,14 @@ class SSML {
                 api.v2('VIEW', payload, '/ssml/api/').then(response => {
                     if(anton.IsRequest(response)) {
                         let jobs = response.message;
-                        console.log(jobs);
+                        
+                        let max_length = 10;
+                        if(jobs.length < max_length) {
+                            max_length = jobs.length;
+                        }
                         let tr = ``;
-                        jobs.forEach(job => {
+                        for(let i = 0; i < max_length; i++) {
+                            let job = jobs[i];
                             let status = job.status == 'completed' ? 'text-success' : 'text-warning';
                             tr += `
                                 <tr>
@@ -1222,10 +1254,16 @@ class SSML {
                                     </td>
                                 </tr>
                             `;
-                        });
+                        }
                         $('#jobs').html(tr);
                     } else {
-                        kasa.error(response.message);
+                        $('#jobs').html(`
+                            <tr>
+                                <td colspan="7" class="text-center">
+                                    ${response.message}
+                                </td>
+                            </tr>
+                        `);
                     }
                 }).catch(error => {
                     kasa.error(error);

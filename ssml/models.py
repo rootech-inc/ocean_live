@@ -91,131 +91,138 @@ class Contractor(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     link = models.CharField(max_length=255)
+    recievable = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    payable = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
         return self.company
 
-    def materials(self):
-        from django.db.models import Sum, F
-        obj = []
-        total = 0
-        barcodes = IssueTransaction.objects.filter(issue__contractor=self).values_list('barcode', flat=True).distinct()
+    # def materials(self):
+        
+    #     obj = []
+    #     total = 0
+    #     barcodes = IssueTransaction.objects.filter(issue__contractor=self).values_list('barcode', flat=True).distinct()
 
-        for barcode in barcodes:
-            material = InventoryMaterial.objects.get(barcode=barcode)
-            this_obj = material.obj()
-            this_obj['issued'] = IssueTransaction.objects.filter(material=material,issue__contractor=self).aggregate(total_qty=models.Sum('total_qty'))['total_qty'] or 0
-            this_obj['consumed'] = MaterialOrderItem.objects.filter(material=material,service_order__contractor=self,material_type='is').aggregate(total_qty=models.Sum('quantity'))['total_qty'] or 0
-            this_obj['balance'] = this_obj['issued'] - this_obj['consumed']
-            negative_balance = this_obj['balance'] * -1
-            this_obj['value'] = negative_balance * material.value
-            this_obj['rate'] = material.value
-            obj.append(this_obj)
-            total += this_obj['value']
-        return obj
+    #     for barcode in barcodes:
+    #         material = InventoryMaterial.objects.get(barcode=barcode)
+    #         this_obj = material.obj()
+    #         this_obj['issued'] = IssueTransaction.objects.filter(material=material,issue__contractor=self).aggregate(total_qty=models.Sum('total_qty'))['total_qty'] or 0
+    #         this_obj['consumed'] = MaterialOrderItem.objects.filter(material=material,service_order__contractor=self,material_type='is').aggregate(total_qty=models.Sum('quantity'))['total_qty'] or 0
+    #         this_obj['balance'] = this_obj['issued'] - this_obj['consumed']
+    #         negative_balance = this_obj['balance'] * -1
+    #         this_obj['value'] = negative_balance * material.value
+    #         this_obj['rate'] = material.value
+    #         obj.append(this_obj)
+    #         total += this_obj['value']
+    #     return obj
     
-    def returns(self):
-        obj = []
-        returns = ServiceOrderReturns.objects.filter(service_order__contractor=self)
-        for rt in returns:
-            this_obj = rt.material.obj()
-            this_obj['expected'] = rt.quantity
-            this_obj['returned'] = IssueTransaction.objects.filter(material=rt.material,issue__contractor=self,issue__issue_type='RET').aggregate(total_qty=models.Sum('total_qty'))['total_qty'] or 0
-            this_obj['balance'] = this_obj['expected'] - this_obj['returned']
-            this_obj['total_value'] = this_obj['balance'] * rt.material.value
-            this_obj['rate'] = rt.material.value
-            obj.append(this_obj)
-        return obj
+    # def returns(self):
+    #     obj = []
+    #     returns = ServiceOrderReturns.objects.filter(service_order__contractor=self)
+    #     for rt in returns:
+    #         this_obj = rt.material.obj()
+    #         this_obj['expected'] = rt.quantity
+    #         this_obj['returned'] = IssueTransaction.objects.filter(material=rt.material,issue__contractor=self,issue__issue_type='RET').aggregate(total_qty=models.Sum('total_qty'))['total_qty'] or 0
+    #         this_obj['balance'] = this_obj['expected'] - this_obj['returned']
+    #         this_obj['total_value'] = this_obj['balance'] * rt.material.value
+    #         this_obj['rate'] = rt.material.value
+    #         obj.append(this_obj)
+    #     return obj
     
-    def jobs(self):
-        obj = []
-        jobs = ServiceOrder.objects.filter(contractor=self)
-        for job in jobs:
-            obj.append(job.obj())
-        return obj
+    # def jobs(self):
+    #     obj = []
+    #     jobs = ServiceOrder.objects.filter(contractor=self)
+    #     for job in jobs:
+    #         obj.append(job.obj())
+    #     return obj
     
-    def issued_recievable_balance(self):
-        obj = []
-        total = 0
-        transactions = IssueTransaction.objects.filter(issue__contractor=self,issue__issue_type='ISS')
-        for transaction in transactions:
-            material = transaction.material.obj()
-            total_qty = transaction.total_qty
-            total_value = total_qty * material.value
+    # def issued_recievable_balance(self):
+    #     obj = []
+    #     total = 0
+    #     transactions = IssueTransaction.objects.filter(issue__contractor=self,issue__issue_type='ISS')
+    #     for transaction in transactions:
+    #         material = transaction.material.obj()
+    #         total_qty = transaction.total_qty
+    #         total_value = total_qty * material.value
 
-            total_used = ServiceOrderItem.objects.filter(service_order__contractor=self,material=transaction.material).aggregate(total_qty=models.Sum('quantity'))['total_qty'] or 0    
-            total_used_value = total_used * material.value
+    #         total_used = ServiceOrderItem.objects.filter(service_order__contractor=self,material=transaction.material).aggregate(total_qty=models.Sum('quantity'))['total_qty'] or 0    
+    #         total_used_value = total_used * material.value
 
-            total_diff = total_value - total_used_value
-            total += total_diff
-            obj.append({
-                'material':material,
-                'total_qty':total_qty,
-                'total_value':total_value,
-                'total_used':total_used,
-                'total_used_value':total_used_value,
-                'total_diff':total_diff
-            })
+    #         total_diff = total_value - total_used_value
+    #         total += total_diff
+    #         obj.append({
+    #             'material':material,
+    #             'total_qty':total_qty,
+    #             'total_value':total_value,
+    #             'total_used':total_used,
+    #             'total_used_value':total_used_value,
+    #             'total_diff':total_diff
+    #         })
 
-        return {
-            'transactions':obj,
-            'total':total
-        }
+    #     return {
+    #         'transactions':obj,
+    #         'total':total
+    #     }
     
-    def recievable(self):
-        total_returns = 0
-        total_usage = 0
-        total_balance = 0
-        obj = []
+    # def recievable(self):
+    #     total_returns = 0
+    #     total_usage = 0
+    #     total_balance = 0
+    #     obj = []
 
-        for material in InventoryMaterial.objects.all():
-            # returns
-            stated_returns = ServiceOrderReturns.objects.filter(material=material,service_order__contractor=self).aggregate(total_qty=models.Sum('quantity'))['total_qty'] or 0
-            actual_returns = IssueTransaction.objects.filter(material=material,issue__contractor=self,issue__issue_type='RET').aggregate(total_qty=models.Sum('total_qty'))['total_qty'] or 0
-            returns_diff = actual_returns - stated_returns 
-            returns_balance = returns_diff * material.value
+    #     for material in InventoryMaterial.objects.all():
+    #         # returns
+    #         stated_returns = ServiceOrderReturns.objects.filter(material=material,service_order__contractor=self).aggregate(total_qty=models.Sum('quantity'))['total_qty'] or 0
+    #         actual_returns = IssueTransaction.objects.filter(material=material,issue__contractor=self,issue__issue_type='RET').aggregate(total_qty=models.Sum('total_qty'))['total_qty'] or 0
+    #         returns_diff = actual_returns - stated_returns 
+    #         returns_balance = returns_diff * material.value
 
-            # usage in service orders
-            stated_usage = MaterialOrderItem.objects.filter(material=material,material_type='is').aggregate(total_qty=models.Sum('quantity'))['total_qty'] or 0
-            issued_for_service_orders = IssueTransaction.objects.filter(material=material,issue__contractor=self,issue__issue_type='ISS').aggregate(total_qty=models.Sum('total_qty'))['total_qty'] or 0
-            usage_diff = stated_usage - issued_for_service_orders
-            usage_balance = usage_diff * material.value
+    #         # usage in service orders
+    #         stated_usage = MaterialOrderItem.objects.filter(material=material,material_type='is').aggregate(total_qty=models.Sum('quantity'))['total_qty'] or 0
+    #         issued_for_service_orders = IssueTransaction.objects.filter(material=material,issue__contractor=self,issue__issue_type='ISS').aggregate(total_qty=models.Sum('total_qty'))['total_qty'] or 0
+    #         usage_diff = stated_usage - issued_for_service_orders
+    #         usage_balance = usage_diff * material.value
 
-            # balance
-            balance = returns_balance + usage_balance
-            total_returns += returns_balance
-            total_usage += usage_balance
-            total_balance += balance
+    #         # balance
+    #         balance = returns_balance + usage_balance
+    #         total_returns += returns_balance
+    #         total_usage += usage_balance
+    #         total_balance += balance
 
-            this_obj = {
-                'material':material.obj(),
-                'returns_balance':returns_balance,
-                'usage_balance':usage_balance,
-                'balance':balance
-            }
-            obj.append(this_obj)
+    #         this_obj = {
+    #             'material':material.obj(),
+    #             'returns_balance':returns_balance,
+    #             'usage_balance':usage_balance,
+    #             'balance':balance
+    #         }
+    #         obj.append(this_obj)
 
-        return {
-            'total_returns':total_returns,
-            'total_usage':total_usage,
-            'total_balance':total_balance,
-            'transactions':obj
-        }
+    #     return {
+    #         'total_returns':total_returns,
+    #         'total_usage':total_usage,
+    #         'total_balance':total_balance,
+    #         'transactions':obj
+    #     }
     
-    def payable(self):
-        return ServiceOrderItem.objects.filter(service_order__contractor=self).aggregate(total_amount=models.Sum('amount'))['total_amount'] or 0
+    # def payable(self):
+    #     return ServiceOrderItem.objects.filter(service_order__contractor=self).aggregate(total_amount=models.Sum('amount'))['total_amount'] or 0
     
-    def matched(self):
-        return self.payable() + self.recievable()['total_balance']
+    # def matched(self):
+    #     return self.payable() + self.recievable()['total_balance'] or 0
     
-    def paid(self):
-        return 0
-    
-    
-    def balance(self):
-        return self.matched() - self.paid()
+    # def paid(self):
+    #     return 0
     
     
+    # def balance(self):
+    #     return self.matched() - self.paid()
+    
+    def next_row(self):
+        return Contractor.objects.filter(id__gt=self.id).first().id if Contractor.objects.filter(id__gt=self.id).count() > 0 else 0
+    def prev_row(self):
+        return Contractor.objects.filter(id__lt=self.id).last().id if Contractor.objects.filter(id__lt=self.id).count() > 0 else 0
 
     def obj(self):
         return {
@@ -233,13 +240,15 @@ class Contractor(models.Model):
             'updated_at':self.updated_at,
             'created_by':self.created_by.username,
             'link':self.link,
-            'materials':self.materials(),
-            'returns':self.returns(),
-            'recievable':self.recievable(),
-            'payable':self.payable(),
-            'paid':self.paid(),
-            'balance':self.balance(),
-            'matched':self.matched()
+            'next_row':self.next_row().id if self.next_row() else 0,
+            'prev_row':self.prev_row().id if self.prev_row() else 0,
+            # 'materials':self.materials(),
+            # 'returns':self.returns(),
+            'recievable':self.recievable,
+            'payable':self.payable,
+            'paid':self.paid,
+            'balance':self.balance,
+            # 'matched':self.matched()
         }
 
 class Supplier(models.Model):

@@ -17,6 +17,8 @@ from django.contrib import admin
 from django.urls import path, include
 from . import views
 from . import ssml_api  
+from .api import contractor_api
+
 urlpatterns = [
     path('', views.index, name='ssml'),
     path('inventory/materials/', views.materials, name='materials'),
@@ -33,4 +35,5 @@ urlpatterns = [
     path('work-order/services/', views.services, name='services'),
     path('work-order/service-orders/', views.service_orders, name='service_orders'),
     path('master/contractors/', views.contractors, name='contractors'),
+    path('api/contractor/', contractor_api.contractor_api, name='contractors_api'),
 ]

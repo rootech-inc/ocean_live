@@ -909,3 +909,13 @@ def interface(request):
             "message"] = f"An error occurred on line {line_number} in file {tb_path}. Details: {e}"
 
     return JsonResponse(response, safe=False)
+
+
+
+
+
+
+
+
+
+
