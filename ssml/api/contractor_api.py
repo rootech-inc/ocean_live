@@ -46,7 +46,8 @@ def contractor_api(request):
                         arr = contractor.obj()
                 except Exception as e:
                     success_response['status_code'] = 505
-                    arr = f"Error: {e}"
+                    success_response['message'] = f"Error at line {e.__traceback__.tb_lineno}"
+                    arr = f"Error at line {e.__traceback__.tb_lineno}: {e}"
 
             elif module == 'material':
                 try:
