@@ -140,6 +140,9 @@
 
 
 <script>
+
+    let next = '';
+    let previous = '';
     $(document).ready(function(){
         ssml.loadContractor(`{{ last_contractor.id }}`);
 
@@ -154,6 +157,17 @@
         $('#add_contractor').click(function(){
             ssml.AddContractor();
         });
+
+        $('#next_contractor').click(function(){
+            ssml.loadContractor(next)
+        })
+
+        $('#prev_contractor').click(function(){
+            ssml.loadContractor(previous)
+        })
+        
+
+
     });
 </script>
 {% endblock %}

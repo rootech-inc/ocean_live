@@ -1325,13 +1325,15 @@ class SSML {
         let payload = {
             module: 'contractor',
             data: {
-                contractor_id: contractor_id
+                id: contractor_id
             }
         }
 
+        console.table(payload)
+
         await api.v2('VIEW', payload, '/ssml/api/contractor/').then(response => {
             if(anton.IsRequest(response)) {
-                let contractor = response.message[0];
+                let contractor = response.message;
                 console.table(contractor);
                 $('#name').val(contractor.company);
                 $('#owner').val(contractor.owner);
@@ -1345,17 +1347,21 @@ class SSML {
                 $('#contractor_id').val(contractor_id);
 
                 if(contractor.prev_row) {
-                    $('#prev_contractor').attr('onclick', `ssml.loadContractor(${contractor.prev_row})`);
+                    
                     $('#prev_contractor').attr('disabled', false);
+                    previous = contractor.prev_row
                 } else {
                     $('#prev_contractor').attr('disabled', true);
+                    previous =0
                 }
 
                 if(contractor.next_row) {
-                    $('#next_contractor').attr('onclick', `ssml.loadContractor(${contractor.next_row})`);
                     $('#next_contractor').attr('disabled', false);
+                    next = contractor.next_row
                 } else {
                     $('#next_contractor').attr('disabled', true);
+                    next = 0
+                    
                 }
 
                 loader.hide();
@@ -1626,6 +1632,86 @@ class SSML {
         });
         
         
+    }
+
+
+    AddContractor(){
+        amodal.setTitleText('Contractors');
+            amodal.setBodyHtml('<div id="contractor_modal"></div>');
+            amodal.setFooterHtml('<button class="btn btn-primary" id="add_contractor">Add Contractor</button>');
+            amodal.show();
+
+            $("#add_contractor").click(function(){
+                amodal.setTitleText('Add Contractor');
+                let form = `
+                    <div class="form-group mb-2">
+                        <label for="link" class="text-info">Link</label>
+                        <input type="text" class="form-control" id="link" name="link">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="company" class="text-info">Company</label>
+                        <input type="text" class="form-control" id="company" name="company">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="owner" class="text-info">Owner</label>
+                        <input type="text" class="form-control" id="owner" name="owner">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="phone" class="text-info">Phone</label>
+                        <input type="text" class="form-control" id="phone" name="phone">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="email" class="text-info">Email</label>
+                        <input type="email" class="form-control" id="email" name="email">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="country" class="text-info">Country</label>
+                        <input type="text" class="form-control" id="country" name="country">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="city" class="text-info">City</label>
+                        <input type="text" class="form-control" id="city" name="city">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="postal_code" class="text-info">Postal Code</label>
+                        <input type="text" class="form-control" id="postal_code" name="postal_code">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="gh_post_code" class="text-info">Ghana Post Code</label>
+                        <input type="text" class="form-control" id="gh_post_code" name="gh_post_code">
+                    </div>
+                    <div class="form-group mb-2">
+                        <label for="gh_card_no" class="text-info">Ghana Card No</label>
+                        <input type="text" class="form-control" id="gh_card_no" name="gh_card_no">
+                    </div>
+                    
+                    
+                     
+
+                `;
+                amodal.setBodyHtml(form);
+                amodal.setFooterHtml('<button class="btn btn-primary" id="save_contractor">Save</button>');
+                amodal.show();
+                $("#save_contractor").click(async function(){
+                    let ids = ['link', 'company', 'owner', 'phone', 'email','country','city','postal_code','gh_post_code','gh_card_no','mypk'];
+                    if(anton.validateInputs(ids)){
+                        let payload = {
+                            module: 'contractor',
+                            data: anton.Inputs(ids)
+                        }
+
+                        await api.v2('PUT',payload,'/ssml/api/').then(res=>{
+                            kasa.response(res);
+                        }).catch(err=>{
+                            kasa.error(err);
+                        });
+
+                        
+                    } else {
+                        kasa.error('Please fill all the fields');
+                    }
+                });
+            });
     }
 
 }
