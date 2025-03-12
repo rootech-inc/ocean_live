@@ -277,7 +277,7 @@ def interface(request):
 
             elif module == 'service_order_new':
                 header = data.get('header')
-                materials = data.get('materials')
+                mats = data.get('materials')
                 services = data.get('services')
                 returns = data.get('returns')
                 user = User.objects.get(id=header.get('mypk'))
@@ -327,15 +327,15 @@ def interface(request):
                         )
                     
                     # create material order items
-                    for material in materials:
-                        mt = InventoryMaterial.objects.get(barcode=material.get('barcode'))
+                    for mat in mats:
+                        mt = InventoryMaterial.objects.get(barcode=mat.get('barcode'))
                         MaterialOrderItem.objects.create(
                             service_order=service_order,
-                            material=InventoryMaterial.objects.get(barcode=material.get('barcode')),
-                            quantity=material.get('quantity'),
+                            material=InventoryMaterial.objects.get(barcode=mat.get('barcode')),
+                            quantity=mat.get('quantity'),
                             material_type='is',
                             rate=mt.value,
-                            amount=Decimal(mt.value) * Decimal(material.get('quantity'))
+                            amount=Decimal(mt.value) * Decimal(mat.get('quantity'))
                         )
                     
                     # create service order returns

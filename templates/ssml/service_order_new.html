@@ -340,6 +340,8 @@
                     payload.data.returns = returns
                     payload.data.services = services
 
+                    console.table(payload)
+
                     await api.v2('PUT',payload,'/ssml/api/').then(response => {
                         if(anton.IsRequest(response)){
                             let message = response.message;
