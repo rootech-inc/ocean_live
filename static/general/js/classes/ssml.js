@@ -322,7 +322,7 @@ class SSML {
                         <td>${service.description}</td>
                         <td>${service.rate}</td>
                         <td>
-                            <button class="btn btn-warning" onclick="ssml.addServiceToOrder(${id}, ${service.id})">Add</button>
+                            <button class="btn btn-warning" onclick="ssml.addServiceToOrder('${service.code}', '${service.name}')">Add</button>
                         </td>
                     </tr>`;
                 });
@@ -364,6 +364,28 @@ class SSML {
                 id: service_id
             }
         }
+
+        let last_service_line = $('#service_items tr').length;
+        let next_service_line = last_service_line + 1;
+        let row_id = 'srv_'+next_service_line;
+        let row_name_id = 'srvname_'+next_service_line;
+        let row_qty_id = 'srvqty_'+next_service_line;
+        let row_code_id = 'srvcode_'+next_service_line;
+        let row = `
+            <tr id="${row_id}">
+                <td id="${row_code_id}">${order_id}</td>
+                <td id="${row_name_id}">${service_id}</td>
+                <td ><input style='width: 100px;' type="number" id="${row_qty_id}" class="form-control" placeholder="Qty" value="1"></td>
+            </tr>
+        `
+
+        console.table(row);
+
+        $('#services_table').append(row);
+        amodal.hide();
+
+
+        return
 
         await api.v2('VIEW', payload, '/ssml/api/').then(response => {
             if(anton.IsRequest(response)) {
@@ -563,7 +585,35 @@ class SSML {
         });
     }
 
-    async addMaterialToOrder(order_id, material_id, material_name) {
+    async addMaterialToOrder(order_id) {
+
+        let line = order_id;
+        let material_name = $('#name_'+line).text();
+        let material_barcode = $('#barcode_'+line).text();
+        let material_qty = $('#qty_'+line).val();
+
+        let next_line = line + 1;
+        let active_tab = $('#serviceOrderTabs .nav-link.active').attr('href');
+        let row_id = active_tab == '#materials' ? 'mat_'+next_line : 'ret_'+next_line;
+        let row_barcode_id = active_tab == '#materials' ? 'mat_barcode_'+next_line : 'ret_barcode_'+next_line;
+        let row_name_id = active_tab == '#materials' ? 'mat_name_'+next_line : 'ret_name_'+next_line;
+        let row_qty_id = active_tab == '#materials' ? 'mat_qty_'+next_line : 'ret_qty_'+next_line;
+
+        let row = `
+            <tr id="${row_id}">
+                <td id="${row_barcode_id}">${material_barcode}</td>
+                <td id="${row_name_id}">${material_name}</td>
+                <td><input style='width: 100px;' type="number" id="${row_qty_id}" class="form-control" placeholder="Qty" value="1"></td>
+            </tr>
+        `
+
+        if(active_tab == '#materials'){
+            $('#materials_table').append(row);
+        } else {
+            $('#returns_table').append(row);
+        }
+
+        return
             
         let body = `
             <div class="row">
@@ -776,7 +826,11 @@ class SSML {
         await api.v2('VIEW', payload, '/ssml/api/').then(response => {
             if(anton.IsRequest(response)) {
                 let contractor = response.message;
-                console.table(contractor.material);
+                
+                
+                
+                
+
                 let body = `
                     
                     <div class="row m-2" id='contractor_print_screen'>
@@ -803,7 +857,7 @@ class SSML {
                             
                         </div>
 
-                        <h4 class="mt-4">Materials</h4>
+                        <h4 class="mt-4">Materials <span class="text-primary" id="total_amount"></span></h4>
 
                         <div class='col-sm-12' style="background-color:rgba(248, 249, 250, 0.57); padding: 20px; border-radius: 10px; border: 2px dotted #808080;">
                             <table class="table table-bordered table-stripped table-bordered">
@@ -818,23 +872,19 @@ class SSML {
                                         <th>Value</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    ${contractor.materials.map(material => `
-                                        <tr>
-                                            <td>${material.barcode}</td>
-                                            <td>${material.name}</td>
-                                            <td>${material.issued}</td>
-                                            <td>${material.consumed}</td>
-                                            <td>${material.balance}</td>
-                                            <td>${material.rate}</td>
-                                            <td>${material.value}</td>
-                                        </tr>
-                                    `).join('')}
+                                <tbody id='mat_rows'>
+                                    <tr>
+                                        <td colspan="7" class="text-center">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
 
-                        <h4 class="mt-4">Returns</h4>
+                        <h4 class="mt-4">Returns <span class="text-primary" id="total_returns"></span></h4>
                         <div class='col-sm-12' style="background-color:rgba(248, 249, 250, 0.57); padding: 20px; border-radius: 10px; border: 2px dotted #808080;">
                             <table class="table table-bordered table-stripped table-bordered">
                                 <thead class="table-dark">
@@ -848,18 +898,14 @@ class SSML {
                                         <th>Value</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    ${contractor.returns.map(material => `
-                                        <tr>
-                                            <td>${material.barcode}</td>
-                                            <td>${material.name}</td>
-                                            <td>${material.expected}</td>
-                                            <td>${material.returned}</td>
-                                            <td>${material.balance}</td>
-                                            <td>${material.rate}</td>
-                                            <td>${material.total_value}</td>
-                                        </tr>
-                                    `).join('')}
+                                <tbody id='ret_rows'>
+                                    <tr>
+                                        <td colspan="6" class="text-center">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -871,6 +917,116 @@ class SSML {
                 amodal.setFooterHtml('<button class="btn btn-primary" id="print_contractor">Print</button>');
                 amodal.setSize('L');
                 amodal.show();
+                loader.hide();
+
+
+                // get materials
+                let mat_load = {
+                    module: 'material',
+                    data: {
+                        contractor_id: id
+                    }
+                }
+                let mat_rows = ``;
+                api.v2('VIEW', mat_load, '/ssml/api/contractor/').then(response => {
+                    console.table(response);
+                    if(anton.IsRequest(response)) {
+                        let materials = response.message;
+                        let total_amount = 0;
+                        materials.forEach(material => {
+                            mat_rows += `
+                                <tr>
+                                    <td>${material.barcode}</td>
+                                    <td>${material.name}</td>
+                                    <td>${material.issued}</td>
+                                    <td>${material.consumed}</td>
+                                    <td>${material.balance}</td>
+                                    <td>${material.rate}</td>
+                                    <td>${material.value}</td>
+                                </tr>
+                            `;
+                            total_amount += parseFloat(material.value);
+                        });
+                        
+                        $('#mat_rows').html(mat_rows);
+                        $('#total_amount').html(total_amount.toFixed(2));
+                    } else {
+                        
+                        mat_rows = `
+                            <tr>
+                                <td colspan="7" class="text-center text-danger">
+                                    ${response.message}
+                                </td>
+                            </tr>
+                        `;
+                        console.log(mat_rows);
+                        console.log(mat_rows);
+                        $('#mat_rows').html(mat_rows);
+                    }
+                }).catch(error => {
+                    mat_rows = `
+                        <tr>
+                            <td colspan="7" class="text-center text-danger">
+                                ${error}
+                            </td>
+                        </tr>
+                    `;
+                    console.log(mat_rows);
+                    $('#mat_rows').html(mat_rows);
+                });
+
+                let ret_load = {
+                    module: 'returns',
+                    data: {
+                        contractor_id: id
+                    }
+                }
+                let ret_rows = ``;
+                api.v2('VIEW', ret_load, '/ssml/api/contractor/').then(response => {
+                    console.table(response);
+                    if(anton.IsRequest(response)) {
+                        let returns = response.message;
+                        let total_returns = 0;
+                        returns.forEach(ret => {
+                            console.table(ret);
+                            ret_rows += `
+                                <tr>
+                                    <td>${ret.barcode}</td>
+                                    <td>${ret.name}</td>
+                                    <td>${ret.expected}</td>
+                                    <td>${ret.returned}</td>
+                                    <td>${ret.balance}</td>
+                                    <td>${ret.rate}</td>
+                                    <td>${ret.total_value}</td>
+                                </tr>
+                            `;
+                            total_returns += parseFloat(ret.total_value);
+                        });
+                        $('#ret_rows').html(ret_rows);
+                        $('#total_returns').html(total_returns.toFixed(2));
+                    } else {
+                        ret_rows = `
+                            <tr>
+                                <td colspan="6" class="text-center text-danger">
+                                    ${response.message}
+                                </td>
+                            </tr>
+                        `;
+                        $('#ret_rows').html(ret_rows);
+                    }
+                }).catch(error => {
+                    ret_rows = `
+                        <tr>
+                            <td colspan="6" class="text-center text-danger">
+                                ${error}
+                            </td>
+                        </tr>
+                    `;
+                    $('#ret_rows').html(ret_rows);
+                });
+                
+                
+                
 
                 $('#print_contractor').click(function() {
                     let print_screen = document.getElementById('contractor_print_screen');
@@ -1301,5 +1457,176 @@ class SSML {
             kasa.error('Operation Cancelled');
         }
     }
+
+
+    async LoadServiceOrder(id) {
+        loader.show();
+        let payload = {
+            module: 'service_order',
+            data: {
+                id: id
+            }
+        }
+
+        await api.v2('VIEW', payload, '/ssml/api/').then(response => {
+            if(anton.IsRequest(response)) {
+                let service_order = response.message[0];
+                console.table(service_order);
+                $('#contractor').val(service_order.contractor.company);
+                $('#service_type').val(service_order.service_type.name);
+                $('#service_date').val(service_order.service_date);
+                $('#customer').val(service_order.customer);
+                $('#customer_no').val(service_order.customer_no);
+                $('#geo_data').val(service_order.plot.plot_no + '-' + service_order.geo_code);
+                $('#old_meter_no').val(service_order.old_meter_no);
+                $('#old_meter_no_reading').val(service_order.old_meter_reading);
+                $('#new_meter_no').val(service_order.new_meter_no);
+                $('#new_meter_no_reading').val(service_order.new_meter_no_reading);
+                $('#total_amount').val(service_order.total_amount);
+                $('#service_order_id').val(service_order.id);
+
+                if(service_order.next_row) {
+                    $('#next_service_order').attr('onclick', `ssml.LoadServiceOrder(${service_order.next_row})`);
+                    $('#next_service_order').attr('disabled', false);
+                } else {
+                    $('#next_service_order').attr('disabled', true);
+                }
+
+                if(service_order.prev_row) {
+                    $('#prev_service_order').attr('onclick', `ssml.LoadServiceOrder(${service_order.prev_row})`);
+                    $('#prev_service_order').attr('disabled', false);
+                } else {
+                    $('#prev_service_order').attr('disabled', true);
+                }
+                
+
+                let materials = service_order.materials;
+                let materials_table = ``;
+                materials.forEach(material => {
+                    materials_table += `
+                        <tr>
+                            <td>${material.material.barcode}</td>
+                            <td>${material.material.name}</td>
+                            <td>ISS</td>
+                            <td>${material.quantity}</td>
+                        </tr>
+                    `;
+                });
+                $('#materials_table').html(materials_table);
+
+                let returns = service_order.returns;
+                let returns_table = ``;
+                returns.forEach(ret => {
+                    returns_table += `
+                        <tr>
+                            <td>${ret.material.barcode}</td>
+                            <td>${ret.material.name}</td>
+                            <td>${ret.quantity}</td>
+                            <td>${ret.rate}</td>
+                            <td>${ret.amount}</td>
+                        </tr>
+                    `;
+                });
+                $('#returns_table').html(returns_table);
+
+                let services = service_order.service_items;
+                let services_table = ``;
+                services.forEach(service => {
+                    services_table += `
+                        <tr>
+                            <td>${service.service.name}</td>
+                            <td>${service.quantity}</td>
+                            <td>${service.rate}</td>
+                            <td>${service.amount}</td>
+                        </tr>
+                    `;
+                });
+                $('#services_table').html(services_table);
+
+                loader.hide();
+            } else {
+                kasa.error(response.message);
+                loader.hide();
+            }
+        }).catch(error => {
+            kasa.error(error);
+            loader.hide();
+        });
+    }
+
+
+    async AddMaterialToOrderScreen() {
+        
+        let body =  `
+            <input type="text" id="material_search" class="form-control w-50 mx-auto mb-2" placeholder="Search Material">
+            <div id="material_search_results"></div>
+        `;        
+        amodal.setTitleText('Search Material');
+        amodal.setBodyHtml(body);
+        amodal.setSize('L');
+        amodal.show();
+
+        $('#material_search').on('keyup', function(event) {
+            let search = $(this).val();
+            // check if key is enter
+            if(event.key === 'Enter') {
+                let string = search.trim();
+                if(string.length > 0) {
+                    // get materials
+                    let payload = {
+                        module: 'material',
+                        data: {
+                            id: string
+                        }
+                    }
+
+                    api.v2('VIEW', payload, '/ssml/api/').then(response => {
+                        if(anton.IsRequest(response)) {
+                            let materials = response.message;
+                            let material_search_results = ``;
+                            let line = 1;
+                            materials.forEach(material => {
+                                
+                                let row_id = `material_${line}`;
+                                material_search_results += `
+                                    <tr id="${row_id}">
+                                        <td  id='barcode_${line}'>${material.barcode}</td>
+                                        <td id='name_${line}'>${material.name}</td>
+                                        <td><input style='width: 100px;' type="number" id='qty_${line}' class="form-control" placeholder="Qty" value="1"></td>
+                                        <td><button class="btn btn-primary" id='add_${line}' onclick="ssml.addMaterialToOrder(${line})">Add</button></td>
+                                    </tr>
+                                `;
+                                line++;
+                            });
+
+                            let tb = `
+                                <table class="table table-bordered">
+                                    <thead class="thead-dark">
+                                        <tr>
+                                            <th>Barcode</th>
+                                            <th>Name</th>
+                                            <th>Qty</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${material_search_results}
+                                    </tbody>
+                                </table>
+                            `;
+                            $('#material_search_results').html(tb);
+                        }
+                    }).catch(error => {
+                        kasa.error(error);
+                    });
+                } else {
+                    kasa.error('Please enter at least a character');
+                }
+            }
+        });
+        
+        
+    }
+
 }
 const ssml = new SSML();

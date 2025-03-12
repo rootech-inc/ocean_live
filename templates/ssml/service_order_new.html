@@ -1,0 +1,371 @@
+{% extends 'ssml/ssmlbase.html' %}
+{% load static %}
+
+{% block body %}
+
+<div class="card-header">
+    <div class="d-flex justify-content-between">
+        <div class="w-50 d-flex">
+            
+            <button id="new_line" class="btn btn-primary ms-2"><i class="bi bi-plus"></i> New Line</button>
+            
+        </div>
+        <div class="w-50 d-flex justify-content-end align-items-center">
+            <button id="save_service_order" class="btn btn-success ms-2"><i class="bi bi-plus"></i> Save</button>
+        </div>
+    </div>
+</div>
+<div id="" class="card-body overflow-hidden">
+    <div class="container-fluid p-2 h-100 overflow-hidden">
+        <div class="row">
+            <div class="col-sm-4">
+                <div class="row mb-2">
+                    <div class="col-sm-4">
+                        <label for="contractor">Contractor</label>
+                    </div>
+                    <div class="col-sm-8">
+                        <select id="contractor" class="form-control rounded-0">
+                            <option selected value="">Select Contractor</option>
+                            {% for contractor in contractors %}
+                                <option value="{{ contractor.id }}">{{ contractor.company }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                
+                <div class="row mb-2">
+                    <div class="col-sm-4">
+                        <label for="service_type">Service Type</label>
+                    </div>
+                    <div class="col-sm-8">
+                        <select id="service_type" class="form-control rounded-0">
+                            {% for service_type in service_types %}
+                                <option value="{{ service_type.id }}">{{ service_type.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-2">
+                    <div class="col-sm-4">
+                        <label for="service_date">Date</label>
+                    </div>
+                    <div class="col-sm-8">
+                        <input type="date" id="service_date" class="form-control rounded-0">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                
+
+                <div class="row mb-2">
+                    <div class="col-sm-4">
+                        <label for="customer">Customer</label>
+                    </div>
+                    <div class="col-sm-8">
+                        <input type="text" id="customer" class="form-control rounded-0">
+                    </div>
+                </div>
+
+                <div class="row mb-2">
+                    <div class="col-sm-4">
+                        <label for="customer_no">Customer #</label>
+                    </div>
+                    <div class="col-sm-8">
+                        <input type="text" id="customer_no" class="form-control rounded-0">
+                    </div>
+                </div>
+
+                <div class="row mb-2">
+                    <div class="col-sm-4">
+                        <label for="geo_data">Plot / Cust</label>
+                    </div>
+                    <div class="col-sm-4">
+                        <select id="plot" class="form-control rounded-0" disabled>
+                            
+                        </select>
+                    </div>
+
+                    <div class="col-sm-4">
+                        <input type="text" id="cust_code" placeholder="C. Code"  class="form-control rounded-0" disabled>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="col-sm-4">
+                <div class="row mb-2">
+                    <div class="col-sm-4">
+                        <label for="old_meter_no">Old Meter</label>
+                    </div>
+                    <div class="col-sm-4 pr-0">
+                        <input type="text" id="old_meter_no" class="form-control rounded-0">
+                    </div>
+                    <div class="col-sm-4 pl-0">
+                        <input type="text" id="old_meter_no_reading" class="form-control rounded-0">
+                    </div>
+                </div>
+
+                <div class="row mb-2 ">
+                    <div class="col-sm-4">
+                        <label for="new_meter_no">New Meter</label>
+                    </div>
+                    <div class="col-sm-4 pr-0">
+                        <input type="text" id="new_meter_no" class="form-control rounded-0">
+                    </div>
+                    <div class="col-sm-4 pl-0">
+                        <input type="text" id="new_meter_no_reading" class="form-control rounded-0">
+                    </div>
+                </div>
+
+                <div class="row mb-2">  
+                    <div class="col-sm-4">
+                        <label for="total_amount">Total Amount</label>
+                    </div>
+                    <div class="col-sm-8">
+                        <input type="text" readonly id="total_amount" class="form-control text-success rounded-0">
+                    </div>
+                </div>
+
+                
+            </div>
+        </div>
+
+        <div class="h-75 overflow-hidden" >
+            <div class="card rounded-0 border h-100">
+                <div class="card-header">
+                    <ul class="nav nav-pills" id="serviceOrderTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="materials-tab" data-toggle="tab" href="#materials" role="tab" aria-controls="materials" aria-selected="true">Materials</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="returns-tab" data-toggle="tab" href="#returns" role="tab" aria-controls="returns" aria-selected="false">Returns</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="services-tab" data-toggle="tab" href="#services" role="tab" aria-controls="services" aria-selected="false">Services</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card-body overflow-hidden">
+                    <div class="tab-content h-100 overflow-auto" id="serviceOrderTabContent">
+                        <div class="tab-pane fade show active" id="materials" role="tabpanel" aria-labelledby="materials-tab">
+                            <div class="p-3">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Barcode</th>
+                                            <th>Name</th>
+                                            <th style="width: 100px;">Quantity</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="materials_table">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="returns" role="tabpanel" aria-labelledby="returns-tab">
+                            <div class="p-3">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Barcode</th>
+                                            <th>Name</th>
+                                            <th style="width: 100px;">Quantity</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="returns_table">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="services" role="tabpanel" aria-labelledby="services-tab">
+                            <div class="p-3">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <td>Code</td>
+                                            <td>Service</td>
+                                            <td>Quantity</td>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="services_table">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+    </div>
+    <div id="result"></div>
+    
+</div>
+
+
+<script>
+   
+        
+        $(document).ready(function(){
+
+            $('#new_line').click(function(){
+                // check active tab
+                let active_tab = $('#serviceOrderTabs .nav-link.active').attr('href');
+                if(active_tab == '#materials' || active_tab == '#returns'){
+                    ssml.AddMaterialToOrderScreen();
+                }
+                if(active_tab == '#services'){
+                    ssml.addService('');
+                }
+                
+            });
+
+            $('#contractor').change(async function() {
+                console.log('hello world');
+
+                let payload = {
+                    module: 'plots',
+                    data: {
+                        contractor_id: $('#contractor').val()
+                    }
+                };
+
+                try {
+                    let response = await api.v2('VIEW', payload, '/ssml/api/contractor/');
+                    if(anton.IsRequest(response)){
+                        let message = response.message;
+                        let plot_options = `<option disabled value=''>Plot</option>`
+                        console.table(response)
+                        console.table(message)
+                        if(message.length > 0){
+                            for(let x = 0; x < message.length; x++){
+                                let plot = message[x];
+                                plot_options += `<option value='${plot.id}'>${plot.plot_no}</option>`
+                            }
+                            $('#plot').html(plot_options)
+                            $('#plot').prop('disabled', false)
+                            $('#cust_code').prop('disabled', false)
+                        } else {
+                            kasa.error("Create Plots")
+                        }
+                        
+                    } else {
+                        kasa.response(response)
+                    }
+                } catch (error) {
+                    kasa.error(error);
+                }
+            });
+
+            $('#save_service_order').click(async function(){
+                loader.show()
+                let data = ['contractor', 'service_type', 'service_date', 'customer', 'customer_no', 'plot', 'cust_code', 'old_meter_no', 'old_meter_no_reading', 'new_meter_no', 'new_meter_no_reading','mypk']
+                if(anton.validateInputs(data)){
+                    let hd = anton.Inputs(data);
+                    let payload = {
+                        module: 'service_order_new',
+                        data:{
+                            header:hd
+                        }
+                        
+                    }
+                    
+                    let materials = []
+                    let returns = []
+                    let services = []
+
+                    if($('#materials_table tr').length < 1){
+                        kasa.error("Materials Cannot Be Empty")
+                        loader.hide()
+                        return
+                    }
+
+                    if($('#services_table tr').length < 1){
+                        kasa.error("Service Cannot be Empty")
+                        loader.hide()
+                        return
+                    }
+
+
+                    $('#materials_table tr').each(function(){
+                        let row = $(this);
+                        let id = row.attr('id');
+                        let line = id.split('_')[1];
+                        materials.push({
+                            barcode:row.find('td:first').text(),
+                            name:row.find('td:nth-child(2)').text(),
+                            quantity:$('#mat_qty_'+line).val(),
+                            line:line
+                        })
+                    })
+
+                    $('#returns_table tr').each(function(){
+                        let row = $(this);
+                        let id = row.attr('id');
+                        let line = id.split('_')[1];
+                        returns.push({
+                            barcode:row.find('td:first').text(),
+                            name:row.find('td:nth-child(2)').text(),
+                            quantity:$('#ret_qty_'+line).val(),
+                            line:line
+                        })
+                    })
+
+                    $('#services_table tr').each(function(){
+                        let row = $(this);
+                        let id = row.attr('id');
+                        let line = id.split('_').pop();
+                        let qty_id = `#srvqty_${line}`;
+                        console.log(qty_id)
+                        let code = row.find('td:first').text();
+                        let name = row.find('td:nth-child(2)').text();
+                        let srv_qty = $(`#srvqty_${line}`).val(); // Default to 1 if empty
+                        console.log('Service quantity:', srv_qty);
+                        
+                        let service = {
+                            code: code,
+                            name: name,
+                            quantity: srv_qty,
+                        }
+                        services.push(service)
+                    })
+
+                    payload.data.materials = materials
+                    payload.data.returns = returns
+                    payload.data.services = services
+
+                    await api.v2('PUT',payload,'/ssml/api/').then(response => {
+                        if(anton.IsRequest(response)){
+                            let message = response.message;
+                            kasa.success(message)
+                            loader.hide()
+                            location.href = '/ssml/work-order/service-orders/'
+                        } else {
+                            kasa.response(response)
+                            loader.hide()
+                        }
+                    }).catch(error => {
+                        kasa.error(error)
+                        loader.hide()
+                    })
+
+                    
+                    
+                } else {
+                    kasa.error("Please fill up all fields")
+                    loader.hide()
+                }
+            });
+        
+        });
+    
+</script>   
+
+
+{% endblock %}

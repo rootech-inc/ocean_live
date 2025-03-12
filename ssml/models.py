@@ -596,7 +596,7 @@ class ServiceOrder(models.Model):
     customer = models.CharField(max_length=255)
     customer_no = models.CharField(max_length=255)
     old_meter_no = models.CharField(max_length=255,unique=True)
-    new_meter = models.ForeignKey('Meter', on_delete=models.CASCADE)
+    new_meter = models.CharField(unique=True,null=False,max_length=20)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -610,6 +610,8 @@ class ServiceOrder(models.Model):
         ('paid', 'Paid'),
     ]
     status = models.CharField(max_length=255, choices=status_choices, default='pending')
+    old_meter_no_reading = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    new_meter_no_reading = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
         return self.service_date
@@ -639,6 +641,9 @@ class ServiceOrder(models.Model):
             obj.append(rt.obj())
         return obj
     
+    def installed_meter(self):
+        return {}
+    
     def obj(self):
         return {
             'id':self.id,
@@ -650,7 +655,7 @@ class ServiceOrder(models.Model):
             'customer':self.customer,
             'customer_no':self.customer_no,
             'old_meter_no':self.old_meter_no,
-            'new_meter_no':self.new_meter.meter_no,
+            'new_meter_no':self.new_meter,
             'created_at':self.created_at,
             'updated_at':self.updated_at,
             'created_by':self.created_by.username,
@@ -659,8 +664,15 @@ class ServiceOrder(models.Model):
             'total_amount':self.total_amount(),
             'materials':self.materials(),
             'returns':self.returns(),
-            
+            'old_meter_reading':self.old_meter_no_reading,
+            'new_meter_reading':self.new_meter_no_reading,
+            'next_row':self.next_row(),
+            'prev_row':self.prev_row(),
         }
+    def next_row(self):
+        return ServiceOrder.objects.filter(id__gt=self.id).first().id if ServiceOrder.objects.filter(id__gt=self.id).count() > 0 else 0
+    def prev_row(self):
+        return ServiceOrder.objects.filter(id__lt=self.id).last().id if ServiceOrder.objects.filter(id__lt=self.id).count() > 0 else 0
     
 
 

@@ -36,4 +36,5 @@ urlpatterns = [
     path('work-order/service-orders/', views.service_orders, name='service_orders'),
     path('master/contractors/', views.contractors, name='contractors'),
     path('api/contractor/', contractor_api.contractor_api, name='contractors_api'),
+    path('service-order/new/', views.service_order_new, name='service_order_new'),
 ]

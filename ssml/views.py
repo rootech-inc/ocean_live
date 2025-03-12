@@ -1,7 +1,7 @@
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 
-from ssml.models import Contractor, Grn, GrnTransaction, InventoryMaterial, Issue, IssueTransaction, Plot, Supplier
+from ssml.models import Contractor, Grn, GrnTransaction, InventoryMaterial, Issue, IssueTransaction, Plot, ServiceOrder, ServiceType, Supplier
 # Create your views here.
 @login_required
 def index(request):
@@ -195,6 +195,9 @@ def plots(request):
 
 @login_required
 def service_orders(request):
+    # ServiceOrder.objects.all()
+    if(ServiceOrder.objects.all().count() < 1):
+        return redirect('service_order_new')
     page = {
         'title': 'Service Order',
         'page': 'service_order',
@@ -202,7 +205,9 @@ def service_orders(request):
         'page_description': 'Service Order',
         'nav':True
     }
+    
     context = {
+        
         'page': page,
         'contractors': Contractor.objects.all(),
         'plots': Plot.objects.all(),
@@ -212,7 +217,8 @@ def service_orders(request):
             'sewerage': 'Sewerage',
             'gas': 'Gas',
             'telecom': 'Telecom'
-        }
+        },
+        'last_service_order': ServiceOrder.objects.last()
     }
     return render(request, 'ssml/service_order.html', context)
 
@@ -247,3 +253,21 @@ def contractors(request):
     }
     return render(request, 'ssml/contractors.html', context)
 
+
+@login_required
+def service_order_new(request):
+    
+    page = {
+        'title': 'New Service Order',
+        'page': 'service_order_new',
+        'page_title': 'New Service Order',
+        'page_description': 'New Service Order',
+        'nav':True,
+        
+    }
+    context = {
+        'page': page,
+        'contractors': Contractor.objects.all(),
+        'service_types': ServiceType.objects.all()
+    }
+    return render(request, 'ssml/service_order_new.html', context)

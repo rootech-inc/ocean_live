@@ -6,15 +6,198 @@
 <div class="card-header">
     <div class="d-flex justify-content-between">
         <div class="w-50 d-flex">
-            <h4>Service Order</h4>
+            <button id="new_service_order" class="btn btn-success ms-2"><i class="bi bi-plus"></i> New</button>
+            <button id="edit_service_order" class="btn btn-primary ms-2"><i class="bi bi-pencil"></i> Edit</button>
+            <button class="btn btn-primary ms-2" id="prev_service_order" onclick="ssml.LoadServiceOrder(`{{ last_service_order.prev_row }}`)">Prev</button>
+            <button class="btn btn-primary ms-2" id="next_service_order" onclick="ssml.LoadServiceOrder(`{{ last_service_order.next_row }}`)">Next</button>
         </div>
         <div class="w-50 d-flex justify-content-end align-items-center">
             <button class="btn btn-warning" id="service_type_btn">Service Types</button>
-            <button id="new_service_order" class="btn btn-success ms-2"><i class="bi bi-plus"></i> New Service Order</button>
+            <button id="close_job" class="btn btn-danger ms-2"><i class="bi bi-x-circle"></i> Close Job</button>
+            <button id="view_job" class="btn btn-primary ms-2"><i class="bi bi-eye"></i> View</button>
         </div>
     </div>
 </div>
-<div id="result" class="card-body">
+<div id="" class="card-body overflow-hidden">
+    <div class="container-fluid p-2 h-75 overflow-hidden">
+        <div class="row">
+            <div class="col-sm-4">
+                <div class="row mb-2">
+                    <div class="col-sm-4">
+                        <label for="contractor">Contractor</label>
+                    </div>
+                    <div class="col-sm-8">
+                        <input type="text" readonly id="contractor" class="form-control rounded-0">
+                        <input type="hidden" id="service_order_id" name="service_order_id">
+                    </div>
+                </div>
+
+                
+                <div class="row mb-2">
+                    <div class="col-sm-4">
+                        <label for="service_type">Service Type</label>
+                    </div>
+                    <div class="col-sm-8">
+                        <input type="text" readonly id="service_type" class="form-control rounded-0">
+                    </div>
+                </div>
+
+                <div class="row mb-2">
+                    <div class="col-sm-4">
+                        <label for="service_date">Date</label>
+                    </div>
+                    <div class="col-sm-8">
+                        <input type="text" readonly id="service_date" class="form-control rounded-0">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                
+
+                <div class="row mb-2">
+                    <div class="col-sm-4">
+                        <label for="customer">Customer</label>
+                    </div>
+                    <div class="col-sm-8">
+                        <input type="text" readonly id="customer" class="form-control rounded-0">
+                    </div>
+                </div>
+
+                <div class="row mb-2">
+                    <div class="col-sm-4">
+                        <label for="customer_no">Customer #</label>
+                    </div>
+                    <div class="col-sm-8">
+                        <input type="text" readonly id="customer_no" class="form-control rounded-0">
+                    </div>
+                </div>
+
+                <div class="row mb-2">
+                    <div class="col-sm-4">
+                        <label for="geo_data">Geo</label>
+                    </div>
+                    <div class="col-sm-8">
+                        <input type="text" readonly id="geo_data" class="form-control rounded-0">
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="col-sm-4">
+                <div class="row mb-2">
+                    <div class="col-sm-4">
+                        <label for="old_meter_no">Old Meter</label>
+                    </div>
+                    <div class="col-sm-4 pr-0">
+                        <input type="text" readonly id="old_meter_no" class="form-control rounded-0">
+                    </div>
+                    <div class="col-sm-4 pl-0">
+                        <input type="text" id="old_meter_no_reading" class="form-control rounded-0">
+                    </div>
+                </div>
+
+                <div class="row mb-2 ">
+                    <div class="col-sm-4">
+                        <label for="new_meter_no">New Meter</label>
+                    </div>
+                    <div class="col-sm-4 pr-0">
+                        <input type="text" readonly id="new_meter_no" class="form-control rounded-0">
+                    </div>
+                    <div class="col-sm-4 pl-0">
+                        <input type="text" readonly id="new_meter_no_reading" class="form-control rounded-0">
+                    </div>
+                </div>
+
+                <div class="row mb-2">  
+                    <div class="col-sm-4">
+                        <label for="total_amount">Total Amount</label>
+                    </div>
+                    <div class="col-sm-8">
+                        <input type="text" readonly id="total_amount" class="form-control text-success rounded-0">
+                    </div>
+                </div>
+
+                
+            </div>
+        </div>
+
+        <div class="h-80 overflow-auto" >
+            <div class="card rounded-0 border h-100 overflow-hidden">
+                <div class="card-header">
+                    <ul class="nav nav-pills" id="serviceOrderTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="materials-tab" data-toggle="tab" href="#materials" role="tab" aria-controls="materials" aria-selected="true">Materials</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="returns-tab" data-toggle="tab" href="#returns" role="tab" aria-controls="returns" aria-selected="false">Returns</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="services-tab" data-toggle="tab" href="#services" role="tab" aria-controls="services" aria-selected="false">Services</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card-body overflow-hidden">
+                    <div class="tab-content" id="serviceOrderTabContent">
+                        <div class="tab-pane fade show active" id="materials" role="tabpanel" aria-labelledby="materials-tab">
+                            <div class="p-3">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Barcode</th>
+                                            <th>Name</th>
+                                            <th>Type</th>
+                                            <th>Quantity</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="materials_table">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="returns" role="tabpanel" aria-labelledby="returns-tab">
+                            <div class="p-3">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Barcode</th>
+                                            <th>Name</th>
+                                            <th>Quantity</th>
+                                            <th>Rate</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="returns_table">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="services" role="tabpanel" aria-labelledby="services-tab">
+                            <div class="p-3">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Service</th>
+                                            <th>Quantity</th>
+                                            <th>Rate</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="services_table">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+    </div>
+    <!-- <div id="result"></div> -->
     
 </div>
 
@@ -24,8 +207,22 @@
         
         $(document).ready(function(){
 
-            ssml.LoadServiceOrders();
+            // ssml.LoadServiceOrders();
+            ssml.LoadServiceOrder(`{{ last_service_order.id }}`);
 
+            $('#view_job').click(function(){
+                let id = $('#service_order_id').val();
+                ssml.viewServiceOrder(id);
+            });
+
+            $('#new_service_order').click(function(){
+                location.href = '/ssml/service-order/new/';
+            });
+
+            $('#edit_service_order').click(function(){
+                let id = $('#service_order_id').val();
+                ssml.LoadServiceOrder(id);
+            });
             $('#service_type_btn').click(async function(){
                 let payload = {
                         module: 'service_type',

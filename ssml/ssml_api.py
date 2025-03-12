@@ -275,6 +275,91 @@ def interface(request):
                 ServiceOrderReturns.objects.create(service_order=service_order, material=material, quantity=quantity, created_by=user, modified_by=user)
                 success_response['message'] = "Service Order Return Created Successfully"
 
+            elif module == 'service_order_new':
+                header = data.get('header')
+                materials = data.get('materials')
+                services = data.get('services')
+                returns = data.get('returns')
+                user = User.objects.get(id=header.get('mypk'))
+
+                # validate meter
+                new_meter_no = header.get('new_meter_no')
+                contractor = Contractor.objects.get(id=header.get('contractor'))
+                print(new_meter_no)
+                meter = Meter.objects.get(meter_no=header.get('new_meter_no'))
+
+                # check if meter belongs to contractor
+                if meter.issue.contractor != contractor:
+                    raise Exception("Meter Does Not Belong To Contractor")
+
+                # check if meter is already issued
+                if meter.is_issued:
+                    raise Exception("Meter Already Issued")
+
+
+
+                try:
+                    # create service order
+                    service_order = ServiceOrder.objects.create(
+                        service_type_id=header.get('service_type'),
+                        service_date=header.get('service_date'),
+                        contractor_id=header.get('contractor'),
+                        plot_id=header.get('plot'),
+                        geo_code=header.get('cust_code'),
+                        customer=header.get('customer'),
+                        customer_no=header.get('customer_no'),
+                        old_meter_no=header.get('old_meter_no'),
+                        new_meter=meter.meter_no,
+                        created_by=user,
+                        old_meter_no_reading=header.get('old_meter_no_reading'),
+                        new_meter_no_reading=header.get('new_meter_no_reading')
+                    )
+
+                    # create service order items
+                    for service in services:
+                        r_service = Service.objects.get(code=service.get('code'))
+                        ServiceOrderItem.objects.create(
+                            service_order=service_order,
+                            service=Service.objects.get(code=service.get('code')),
+                            rate=r_service.rate,
+                            quantity=service.get('quantity'),
+                            amount=Decimal(service.get('quantity')) * Decimal(r_service.rate)
+                        )
+                    
+                    # create material order items
+                    for material in materials:
+                        mt = InventoryMaterial.objects.get(barcode=material.get('barcode'))
+                        MaterialOrderItem.objects.create(
+                            service_order=service_order,
+                            material=InventoryMaterial.objects.get(barcode=material.get('barcode')),
+                            quantity=material.get('quantity'),
+                            material_type='is',
+                            rate=mt.value,
+                            amount=Decimal(mt.value) * Decimal(material.get('quantity'))
+                        )
+                    
+                    # create service order returns
+                    for rt in returns:
+                        ServiceOrderReturns.objects.create(
+                            service_order=service_order,
+                            material=InventoryMaterial.objects.get(barcode=rt.get('barcode')),
+                            quantity=rt.get('quantity'),
+                            created_by=user,
+                            modified_by=user
+                        )
+
+                    meter.is_issued = True
+                    meter.service_order = service_order
+                    meter.save()
+
+                    success_response['message'] = "Service Order Created Successfully"
+                except Exception as e:
+                    # delete service order if created
+                    if 'service_order' in locals():
+                        service_order.delete()
+                    success_response['status_code'] = 400
+                    success_response['message'] = f"Error on line {sys.exc_info()[2].tb_lineno}: {e}"
+
             else:
                 success_response['status_code'] = 400
                 success_response['message'] = f"Module Not Found"
