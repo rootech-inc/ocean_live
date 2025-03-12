@@ -592,15 +592,17 @@ class SSML {
         let material_barcode = $('#barcode_'+line).text();
         let material_qty = $('#qty_'+line).val();
 
-        let next_line = line + 1;
+        
         let active_tab = $('#serviceOrderTabs .nav-link.active').attr('href');
+        let next_line = active_tab == '#materials' ? $('#materials_table tr').length + 1 : $('#returns_table').length + 1
         let row_id = active_tab == '#materials' ? 'mat_'+next_line : 'ret_'+next_line;
         let row_barcode_id = active_tab == '#materials' ? 'mat_barcode_'+next_line : 'ret_barcode_'+next_line;
         let row_name_id = active_tab == '#materials' ? 'mat_name_'+next_line : 'ret_name_'+next_line;
         let row_qty_id = active_tab == '#materials' ? 'mat_qty_'+next_line : 'ret_qty_'+next_line;
 
         let row = `
-            <tr id="${row_id}">
+            <tr  id="${row_id}">
+                <td ondblclick='$(#${row_id}).remove()'>${next_line}</td>
                 <td id="${row_barcode_id}">${material_barcode}</td>
                 <td id="${row_name_id}">${material_name}</td>
                 <td><input style='width: 100px;' type="number" id="${row_qty_id}" class="form-control" placeholder="Qty" value="1"></td>

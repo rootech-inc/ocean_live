@@ -282,6 +282,9 @@ def interface(request):
                 returns = data.get('returns')
                 user = User.objects.get(id=header.get('mypk'))
 
+                # print(mats)
+                # raise Exception("Test End")
+
                 # validate meter
                 new_meter_no = header.get('new_meter_no')
                 contractor = Contractor.objects.get(id=header.get('contractor'))

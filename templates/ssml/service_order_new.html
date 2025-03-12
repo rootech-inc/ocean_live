@@ -155,6 +155,7 @@
                                 <table class="table table-bordered">
                                     <thead>
                                         <tr>
+                                            <th>LN</th>
                                             <th>Barcode</th>
                                             <th>Name</th>
                                             <th style="width: 100px;">Quantity</th>
@@ -171,6 +172,7 @@
                                 <table class="table table-bordered">
                                     <thead>
                                         <tr>
+                                            <th>LN</th>
                                             <th>Barcode</th>
                                             <th>Name</th>
                                             <th style="width: 100px;">Quantity</th>
@@ -298,8 +300,8 @@
                         let id = row.attr('id');
                         let line = id.split('_')[1];
                         materials.push({
-                            barcode:row.find('td:first').text(),
-                            name:row.find('td:nth-child(2)').text(),
+                            barcode:row.find('td:nth-child(2)').text(),
+                            name:row.find('td:nth-child(3)').text(),
                             quantity:$('#mat_qty_'+line).val(),
                             line:line
                         })
@@ -310,8 +312,8 @@
                         let id = row.attr('id');
                         let line = id.split('_')[1];
                         returns.push({
-                            barcode:row.find('td:first').text(),
-                            name:row.find('td:nth-child(2)').text(),
+                            barcode:row.find('td:nth-child(2)').text(),
+                            name:row.find('td:nth-child(3)').text(),
                             quantity:$('#ret_qty_'+line).val(),
                             line:line
                         })
