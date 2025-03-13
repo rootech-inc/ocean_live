@@ -1365,6 +1365,8 @@ class SSML {
         });
     }
 
+    
+
     async loadContractor(contractor_id) {
         loader.show();
         let payload = {
@@ -1531,7 +1533,7 @@ class SSML {
             }
         }
 
-        if(confirm('Are you sure you want to close this job?')) {
+        if(true) {
             await api.v2('PATCH', payload, '/ssml/api/').then(response => {
                 if(anton.IsRequest(response)) {
                 kasa.success(response.message);

@@ -760,10 +760,14 @@ def interface(request):
                 elif module == 'service_order':
                     id = data.get('id','*')
                     filter = data.get('filter','*')
+                    print(data)
                     if id == '*':
                         service_orders = ServiceOrder.objects.all()[:10]
                         if filter == 'contractor':
-                            service_orders = ServiceOrder.objects.filter(contractor=data.get('contractor'),status='pending')[:10]
+                            service_orders = ServiceOrder.objects.filter(contractor=data.get('contractor'))[:10]
+                            status = data.get('status')
+                            if status:
+                                service_orders.filter(status=status)
                         elif filter == 'plot':
                             service_orders = ServiceOrder.objects.filter(plot=data.get('plot'))[:10]
                         elif filter == 'service_type':

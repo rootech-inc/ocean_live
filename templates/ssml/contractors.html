@@ -14,6 +14,7 @@
         <div class="w-50 d-flex justify-content-end">
             
             <button class="btn btn-info rounded-0 ms-2" id="view_contractor"><i class="bi bi-eye"></i> View</button>
+            <button class="btn btn-info rounded-0 ms-2" id="close_jobs"><i class="bi bi-eye"></i> Close Jobs</button>
         </div>
     </div>
 </div>
@@ -164,6 +165,49 @@
 
         $('#prev_contractor').click(function(){
             ssml.loadContractor(previous)
+        })
+
+        $('#close_jobs').click(async function(){
+            if(confirm("Are You Sure>")){
+                let id = $('#contractor_id').val()
+                // get all penidng jobs
+                let payload = {
+                    module: 'service_order',
+                    data: {
+                        id: '*',
+                        contractor: id,
+                        filter: 'contractor'
+                    }
+                }
+                loader.show()
+
+                await api.v2('VIEW',payload,'/ssml/api/').then(response => {
+                    if(anton.IsRequest(response)){
+                        console.log("Here We")
+                        let messsage = response['message']
+                        console.table(messsage.length)
+                        for(let j = 0; j < messsage.length; j++){
+                            let service_id = messsage[j].id;
+                            if(messsage[j].status === 'pending'){
+                                ssml.closeJob(service_id)
+                            }
+                            
+                        }
+                        console.table(messsage)
+                        loader.hide()
+                    } else {
+                        console.log("Alhaji")
+                        loader.hide()
+                    }
+                }).catch(error => {
+                    kasa.error(error)
+                    loader.hide()
+                })
+
+
+            } else {
+                kasa.info("Operation Cancelled")
+            }
         })
         
 
