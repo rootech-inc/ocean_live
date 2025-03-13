@@ -1888,7 +1888,7 @@ class SSML {
                                     </tr>
                                 `
 
-                                to_export.push([record.meter],[record.name],[record.quantity])
+                                to_export.push([record.meter,record.name,record.quantity])
                             }
 
                             let table = `<table class='table table-sm table-bordered'>
