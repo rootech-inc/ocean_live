@@ -726,7 +726,7 @@ def interface(request):
                     if id == '*':
                         service_orders = ServiceOrder.objects.all()
                         if filter == 'contractor':
-                            service_orders = ServiceOrder.objects.filter(contractor=data.get('contractor'))
+                            service_orders = ServiceOrder.objects.filter(contractor=data.get('contractor'),status='completed')
                         elif filter == 'plot':
                             service_orders = ServiceOrder.objects.filter(plot=data.get('plot'))
                         elif filter == 'service_type':
