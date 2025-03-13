@@ -362,11 +362,18 @@
                                     <div class="form-group">
                                         <label for="value">Value</label>
                                         <input type="number" class="form-control" id="value" name="value" value="${material.value}">
-                                    </div>
+                                    </div><hr>
 
                                     <div class="form-group">
-                                        <label for="is_return">Return</label>
+                                        <label for="is_return">Is Return?</label>
                                         <select class="form-control" id="is_return" name="is_return">
+                                               <option value='0'>NO</option>
+                                               <option value='1'>Yes</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="is_issue">Is Issue?</label>
+                                        <select class="form-control" id="is_issue" name="is_issue">
                                                <option value='0'>NO</option>
                                                <option value='1'>Yes</option>
                                         </select>
@@ -386,7 +393,7 @@
                                 amodal.show();
 
                                 $('#save-material').click(async function () {
-                                    let ids = ['barcode', 'name', 'group', 'reorder_qty', 'value','is_return'];
+                                    let ids = ['barcode', 'name', 'group', 'reorder_qty', 'value','is_return','is_issue'];
                                     if (anton.validateInputs(ids)) {
                                         let payload = {
                                             module: 'material',
@@ -397,7 +404,8 @@
                                                 group: $('#group').val(),
                                                 reorder_qty: $('#reorder_qty').val(),
                                                 value: $('#value').val(),
-                                                is_return:$('#is_return').val()
+                                                is_return:$('#is_return').val(),
+                                                is_issue:$('#is_issue').val()
                                             }
                                         };
                                         await api.v2('PATCH', payload, '/ssml/api/').then(res => {

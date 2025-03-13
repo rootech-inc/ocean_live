@@ -36,6 +36,7 @@ class InventoryMaterial(models.Model):
     image = models.ImageField(upload_to='static/uploads/materials/', null=True, blank=True,default='static/uploads/materials/default.png')
     value = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     is_return = models.BooleanField(default=False)
+    is_issue = models.BooleanField(default=False)
     
     def __str__(self):
         return self.name

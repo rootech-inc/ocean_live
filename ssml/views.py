@@ -268,6 +268,7 @@ def service_order_new(request):
     context = {
         'page': page,
         'contractors': Contractor.objects.all(),
-        'service_types': ServiceType.objects.all()
+        'service_types': ServiceType.objects.all(),
+        'issue_materials':InventoryMaterial.objects.filter(is_issue=True)
     }
     return render(request, 'ssml/service_order_new.html', context)

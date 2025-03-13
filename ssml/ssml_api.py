@@ -340,6 +340,20 @@ def interface(request):
                             rate=mt.value,
                             amount=Decimal(mt.value) * Decimal(mat.get('quantity'))
                         )
+
+                    # automate materials add
+                    for ret_item in InventoryMaterial.objects.filter(is_return=True):
+                        try:
+                            MaterialOrderItem.objects.create(
+                                service_order=service_order,
+                                material=ret_item,
+                                quantity=1,
+                                material_type='is',
+                                rate=ret_item.value,
+                                amount=Decimal(mt.value) * Decimal(mat.get('quantity'))
+                            )
+                        except Exception as e:
+                            pass
                     
                     # create service order returns
                     for rt in returns:
@@ -350,6 +364,18 @@ def interface(request):
                             created_by=user,
                             modified_by=user
                         )
+
+                    # add automatic returns
+                    for ret_item in InventoryMaterial.objects.filter(is_return=True):
+                        ServiceOrderReturns.objects.create(
+                            service_order=service_order,
+                            material=ret_item,
+                            quantity=1,
+                            created_by=user,
+                            modified_by=user
+                        )
+
+                    
 
                     meter.is_issued = True
                     meter.service_order = service_order
@@ -806,6 +832,7 @@ def interface(request):
                 reorder_qty = data.get('reorder_qty')
                 value = data.get('value')
                 is_return = data.get('is_return')
+                is_issue = data.get('is_issue')
                 print(data)
                 material = InventoryMaterial.objects.get(barcode=barcode)
                 material.name = name
@@ -813,6 +840,8 @@ def interface(request):
                 material.reorder_qty = reorder_qty
                 material.value = value
                 material.is_return = is_return
+                material.is_issue = is_issue
+
                 material.save()
                 success_response['message'] = "Material Updated Successfully"
             elif module == 'post_grn':
