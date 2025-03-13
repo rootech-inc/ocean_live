@@ -245,6 +245,26 @@ def contractor_api(request):
                     success_response['status_code'] = 500
                     arr = str(e)
 
+            elif module == 'contractor_usage':
+                try:
+                    barcode = data.get('barcode')
+                    contractor_id = data.get('contractor_id')
+                    contractor = Contractor.objects.get(id=contractor_id)
+                    trans = []
+                    for usage in MaterialOrderItem.objects.filter(service_order__contractor=contractor,material__barcode=barcode):
+                        item = usage.material
+                        trans.append({
+                            'barcode':item.barcode,
+                            'name':item.name,
+                            'meter':usage.service_order.new_meter,
+                            'quantity':usage.quantity
+                        })
+
+                    arr = trans
+                except Exception as e:
+                    success_response['status_code'] = 500
+                    arr = str(e)
+
 
             success_response['message'] = arr
 

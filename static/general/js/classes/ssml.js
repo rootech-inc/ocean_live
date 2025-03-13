@@ -1825,5 +1825,98 @@ class SSML {
         })
     }
 
+
+    async materialUsage(){
+        
+
+        let payload = {
+            module:'contractor',
+            data:{
+                contractor_id:'*'
+            }
+        }
+
+        await api.v2('VIEW',payload,'/ssml/api/').then(response => {
+            if(anton.IsRequest(response)){
+                let conts = response.message
+                let option = ``
+                for(let x = 0; x < conts.length; x++){
+                    let contractor = conts[x];
+                    console.table(contractor)
+                    option +=  `<option value='${contractor.id}' >${contractor.company}</option>`
+                }
+
+                let form = `
+                <div class='form-group mb-2'>
+                    <label>CONTRACTOR</label><br>
+                    <select class='form-control' id='contractor_id'>
+                        ${option}
+                    </select>
+                </div>
+                <div class='form-group'>
+                    <label>BARCODE</label><br>
+                    <input class='form-control' id='barcode' >
+                </div>
+            
+            `
+                amodal.setBodyHtml(form)
+                amodal.setFooterHtml(`<button id='see'>SEE</button>`)
+                amodal.show()
+
+                $('#see').click(async function(){
+                    let ids = ['barcode','contractor_id'];
+                    payload = {
+                        module:'contractor_usage',
+                        data:anton.Inputs(ids)
+                    }
+
+                    await api.v2('VIEW',payload,'/ssml/api/contractor/').then(response => {
+                        if(anton.IsRequest(response)){
+                            let records = response.message
+                            let to_export = []
+                            let tr = ``;
+                            for(let m = 0; m < records.length; m++){
+                                let record = records[m];
+                                console.table(record)
+                                tr += `
+                                    <tr>
+                                        <td>${record.meter}</td>
+                                        <td>${record.barcode}</td>
+                                        <td>${record.name}</td>
+                                        <td>${record.quantity}</td>
+                                    </tr>
+                                `
+
+                                to_export.push([record.meter],[record.name],[record.quantity])
+                            }
+
+                            let table = `<table class='table table-sm table-bordered'>
+                                <tbody>${tr}</tbody>
+                            </table>`
+
+                            amodal.setBodyHtml(table)
+                            amodal.setSize('L')
+                            amodal.setFooterHtml(`<button>AGAIN</button><button id='export'>Export</button>`)
+
+                            $('#export').click(function(){
+                                anton.downloadCSV('material_use.csv',to_export)
+                            });
+
+                        }
+                    }).catch(error => {
+                        kasa.error(error)
+                    })
+                })
+            }
+            
+        }).catch(error => {
+            kasa.error(error)
+        })
+
+
+
+        
+    }
+
 }
 const ssml = new SSML();
