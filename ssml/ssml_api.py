@@ -724,13 +724,13 @@ def interface(request):
                     id = data.get('id','*')
                     filter = data.get('filter','*')
                     if id == '*':
-                        service_orders = ServiceOrder.objects.all()
+                        service_orders = ServiceOrder.objects.all()[:10]
                         if filter == 'contractor':
-                            service_orders = ServiceOrder.objects.filter(contractor=data.get('contractor'),status='pending')
+                            service_orders = ServiceOrder.objects.filter(contractor=data.get('contractor'),status='pending')[:10]
                         elif filter == 'plot':
-                            service_orders = ServiceOrder.objects.filter(plot=data.get('plot'))
+                            service_orders = ServiceOrder.objects.filter(plot=data.get('plot'))[:10]
                         elif filter == 'service_type':
-                            service_orders = ServiceOrder.objects.filter(service_type=data.get('service_type'))
+                            service_orders = ServiceOrder.objects.filter(service_type=data.get('service_type'))[:10]
                             
                         success_response['message'] = [service_order.obj() for service_order in service_orders]
                     else:
