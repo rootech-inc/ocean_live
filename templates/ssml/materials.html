@@ -378,6 +378,12 @@
                                                <option value='1'>Yes</option>
                                         </select>
                                     </div>
+                                    <hr>
+                                    <div class="form-group">
+                                        <label for="issue_qty">issue_qty</label>
+                                        <input type="number" class="form-control" id="issue_qty" name="issue_qty" value="${material.issue_qty}">
+                                    </div>
+
 
 
 
@@ -393,7 +399,7 @@
                                 amodal.show();
 
                                 $('#save-material').click(async function () {
-                                    let ids = ['barcode', 'name', 'group', 'reorder_qty', 'value','is_return','is_issue'];
+                                    let ids = ['barcode', 'name', 'group', 'reorder_qty', 'value','is_return','is_issue','issue_qty'];
                                     if (anton.validateInputs(ids)) {
                                         let payload = {
                                             module: 'material',
@@ -405,7 +411,8 @@
                                                 reorder_qty: $('#reorder_qty').val(),
                                                 value: $('#value').val(),
                                                 is_return:$('#is_return').val(),
-                                                is_issue:$('#is_issue').val()
+                                                is_issue:$('#is_issue').val(),
+                                                issue_qty:$('#issue_qty').val()
                                             }
                                         };
                                         await api.v2('PATCH', payload, '/ssml/api/').then(res => {

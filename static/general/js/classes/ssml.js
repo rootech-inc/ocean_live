@@ -2050,5 +2050,19 @@ class SSML {
         });
     }
 
+
+    async updateIssued(){
+        loader.show()
+        let payload = {
+            module:'issue_def_qty',
+            data:{}
+        }
+
+        await api.v2('PATCH',payload,'/ssml/api/').then(response => {
+            kasa.response(response)
+            loader.hide()
+        }).catch(error => {kasa.error(error);loader.hide()})
+    }
+
 }
 const ssml = new SSML();

@@ -857,9 +857,23 @@ def interface(request):
                 material.value = value
                 material.is_return = is_return
                 material.is_issue = is_issue
+                material.issue_qty = data.get('issue_qty')
 
                 material.save()
                 success_response['message'] = "Material Updated Successfully"
+
+
+            elif module == 'issue_def_qty':
+                for meterial in InventoryMaterial.objects.filter(is_issue=True):
+                    issue_qty = meterial.issue_qty
+                    MaterialOrderItem.objects.filter(material=meterial).update(
+                        quantity=issue_qty,
+                        rate=meterial.value,
+                        amount=issue_qty*meterial.value
+                    )
+
+                success_response['message'] = "Issued Quantity Updated!!"
+            
             elif module == 'post_grn':
                 grn_id = data.get('id')
                 grn = Grn.objects.get(id=grn_id)

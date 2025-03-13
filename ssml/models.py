@@ -37,6 +37,7 @@ class InventoryMaterial(models.Model):
     value = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     is_return = models.BooleanField(default=False)
     is_issue = models.BooleanField(default=False)
+    issue_qty = models.DecimalField(max_digits=10,default=0.00, decimal_places=2)
     
     def __str__(self):
         return self.name
@@ -56,7 +57,8 @@ class InventoryMaterial(models.Model):
             'low':self.low(),
             'out':self.out(),
             'image':self.image.url if self.image else None,
-            'value':self.value
+            'value':self.value,
+            'issue_qty':self.issue_qty
         }
     def stock(self):
         return Cardex.objects.filter(material=self).aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
