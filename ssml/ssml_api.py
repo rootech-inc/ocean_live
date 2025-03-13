@@ -864,15 +864,38 @@ def interface(request):
 
 
             elif module == 'issue_def_qty':
+                updated = 0
+                created = 0
                 for meterial in InventoryMaterial.objects.filter(is_issue=True):
+                    
                     issue_qty = meterial.issue_qty
                     MaterialOrderItem.objects.filter(material=meterial).update(
                         quantity=issue_qty,
                         rate=meterial.value,
                         amount=issue_qty*meterial.value
                     )
+                    updated += 1
 
-                success_response['message'] = "Issued Quantity Updated!!"
+                    mt = meterial
+
+                    for service in ServiceOrder.objects.all():
+                        if MaterialOrderItem.objects.filter(material=mt,service_order=service).count() == 0:
+                            # create
+                            MaterialOrderItem.objects.create(
+                                material_type='is',
+                                material=mt,
+                                quantity=issue_qty,
+                                rate=mt.value,
+                                amount = issue_qty * mt.value ,
+                                service_order=service
+                            )
+                            created += 1
+
+                success_response['message'] = f"UPDATED {updated}, CREATED:{created}"
+
+            
+                
+                
             
             elif module == 'post_grn':
                 grn_id = data.get('id')
