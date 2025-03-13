@@ -367,13 +367,16 @@ def interface(request):
 
                     # add automatic returns
                     for ret_item in InventoryMaterial.objects.filter(is_return=True):
-                        ServiceOrderReturns.objects.create(
-                            service_order=service_order,
-                            material=ret_item,
-                            quantity=1,
-                            created_by=user,
-                            modified_by=user
-                        )
+                        try:
+                            ServiceOrderReturns.objects.create(
+                                service_order=service_order,
+                                material=ret_item,
+                                quantity=1,
+                                created_by=user,
+                                modified_by=user
+                            )
+                        except Exception as e:
+                            pass
 
                     
 
