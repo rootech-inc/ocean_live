@@ -828,11 +828,9 @@ class SSML {
         await api.v2('VIEW', payload, '/ssml/api/').then(response => {
             if(anton.IsRequest(response)) {
                 let contractor = response.message;
+                let total_credit = contractor.ledger.total_credit
                 
-                
-                
-                
-
+            
                 let body = `
                     
                     <div class="row m-2" id='contractor_print_screen'>
@@ -853,6 +851,29 @@ class SSML {
                                     <p><small>${contractor.phone}</small><br>
                                         <small>${contractor.email}</small>
                                     </p>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <strong class="text-primary text-center">Materials Balance</strong>
+                                    <div id='materials_balance'>
+                                        <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden"></span>
+                                            </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong class="text-primary text-center">Service Balance</strong>
+                                    <div id='service_balance'>
+                                        ${total_credit}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong class="text-primary text-center">Total Balance</strong>
+                                    <div id='total_balance'>
+                                        <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden"></span>
+                                            </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -921,6 +942,9 @@ class SSML {
                 amodal.show();
                 loader.hide();
 
+                let issue_material_balance = 0;
+                
+
 
                 // get materials
                 let mat_load = {
@@ -931,7 +955,6 @@ class SSML {
                 }
                 let mat_rows = ``;
                 api.v2('VIEW', mat_load, '/ssml/api/contractor/').then(response => {
-                    console.table(response);
                     if(anton.IsRequest(response)) {
                         let materials = response.message;
                         let total_amount = 0;
@@ -952,6 +975,8 @@ class SSML {
                         
                         $('#mat_rows').html(mat_rows);
                         $('#total_amount').html(total_amount.toFixed(2));
+                        issue_material_balance = total_amount;
+                        
                     } else {
                         
                         mat_rows = `
@@ -977,6 +1002,8 @@ class SSML {
                     $('#mat_rows').html(mat_rows);
                 });
 
+
+                let return_material_balance = 0;
                 let ret_load = {
                     module: 'returns',
                     data: {
@@ -985,12 +1012,11 @@ class SSML {
                 }
                 let ret_rows = ``;
                 api.v2('VIEW', ret_load, '/ssml/api/contractor/').then(response => {
-                    console.table(response);
+                    console.log(response);
                     if(anton.IsRequest(response)) {
-                        let returns = response.message;
-                        let total_returns = 0;
+                        let returns = response.message.transactions;
+                        let total_returns = response.message.total;
                         returns.forEach(ret => {
-                            console.table(ret);
                             ret_rows += `
                                 <tr>
                                     <td>${ret.barcode}</td>
@@ -1002,10 +1028,22 @@ class SSML {
                                     <td>${ret.total_value}</td>
                                 </tr>
                             `;
-                            total_returns += parseFloat(ret.total_value);
+                            // total_returns += parseFloat(ret.total_value);
                         });
                         $('#ret_rows').html(ret_rows);
-                        $('#total_returns').html(total_returns.toFixed(2));
+                        $('#total_returns').html(total_returns);
+                        return_material_balance = total_returns;
+                        console.log("returns_balance",return_material_balance);
+                        console.log("issue_material_balance",issue_material_balance);
+                        let materials_balance = parseFloat(issue_material_balance) + parseFloat(return_material_balance);
+                        $('#materials_balance').empty();
+                        $('#materials_balance').html(materials_balance);
+                        let t_balance = parseFloat(total_credit) - parseFloat(materials_balance)
+                        $('#total_balance').html(t_balance.toFixed(2))
+                        
+                        // get service balance
+
+
                     } else {
                         ret_rows = `
                             <tr>
@@ -1026,6 +1064,9 @@ class SSML {
                     `;
                     $('#ret_rows').html(ret_rows);
                 });
+
+
+                
                 
                 
                 
@@ -1331,7 +1372,7 @@ class SSML {
             }
         }
 
-        console.table(payload)
+        
 
         await api.v2('VIEW', payload, '/ssml/api/contractor/').then(response => {
             if(anton.IsRequest(response)) {
@@ -1343,9 +1384,9 @@ class SSML {
                 $('#phone').val(contractor.phone);
                 $('#email').val(contractor.email);
                 $('#address').val( contractor.city + ', ' + contractor.postal_code);
-                $('#debit').val(contractor.recievable);
-                $('#credit').val(contractor.payable);
-                $('#balance').val(contractor.balance);
+                // $('#debit').val(contractor.recievable);
+                $('#credit').val(contractor.ledger.total_credit);
+                // $('#balance').val(contractor.balance);
                 $('#contractor_id').val(contractor_id);
 
                 if(contractor.prev_row) {
@@ -1367,6 +1408,28 @@ class SSML {
                 }
 
                 loader.hide();
+
+                let debit_payload = {
+                    module:'debit_summary',
+                    data:{
+                        contractor_id:contractor_id
+                    }
+                }
+
+                api.v2('VIEW',debit_payload,'/ssml/api/contractor/').then(response => {
+                    
+                    if(anton.IsRequest(response)){
+                        let tot = response.message.total
+                        let balance = parseFloat(contractor.ledger.total_credit) + parseFloat(tot)
+                        $('#debit').val(parseFloat(tot).toFixed(2))
+                        $('#balance').val(balance.toFixed(2))
+                        
+                    }
+
+                }).catch(error => {
+                    console.error(error)
+                })
+
                 $('#jobs').html(`
                     <tr>
                         <td colspan="7" class="text-center">
@@ -1376,6 +1439,22 @@ class SSML {
                         </td>
                     </tr>
                 `);
+
+                // get recievales
+                let rec_payload = {
+                    module:'recievable',
+                    data:{
+                        contractor_id:contractor_id
+                    }
+                }
+
+                // api.v2('VIEW',rec_payload,'/ssml/api/contractor/').then(response => {
+                //     //console.table(response)
+
+                // }).catch(error => {
+                //     console.error(error)
+                // })
+
                 // get jobs
                 let payload = {
                     module: 'service_order',
@@ -1445,7 +1524,8 @@ class SSML {
         let payload = {
             module: 'close_service_order',
             data: {
-                id: job_id
+                id: job_id,
+                mypk: $('#mypk').val()
             }
         }
 
@@ -1455,6 +1535,7 @@ class SSML {
                 kasa.success(response.message);
                 $('#status_'+job_id).html('Completed');
                 $('#status_'+job_id).attr('class', 'text-success');
+                ssml.loadContractor(response.message)
             } else {
                 kasa.error(response.message);
                 }

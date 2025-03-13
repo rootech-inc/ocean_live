@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum, F
 
-from ssml.models import Contractor, InventoryMaterial, IssueTransaction, MaterialOrderItem, Plot, ServiceOrder, ServiceOrderItem, ServiceOrderReturns
+from ssml.models import Contractor, InventoryMaterial, IssueTransaction, Ledger, MaterialOrderItem, Plot, ServiceOrder, ServiceOrderItem, ServiceOrderReturns
 
 
 @csrf_exempt
@@ -73,14 +73,54 @@ def contractor_api(request):
                 contractor_id = data.get('contractor_id')
                 contractor = Contractor.objects.get(id=contractor_id)
                 returns = ServiceOrderReturns.objects.filter(service_order__contractor=contractor)
+                total_returns = 0
+                transactions = []
                 for rt in returns:
                     this_obj = rt.material.obj()
                     this_obj['expected'] = rt.quantity
                     this_obj['returned'] = IssueTransaction.objects.filter(material=rt.material,issue__contractor=contractor,issue__issue_type='RET').aggregate(total_qty=Sum('total_qty'))['total_qty'] or 0
-                    this_obj['balance'] = this_obj['expected'] - this_obj['returned']
+                    this_obj['balance'] = this_obj['returned'] - this_obj['expected']
                     this_obj['total_value'] = this_obj['balance'] * rt.material.value
                     this_obj['rate'] = rt.material.value
-                    arr.append(this_obj)
+                    total_returns += this_obj['total_value']
+                    transactions.append(this_obj)
+
+                arr = {
+                    'transactions':transactions,
+                    'total':total_returns
+                }
+
+            elif module == 'credit_ledger_summary':
+                contractor_id = data.get('contractor_id')
+                contractor = Contractor.objects.get(id=contractor_id)
+                ledger = Ledger.objects.filter(contractor=contractor,transaction_type='credit')
+                total_credit = ledger.aggregate(total_credit=Sum('amount'))['total_credit'] or 0
+                total_debit = ledger.aggregate(total_debit=Sum('amount'))['total_debit'] or 0
+                total_balance = total_credit - total_debit
+                arr = {
+                    'total_credit':total_credit,
+                    'total_debit':total_debit,
+                    'total_balance':total_balance
+                }
+
+            elif module == 'debit_summary':
+                try:
+                    from ..helper import returns,material_differences
+                    contractor_id = data.get('contractor_id')
+                    contractor = Contractor.objects.get(id=contractor_id)
+                    rt = returns(contractor_id)
+                    mt = material_differences(contractor_id)
+
+                    total = rt['total'] + mt['total']
+                    arr = {
+                        'returns':rt['total'],
+                        'materials':mt['total'],
+                        'total':total
+                    }
+
+                except Exception as e:
+                    success_response['status_code'] = 500
+                    arr = str(e)
 
             elif module == 'jobs':
                 contractor_id = data.get('contractor_id')
@@ -122,43 +162,54 @@ def contractor_api(request):
                 }
 
             elif module == 'recievable':
-                contractor_id = data.get('contractor_id')
-                contractor = Contractor.objects.get(id=contractor_id)
-                total_returns = 0
-                total_usage = 0
-                total_balance = 0
-                obj = []
+                try:
+                    contractor_id = data.get('contractor_id')
+                    contractor = Contractor.objects.get(id=contractor_id)
+                    total_returns = 0
+                    total_usage = 0
+                    total_balance = 0
+                    obj = []
 
-                for material in InventoryMaterial.objects.all():
-                    # returns
-                    stated_returns = ServiceOrderReturns.objects.filter(material=material,service_order__contractor=contractor).aggregate(total_qty=Sum('quantity'))['total_qty'] or 0
-                    actual_returns = IssueTransaction.objects.filter(material=material,issue__contractor=contractor,issue__issue_type='RET').aggregate(total_qty=Sum('total_qty'))['total_qty'] or 0
-                    returns_diff = actual_returns - stated_returns 
-                    returns_balance = returns_diff * material.value
-                    total_returns += returns_balance
-
-                    # usage in service orders
-                    stated_usage = MaterialOrderItem.objects.filter(material=material,material_type='is').aggregate(total_qty=Sum('quantity'))['total_qty'] or 0
-                    issued_for_service_orders = IssueTransaction.objects.filter(material=material,issue__contractor=contractor,issue__issue_type='ISS').aggregate(total_qty=Sum('total_qty'))['total_qty'] or 0
-                    usage_diff = stated_usage - issued_for_service_orders
-                    usage_balance = usage_diff * material.value
-                    total_usage += usage_balance
-
-                    # balance
-                    balance = returns_balance + usage_balance
-                    total_balance += balance
-                    total_usage += usage_balance
-                    total_returns += returns_balance
+                    for material in InventoryMaterial.objects.all():
+                        # returns
+                        stated_returns = ServiceOrderReturns.objects.filter(material=material,service_order__contractor=contractor_id).aggregate(total_qty=Sum('quantity'))['total_qty'] or 0
+                        actual_returns = IssueTransaction.objects.filter(material=material,issue__contractor=contractor_id,issue__issue_type='RET').aggregate(total_qty=Sum('total_qty'))['total_qty'] or 0
+                        returns_diff = actual_returns - stated_returns 
+                        returns_balance = returns_diff * material.value
 
 
-                    this_obj = {
-                        'material':material.obj(),
-                        'returns':returns_balance,
-                        'usage':usage_balance,
-                        'balance':balance
+                        # usage in service orders
+                        stated_usage = MaterialOrderItem.objects.filter(material=material,material_type='is',service_order__contractor=contractor).aggregate(total_qty=Sum('quantity'))['total_qty'] or 0
+                        issued_for_service_orders = IssueTransaction.objects.filter(material=material,issue__contractor=contractor_id,issue__issue_type='ISS').aggregate(total_qty=Sum('total_qty'))['total_qty'] or 0
+                        usage_diff = stated_usage - issued_for_service_orders
+                        usage_balance = usage_diff * material.value
+
+                        # balance
+                        balance = returns_balance + usage_balance
+                        total_returns += returns_balance
+                        total_usage += usage_balance
+                        total_balance += balance
+
+                        this_obj = {
+                            'material':material.obj(),
+                            'returns_balance':returns_balance,
+                            'usage_balance':usage_balance,
+                            'balance':balance
+                        }
+                        obj.append(this_obj)
+
+                    arr = {
+                        'total_returns':total_returns,
+                        'total_usage':total_usage,
+                        'total_balance':total_balance,
+                        'transactions':obj
                     }
 
-                    obj.append(this_obj)
+
+
+                except Exception as e:
+                    success_response['status_code'] = 505
+                    arr = str(e)
 
                 arr = {
                     'total_returns':total_returns,

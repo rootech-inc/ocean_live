@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.contrib.auth.models import User
 
 
-from ssml.models import Cardex, Contractor, InventoryGroup, InventoryMaterial, Issue, IssueTransaction, MaterialOrderItem, Meter, Plot, Service, ServiceOrder, ServiceOrderItem, ServiceOrderReturns, ServiceType, Supplier, Grn, GrnTransaction
+from ssml.models import Cardex, Contractor, InventoryGroup, InventoryMaterial, Issue, IssueTransaction, Ledger, MaterialOrderItem, Meter, Plot, Service, ServiceOrder, ServiceOrderItem, ServiceOrderReturns, ServiceType, Supplier, Grn, GrnTransaction
 
 
 @csrf_exempt
@@ -978,10 +978,26 @@ def interface(request):
               
             elif module == 'close_service_order':
                 id = data.get('id')
+                mypk = data.get('mypk')
+                user = User.objects.get(id=mypk)
                 service_order = ServiceOrder.objects.get(id=id)
+                total_amount = service_order.total_amount()
+
+                Ledger.objects.create(
+                    contractor=service_order.contractor,
+                    amount=total_amount,
+                    reference_no=service_order.new_meter,
+                    transaction_type='credit',
+                    remarks=f"Service Order {service_order.id} Closed",
+                    created_by=user
+                )
+
                 service_order.status = 'completed'
+                service_order.closed_by = user
+                service_order.total_amount = total_amount
+                contractor_id = service_order.contractor.id
                 service_order.save()
-                success_response['message'] = "Service Order Closed Successfully"
+                success_response['message'] = contractor_id
         else:
             success_response['status_code'] = 400
             success_response['message'] = f"Method Not Found"

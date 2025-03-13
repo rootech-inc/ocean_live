@@ -437,6 +437,16 @@
 
                 
             });
+        
+            $('#close_service_order').click(function(){
+                let payload = {
+                    module:"",
+                    data:{
+                        id:$('#service_order_id').val()
+                    }
+                }
+            });
+
         });
     
 </script>   

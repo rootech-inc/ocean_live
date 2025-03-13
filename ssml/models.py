@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models import Sum, F
 
 # Create your models here.
 class InventoryGroup(models.Model):
@@ -223,6 +224,17 @@ class Contractor(models.Model):
         return Contractor.objects.filter(id__gt=self.id).first().id if Contractor.objects.filter(id__gt=self.id).count() > 0 else 0
     def prev_row(self):
         return Contractor.objects.filter(id__lt=self.id).last().id if Contractor.objects.filter(id__lt=self.id).count() > 0 else 0
+    
+    def ledger_sum(self):
+        ledger = Ledger.objects.filter(contractor=self,transaction_type='credit')
+        total_credit = ledger.aggregate(total_credit=Sum('amount'))['total_credit'] or 0
+        total_debit = 0
+        total_balance = total_credit - total_debit
+        return {
+                    'total_credit':total_credit,
+                    'total_debit':total_debit,
+                    'total_balance':total_balance
+            }
 
     def obj(self):
         return {
@@ -248,7 +260,8 @@ class Contractor(models.Model):
             'payable':self.payable,
             'paid':self.paid,
             'balance':self.balance,
-            # 'matched':self.matched()
+            # 'matched':self.matched(),
+            'ledger':self.ledger_sum()
         }
 
 class Supplier(models.Model):
@@ -612,6 +625,8 @@ class ServiceOrder(models.Model):
     status = models.CharField(max_length=255, choices=status_choices, default='pending')
     old_meter_no_reading = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     new_meter_no_reading = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    closed_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='closed_service_orders')
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
         return self.service_date
@@ -781,6 +796,33 @@ class ServiceOrderReturns(models.Model):
             'modified_by':self.modified_by.username,
             'rate':self.material.value,
             'amount':self.quantity * self.material.value
+        }
+    
+
+class Ledger(models.Model):
+    contractor = models.ForeignKey(Contractor, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    reference_no = models.CharField(max_length=255,unique=True,null=False,blank=False)
+    transaction_types = [
+        ('credit', 'Credit'),
+        ('debit', 'Debit'),
+    ]
+    transaction_type = models.CharField(max_length=255, choices=transaction_types)
+    remarks = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    
+    def obj(self):
+        return {
+            'id':self.id,
+            'amount':self.amount,
+            'transaction_type':self.transaction_type,
+            'remarks':self.remarks,
+            'created_at':self.created_at,
+            'updated_at':self.updated_at,
+            'created_by':self.created_by.username,
+            'contractor':self.contractor.obj()
         }
     
     
