@@ -1012,18 +1012,19 @@ def interface(request):
                     service_id = data.get('service_id')
                     service = ServiceOrder.objects.get(id=service_id)
                     user = User.objects.get(pk=data.get('mypk'))
-                    for material in InventoryMaterial.objects.filter(is_return=True):
-                        try:
-                            ServiceOrderReturns.objects.create(
-                            service_order=service,
-                            material=material,
-                            quantity=1,
-                            created_by=user
-                        )
-                        except Exception as e:
-                            print("Error")
-                            print(e)
-                            pass
+                    for service in ServiceOrder.objects.all():
+                        for material in InventoryMaterial.objects.filter(is_return=True):
+                            try:
+                                ServiceOrderReturns.objects.create(
+                                service_order=service,
+                                material=material,
+                                quantity=1,
+                                created_by=user
+                            )
+                            except Exception as e:
+                                print("Error")
+                                print(e)
+                                pass
                     success_response['status_code'] = 200
                     success_response['message'] = 'done'
                 except Exception as e:

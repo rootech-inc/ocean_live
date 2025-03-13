@@ -1808,16 +1808,20 @@ class SSML {
                 mypk:$('#mypk').val()
             }
         }
+        loader.show()
 
         await api.v2('PATCH',payload,'/ssml/api/').then(response => {
             if(anton.IsRequest(response)){
                 kasa.response(response)
+                loader.hide()
                 ssml.viewServiceOrder(service_id)
             } else {
                 kasa.response(response)
+                loader.hide()
             }
         }).catch(error => {
             kasa.error(error)
+            loader.hide()
         })
     }
 
