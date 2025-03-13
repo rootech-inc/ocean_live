@@ -58,7 +58,9 @@ class InventoryMaterial(models.Model):
             'out':self.out(),
             'image':self.image.url if self.image else None,
             'value':self.value,
-            'issue_qty':self.issue_qty
+            'issue_qty':self.issue_qty,
+            'is_issue':self.is_issue,
+            'is_return':self.is_return,
         }
     def stock(self):
         return Cardex.objects.filter(material=self).aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0

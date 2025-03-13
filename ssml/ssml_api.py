@@ -419,7 +419,7 @@ def interface(request):
                 elif module == 'material':
                     id = data.get('id','*')
                     if id == '*':
-                        materials = InventoryMaterial.objects.all()
+                        materials = InventoryMaterial.objects.all().order_by('name')
                         success_response['message'] = [material.obj() for material in materials]
                     else:
                         if id.isdigit():
