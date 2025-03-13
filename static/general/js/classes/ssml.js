@@ -206,6 +206,7 @@ class SSML {
                     <div class="col-md-12" style="background-color:rgba(248, 249, 250, 0.57); padding: 20px; border-radius: 10px; border: 2px dotted #808080;">
                         <div class='d-flex flex-wrap justify-content-between'>
                             <button class="btn btn-primary mb-2" onclick="ssml.addReturn(${id})">Add Return</button>
+                            <button onclick='ssml.retRecon(${id})' class='btn btn-info'>?</button>
                         </div>
                         <table class="table table-bordered table-stripped table-bordered">
                             <thead class="table-dark">
@@ -1795,6 +1796,29 @@ class SSML {
                     }
                 });
             });
+    }
+
+
+
+    async retRecon(service_id){
+        let payload = {
+            module:'ret_def_rec',
+            data:{
+                service_id:service_id,
+                mypk:$('#mypk').val()
+            }
+        }
+
+        await api.v2('PATCH',payload,'/ssml/api/').then(response => {
+            if(anton.IsRequest(response)){
+                kasa.response(response)
+                ssml.viewServiceOrder(service_id)
+            } else {
+                kasa.response(response)
+            }
+        }).catch(error => {
+            kasa.error(error)
+        })
     }
 
 }

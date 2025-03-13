@@ -35,6 +35,7 @@ class InventoryMaterial(models.Model):
     is_active = models.BooleanField(default=True)
     image = models.ImageField(upload_to='static/uploads/materials/', null=True, blank=True,default='static/uploads/materials/default.png')
     value = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    is_return = models.BooleanField(default=False)
     
     def __str__(self):
         return self.name
@@ -792,8 +793,8 @@ class ServiceOrderReturns(models.Model):
             'quantity':self.quantity,
             'created_at':self.created_at,
             'updated_at':self.updated_at,
-            'created_by':self.created_by.username,
-            'modified_by':self.modified_by.username,
+            'created_by':self.created_by.username if self.created_by else None,
+            'modified_by':self.modified_by.username if self.modified_by else None,
             'rate':self.material.value,
             'amount':self.quantity * self.material.value
         }

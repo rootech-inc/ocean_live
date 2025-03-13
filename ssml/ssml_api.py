@@ -805,11 +805,14 @@ def interface(request):
                 group = InventoryGroup.objects.get(id=data.get('group'))
                 reorder_qty = data.get('reorder_qty')
                 value = data.get('value')
+                is_return = data.get('is_return')
+                print(data)
                 material = InventoryMaterial.objects.get(barcode=barcode)
                 material.name = name
                 material.group = group
                 material.reorder_qty = reorder_qty
                 material.value = value
+                material.is_return = is_return
                 material.save()
                 success_response['message'] = "Material Updated Successfully"
             elif module == 'post_grn':
@@ -1003,6 +1006,35 @@ def interface(request):
                 contractor_id = service_order.contractor.id
                 service_order.save()
                 success_response['message'] = contractor_id
+
+            elif module == 'ret_def_rec':
+                try:
+                    service_id = data.get('service_id')
+                    service = ServiceOrder.objects.get(id=service_id)
+                    user = User.objects.get(pk=data.get('mypk'))
+                    for material in InventoryMaterial.objects.filter(is_return=True):
+                        try:
+                            ServiceOrderReturns.objects.create(
+                            service_order=service,
+                            material=material,
+                            quantity=1,
+                            created_by=user
+                        )
+                        except Exception as e:
+                            print("Error")
+                            print(e)
+                            pass
+                    success_response['status_code'] = 200
+                    success_response['message'] = 'done'
+                except Exception as e:
+                    success_response['status_code'] = 505
+                    success_response['message'] = str(e)
+
+                print(success_response)
+
+            else:
+                success_response['status_code'] = 505
+                success_response['message'] = "Invalid Module"
         else:
             success_response['status_code'] = 400
             success_response['message'] = f"Method Not Found"
