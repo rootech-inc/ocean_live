@@ -789,6 +789,11 @@ def interface(request):
                 issue.save()
                 success_response['message'] = "Issue Deleted Successfully"
 
+            elif module == 'service_order_return':
+                id = data.get('id')
+                ServiceOrderReturns.objects.get(id=id).delete()
+                success_response['message'] = "Return Deleted"
+
             else:
                 success_response['status_code'] = 400
                 success_response['message'] = f"Module Not Found {module}"
