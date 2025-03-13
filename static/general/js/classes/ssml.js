@@ -1900,7 +1900,7 @@ class SSML {
                             amodal.setFooterHtml(`<button>AGAIN</button><button id='export'>Export</button>`)
 
                             $('#export').click(function(){
-                                anton.downloadCSV('material_use.csv',to_export)
+                                anton.downloadCSV('material_use.csv',anton.convertToCSV(to_export))
                             });
 
                         }
