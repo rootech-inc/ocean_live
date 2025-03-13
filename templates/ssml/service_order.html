@@ -447,6 +447,15 @@
                 }
             });
 
+            $('#searchQuery').on('keyup', function(event){
+                let search = $(this).val();
+                if(event.key === 'Enter'){
+                    ssml.loadByMeterNumber($(this).val())
+                }
+
+                
+            })
+
         });
     
 </script>   

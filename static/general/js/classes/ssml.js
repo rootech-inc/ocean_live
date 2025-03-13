@@ -285,6 +285,7 @@ class SSML {
                         <td><small>${material.material.barcode}</small></td>
                         <td><small>${material.material.name}</small></td>
                         <td><small>${material.quantity}</small></td>
+                        <td><button onclick=ssml.deleteServiceMaterial('${material.id}')>DEL</button></td>
                     </tr>
                 `);
             });
@@ -1913,9 +1914,57 @@ class SSML {
             kasa.error(error)
         })
 
+        
+
 
 
         
+    }
+
+    getMeter(meter_number){
+        let payload = {
+            module:'meter',
+            data:{
+                meter_no:meter_number
+            }
+        }
+
+        return api.call('VIEW',payload,'/ssml/api/')
+    }
+
+    loadByMeterNumber(meter_no){
+        let meter = ssml.getMeter(meter_no)
+        if(anton.IsRequest(meter)){
+            // console.log("METER")
+            // console.table(meter)
+
+            // console.log("SERVICE #")
+            // console.table(meter.message.service)
+            ssml.LoadServiceOrder(meter.message.service)
+        } else {
+            kasa.response(meter)
+        }
+        console.table(meter)
+    }
+
+    async deleteServiceMaterial(id){
+        let payload = {
+            module:'service_material',
+            data:{
+                id:id
+            }
+        }
+
+        if(confirm("Are You Sure?")){
+            await api.v2('DELETE',payload,'/ssml/api/').then(response =>{
+                kasa.response(response)
+                ssml.viewServiceOrder($('#service_order_id').val())
+            }).catch(error => {
+                kasa.error(error)
+            })
+        } else {
+            kasa.info("Operation Cancelled")
+        }
     }
 
 }

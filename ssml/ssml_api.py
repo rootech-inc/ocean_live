@@ -430,6 +430,14 @@ def interface(request):
                             success_response['message'] = [m.obj() for m in material]
                        
 
+                elif module == 'meter':
+                    meter_no=data.get('meter_no')
+                    meter = Meter.objects.get(meter_no=meter_no)
+                    arr = meter.obj()
+                    print(meter.obj())
+
+                    success_response['message'] = arr
+
                 elif module == 'supplier':
                     id = data.get('id','*')
                     if id == '*':
@@ -817,6 +825,11 @@ def interface(request):
                 issue.is_deleted = True
                 issue.save()
                 success_response['message'] = "Issue Deleted Successfully"
+
+            elif module == 'service_material':
+                id = data.get('id')
+                MaterialOrderItem.objects.get(id=id).delete()
+                success_response['message'] = "Material Deleted"
 
             elif module == 'service_order_return':
                 id = data.get('id')

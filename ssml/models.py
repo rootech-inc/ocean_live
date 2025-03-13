@@ -714,7 +714,8 @@ class Meter(models.Model):
             'created_at':self.created_at,
             'updated_at':self.updated_at,
             'is_issued':self.is_issued,
-            'service_order':self.service_order.obj() if self.service_order else None
+            'service_order':self.service_order.obj() if self.service_order else None,
+            'service':ServiceOrder.objects.get(new_meter=self.meter_no).id if ServiceOrder.objects.filter(new_meter=self.meter_no).exists() else None
         }
     
 

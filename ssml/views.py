@@ -218,7 +218,8 @@ def service_orders(request):
             'gas': 'Gas',
             'telecom': 'Telecom'
         },
-        'last_service_order': ServiceOrder.objects.last()
+        'last_service_order': ServiceOrder.objects.last(),
+        'searchButton':'search_service_by_meter'
     }
     return render(request, 'ssml/service_order.html', context)
 
