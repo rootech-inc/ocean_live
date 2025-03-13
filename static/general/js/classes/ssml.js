@@ -183,7 +183,7 @@ class SSML {
                     <h4>Materials</h4>
                     <div class="col-md-12" style="background-color:rgba(248, 249, 250, 0.57); padding: 20px; border-radius: 10px; border: 2px dotted #808080;">
                         <div class='d-flex flex-wrap justify-content-between'>
-                            <button class="btn btn-primary mb-2" onclick="ssml.addMaterial(${id})">Add Material</button>
+                            <button class="btn btn-primary mb-2" onclick="ssml.addMaterialToOrderOnly(${id})">Add Material V2</button>
                         </div>
                         <table class="table table-bordered table-stripped table-bordered">
                             <thead class="table-dark">
@@ -1965,6 +1965,89 @@ class SSML {
         } else {
             kasa.info("Operation Cancelled")
         }
+    }
+
+    async addMaterialToOrderOnly(order_id){
+        let payload = {
+            module: 'material',
+            data: {
+                id: '*'
+            }
+        }   
+
+        await api.v2('VIEW', payload, '/ssml/api/').then(response => {
+            if(anton.IsRequest(response)) {
+                let materials = response.message;
+                let tbody = '';
+                materials.forEach(material => {
+                    let qty_id = `${material.barcode}_qty`
+                    console.log(qty_id)
+                    tbody += `<tr>
+                        <td id='${material.barcode}'>${material.barcode}</td>
+                        <td>${material.name}</td>
+                        <td><input id='${qty_id}' value='1' type_no stayle='width:50' ><td>
+                        <td>
+                            <button class="btn btn-warning add-new-material" data-id='${material.id}' data-barcode='${material.barcode}' onclick="kasa.info('ok')">Add</button>
+                        </td>
+                    </tr>`;
+                });
+                amodal.setTitleText('Add Material');
+                amodal.setBodyHtml(`
+                    <table class="table table-bordered table-stripped table-bordered">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tbody}
+                        </tbody>
+                    </table>
+                `);
+                amodal.setFooterHtml(`
+                    <button class='btn btn-danger' onclick='ssml.viewServiceOrder(${order_id})'>Cancel</button>
+                `);
+                amodal.setSize('');
+                amodal.show();
+
+                $('.add-new-material').click(async function(){
+                    let barcode = $(this).attr('data-barcode');
+                    let material_id = $(this).attr('data-id')
+                    let qty_id = `#${barcode}_qty`;
+                    console.log(qty_id)
+                    let qty = $(qty_id).val()
+                    let payload = {
+                        module:'material_order_item',
+                        data:{
+                            order_id:order_id,
+                            material_id:material_id,
+                            barcode:barcode,
+                            mat_qty:qty,
+                            mat_type:'is'
+                        }
+                    }
+
+                    await api.v2('PUT',payload,'/ssml/api/').then(reponse => {
+                        if(anton.IsRequest(response)){
+                            kasa.success("Material Added")
+                        } else {
+                            kasa.error(response.message)
+                        }
+
+                    }).catch(error => {
+                        kasa.error(err)
+                    })
+
+                    
+                })
+            } else {
+                kasa.error(response.message);
+            }
+        }).catch(error => {
+            kasa.error(error);
+        });
     }
 
 }
