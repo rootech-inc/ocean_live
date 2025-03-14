@@ -760,14 +760,15 @@ def interface(request):
                 elif module == 'service_order':
                     id = data.get('id','*')
                     filter = data.get('filter','*')
+                    status = data.get('status','pending')
                     print(data)
                     if id == '*':
                         service_orders = ServiceOrder.objects.all()[:10]
                         if filter == 'contractor':
-                            service_orders = ServiceOrder.objects.filter(contractor=data.get('contractor'))[:10]
+                            limit = data.get('filter',1000)
+                            service_orders = ServiceOrder.objects.filter(contractor=data.get('contractor'),status=status)[:100]
                             status = data.get('status')
-                            if status:
-                                service_orders.filter(status=status)
+                            
                         elif filter == 'plot':
                             service_orders = ServiceOrder.objects.filter(plot=data.get('plot'))[:10]
                         elif filter == 'service_type':
@@ -997,8 +998,11 @@ def interface(request):
                     transactions = IssueTransaction.objects.filter(issue=issue)
                     for transaction in transactions:
                         qty = transaction.total_qty * -1
-                        # if tp == 'RET':
-                        #     qty = transaction.total_qty
+                        if tp == 'RET':
+                            qty = transaction.total_qty
+                        
+                        if tp == 'ISS':
+                            qty = qty
                         Cardex.objects.create(
                             doc_type=tp,
                             doc_no=issue.issue_no,
@@ -1076,15 +1080,22 @@ def interface(request):
                 user = User.objects.get(id=mypk)
                 service_order = ServiceOrder.objects.get(id=id)
                 total_amount = service_order.total_amount()
+                print(total_amount)
 
-                Ledger.objects.create(
-                    contractor=service_order.contractor,
-                    amount=total_amount,
-                    reference_no=service_order.new_meter,
-                    transaction_type='credit',
-                    remarks=f"Service Order {service_order.id} Closed",
-                    created_by=user
-                )
+                try:
+
+
+                    Ledger.objects.create(
+                        contractor=service_order.contractor,
+                        amount=total_amount,
+                        reference_no=service_order.new_meter,
+                        transaction_type='credit',
+                        remarks=f"Service Order {service_order.id} Closed",
+                        created_by=user
+                    )
+
+                except Exception as e:
+                    pass
 
                 service_order.status = 'completed'
                 service_order.closed_by = user

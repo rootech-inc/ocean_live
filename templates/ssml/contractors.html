@@ -185,7 +185,9 @@
                     data: {
                         id: '*',
                         contractor: id,
-                        filter: 'contractor'
+                        filter: 'contractor',
+                        limit:1000,
+                        status:'pending'
                     }
                 }
                 loader.show()
@@ -197,8 +199,9 @@
                         console.table(messsage.length)
                         for(let j = 0; j < messsage.length; j++){
                             let service_id = messsage[j].id;
-                            if(messsage[j].status === 'pending'){
-                                ssml.closeJob(service_id)
+                            if(true){
+                                let close = ssml.closeJob(service_id)
+                                console.table(close)
                             }
                             
                         }

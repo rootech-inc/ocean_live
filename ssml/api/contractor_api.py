@@ -266,6 +266,18 @@ def contractor_api(request):
                     success_response['status_code'] = 500
                     arr = str(e)
 
+
+            elif module == 'contractor_issue':
+                contractor_id = data.get('issue_contractor')
+                contractor = Contractor.objects.get(id=contractor_id)
+                issue_type = data.get('issue_type','ISS')
+                mat_barcode = data.get('mat_barcode')
+                for issue in IssueTransaction.objects.filter(issue__issue_type=issue_type,issue__contractor=contractor,barcode=mat_barcode).order_by('issue__issue_date'):
+                    arr.append(issue.obj())
+
+                success_response['message'] = arr
+                
+
             elif module == 'service_order':
                 try:
                     id = data.get('contractor_id')
@@ -277,7 +289,7 @@ def contractor_api(request):
                         sheet = book.active
                         hd = ["DATE","TYPE","METER","CUSTOMER","AMOUNT"]
                         sheet.append(hd)
-                    for service in ServiceOrder.objects.filter(contractor=contractor):
+                    for service in ServiceOrder.objects.filter(contractor=contractor).order_by('service_date'):
                         li = [service.service_date,service.service_type.name,service.new_meter,service.customer,service.total_amount()]
                         if doc == 'excel':
                             sheet.append(li)

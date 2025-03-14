@@ -414,10 +414,10 @@ class GrnTransaction(models.Model):
 class Cardex(models.Model):
     doc_type_choices = [
         ('GR', 'GRN'),
-        ('IS', 'ISSUE'),
-        ('RT', 'RETURN'),
+        ('ISS', 'ISSUE'),
+        ('RET', 'RETURN'),
     ]
-    doc_type = models.CharField(max_length=2, choices=doc_type_choices)
+    doc_type = models.CharField(max_length=3, choices=doc_type_choices)
     doc_no = models.CharField(max_length=255)
     ref_no = models.CharField(max_length=255)
     material = models.ForeignKey(InventoryMaterial, on_delete=models.CASCADE)
@@ -527,7 +527,9 @@ class IssueTransaction(models.Model):
             'pack_qty':self.pack_qty,
             'total_qty':self.total_qty,
             'created_at':self.created_at,
-            'updated_at':self.updated_at
+            'updated_at':self.updated_at,
+            'issue_no':self.issue.issue_no,
+            'issue_date':self.issue.issue_date
 
         }
 

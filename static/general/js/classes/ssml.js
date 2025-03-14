@@ -1465,7 +1465,8 @@ class SSML {
                     data: {
                         id: '*',
                         contractor: contractor_id,
-                        filter: 'contractor'
+                        filter: 'contractor',
+                        status:'pending'
                     }
                 }
 
@@ -1557,7 +1558,7 @@ class SSML {
         let payload = {
             module: 'service_order',
             data: {
-                id: id
+                id: id,
             }
         }
 
@@ -2088,6 +2089,141 @@ class SSML {
             }
 
         }).catch(error => {kasa.error(error);loader.hide()})
+    }
+
+
+    async contractorIssueScreen(){
+        loader.show()
+        let payload = {
+            module: 'contractor',
+            data: {
+                id: '*'
+            }
+        }
+
+        await api.v2('VIEW',payload,'/ssml/api/contractor/').then(response => {
+
+            if(anton.IsRequest(response)){
+
+
+                let opts = ``;
+                for(let x = 0; x < response.message.length; x++){
+                    let contractor = response.message[x];
+                    opts += `<option value='${contractor.id}'>${contractor.company}</option>`
+                }
+                console.table(response.message)
+                let form = `
+                    <div class='form-group mb-2'>
+                        <label for='issue_contractor'>Contractor</label>
+                        <select class='form-control rounded-0' id='issue_contractor'>${opts}</select>
+                    </div>
+
+                    <div class='form-group mb-2'>
+                        <label for='issue_type'>Issue Type</label>
+                        <select class='form-control rounded-0' id='issue_type'>
+                            <option value='ISS'>Issue</option>
+                            <option value='RET'>Return</option>
+                        </select>
+                    </div>
+
+                    <div class='form-group mb-2'>
+                        <label for='mat_barcode'>Barcode</label>
+                        <input class='form-control rounded-0' id='mat_barcode' />
+                    </div>
+                `
+
+                amodal.setTitleText("Contractor Issue")
+                amodal.setBodyHtml(form)
+                amodal.setFooterHtml(`<button id='check_issue'>Check</button>`)
+                amodal.setSize('')
+                amodal.show()
+
+                loader.hide()
+
+                $('#check_issue').click(async function(){
+                    loader.show()
+                    let ids = ['mat_barcode','issue_type','issue_contractor']
+                    if(anton.validateInputs(ids)){
+
+
+                        let payload = {
+                            module:'contractor_issue',
+                            data:anton.Inputs(ids)
+                        }
+                        
+                        await api.v2("VIEW",payload,'/ssml/api/contractor/').then(response => {
+                            
+
+                            if(anton.IsRequest(response)){
+                                let issues = response.message;
+                                let rows = ``;
+                                let export_list = []
+                                // amodal.hide()
+                                for(let i = 0 ; i < issues.length; i++){
+                                    const issue = issues[i]
+                                    rows += `
+                                        <tr>
+                                            <td>${issue.issue_no}</td>
+                                            <td>${issue.issue_date}</td>
+                                            <td>${issue.material.barcode}</td>
+                                            <td>${issue.material.name}</td>
+                                            <td>${issue.total_qty}</td>
+                                        </tr>
+                                    `
+                                    export_list.push([issue.issue_no,issue.issue_date,issue.material.name,issue.total_qty])
+                                }
+
+                                let table = `
+                                    <table class='table table-sm table-stripped table-hover'>
+                                        <thead>
+                                            <tr>
+                                                <th>ENTRY</th>
+                                                <th>DATE</th>
+                                                <th>BARCODE</th>
+                                                <th>NAME</th>
+                                                <th>QUANTITY</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>${rows}</tbody>
+                                    </table>
+                                `
+
+                                amodal.setBodyHtml(table)
+                                amodal.setTitleText(`ISSUE`)
+                                amodal.setSize('L')
+                                amodal.setFooterHtml(`<button id='is_export'>Export</button>`)
+
+                                $('#is_export').click(function(){
+                                    anton.downloadCSV("ISSUE",anton.convertToCSV(export_list))
+                                })
+
+                            } else {
+                                kasa.response(response)
+                            }
+                            loader.hide()
+
+                        }).catch(error=>{
+                            kasa.error(error)
+                            loader.hise()
+                        })
+
+
+
+                    }
+                })
+
+            } else {
+                kasa.response(response)
+            }
+
+            
+
+        }).catch(error => {
+            kasa.error(error)
+            loader.hise()
+        })
+
+        
     }
 
 }
