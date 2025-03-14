@@ -15,6 +15,15 @@
             
             <button class="btn btn-info rounded-0 ms-2" id="view_contractor"><i class="bi bi-eye"></i> View</button>
             <button class="btn btn-info rounded-0 ms-2" id="close_jobs"><i class="bi bi-eye"></i> Close Jobs</button>
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle ms-2" type="button" id="exportDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-file-export"></i> Export
+                </button>
+                <div class="dropdown-menu" aria-labelledby="exportDropdown">
+                    <a class="dropdown-item" href="javascript:void(0)"><i class="fas fa-file-pdf text-danger"></i> PDF</a>
+                    <a class="dropdown-item export_excel" href="javascript:void(0)"><i class="fas fa-file-excel text-success"></i> Excel</a>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -208,6 +217,12 @@
             } else {
                 kasa.info("Operation Cancelled")
             }
+        })
+
+
+        $('.export_excel').click(function(){
+            let id = $('#contractor_id').val();
+            ssml.exportContractorService('excel',id)
         })
         
 

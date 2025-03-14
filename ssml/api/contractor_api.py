@@ -266,6 +266,30 @@ def contractor_api(request):
                     success_response['status_code'] = 500
                     arr = str(e)
 
+            elif module == 'service_order':
+                try:
+                    id = data.get('contractor_id')
+                    import openpyxl
+                    contractor = Contractor.objects.get(id=id)
+                    doc = data.get('document')
+                    if doc == 'excel':
+                        book = openpyxl.Workbook()
+                        sheet = book.active
+                        hd = ["DATE","TYPE","METER","CUSTOMER","AMOUNT"]
+                        sheet.append(hd)
+                    for service in ServiceOrder.objects.filter(contractor=contractor):
+                        li = [service.service_date,service.service_type.name,service.new_meter,service.customer,service.total_amount()]
+                        if doc == 'excel':
+                            sheet.append(li)
+
+                    if doc == 'excel':
+                        file = f"static/general/tmp/{contractor.company}.xlsx"
+                        book.save(file)
+                        arr = file
+
+                except Exception as e:
+                    success_response['status_code'] = 500
+                    arr = str(e)
 
             success_response['message'] = arr
 

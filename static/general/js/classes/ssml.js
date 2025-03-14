@@ -2066,5 +2066,29 @@ class SSML {
         }).catch(error => {kasa.error(error);loader.hide()})
     }
 
+    async exportContractorService(doc='excel',id){
+        loader.show()
+        let payload = {
+            module:'service_order',
+            data:{
+                document:doc,
+                contractor_id:id
+            }
+        }
+
+        await api.v2('VIEW',payload,'/ssml/api/contractor/').then(response => {
+
+            if(anton.IsRequest(response)){
+                console.table(response)
+                anton.viewFile(`/${response.message}`)
+                loader.hide()
+            } else {
+                kasa.response(response)
+                loader.hide()
+            }
+
+        }).catch(error => {kasa.error(error);loader.hide()})
+    }
+
 }
 const ssml = new SSML();
