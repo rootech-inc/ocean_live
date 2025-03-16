@@ -9,6 +9,7 @@ colorama==0.4.6
 coloredlogs==15.0.1
 cryptography==43.0.1
 Django==5.1.4
+django-cors-headers==4.7.0
 et-xmlfile==1.1.0
 flatbuffers==24.3.25
 fpdf==1.7.2
