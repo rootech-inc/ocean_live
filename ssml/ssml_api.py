@@ -766,7 +766,7 @@ def interface(request):
                         service_orders = ServiceOrder.objects.all()[:10]
                         if filter == 'contractor':
                             limit = data.get('filter',1000)
-                            service_orders = ServiceOrder.objects.filter(contractor=data.get('contractor'),status=status)[:100]
+                            service_orders = ServiceOrder.objects.filter(contractor=data.get('contractor'),status=status)
                             status = data.get('status')
                             
                         elif filter == 'plot':

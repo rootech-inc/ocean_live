@@ -1,0 +1,170 @@
+{% extends 'ssml/ssmlbase.html' %}
+{% load static %}
+
+
+{% block body %}
+
+
+    <div class="card-header">
+        <div class="w-100 d-flex">
+            <div class="w-50 d-flex">
+                <button id="new" class="btn btn-sm ms-2 btn-primary">NEW</button>
+            </div>
+            <div class="w-50 d-flex">
+
+            </div>
+        </div>
+    </div>
+    <div class="card-body overflow-hidden">
+        <div class="container h-100">
+            <div class="row py-2">
+                <div class="col-sm-4">
+                    <div class="row">
+                        <div class="col-sm-4"><label for="contractor">Contractor</label></div>
+                        <div class="col-sm-8 mb-3">
+                            <select class="form-control rounded-0" id="contractor">
+                                <option value="">Select Contractor</option>
+                                {% for contractor in contractors%}
+                                    <option value="{{contractor.id}}">{{contractor.company}}</option>
+                                {%endfor%}
+                            </select>
+                        </div>
+
+                        <div class="col-sm-4"><label for="entry_no">Entry No.</label></div>
+                        <div class="col-sm-8 mb-3"><input readonly value="auto"  type="text" class="form-control rounded-0" id="entry_no"></div>
+
+                        <div class="col-sm-4"><label for="date">Date.</label></div>
+                        <div class="col-sm-8"><input  type="date" class="form-control rounded-0" id="date"></div>
+                    </div>
+                </div>
+
+                <div class="col-sm-4">
+                    <div class="row">
+                        <div class="col-sm-4"><label for="type">Type</label></div>
+                        <div class="col-sm-8 mb-3">
+                            <select class="form-control rounded-0" id="type">
+                                <option value="">Select Type</option>
+                                <option value="RET">Returns</option>
+                                <option value="MAT">Materials</option>
+                            </select>
+                        </div>
+
+                        <div class="col-sm-4"><label for="contractor">Remarks.</label></div>
+                        <div class="col-sm-8 mb-3">
+                            <textarea  type="text" class="form-control rounded-0" id="entry_no" rows="3"></textarea>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <button id="retrieve" class="btn btn-info">RETRIEVE</button>
+                </div>
+
+            </div>
+
+            <div class="h-75 overflow-auto" style="background-color: aliceblue;">
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr>
+                            <th>SN</th>
+                            <th>BARCODE</th>
+                            <th>NAME</th>
+                            <th>PACK UM</th>
+                            <th>BALANCE</th>
+                            <th>QTY</th>
+                            <th>REASON</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        $(document).ready(function(){
+            $('#new').click(function(){
+                location.href = '/ssml/inventory/redeem/new/'
+            })
+
+            $('#retrieve').click(async function(){
+                let ids = ['contractor','type'];
+                if(anton.validateInputs(ids)){
+                    let typ = $('#type').val()
+                    let module = '';
+                    switch (typ) {
+                        case 'RET':
+                            module = 'returns'
+                            break;
+
+                        case 'MAT':
+                            module = 'material'
+                            break;
+                    
+                        default:
+                            break;
+                    }
+                    let payload = {
+                        module:module,
+                        data:{
+                            contractor_id:$('#contractor').val()
+                        }
+                    }
+
+                    await api.v2('VIEW',payload,'/ssml/api/contractor/').then(response => {
+                        if(anton.IsRequest(response)){
+                            let resp = response.message;
+                            let transactions = '';
+                            if(typ == 'RET'){
+                                transactions = resp['transactions']
+                            } else if (typ === 'MAT'){
+                                transactions = resp
+                            } else {
+                                new Error("Unknown Type")
+                            }
+                            let rows = "";
+                            for(let x = 0; x < transactions.length; x++){
+                                let row = transactions[x];
+                                let line = x + 1;
+                                let row_id = `row_${line}`;
+                                let barcode_id = `barcode_${line}`;
+                                let name_id = `name_${line}`;
+                                let pack_um = `packum_${line}`;
+                                let pack_qty = `packqty_${line}`;
+                                let balance_qty = `balqty_${line}`;
+                                let qty_id = `qty_${line}`;
+                                let reason_id = `reason_${line}`;
+
+                                rows += `
+                                    <tr id='${row_id}'>
+                                        <td  ondbclick='${$(row_id).remove()}'>${line}</td>
+                                        <td id='${barcode_id}'>${row['barcode']}</td>  
+                                        <td id='${name_id}'>${row['name']}</td>
+                                        <td><input id='${pack_um}' style='width:100px' class='form-control' value='PCS'></td> 
+                                        <td><input id='${balance_qty}' readonly style='width:100px' class='form-control' value='${row['balance']}'></td>
+                                        <td><input id='${qty_id}' style='width:100px' class='form-control' value='0'></td>
+                                        <td><input id='${reason_id}' class='form-control' value=''></td>
+                                    </tr>
+                                `
+                                console.table(row)
+                            }
+
+                            $('tbody').html(rows)
+                            // console.table(transactions)
+                        } else {
+                            kasa.response(response)
+                        }
+                    }).catch(error => {
+                        kasa.error(error)
+                    })
+
+
+                } else {
+                    kasa.error("Invalid Form Selection")
+                }
+            })
+        })
+    </script>
+
+{% endblock %}

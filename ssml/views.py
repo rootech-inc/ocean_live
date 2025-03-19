@@ -273,3 +273,39 @@ def service_order_new(request):
         'issue_materials':InventoryMaterial.objects.filter(is_issue=True)
     }
     return render(request, 'ssml/service_order_new.html', context)
+
+
+@login_required
+def redeem(request):
+    page = {
+        'title': 'Redeem',
+        'page': 'service_order_new',
+        'page_title': 'New Service Order',
+        'page_description': 'New Service Order',
+        'nav':True,
+        
+    }
+     
+    context = {
+         'page':page
+     }
+    
+    return render(request, 'ssml/redeem.html', context)
+
+
+def new_redemption(request):
+    page = {
+        'title': 'New Redeem',
+        'page': 'service_order_new',
+        'page_title': 'New Service Order',
+        'page_description': 'New Service Order',
+        'nav':True,
+        
+    }
+     
+    context = {
+         'page':page,
+         'contractors':Contractor.objects.all().order_by('company')
+     }
+    
+    return render(request, 'ssml/new_redeem.html', context)

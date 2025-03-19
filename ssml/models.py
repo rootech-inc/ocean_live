@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import Sum, F
 
+
+
 # Create your models here.
 class InventoryGroup(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -232,10 +234,13 @@ class Contractor(models.Model):
         return Contractor.objects.filter(id__lt=self.id).last().id if Contractor.objects.filter(id__lt=self.id).count() > 0 else 0
     
     def ledger_sum(self):
+        from ssml.helper import returns,lederhd
+        return lederhd(self.id)
+    
         ledger = Ledger.objects.filter(contractor=self,transaction_type='credit')
         total_credit = ledger.aggregate(total_credit=Sum('amount'))['total_credit'] or 0
-        total_debit = 0
-        total_balance = total_credit - total_debit
+        total_debit = returns(self.id)['total']
+        total_balance = total_credit + total_debit
         return {
                     'total_credit':total_credit,
                     'total_debit':total_debit,

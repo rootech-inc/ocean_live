@@ -831,6 +831,8 @@ class SSML {
             if(anton.IsRequest(response)) {
                 let contractor = response.message;
                 let total_credit = contractor.ledger.total_credit
+                let total_balance = contractor.ledger.total_balance
+                let total_debit = contractor.ledger.total_debit
                 
             
                 let body = `
@@ -872,9 +874,7 @@ class SSML {
                                 <div class="col-md-4">
                                     <strong class="text-primary text-center">Total Balance</strong>
                                     <div id='total_balance'>
-                                        <div class="spinner-border text-primary" role="status">
-                                                <span class="visually-hidden"></span>
-                                            </div>
+                                        ${total_balance}
                                     </div>
                                 </div>
                             </div>
@@ -1039,9 +1039,9 @@ class SSML {
                         console.log("issue_material_balance",issue_material_balance);
                         let materials_balance = parseFloat(issue_material_balance) + parseFloat(return_material_balance);
                         $('#materials_balance').empty();
-                        $('#materials_balance').html(materials_balance);
-                        let t_balance = parseFloat(total_credit) - parseFloat(materials_balance)
-                        $('#total_balance').html(t_balance.toFixed(2))
+                        $('#materials_balance').html(total_debit);
+                        // let t_balance = parseFloat(total_credit) - parseFloat(materials_balance)
+                        // $('#total_balance').html(total_balance.toFixed(2))
                         
                         // get service balance
 
@@ -1469,6 +1469,8 @@ class SSML {
                         status:'pending'
                     }
                 }
+
+                payload = {}
 
                 api.v2('VIEW', payload, '/ssml/api/').then(response => {
                     if(anton.IsRequest(response)) {

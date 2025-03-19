@@ -101,10 +101,10 @@ WSGI_APPLICATION = 'ocean.wsgi.application'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 # Read environment variables or use defaults
 DATABASE_ENGINE = os.environ.get('DB_ENGINE', 'django.db.backends.mysql')
-DATABASE_NAME = os.environ.get('DB_NAME', 'ocean')
+DATABASE_NAME = os.environ.get('DB_NAME', 'meters')
 DATABASE_USER = os.environ.get('DB_USER', 'root')
 DATABASE_PASSWORD = os.environ.get('DB_PASSWORD', 'Sunderland@411')
-DATABASE_HOST = os.environ.get('DB_HOST', '192.168.1.7')
+DATABASE_HOST = os.environ.get('DB_HOST', 'localhost')
 DATABASE_PORT = os.environ.get('DB_PORT', '3306')
 BOLT_MARGIN = os.environ.get('BOLT_MARGIN',25)
 

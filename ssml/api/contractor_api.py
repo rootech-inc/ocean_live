@@ -92,6 +92,7 @@ def contractor_api(request):
                         'transactions':transactions,
                         'total':total_returns
                     }
+                    print(arr['total'])
                 
                 except Exception as e:
                     success_response['status_code'] = 505
