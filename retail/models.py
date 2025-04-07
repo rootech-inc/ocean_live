@@ -84,6 +84,8 @@ class BoltItems(models.Model):
     image = models.ImageField(upload_to='static/uploads/dolphine/bolt/', null=True,default='static/uploads/dolphine/bolt/default.png')
     description = models.TextField(null=True,blank=True)
 
+    is_listed = models.BooleanField(default=True)
+
     def obj(self):
         return {
             "product":self.product.obj(),
@@ -142,7 +144,7 @@ class ProductGroup(models.Model):
     entity = models.ForeignKey(admin_panel.models.BusinessEntityTypes, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
-        unique_together = (('code','entity'),)
+        unique_together = (('code','entity'),('name','entity'),)
 
     def subgroups(self):
         return ProductSubGroup.objects.filter(group=self)
@@ -177,6 +179,7 @@ class Products(models.Model):
 
     is_butch = models.BooleanField(default=False)
     barcodes = models.TextField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         unique_together = (('subgroup', 'code','entity'),)
@@ -208,7 +211,12 @@ class Products(models.Model):
             'stock':stock_by_moved(self.pk,'*'),
             'shelf':self.shelf,
             'moves':self.moves(date),
-            'cardex':[]
+            'cardex':[],
+            'group':self.subgroup.group.name,
+            'subgroup':self.subgroup.name,
+            'is_on_bolt':self.is_on_bolt(),
+            'sold':0,
+            'status': "Active" if self.is_active else "Inactive",
         }
 
     def is_on_bolt(self):

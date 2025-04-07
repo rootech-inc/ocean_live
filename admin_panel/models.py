@@ -314,7 +314,10 @@ class ProductMaster(models.Model):
             "name":self.descr,
             "group":self.group.descr,
             "supplier":self.supplier.company,
-            "sub_group":self.sub_group.descr
+            "sub_group":self.sub_group.descr,
+            'pk':self.pk,
+            'img':self.prod_img.url,
+            'stock':self.stock(),
         }
     def stock(self):
         arr = []
@@ -327,6 +330,8 @@ class ProductMaster(models.Model):
                 'loc_name':name,
                 'stock':stk
             })
+
+        return arr
         if ProductTrans.objects.filter(product=self).aggregate(Sum('tran_qty'))['tran_qty__sum'] is None:
             return 0
         else:
@@ -561,8 +566,8 @@ class TransferHD(models.Model):
             "to":self.loc_to.descr,
             "created_by":self.created_by.get_full_name(),
             "entry_no":self.entry_no,
-            "next": TransferHD.objects.filter(pk__gt=self.pk).last().pk if TransferHD.objects.filter(pk__gt=self.pk).count() > 0 else 0,
-            "previous":TransferHD.objects.filter(pk__lt=self.pk).order_by('-pk').last().pk if TransferHD.objects.filter(pk__lt=self.pk).count() > 0 else 0,
+            "next": TransferHD.objects.filter(pk__gt=self.pk).first().pk if TransferHD.objects.filter(pk__gt=self.pk).count() > 0 else 0,
+            "previous":TransferHD.objects.filter(pk__lt=self.pk).order_by('-pk').first().pk if TransferHD.objects.filter(pk__lt=self.pk).count() > 0 else 0,
             "remarks":self.remarks,
             "total_cost":format_currency(self.total_cost()),
             "tran_pieces":format_currency(self.tran_pieces()),

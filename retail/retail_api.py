@@ -67,8 +67,23 @@ def interface(request):
                 entity = BusinessEntityTypes.objects.get(id = entity_id)
                 #print(item_code)
                 if Products.objects.filter(barcode=item_code,entity=entity).count() == 0:
+                    # pass
                     item_code = f"0{item_code}"
-                pd = Products.objects.get(barcode=item_code,entity=entity)
+
+
+                if Products.objects.filter(barcode=item_code,entity=entity).count() > 0:
+                    pd = Products.objects.get(barcode=item_code,entity=entity)
+                else:
+                    db_conn = ret_cursor()
+                    cursor = db_conn.cursor()
+                    qr = f"select item_code from barcode where barcode = '{item_code}'"
+                    cursor.execute(qr)
+                    row = cursor.fetchone()
+                    if row:
+                        item_code = row[0]
+                        pd = Products.objects.get(code=item_code,entity=entity)
+                    else:
+                        raise Exception(f"Item not found in live {qr}")
                 price = pd.price
                 item_code = pd.code
 
@@ -98,7 +113,7 @@ def interface(request):
                     BoltItems(product=pd,price=price,stock_nia=nia_stock,stock_spintex=spintex_stock,stock_osu=osu_stock,group=group,subgroup=subgroup,image=image,menu=entity).save()
                     success_response['message'] = "Product Added"
                 else:
-                    raise Exception(f"Product Exist with barcode {pd.barcode}")
+                    pass
 
             elif module == 'moves':
                 move_type = data.get('type','')
@@ -837,7 +852,7 @@ def interface(request):
                 for supplier in cursor.fetchall():
                     code = supplier[0].strip()
                     name = supplier[1].strip()
-                    person = supplier[2].strip()
+                    person = '' if supplier[2] is None else supplier[2].strip()
                     phone = '' if supplier[3] is None else supplier[3].strip()
                     email = '' if supplier[4] is None else supplier[4].strip()
                     city = '' if supplier[5] is None else supplier[5].strip()
@@ -863,12 +878,21 @@ def interface(request):
                 count = 0
                 not_counted = 0
 
+                entity = data.get('entity',1)
+                for prod in ProductGroup.objects.all()[:100]:
+                    print(prod.name)
+                    prod.delete()
+
+
+
                 for group in cursor.fetchall():
                     code, name = group[0].strip(), group[1].strip()
                     try:
-                        get, add = ProductGroup.objects.get_or_create(code=code, name=name)
+                        if ProductGroup.objects.filter(code=code, name=name,entity_id=entity).count() == 0:
+                            get, add = ProductGroup.objects.get_or_create(code=code, name=name,entity_id=entity)
                         count = count + 1
                     except Exception as e:
+                        print(e)
                         not_counted = not_counted + 1
 
                 conn.close()
@@ -888,14 +912,11 @@ def interface(request):
 
                     group_code, group_des, sub_group_code, sub_group_des = sub_group[0], sub_group[1].strip(), \
                         sub_group[2].strip(), sub_group[3].strip()
-                    group, add = ProductGroup.objects.get_or_create(code=group_code, name=group_des)
-
-                    if add:
-                        group = ProductGroup.objects.get(code=group_code, name=group_des)
+                    group = ProductGroup.objects.get(code=group_code, name=group_des)
 
                     try:
                         sub, create = ProductSubGroup.objects.get_or_create(group=group, code=sub_group_code,
-                                                                            name=sub_group_des)
+                                                                            name=sub_group_des,entity_id=1)
                         count = count + 1
                     except Exception as e:
                         errors.append(e)
@@ -908,7 +929,9 @@ def interface(request):
             elif module == 'sync_retail_products':
                 conn = ret_cursor()
                 cursor = conn.cursor()
-                query = "SELECT item_code, barcode, item_des, (SELECT group_des FROM group_mast WHERE group_mast.group_code = prod_mast.group_code) AS 'group', (SELECT sub_group_des FROM sub_group WHERE sub_group.group_code = prod_mast.group_code AND sub_group.sub_group = prod_mast.sub_group) AS 'sub_group', (SELECT supp_name FROM supplier WHERE supplier.supp_code = prod_mast.supp_code) AS 'supplier', retail1 FROM prod_mast WHERE item_type != 0"
+                barcode = data.get('barcode','')
+                query = f"SELECT item_code, barcode, item_des, (SELECT group_des FROM group_mast WHERE group_mast.group_code = prod_mast.group_code) AS 'group', (SELECT sub_group_des FROM sub_group WHERE sub_group.group_code = prod_mast.group_code AND sub_group.sub_group = prod_mast.sub_group) AS 'sub_group', (SELECT supp_name FROM supplier WHERE supplier.supp_code = prod_mast.supp_code) AS 'supplier', retail1,item_type FROM prod_mast where barcode like '%{barcode}%' order by item_des "
+                print(query)
                 cursor.execute(query)
                 saved = 0
                 not_synced = 0
@@ -917,6 +940,7 @@ def interface(request):
                     code = product[0]
                     barcode = str(product[1]).strip()
                     item_des = product[2].strip()
+                    print(item_des)
                     group = product[3]
                     #print(product[4])
                     try:
@@ -926,9 +950,14 @@ def interface(request):
 
                     supplier = product[5]
                     retail1 = product[6]
+                    item_type_res = product[7]
+                    is_active = False
+                    if item_type_res != 0:
+                        is_active = True
+
 
                     # add to products
-                    subgroup = ProductSubGroup.objects.get(code='999')
+                    # subgroup = ProductSubGroup.objects.get(code='999')
                     if ProductSubGroup.objects.filter(name=sub_group).count() == 1:
                         subgroup = ProductSubGroup.objects.get(name=sub_group)
                         # delete product
@@ -939,11 +968,12 @@ def interface(request):
                         prod.name = item_des
                         prod.price = retail1
                         prod.subgroup = subgroup
+                        prod.is_active = is_active
                         prod.save()
                     else:
                         # save new
                         Products.objects.get_or_create(subgroup=subgroup, name=item_des, barcode=barcode,
-                                                           code=code, price=retail1)
+                                                           code=code, price=retail1,entity_id=1,is_active=is_active)
                         saved = saved + 1
                     # else:
                     #     not_synced = not_synced + 1
@@ -3172,7 +3202,13 @@ ORDER BY
                 if pk == '*':
                     prods = Products.objects.filter(entity=entity).order_by('-pk')[:1]
                 else:
+
                     prods = Products.objects.filter(pk=pk,entity=entity) if filter == 'pk' else Products.objects.filter(barcode=pk,entity=entity)
+                    if prods.count() == 0:
+                        # check in barcodes
+                        x = Barcode.objects.filter(barcode=pk).order_by('-pk').last()
+                        print(x.product.pk)
+                        prods = Products.objects.filter(pk=x.product.pk)
 
                 for prod in prods:
                     print(prod.obj())
@@ -3716,6 +3752,9 @@ ORDER BY
                     item.price = item.product.price
                     item.save()
 
+            elif module == 'bolt_update':
+                pass
+
             elif module == 'check_bolt_expiry':
                 ent_pk = data.get('entity')
                 entity = BusinessEntityTypes.objects.get(pk=ent_pk)
@@ -3749,6 +3788,8 @@ ORDER BY
                         print(lx)
                         if exp_date < today:
                             is_expired = True
+                        else:
+                            is_expired = False
                     li = [barcode,grn_date,entry_no,exp_date,is_expired]
                     print(li)
                     item.is_expired = is_expired
@@ -3759,6 +3800,8 @@ ORDER BY
                     # li = [barcode,itemcode]
 
                 conn = ret_cursor()
+
+
 
 
             elif module == 'menu_transfer':

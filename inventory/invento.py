@@ -10,6 +10,7 @@ from admin_panel.models import Locations, TransferHD, TransferTran, ProductMaste
 from admin_panel.views import bank_posts
 from inventory.models import Evidence
 from retail.models import Products
+from django.db.models import Q
 
 
 @csrf_exempt
@@ -129,6 +130,17 @@ def interface(request):
                 success_response['message'] = arr
                 response = success_response
                 print(responses)
+
+            elif module == 'product':
+                key = data.get('key')
+                
+                try:    
+                    products = ProductMaster.objects.filter(Q(barcode__icontains=key) | Q(descr__icontains=key))
+                    success_response['message'] = [p.obj() for p in products]
+                    response = success_response
+                except Exception as e:
+                    error_response['message'] = f"Product Not Found: {e}"
+                    response = error_response
 
         elif method == 'PATCH':
             if module == 'transfer':

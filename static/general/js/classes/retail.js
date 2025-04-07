@@ -1747,8 +1747,9 @@ class Retail {
     }
 
     loadCard(s = '*',filter='pk',entity='*') {
-        console.log(s)
+
         let product = this.getCardProduct(s,filter,entity);
+        console.table(product)
 
         if(anton.IsRequest(product)){
             let message = product['message'][0];
@@ -1757,6 +1758,8 @@ class Retail {
             $('#previous').val(message['previous'])
             $('#next').val(message['next'])
             $('#image').attr('src',`${message['image']}`)
+            $('#group_name').val(message['group'])
+            $('#sub_group_name').val(message['subgroup'])
 
             if(message['previous'] === 0){
                 $('#previous').attr('disabled',true)
@@ -1822,6 +1825,8 @@ class Retail {
             },
 
         },'/retail/api/');
+
+
     }
 
     changeBoltImage(barcode='none') {

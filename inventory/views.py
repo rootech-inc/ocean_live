@@ -257,8 +257,18 @@ def save_evidence(request):
         form = EvidenceForm(request.POST,request.FILES)
         if form.is_valid():
             form.save()
-            return HttpResponse("SAVED")
+            return redirect('transfer')
         else:
             return HttpResponse(f"Invalid Form <br>{form}")
     else:
         return HttpResponse("Invalid Form")
+
+@login_required()
+def adjustment(request):
+    page['title'] = 'Adjustment'
+    context = {
+        'page': page,
+        'nav': True,
+        'locs': Locations.objects.all()
+    }
+    return render(request, 'inventory/adjustment/indx.html', context=context)
