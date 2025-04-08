@@ -25,7 +25,7 @@ urlpatterns = [
     path('assets/save-new', views.assets_new, name='assets_new'),
     path('purchasing/', views.purchasing, name='purchasing'),
     path('purchasing/new/', views.new_purchasing_order, name='new_purchasing_order'),
-    path('grn/', views.grn, name='grn'),
+    path('grn/', views.grn, name='inventory-grn'),
     path('grn/new/', views.new_grn, name='new-grn'),
     path('workstation/', views.workstation, name='workstation'),
     path('workstation/save_workstation/', views.save_workstation, name='save_workstation'),
@@ -36,7 +36,8 @@ urlpatterns = [
     path('transfer/',views.transfer,name='transfer'),
     path('transfer/new/',views.transfer_new,name='new_transfer'),
     path('transfer/edit/<entry_no>/',views.transfer_edit,name='edit_transfer'),
-    path('transfer/save-evidence/',views.save_evidence,name='save_inv_evidence')
+    path('transfer/save-evidence/',views.save_evidence,name='save_inv_evidence'),
+    path('adjustment/',views.adjustment,name='inventory-adjustment'),
 
 ]
 

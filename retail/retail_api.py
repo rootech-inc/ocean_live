@@ -67,8 +67,23 @@ def interface(request):
                 entity = BusinessEntityTypes.objects.get(id = entity_id)
                 #print(item_code)
                 if Products.objects.filter(barcode=item_code,entity=entity).count() == 0:
+                    # pass
                     item_code = f"0{item_code}"
-                pd = Products.objects.get(barcode=item_code,entity=entity)
+
+
+                if Products.objects.filter(barcode=item_code,entity=entity).count() > 0:
+                    pd = Products.objects.get(barcode=item_code,entity=entity)
+                else:
+                    db_conn = ret_cursor()
+                    cursor = db_conn.cursor()
+                    qr = f"select item_code from barcode where barcode = '{item_code}'"
+                    cursor.execute(qr)
+                    row = cursor.fetchone()
+                    if row:
+                        item_code = row[0]
+                        pd = Products.objects.get(code=item_code,entity=entity)
+                    else:
+                        raise Exception(f"Item not found in live {qr}")
                 price = pd.price
                 item_code = pd.code
 
@@ -98,7 +113,7 @@ def interface(request):
                     BoltItems(product=pd,price=price,stock_nia=nia_stock,stock_spintex=spintex_stock,stock_osu=osu_stock,group=group,subgroup=subgroup,image=image,menu=entity).save()
                     success_response['message'] = "Product Added"
                 else:
-                    raise Exception(f"Product Exist with barcode {pd.barcode}")
+                    pass
 
             elif module == 'moves':
                 move_type = data.get('type','')
@@ -363,19 +378,17 @@ def interface(request):
                     print("TRANSFER")
 
                     # get invoice tran
-                    query = "select hd.entry_no,hd.entry_date,tr.total_units,tr.line_no,hd.loc_from,loc_to,tr.item_code,hd.remark,tr.item_ref,tr.item_des from tran_tr tr join tran_hd hd on hd.entry_no = tr.entry_no where ocean is NULL and hd.valid = 1 and hd.posted = 1;"
+                    query = "select hd.entry_no,hd.entry_date,tr.total_units,tr.line_no,hd.loc_from,loc_to,tr.item_code,hd.remark from tran_tr tr join tran_hd hd on hd.entry_no = tr.entry_no where ocean is NULL and hd.valid = 1 and hd.posted = 1 and hd.loc_to = '001';"
                     cursor.execute(query)
                     print(query)
                     rows = cursor.fetchall()
                     over_lines = len(rows)
                     compare_line = 1
                     for row in rows:
-                        entry_no, entry_date, quantity, line_no, loc_id, loc_to, item_code, remarks,barcode,name = row
-                        print([entry_no,item_code,barcode,name])
+                        entry_no, entry_date, quantity, line_no, loc_id, loc_to, item_code, remarks = row
                         log = f"{move_type} : {compare_line} / {over_lines} {item_code}"
                         # get product
                         product = Products.objects.filter(code=item_code)
-                        cds = [item_code]
                         if product.exists():
                             location = Locations.objects.get(code=loc_to)
                             pd = product.last()
@@ -839,7 +852,7 @@ def interface(request):
                 for supplier in cursor.fetchall():
                     code = supplier[0].strip()
                     name = supplier[1].strip()
-                    person = supplier[2].strip()
+                    person = '' if supplier[2] is None else supplier[2].strip()
                     phone = '' if supplier[3] is None else supplier[3].strip()
                     email = '' if supplier[4] is None else supplier[4].strip()
                     city = '' if supplier[5] is None else supplier[5].strip()
@@ -865,12 +878,21 @@ def interface(request):
                 count = 0
                 not_counted = 0
 
+                entity = data.get('entity',1)
+                for prod in ProductGroup.objects.all()[:100]:
+                    print(prod.name)
+                    prod.delete()
+
+
+
                 for group in cursor.fetchall():
                     code, name = group[0].strip(), group[1].strip()
                     try:
-                        get, add = ProductGroup.objects.get_or_create(code=code, name=name)
+                        if ProductGroup.objects.filter(code=code, name=name,entity_id=entity).count() == 0:
+                            get, add = ProductGroup.objects.get_or_create(code=code, name=name,entity_id=entity)
                         count = count + 1
                     except Exception as e:
+                        print(e)
                         not_counted = not_counted + 1
 
                 conn.close()
@@ -890,14 +912,11 @@ def interface(request):
 
                     group_code, group_des, sub_group_code, sub_group_des = sub_group[0], sub_group[1].strip(), \
                         sub_group[2].strip(), sub_group[3].strip()
-                    group, add = ProductGroup.objects.get_or_create(code=group_code, name=group_des)
-
-                    if add:
-                        group = ProductGroup.objects.get(code=group_code, name=group_des)
+                    group = ProductGroup.objects.get(code=group_code, name=group_des)
 
                     try:
                         sub, create = ProductSubGroup.objects.get_or_create(group=group, code=sub_group_code,
-                                                                            name=sub_group_des)
+                                                                            name=sub_group_des,entity_id=1)
                         count = count + 1
                     except Exception as e:
                         errors.append(e)
@@ -910,7 +929,9 @@ def interface(request):
             elif module == 'sync_retail_products':
                 conn = ret_cursor()
                 cursor = conn.cursor()
-                query = "SELECT item_code, barcode, item_des, (SELECT group_des FROM group_mast WHERE group_mast.group_code = prod_mast.group_code) AS 'group', (SELECT sub_group_des FROM sub_group WHERE sub_group.group_code = prod_mast.group_code AND sub_group.sub_group = prod_mast.sub_group) AS 'sub_group', (SELECT supp_name FROM supplier WHERE supplier.supp_code = prod_mast.supp_code) AS 'supplier', retail1 FROM prod_mast WHERE item_type != 0"
+                barcode = data.get('barcode','')
+                query = f"SELECT item_code, barcode, item_des, (SELECT group_des FROM group_mast WHERE group_mast.group_code = prod_mast.group_code) AS 'group', (SELECT sub_group_des FROM sub_group WHERE sub_group.group_code = prod_mast.group_code AND sub_group.sub_group = prod_mast.sub_group) AS 'sub_group', (SELECT supp_name FROM supplier WHERE supplier.supp_code = prod_mast.supp_code) AS 'supplier', retail1,item_type FROM prod_mast where barcode like '%{barcode}%' order by item_des "
+                print(query)
                 cursor.execute(query)
                 saved = 0
                 not_synced = 0
@@ -919,6 +940,7 @@ def interface(request):
                     code = product[0]
                     barcode = str(product[1]).strip()
                     item_des = product[2].strip()
+                    print(item_des)
                     group = product[3]
                     #print(product[4])
                     try:
@@ -928,9 +950,14 @@ def interface(request):
 
                     supplier = product[5]
                     retail1 = product[6]
+                    item_type_res = product[7]
+                    is_active = False
+                    if item_type_res != 0:
+                        is_active = True
+
 
                     # add to products
-                    subgroup = ProductSubGroup.objects.get(code='999')
+                    # subgroup = ProductSubGroup.objects.get(code='999')
                     if ProductSubGroup.objects.filter(name=sub_group).count() == 1:
                         subgroup = ProductSubGroup.objects.get(name=sub_group)
                         # delete product
@@ -941,11 +968,12 @@ def interface(request):
                         prod.name = item_des
                         prod.price = retail1
                         prod.subgroup = subgroup
+                        prod.is_active = is_active
                         prod.save()
                     else:
                         # save new
                         Products.objects.get_or_create(subgroup=subgroup, name=item_des, barcode=barcode,
-                                                           code=code, price=retail1)
+                                                           code=code, price=retail1,entity_id=1,is_active=is_active)
                         saved = saved + 1
                     # else:
                     #     not_synced = not_synced + 1
@@ -3174,7 +3202,13 @@ ORDER BY
                 if pk == '*':
                     prods = Products.objects.filter(entity=entity).order_by('-pk')[:1]
                 else:
+
                     prods = Products.objects.filter(pk=pk,entity=entity) if filter == 'pk' else Products.objects.filter(barcode=pk,entity=entity)
+                    if prods.count() == 0:
+                        # check in barcodes
+                        x = Barcode.objects.filter(barcode=pk).order_by('-pk').last()
+                        print(x.product.pk)
+                        prods = Products.objects.filter(pk=x.product.pk)
 
                 for prod in prods:
                     print(prod.obj())
@@ -3609,26 +3643,22 @@ ORDER BY
 
                     for item in items:
                         print(item.product.barcode)
-                        # stock = stock_by_prod(item.product.pk)
-                        # print(stock)
-
-                        # sp_stk = item.stock_spintex
-                        # ni_stk = item.stock_nia
-                        # os_stk = item.stock_osu
+                        stock = stock_by_prod(item.product.pk)
+                        print(stock)
 
                         sp_stk = [
                             item.product.barcode,
-                            item.stock_spintex,
+                            stock.get('001') if stock.get('001') > 0 else 0,
                             BOLT_PROVIDER_ID.get('001')['address']
                         ]
                         ni_stk = [
                             item.product.barcode,
-                            item.stock_nia,# if stock.get('nia') > 0 else 0,
+                            stock.get('001') if stock.get('202') > 0 else 0,# if stock.get('nia') > 0 else 0,
                             BOLT_PROVIDER_ID.get('202')['address']
                         ]
                         os_stk = [
                             item.product.barcode,
-                            item.stock_osu,# 5) if stock.get('osu') > 0 else 5,
+                            stock.get('001') if stock.get('205') > 0 else 0,# 5) if stock.get('osu') > 0 else 5,
                             BOLT_PROVIDER_ID.get('205')['address']
                         ]
 
@@ -3722,17 +3752,11 @@ ORDER BY
                     item.price = item.product.price
                     item.save()
 
-            elif module == 'hide_bolt':
-                reason = data.get('hide_reason')
-                pk = data.get('pk')
-
-                item = BoltItems.objects.get(pk=pk)
-                item.is_hidden = True
-                item.hide_reason = reason
-                item.save()
+            elif module == 'bolt_update':
+                pass
 
             elif module == 'check_bolt_expiry':
-                ent_pk = data.get('entity',1)
+                ent_pk = data.get('entity')
                 entity = BusinessEntityTypes.objects.get(pk=ent_pk)
                 conn = ret_cursor()
                 cursor = conn.cursor()
@@ -3758,40 +3782,26 @@ ORDER BY
                         if not exp_date or exp_date == 'NULL':
                             exp_date = datetime.strptime('2099-01-01', '%Y-%m-%d').date()
                         else:
-                            #print(str(exp_date).split(' ')[0])
+                            print(str(exp_date).split(' ')[0])
                             exp_date = datetime.strptime(str(exp_date).split(' ')[0], '%Y-%m-%d').date()
-                        
+                        lx = [today,exp_date]
+                        print(lx)
                         if exp_date < today:
                             is_expired = True
+                        else:
+                            is_expired = False
                     li = [barcode,grn_date,entry_no,exp_date,is_expired]
-                   
-                    
-                    if item.is_expired != is_expired:
-                        item.chng = True
-
-                    if item.hide_reason == "EXP":
-                        item.exp_last_check = timezone.now()
-
-                    #print(item.hide_reason)
-
-                    # check stock
-                    stock_moved = stock_by_moved(item.product.pk,'*')
-                    nia_stock = stock_moved.get('202',0)
-                    osu_stock = stock_moved.get('205',0)
-                    spi_stock = stock_moved.get('001',0)
-                    print(stock_moved)
-
+                    print(li)
                     item.is_expired = is_expired
                     item.exp_date = exp_date
-                    item.stock_nia = nia_stock
-                    item.stock_spintex = spi_stock
-                    item.stock_osu = osu_stock
                     item.save()
 
 
                     # li = [barcode,itemcode]
 
                 conn = ret_cursor()
+
+
 
 
             elif module == 'menu_transfer':

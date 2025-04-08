@@ -83,5 +83,48 @@
 
     </div>
 
+
+    <script>
+        $(document).ready(function(){
+            $('#adj_item_search').on('keyup', async function(e){
+                var query = $(this).val();
+                if(query.length > 0){
+                    // check if key is enter
+                    if(e.key === 'Enter'){
+                        console.log(query);
+                        let payload = {
+                            module: 'product',
+                            'data':{
+                                key:query
+                            }
+                        }
+                        $('#searchRes').html('');
+                        await api.v2('VIEW', payload,'/inventory/api/').then(response => {
+                            let message = response.message;
+                            let rows = '';
+                            message.map(item => {
+                                rows += `
+                                    <tr>
+                                        <td>${item.barcode}</td>
+                                        <td>${item.name}</td>
+                                        <td><button onclick="add_item(${item.pk})" class="btn btn-sm btn-primary">ADD</button></td>
+                                    </tr>
+                                `
+                            })
+                            $('#searchRes').html(`<table class="table">${rows}</table>`);
+                        }).catch(error => {
+                            kasa.error(error.message);
+                        })
+
+                    }
+                }
+            });
+        });
+
+        const add_item = (pk) => {
+            console.log(pk);
+        }
+    </script>
+
 {% endblock %}
 

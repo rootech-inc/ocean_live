@@ -60,7 +60,6 @@ INSTALLED_APPS = [
     'servicing.apps.ServicingConfig',
     'maintenance.apps.MaintenanceConfig',
     'ssml.apps.SsmlConfig',
-    'corsheaders'
 ]
 
 MIDDLEWARE = [
@@ -71,10 +70,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True  # Temporarily allow all
+
 
 
 ROOT_URLCONF = 'ocean.urls'
@@ -106,6 +104,7 @@ DATABASE_USER = os.environ.get('DB_USER', 'root')
 DATABASE_PASSWORD = os.environ.get('DB_PASSWORD', 'Sunderland@411')
 DATABASE_HOST = os.environ.get('DB_HOST', '192.168.2.60')
 DATABASE_PORT = os.environ.get('DB_PORT', '3306')
+
 BOLT_MARGIN = os.environ.get('BOLT_MARGIN',25)
 
 DATABASES = {
