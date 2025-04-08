@@ -363,17 +363,19 @@ def interface(request):
                     print("TRANSFER")
 
                     # get invoice tran
-                    query = "select hd.entry_no,hd.entry_date,tr.total_units,tr.line_no,hd.loc_from,loc_to,tr.item_code,hd.remark from tran_tr tr join tran_hd hd on hd.entry_no = tr.entry_no where ocean is NULL and hd.valid = 1 and hd.posted = 1 and hd.loc_to = '001';"
+                    query = "select hd.entry_no,hd.entry_date,tr.total_units,tr.line_no,hd.loc_from,loc_to,tr.item_code,hd.remark,tr.item_ref,tr.item_des from tran_tr tr join tran_hd hd on hd.entry_no = tr.entry_no where ocean is NULL and hd.valid = 1 and hd.posted = 1;"
                     cursor.execute(query)
                     print(query)
                     rows = cursor.fetchall()
                     over_lines = len(rows)
                     compare_line = 1
                     for row in rows:
-                        entry_no, entry_date, quantity, line_no, loc_id, loc_to, item_code, remarks = row
+                        entry_no, entry_date, quantity, line_no, loc_id, loc_to, item_code, remarks,barcode,name = row
+                        print([entry_no,item_code,barcode,name])
                         log = f"{move_type} : {compare_line} / {over_lines} {item_code}"
                         # get product
                         product = Products.objects.filter(code=item_code)
+                        cds = [item_code]
                         if product.exists():
                             location = Locations.objects.get(code=loc_to)
                             pd = product.last()
@@ -3607,22 +3609,26 @@ ORDER BY
 
                     for item in items:
                         print(item.product.barcode)
-                        stock = stock_by_prod(item.product.pk)
-                        print(stock)
+                        # stock = stock_by_prod(item.product.pk)
+                        # print(stock)
+
+                        # sp_stk = item.stock_spintex
+                        # ni_stk = item.stock_nia
+                        # os_stk = item.stock_osu
 
                         sp_stk = [
                             item.product.barcode,
-                            stock.get('001') if stock.get('001') > 0 else 0,
+                            item.stock_spintex,
                             BOLT_PROVIDER_ID.get('001')['address']
                         ]
                         ni_stk = [
                             item.product.barcode,
-                            stock.get('001') if stock.get('202') > 0 else 0,# if stock.get('nia') > 0 else 0,
+                            item.stock_nia,# if stock.get('nia') > 0 else 0,
                             BOLT_PROVIDER_ID.get('202')['address']
                         ]
                         os_stk = [
                             item.product.barcode,
-                            stock.get('001') if stock.get('205') > 0 else 0,# 5) if stock.get('osu') > 0 else 5,
+                            item.stock_osu,# 5) if stock.get('osu') > 0 else 5,
                             BOLT_PROVIDER_ID.get('205')['address']
                         ]
 
@@ -3716,8 +3722,17 @@ ORDER BY
                     item.price = item.product.price
                     item.save()
 
+            elif module == 'hide_bolt':
+                reason = data.get('hide_reason')
+                pk = data.get('pk')
+
+                item = BoltItems.objects.get(pk=pk)
+                item.is_hidden = True
+                item.hide_reason = reason
+                item.save()
+
             elif module == 'check_bolt_expiry':
-                ent_pk = data.get('entity')
+                ent_pk = data.get('entity',1)
                 entity = BusinessEntityTypes.objects.get(pk=ent_pk)
                 conn = ret_cursor()
                 cursor = conn.cursor()
@@ -3743,16 +3758,34 @@ ORDER BY
                         if not exp_date or exp_date == 'NULL':
                             exp_date = datetime.strptime('2099-01-01', '%Y-%m-%d').date()
                         else:
-                            print(str(exp_date).split(' ')[0])
+                            #print(str(exp_date).split(' ')[0])
                             exp_date = datetime.strptime(str(exp_date).split(' ')[0], '%Y-%m-%d').date()
-                        lx = [today,exp_date]
-                        print(lx)
+                        
                         if exp_date < today:
                             is_expired = True
                     li = [barcode,grn_date,entry_no,exp_date,is_expired]
-                    print(li)
+                   
+                    
+                    if item.is_expired != is_expired:
+                        item.chng = True
+
+                    if item.hide_reason == "EXP":
+                        item.exp_last_check = timezone.now()
+
+                    #print(item.hide_reason)
+
+                    # check stock
+                    stock_moved = stock_by_moved(item.product.pk,'*')
+                    nia_stock = stock_moved.get('202',0)
+                    osu_stock = stock_moved.get('205',0)
+                    spi_stock = stock_moved.get('001',0)
+                    print(stock_moved)
+
                     item.is_expired = is_expired
                     item.exp_date = exp_date
+                    item.stock_nia = nia_stock
+                    item.stock_spintex = spi_stock
+                    item.stock_osu = osu_stock
                     item.save()
 
 

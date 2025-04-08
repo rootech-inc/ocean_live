@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum, F
 
-from ssml.models import Contractor, InventoryMaterial, IssueTransaction, Ledger, MaterialOrderItem, Plot, ServiceOrder, ServiceOrderItem, ServiceOrderReturns
+from ssml.models import Contractor, InventoryMaterial, IssueTransaction, Ledger, MaterialOrderItem, Plot, RedeemTransactions, ServiceOrder, ServiceOrderItem, ServiceOrderReturns
 
 
 @csrf_exempt
@@ -60,7 +60,8 @@ def contractor_api(request):
                         this_obj = material.obj()
                         this_obj['issued'] = IssueTransaction.objects.filter(material=material,issue__contractor=contractor,issue__issue_type='ISS').aggregate(total_qty=Sum('total_qty'))['total_qty'] or 0
                         this_obj['consumed'] = MaterialOrderItem.objects.filter(material=material,service_order__contractor=contractor,material_type='is').aggregate(total_qty=Sum('quantity'))['total_qty'] or 0
-                        this_obj['balance'] = this_obj['issued'] - this_obj['consumed']
+                        this_obj['redeemed'] = RedeemTransactions.objects.filter(material=material,redeem__contractor=contractor,redeem__transaction_type='ISS').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
+                        this_obj['balance'] = this_obj['issued'] - this_obj['consumed'] + this_obj['redeemed']
                         negative_balance = this_obj['balance'] * -1
                         this_obj['value'] = negative_balance * material.value
                         this_obj['rate'] = material.value
@@ -81,8 +82,9 @@ def contractor_api(request):
                         material = InventoryMaterial.objects.get(id=rt)
                         this_obj = material.obj()
                         this_obj['expected'] = ServiceOrderReturns.objects.filter(service_order__contractor=contractor,material=material).aggregate(tot_qty=Sum('quantity'))['tot_qty'] or 0
+                        this_obj['redeemed'] = RedeemTransactions.objects.filter(material=material,redeem__contractor=contractor,redeem__transaction_type='RET').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
                         this_obj['returned'] = IssueTransaction.objects.filter(material=material,issue__contractor=contractor,issue__issue_type='RET').aggregate(total_qty=Sum('total_qty'))['total_qty'] or 0
-                        this_obj['balance'] = this_obj['returned'] - this_obj['expected']
+                        this_obj['balance'] = this_obj['returned'] - this_obj['expected'] + this_obj['redeemed']
                         this_obj['total_value'] = this_obj['balance'] * material.value
                         this_obj['rate'] = material.value
                         total_returns += this_obj['total_value']

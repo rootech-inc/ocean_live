@@ -25,6 +25,7 @@ urlpatterns = [
     path('sync_clerks/<fr>/', views.sync_clerks, name='sync_clerks'),
     path('bolt/', views.bolt_landing, name='bolt_landing'),
     path('bolt/products/', views.bolt_products, name='bolt_products'),
+    path('bolt/bolt_hidden/',views.bolt_hidden,name='bolt_hidden'),
     path('bolt/products/pending/', views.bolt_products_pending, name='bolt_products_pending'),
     path('bolt/categories/', views.bolt_groups, name='bolt_groups'),
     path('bolt/category/<pk>/', views.bolt_category, name='bolt_category'),

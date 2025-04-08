@@ -195,6 +195,19 @@ class CustomPaginator(Paginator):
 def has_next_page(current_page, paginator):
     return current_page.has_next()
 
+
+@login_required()
+def bolt_hidden(request):
+    context = {
+        'nav': True,
+        'page': {
+            'title': "Bolt Products"
+        },
+        'items': BoltItems.objects.filter(is_hidden=True)
+    }
+    return render(request, 'retail/bolt-products-hidden.html', context=context)
+
+
 @login_required()
 def products(request,page=1):
     if Products.objects.all().count() > 500:

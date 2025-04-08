@@ -1,7 +1,7 @@
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 
-from ssml.models import Contractor, Grn, GrnTransaction, InventoryMaterial, Issue, IssueTransaction, Plot, ServiceOrder, ServiceType, Supplier
+from ssml.models import Contractor, Grn, GrnTransaction, InventoryMaterial, Issue, IssueTransaction, Plot, Reedem, ServiceOrder, ServiceType, Supplier
 # Create your views here.
 @login_required
 def index(request):
@@ -277,6 +277,10 @@ def service_order_new(request):
 
 @login_required
 def redeem(request):
+    if Reedem.objects.all().count() < 1:
+        return redirect('new_redeem')
+    
+    last_entry = Reedem.objects.all().last()
     page = {
         'title': 'Redeem',
         'page': 'service_order_new',
@@ -287,12 +291,13 @@ def redeem(request):
     }
      
     context = {
-         'page':page
+         'page':page,
+         'last_entry':last_entry
      }
     
     return render(request, 'ssml/redeem.html', context)
 
-
+@login_required
 def new_redemption(request):
     page = {
         'title': 'New Redeem',

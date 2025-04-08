@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.contrib.auth.models import User
 
 
-from ssml.models import Cardex, Contractor, InventoryGroup, InventoryMaterial, Issue, IssueTransaction, Ledger, MaterialOrderItem, Meter, Plot, Service, ServiceOrder, ServiceOrderItem, ServiceOrderReturns, ServiceType, Supplier, Grn, GrnTransaction
+from ssml.models import Cardex, Contractor, InventoryGroup, InventoryMaterial, Issue, IssueTransaction, Ledger, MaterialOrderItem, Meter, Plot, RedeemTransactions, Reedem, Service, ServiceOrder, ServiceOrderItem, ServiceOrderReturns, ServiceType, Supplier, Grn, GrnTransaction
 
 
 @csrf_exempt
@@ -385,10 +385,64 @@ def interface(request):
                     meter.save()
 
                     success_response['message'] = "Service Order Created Successfully"
+
+                
+
                 except Exception as e:
                     # delete service order if created
                     if 'service_order' in locals():
                         service_order.delete()
+                    success_response['status_code'] = 400
+                    success_response['message'] = f"Error on line {sys.exc_info()[2].tb_lineno}: {e}"
+
+            elif module == 'redeem':
+                
+
+                try:
+                    header = data.get('header')
+                    transactions = data.get('transactions')
+
+                    contractor = Contractor.objects.get(id=header.get('contractor'))
+                    entry_date = header.get('date')
+                    user = User.objects.get(pk=header.get('mypk'))
+                    remarks = header.get('remarks')
+                    typ = header.get('type')
+                    entry_no = f"RED-{Reedem.objects.all().last().pk + 1}" if Reedem.objects.all().count() > 0 else "RED-1"
+
+
+                    entry = Reedem.objects.create(
+                        entry_no=entry_no,
+                        entry_date=entry_date,
+                        contractor=contractor,created_by=user,
+                        transaction_type=typ,remarks=remarks
+                    )
+
+                    # enter transactions
+                    for transaction in transactions:
+                        
+                        barcode = transaction.get('barcode')
+                        mt = InventoryMaterial.objects.get(barcode=barcode)
+                        pack_um = transaction.get('pack_um')
+                        balance = transaction.get('balance')
+                        reason = transaction.get('reason')
+                        qty=transaction.get('qty')
+                        RedeemTransactions.objects.create(
+                            redeem=entry,
+                            material=mt,
+                            pack_um=pack_um,
+                            balance=balance,
+                            reason=reason,
+                            qty=qty
+                        )
+
+
+
+
+
+                except Exception as e:
+                    # delete service order if created
+                    if 'entry' in locals():
+                        entry.delete()
                     success_response['status_code'] = 400
                     success_response['message'] = f"Error on line {sys.exc_info()[2].tb_lineno}: {e}"
 
@@ -399,6 +453,7 @@ def interface(request):
 
 
         elif method == 'VIEW':
+                
                 if module == 'contractor':
                     id = data.get('id','*') 
                     if id == '*':
@@ -796,6 +851,19 @@ def interface(request):
                         return_item = ServiceOrderReturns.objects.get(id=id)
                         success_response['message'] = return_item.obj()
                 
+                elif module == 'reedem':
+                    pk = data.get('pk')
+                    entry = Reedem.objects.get(pk=pk)
+
+                    if pk == '*':
+                        redeems = Reedem.objects.all()
+                        success_response['message'] = [redeem.obj() for redeem in redeems]
+                    else:
+                        redeem = Reedem.objects.get(pk=pk)
+                        success_response['message'] = redeem.obj()
+
+
+
                 else:
                     success_response['status_code'] = 400
                     success_response['message'] = f"Module Not Found {module}"
@@ -840,6 +908,15 @@ def interface(request):
                 id = data.get('id')
                 ServiceOrderReturns.objects.get(id=id).delete()
                 success_response['message'] = "Return Deleted"
+
+            elif module == 'reedem':
+                id = data.get('id')
+                redeem = Reedem.objects.get(id=id)
+                RedeemTransactions.objects.filter(redeem=redeem).delete()
+                redeem.is_valid = False
+                redeem.save()
+
+                success_response['message'] = "Reedem Deleted"
 
             else:
                 success_response['status_code'] = 400

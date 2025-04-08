@@ -2454,6 +2454,49 @@ class Retail {
             }
         }).catch(error => {kasa.error(error)})
     }
+
+
+    hideBolt(barcode){
+        let html = `
+            <select id='hide_reason' class='form-control rounded-0'>
+                <option value='' selected disabled>Select Reason</option>
+                <option value='EXP'>Expired</option>
+                <option value='OUT'>Out Of Stock</option>
+            </select>
+        `
+        amodal.setBodyHtml(html)
+        amodal.setTitleText("Hide Reason")
+        amodal.setFooterHtml(`<button id='hide_btn' class='btn btn-warning rounded-0'>HIDE</button>`)
+        amodal.show()
+
+        $('#hide_btn').click(async function(){
+            let ids = ['hide_reason','mypk']
+            if(anton.validateInputs(ids)){
+                let payload= {
+                    module:'hide_bolt',
+                    data:anton.Inputs(ids)
+                }
+
+                payload['data']['pk'] = barcode
+
+                console.table(payload)
+
+                await api.v2('PATCH',payload,'/retail/api/').then(response => {
+                    if(anton.IsRequest(response)){
+                        kasa.success("HELLO WORLD")
+                    } else {
+                        kasa.error(response)
+                    }
+                }).catch(error => {
+                    kasa.info(error)
+                })
+            } else {
+                kasa.error("Fill Form")
+            }
+        })
+
+    }
+
 }
 
 const retail = new Retail();

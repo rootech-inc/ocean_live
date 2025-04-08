@@ -892,6 +892,7 @@ class SSML {
                                         <th>Name</th>
                                         <th>Issued</th>
                                         <th>Consumed</th>
+                                        <th>Redeemed</th>
                                         <th>Balance</th>
                                         <th>Rate</th>
                                         <th>Value</th>
@@ -918,6 +919,7 @@ class SSML {
                                         <th>Name</th>
                                         <th>Expected</th>
                                         <th>Returned</th>
+                                        <th>Redeemed</th>
                                         <th>Balance</th>
                                         <th>Rate</th>
                                         <th>Value</th>
@@ -967,6 +969,7 @@ class SSML {
                                     <td>${material.name}</td>
                                     <td>${material.issued}</td>
                                     <td>${material.consumed}</td>
+                                    <td>${material.redeemed}</td>
                                     <td>${material.balance}</td>
                                     <td>${material.rate}</td>
                                     <td>${material.value}</td>
@@ -1025,6 +1028,7 @@ class SSML {
                                     <td>${ret.name}</td>
                                     <td>${ret.expected}</td>
                                     <td>${ret.returned}</td>
+                                    <td>${ret.redeemed}</td>
                                     <td>${ret.balance}</td>
                                     <td>${ret.rate}</td>
                                     <td>${ret.total_value}</td>
@@ -2228,5 +2232,98 @@ class SSML {
         
     }
 
+
+    async getReedem(pk){
+        return await api.call('VIEW',{module:'reedem',data:{pk:pk}},'/ssml/api/')
+    }
+
+    async loadReedem(pk){
+        loader.show()
+        await ssml.getReedem(pk).then(response => {
+            if(anton.IsRequest(response)){
+
+            let data = response.message
+            $('#contractor').val(data.contractor.company)
+            $('#entry_no').val(data.entry_no)
+            $('#entry_date').val(data.entry_date)
+            $('#remarks').val(data.remarks)
+            $('#id').val(data.id)
+
+            next_row = data.next_row
+            prev_row = data.prev_row
+
+            if(next_row > 0){
+                $('#next_row').attr('disabled',false)
+            } else {
+                $('#next_row').attr('disabled',true)
+            }
+
+            if(data.prev_row > 0){
+                $('#prev_row').attr('disabled',false)
+            } else {
+                $('#prev_row').attr('disabled',true)
+            }
+
+            let rows = ``;
+            let transactions = data.transactions
+            let line = 1;
+            transactions.map(row => {
+                rows += `
+                
+                    <tr>
+                        <td>${line}</td>
+                        <td>${row.material.barcode}</td>
+                        <td>${row.material.name}</td>
+                        <td>${row.pack_um}</td>
+                        <td>${row.balance}</td>
+                        <td>${row.qty}</td>
+                        <td>${row.reason}</td>
+                    </tr>
+                `
+                line++
+            })
+
+            $('tbody').empty()
+            $('tbody').html(rows)
+
+            console.table(transactions)
+            loader.hide()
+            } else {
+                kasa.response(response)
+                loader.hide()
+            }
+        }).catch(error => {
+            kasa.error(error)
+            loader.hide()
+        })
+    }
+
+
+    async deleteReedem(id){
+        let payload = {
+            module:'reedem',
+            data:{
+                id:id
+            }
+        }
+
+        if(confirm("Are you sure you want to delete this reedem?")){    
+            await api.v2('DELETE',payload,'/ssml/api/').then(response => {
+                loader.show()
+                if(anton.IsRequest(response)){
+                    kasa.success(response.message)
+                    ssml.loadReedem(id)
+                } else {
+                    kasa.error(response.message)
+                }
+                loader.hide()
+            }).catch(error => {
+                kasa.error(error)
+                loader.hide()
+            })
+        } else {
+            kasa.error('Operation Cancelled')
+        }
+    }
 }
 const ssml = new SSML();

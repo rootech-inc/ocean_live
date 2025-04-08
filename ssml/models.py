@@ -839,4 +839,71 @@ class Ledger(models.Model):
             'contractor':self.contractor.obj()
         }
     
+
+class Reedem(models.Model):
+    entry_no = models.CharField(max_length=10,unique=True,null=False,blank=False)
+    contractor = models.ForeignKey(Contractor, on_delete=models.CASCADE)
+    entry_date =  models.DateField()
+    remarks = models.TextField()
+    type_choices = [
+        ('RET',"Return"),
+        ("ISS","Issue")
+    ]
+    transaction_type = models.CharField(max_length=255, choices=type_choices)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    is_valid = models.BooleanField(default=True)
+
+    def next_row(self):
+        return Reedem.objects.filter(id__gt=self.id).first().id if Reedem.objects.filter(id__gt=self.id).count() > 0 else 0
+    def prev_row(self):
+        return Reedem.objects.filter(id__lt=self.id).last().id if Reedem.objects.filter(id__lt=self.id).count() > 0 else 0
+
+    def transactions(self):
+        trans = RedeemTransactions.objects.filter(redeem=self)
+        return [redeem.obj() for redeem in trans]
+
+
+    def obj(self):
+        return {
+            'id':self.id,
+            'entry_no':self.entry_no,
+            'contractor':{
+                'company':self.contractor.company,
+                'id':self.contractor.id
+            },
+            'entry_date':self.entry_date,
+            'type':self.transaction_type,
+            'date_created':self.created_at,
+            'created_by':self.created_by.username,
+            'remarks':self.remarks,
+            'transactions':self.transactions(),
+            'next_row':self.next_row(),
+            'prev_row':self.prev_row(),
+            'is_valid':self.is_valid
+        }
+
+
+class RedeemTransactions(models.Model):
+    redeem =  models.ForeignKey(Reedem, on_delete=models.CASCADE)
+    material = models.ForeignKey(InventoryMaterial, on_delete=models.CASCADE)
+    pack_um = models.CharField(max_length=5)
+    balance = models.DecimalField(max_digits=10, decimal_places=2)
+    qty = models.DecimalField(max_digits=10, decimal_places=2)
+    reason = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+    def obj(self):
+        return {
+            'material':self.material.obj(),
+            'pack_um':self.pack_um,
+            'balance':self.balance,
+            'qty':self.qty,
+            'reason':self.reason
+        }
+
+
+
     

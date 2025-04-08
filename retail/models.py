@@ -80,9 +80,28 @@ class BoltItems(models.Model):
 
     exp_date = models.DateField(null=True, blank=True,default=timezone.now().date())
     is_expired = models.BooleanField(default=False)
+    exp_flag = models.BooleanField(default=False)
+
+    hide_reasons = [
+        ('N',"NOT HIDDEN"),
+        ('OUT',"STOCK OUT"),
+        ('EXP',"EXPIRED")
+    ]
+    is_hidden = models.BooleanField(default=False)
+    hide_reason = models.CharField(max_length=3, choices=hide_reasons,default="N")
+    chng = models.BooleanField(default=False)
+    exp_last_check = models.DateTimeField(null=True,blank=True)
+    stock_last_check = models.DateTimeField(null=True,blank=True)
 
     image = models.ImageField(upload_to='static/uploads/dolphine/bolt/', null=True,default='static/uploads/dolphine/bolt/default.png')
     description = models.TextField(null=True,blank=True)
+
+
+    def hdst(self):
+        if self.is_hidden is False:
+            return "Active"
+        else:
+            return "Hidden"
 
     def obj(self):
         return {
@@ -93,6 +112,13 @@ class BoltItems(models.Model):
             'exp_date':self.exp_date,
         }
 
+    def last_check(self):
+        if self.hide_reason == "EXP":
+            return self.exp_last_check
+        if self.hide_reason == 'OUT':
+            return self.hide_reason
+        else: 
+            return ""
     def img_url(self):
         if self.image and hasattr(self.image, 'url'):
             evidence_url = self.image.url
@@ -102,11 +128,12 @@ class BoltItems(models.Model):
 
     def stock(self):
         obj = {}
-        from retail.db import get_stock
-        stk = get_stock(self.product.code)
-        obj['nia'] = stk['nia']
-        obj['spintex'] = stk['spintex']
-        obj['osu'] = stk['osu']
+        # from retail.db import get_stock
+        # stk = get_stock(self.product.code)
+        # obj['nia'] = stk['nia']
+        # obj['spintex'] = stk['spintex']
+        # obj['osu'] = stk['osu']
+        
         return obj
 
 

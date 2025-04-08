@@ -38,7 +38,7 @@
                 <tr>
                     <th>IMAGE</th>
                     <th>GROUP</th>
-                    <th>SUN GROUP</th>
+                    <th>STATUS</th>
                     <th>BARCODE</th>
                     <th>NAME</th>
                     <th>ACT</th>
@@ -52,10 +52,10 @@
             </thead>
             <tbody>
                 {% for item in items %}
-                    <tr id="row_{{ item.product.barcode }}" class="{% if item.is_sync == False %}text-warning{% endif %}">
+                    <tr id="row_{{ item.product.barcode }}" class="{% if item.is_hidden == False %}text-muted{% endif %}">
                         <td><img onclick="windowPopUp(`{{ item.image.img_url }}`,'',600,600)" src="{{ item.image.img_url }}" alt="" style="width: 50px" class="img-fluid"></td>
-                        <td>{{ item.group.name }} </td>
-                    <td>{{ item.subgroup.name }}</td>
+                        <td>{{ item.group.name }}<br>{{ item.subgroup.name }}</td>
+                    <td><kbd class="{% if item.is_hidden %}bg-secondary{% else %}bg-success{% endif %}">{{ item.hdst }}</kbd></td>
                         <td>{{ item.product.barcode }}</td>
                         <td>{{ item.product.name }}</td>
                         <td>
@@ -70,7 +70,9 @@
                                    <div class="dropdown-divider"></div>
                                 <a class="dropdown-item text-secondary" href="javascript:void(0)" onclick="retail.changeBoltImage(`{{ item.product.barcode }}`)"><i  class="bx bx-image"></i> Change Image</a>
                                    <div class="dropdown-divider"></div>
-                                  <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="retail.removeFromBolt(`{{ item.product.barcode }}`)"><i  class="bx bx-trash"></i> Remove</a>
+                                   <a class="dropdown-item text-warning" href="javascript:void(0)" onclick="retail.hideBolt(`{{ item.pk }}`)"><i  class="bx bx-trash"></i> Hide</a>
+                                   <div class="dropdown-divider"></div>
+                                   <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="retail.removeFromBolt(`{{ item.product.barcode }}`)"><i  class="bx bx-trash"></i> Remove</a>
 
                               </div>
                             </div>
@@ -78,7 +80,7 @@
                         </td>
                         <td>{{ item.price }}</td>
                         <td>{{ item.product.price }}</td>
-                        <td class="{% if item.stock_spintex == 1 %}text-success{% else %}text-danger{% endif %}">{{ item.stock.spintex }}</td>
+                        <td class="{% if item.stock_spintex == 1 %}text-success{% else %}text-danger{% endif %}">{{ item.stock }}</td>
                         <td class="{% if item.stock_nia == 1 %}text-success{% else %}text-danger{% endif %}">{{ item.stock.nia }}</td>
                         <td class="{% if item.stock_osu == 1 %}text-success{% else %}text-danger{% endif %}">{{ item.stock.osu }}</td>
                         <td>{{ item.is_sync }}</td>

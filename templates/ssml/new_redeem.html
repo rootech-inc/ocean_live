@@ -8,7 +8,7 @@
     <div class="card-header">
         <div class="w-100 d-flex">
             <div class="w-50 d-flex">
-                <button id="new" class="btn btn-sm ms-2 btn-primary">NEW</button>
+                <button id="save" class="btn btn-sm ms-2 btn-primary">NEW</button>
             </div>
             <div class="w-50 d-flex">
 
@@ -49,9 +49,9 @@
                             </select>
                         </div>
 
-                        <div class="col-sm-4"><label for="contractor">Remarks.</label></div>
+                        <div class="col-sm-4"><label for="remarks">Remarks.</label></div>
                         <div class="col-sm-8 mb-3">
-                            <textarea  type="text" class="form-control rounded-0" id="entry_no" rows="3"></textarea>
+                            <textarea  type="text" class="form-control rounded-0" id="remarks" rows="3"></textarea>
                         </div>
 
                     </div>
@@ -84,8 +84,86 @@
 
     <script>
         $(document).ready(function(){
-            $('#new').click(function(){
-                location.href = '/ssml/inventory/redeem/new/'
+            $('#save').click( async function(){
+                
+                try {
+                    loader.show()
+                    let ids = ['contractor','date','type','remarks','mypk']
+                    if(anton.validateInputs(ids)){
+
+                        // validade transactions
+                        let tbody = $('tbody tr');
+                        if(tbody.length < 1){
+                            kasa.error("Cannot save empty transactions")
+                            return;
+                        } else {
+                            
+                            // make transactions
+                            let transactions = []
+
+                            $('tbody tr').each(function(){
+                                let id = $(this).attr('id');
+                                let line = id.split('_').pop()
+                                let row_id = `row_${line}`;
+                                let barcode_id = `barcode_${line}`;
+                                let name_id = `name_${line}`;
+                                let pack_um = `packum_${line}`;
+                                let pack_qty = `packqty_${line}`;
+                                let balance_qty = `balqty_${line}`;
+                                let qty_id = `qty_${line}`;
+                                let reason_id = `reason_${line}`;
+                                let ids = [pack_um,balance_qty,qty_id,reason_id]
+                                if(!anton.validateInputs(ids)){
+                                    throw Error(`There is an error on line ${line}`)
+                                    return
+                                }else {
+                                    // make transaction
+                                    const dt = anton.Inputs(ids)
+                                    transactions.push({
+                                        barcode:$(`#${barcode_id}`).text(),
+                                        pack_um:dt[pack_um],
+                                        balance:dt[balance_qty],
+                                        qty:dt[qty_id],
+                                        reason:dt[reason_id]
+                                    })
+                                }
+                                console.log(line)
+                            })
+
+                            let payload = {
+                                module:'redeem',
+                                data:{
+                                    header:anton.Inputs(['contractor','date','type','remarks','mypk']),
+                                    transactions:transactions
+                                    
+                                }
+                            }
+
+                            console.table(payload)
+
+                            await api.v2('PUT',payload,'/ssml/api/').then(response => {
+                                if(anton.IsRequest(response)){
+                                    kasa.success("Saved")
+                                } else {
+                                    kasa.response(response)
+                                }
+                                loader.hide()
+                            }).catch(error => {kasa.error(error); loader.hide()})
+                            
+
+                            
+
+                        }
+                        
+
+                    } else {
+                        new Error("Invalid Form Field")
+                    }
+                    
+                } catch (error) {
+                    kasa.error(error)
+                }
+                
             })
 
             $('#retrieve').click(async function(){
