@@ -1,0 +1,262 @@
+{% extends 'retail/base.html' %}
+{% load static %}
+{% block body %}
+    <div class="card h-100">
+        <div class="card-header">
+        <div class="w-100 h-100 d-flex flex-wrap">
+            <div class="w-25 h-100"><strong class="card-title">BOLT ITEMS</strong></div>
+            <div class="w-75 h-100 d-flex flex-wrap justify-content-end align-content-center">
+{#                <button style="border-radius: 0 !important" onclick="retail.boldUploadScreen()" class="btn btn-outline-info"><i class="bx bx-upload"></i> UPLOAD BATCH</button>#}
+{#                <button style="border-radius: 0 !important" onclick="retail.markProducts()" class="btn btn-outline-dark"><i class="bx bx-checkbox-checked"></i> MARK UPDATE</button>#}
+{#                <button style="border-radius: 0 !important" onclick="retail.checkPrices()" class="btn btn-outline-primary">PRICE CHANGE</button>#}
+{#                <a href="javascript:void(0)" style="border-radius: 0 !important" onclick="retail.exportItems('*')" class="btn btn-outline-warning"><i class="fa fa-file-excel"></i> Export</a>#}
+{#                <button onclick="retail.sync2bolt()" style="border-radius: 0 !important" class="btn btn-outline-info">sync2bolt</button>#}
+                <div class="dropdown dropleft">
+                    <button class="btn btn-secondary" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Menu
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <a class="dropdown-item" onclick="retail.migrateBoltItems('from')" href="javascript:void(0)">Make Migration</a>
+                        <a class="dropdown-item" id="add_items_to_menu" href="javascript:void(0)">Add To Menu</a>
+                        <a class="dropdown-item" onclick="retail.boldUploadScreen()" href="javascript:void(0)"><i class="bx bx-upload"></i> UPLOAD BATCH</a>
+                        <a class="dropdown-item" onclick="retail.markProducts()" href="javascript:void(0)"><i class="bx bx-checkbox-checked"></i> MARK UPDATE</a>
+                        <a class="dropdown-item" onclick="retail.checkPrices()" href="javascript:void(0)">PRICE CHANG</a>
+{#                        <a class="dropdown-item" onclick="retail.exportItems('*')" href="javascript:void(0)"><i class="fa fa-file-excel"></i> Export</a>#}
+                        <div class="dropdown-divider"></div>
+                        <h5 class="dropdown-header">V2</h5>
+                        <a class="dropdown-item" onclick="retail.sync2bolt()" href="javascript:void(0)"><i class="bx bx-sync"></i> sync2bolt</a>
+                        <a class="dropdown-item" onclick="retail.mark_send2bold()" href="javascript:void(0)"><i class="bx bx-checkbox-checked"></i>mark_send2bold</a>
+                        <div class="dropdown-divider"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+        <div class="card-body overflow-auto">
+        <table class="table datatable">
+            <thead>
+                <tr>
+                    <th>STATUS</th>
+                    <th>BARCODE</th>
+                    <th>NAME</th>
+                    <th>REASON</th>
+                    <th>EXP. DATE</th>
+                    <th>LAST CHECKED</th>
+                    <th>ACT</th>
+                    
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                    <tr id="row_{{ item.product.barcode }}" class="{% if item.is_hidden == False %}text-muted{% endif %}">
+                        
+                        <td><i class="fa fa-upload text-muted"></i></td>
+                        <td>{{ item.product.barcode }}</td>
+                        <td>{{ item.product.name }}</td>
+                        <td>{{item.hide_reason}}</td>
+                        <td>{{item.exp_date}}</td>
+                        <td>{{item.last_check}}</td>
+                        <td>
+                            <div class="dropdown">
+                              <button class="btn btn-sm" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="bx bx-menu"></i>
+                              </button>
+                              <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                  <div class="dropdown-header">Menu</div>
+                                  <div class="dropdown-divider"></div>
+                                <a class="dropdown-item text-primary" href="javascript:void(0)" onclick="retail.changeBoltGroupScreen('{{ item.pk }}')"><i class="bx bx-group"></i> Change Category</a>
+                                   <div class="dropdown-divider"></div>
+                                <a class="dropdown-item text-secondary" href="javascript:void(0)" onclick="retail.changeBoltImage(`{{ item.product.barcode }}`)"><i  class="bx bx-image"></i> Change Image</a>
+                                   <div class="dropdown-divider"></div>
+                                   <a class="dropdown-item text-warning" href="javascript:void(0)" onclick="retail.hideBolt(`{{ item.pk }}`)"><i  class="bx bx-trash"></i> Hide</a>
+                                   <div class="dropdown-divider"></div>
+                                   <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="retail.removeFromBolt(`{{ item.product.barcode }}`)"><i  class="bx bx-trash"></i> Remove</a>
+
+                              </div>
+                            </div>
+
+                        </td>
+                        
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    </div>
+
+
+    <script>
+        $(document).ready(function(){
+            $('#add_items_to_menu').click(function(){
+                let menu = location.href.split('/')[6].toLowerCase()
+
+                let decider_html = `
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <button id="select_menu_items" style='height:100px; border-radius:0' class="btn w-100 btn-outline-primary"><i class="fa fa-check-square"></i> SELECT</button>
+                            </div>
+                            <div class="col-sm-6">
+                                <button id="upload_menu_items" style='height:100px; border-radius:0' class="btn w-100 btn-outline-secondary"><i class="fa fa-upload"></i> IMPORT</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                amodal.setBodyHtml(decider_html)
+                amodal.setTitleText("ADD ITEMS TO MENU")
+                amodal.show()
+
+                // handle select
+                $('#select_menu_items').click(async function () {
+                    loader.show()
+                    amodal.hide()
+                    let payload = {
+                        module: 'entity_prod_mast',
+                        data: {
+                            entity_name: menu,
+                            filter_flag:'not_on_bolt'
+                        }
+                    }
+
+
+                    await api.v2('VIEW', payload, '/retail/api/').then(response => {
+                        if(anton.IsRequest(response)){
+                            let tr = ""
+                            let items = response.message;
+                            for(let t = 0; t < items.length; t++){
+                                const item = items[t];
+                                let line = t + 1;
+
+                                tr += `
+                                    <tr>
+                                        <td><input id="check_${line}" type="checkbox" class="check_item_for_bolt_select"></td>
+                                        <td id="barcode_${line}">${item.barcode}</td>
+                                        <td>${item.name}</td>
+                                        <td>${item.price}</td>
+
+                                    </tr>`
+                            }
+                            let table = `
+                                <table class="table datatable table-bordered table-striped table-hover">
+                                   <thead><tr><th><button class="btn btn-sm"><i class="fa fa-check-square"></i></button></th><th>BARCODE</th><th>NAME</th><th>PRICE</th></tr></thead>
+                                    <tbody>
+                                    ${tr}
+                                    </tbody>
+                                </table>
+                            `
+                            let card = `
+
+                                <div style="height: 75vh !important; overflow: auto" class="card">
+
+                                    <div class="card-body overflow-auto">${table}</div>
+
+                                </div>
+                                `
+
+                            amodal.setBodyHtml(card)
+                            amodal.setTitleHtml(`
+                                Select Items
+                            `)
+                            amodal.setSize('XL')
+
+                            // get categories
+                            let categories = retail.boltCategories(`{{entity.pk}}`);
+                            if(anton.IsRequest(categories)){
+                                let options = '';
+                                for(let t = 0; t < categories.message.length; t++){
+                                    const category = categories.message[t];
+                                    options += `<option value="${category.pk}">${category.name}</option>`
+                                }
+
+
+
+                                amodal.setFooterHtml(`
+                                    <select name="" id="group" class="form-control w-25 rounded-0 form-control-sm">
+                                       <option seleted disabled>Group</option>
+                                       ${options}
+                                    </select>
+                                    <select name="" disabled id="sub_group" class="form-control w-25 rounded-0 form-control-sm">
+                                       <option value="">Sub Group</option>
+                                    </select>
+                                    <button disabled class="btn btn-primary rounded-0" id="add_items_to_menu">ADD</button>
+                                `)
+                                amodal.show()
+                                {#console.table(items)#}
+                                loader.hide()
+
+                                $('#group').change(function(){
+                                    let group = $(this).val();
+                                    $('#sub_group').prop('disabled', false)
+
+                                    let subs = retail.getBoltSubGroups(group,`{{ entity.pk }}`);
+                                    console.table(subs)
+                                    if(anton.IsRequest(subs)){
+                                        let sbs = subs.message;
+                                        let subop = ``;
+                                        for(let t = 0; t < sbs.length; t++){
+                                            const sub = sbs[t];
+                                            subop += `<option value="${sub.pk}">${sub.name}</option>`
+                                        }
+                                        if(sbs.length > 0){
+                                            $('#add_items_to_menu').prop('disabled', false)
+                                        }
+                                        $('#sub_group').html(subop)
+
+                                        // add to button
+
+                                        $('#add_items_to_menu').click(function () {
+                                            let sub = $('#sub_group').val();
+                                            let items = []
+                                            $('.check_item_for_bolt_select:checked').each(function () {
+                                                // get this is
+                                                let id = $(this).attr('id');
+                                                let line = id.split('_')[1];
+                                                let barcode = $('#barcode_' + line).text();
+                                                let add_load = {
+                                                    module: 'bolt_item',
+                                                    data: {
+                                                        item_code: barcode,
+                                                        group: group,
+                                                        sub_group: sub,
+                                                        entity: `{{ entity.pk }}`
+                                                    }
+                                                }
+
+                                                let resp  = api.call('PUT', add_load, '/retail/api/')
+                                                console.table(resp)
+
+                                            })
+
+
+                                            amodal.hide()
+                                            loader.hide()
+                                        })
+
+                                    } else {
+                                        kasa.response(subs)
+                                    }
+
+                                })
+
+                            } else {
+                                kasa.response(categories)
+                                loader.hide()
+                                new Error('Categories Not Found')
+                            }
+
+
+                        } else {
+                            loader.hide()
+                            kasa.response(response)
+                        }
+                    }).catch(error => {
+                        kasa.error(error)
+                    })
+
+                })
+
+            })
+        })
+    </script>
+{% endblock %}
