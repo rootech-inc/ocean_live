@@ -37,5 +37,6 @@ urlpatterns = [
     path('servicing/', include('servicing.urls')),
     path('maintainance/', include('maintenance.urls')),
     path('ssml/', include('ssml.urls')),
+    path('company/', include('employee.urls')),
 
 ]

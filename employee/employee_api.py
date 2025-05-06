@@ -1,6 +1,8 @@
 import json
 import sys
 from decimal import Decimal
+
+import requests
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
@@ -133,7 +135,23 @@ def interface(request):
                 )
 
                 success_response['message'] = "Attendance Created Successfully"
-    
+
+        if method == 'VIEW':
+            if module == 'area':
+                url = 'http://192.168.2.15/personnel/api/areas/'
+                from .modric import token
+                tk = token('solomon','Szczesny@411')
+                headers = {
+                    'Authorization': f'JWT {tk}',
+                    'Content-Type': 'application/json'
+                }
+                response = requests.get(url, headers=headers)
+                response = response.json()
+                data = response.get('data')
+
+                success_response['message'] = data
+                response = success_response
+
     except Exception as e:
         error_type, error_instance, traceback = sys.exc_info()
         tb_path = traceback.tb_frame.f_code.co_filename

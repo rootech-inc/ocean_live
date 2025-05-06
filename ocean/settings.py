@@ -108,6 +108,7 @@ DATABASE_HOST = os.environ.get('DB_HOST', '127.0.0.1')
 DATABASE_HOST = os.environ.get('DB_HOST', '192.168.2.60')
 DATABASE_PORT = os.environ.get('DB_PORT', '3306')
 
+
 BOLT_MARGIN = os.environ.get('BOLT_MARGIN',25)
 
 DATABASES = {
