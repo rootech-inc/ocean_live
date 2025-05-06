@@ -172,7 +172,7 @@
                     
                     let tr = '';
                     services_types.forEach(service_type => {
-                        tr += `<tr><td>${service_type.name}</td><td>${service_type.description}</td><td><button class="btn btn-primary" onclick="editServiceType(${service_type.id})">Edit</button></td></tr>`;
+                        tr += `<tr><td>${service_type.name}</td><td>${service_type.description}</td><td><a href='/ssml/service-type/view/${service_type.id}/' class="btn btn-primary">View</a></td></tr>`;
                     });
 
                     let body = `

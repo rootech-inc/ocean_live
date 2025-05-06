@@ -1,7 +1,40 @@
+
+from datetime import datetime
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import Sum, F
 
+
+# locations class
+class Location(models.Model):
+    loc_id = models.CharField(max_length=255,unique=True,blank=False,null=False)
+    loc_name = models.CharField(max_length=255,unique=True,blank=False,null=False)
+    loc_desc = models.CharField(max_length=255,unique=True,blank=False,null=False)
+    country = models.CharField(max_length=255)
+    city = models.CharField(max_length=255)
+    street = models.CharField(max_length=255)
+    address = models.CharField(max_length=255)
+    phone = models.CharField(max_length=255)
+    email = models.CharField(max_length=255)
+
+    date_created = models.DateField(auto_now_add=True)
+    time_created = models.TimeField(auto_now_add=True)
+
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
+
+    def obj(self):
+        return {
+            'pk':self.id,
+            'name':self.loc_name,
+            'loc_id':self.loc_id,
+            'country':self.country,
+            'city':self.city,
+            'street':self.street,
+            'address':self.address,
+            'phone':self.phone,
+            'email':self.email
+        }
 
 
 # Create your models here.
@@ -40,6 +73,7 @@ class InventoryMaterial(models.Model):
     is_return = models.BooleanField(default=False)
     is_issue = models.BooleanField(default=False)
     issue_qty = models.DecimalField(max_digits=10,default=0.00, decimal_places=2)
+    auto_issue = models.BooleanField(default=False)
     
     def __str__(self):
         return self.name
@@ -63,9 +97,30 @@ class InventoryMaterial(models.Model):
             'issue_qty':self.issue_qty,
             'is_issue':self.is_issue,
             'is_return':self.is_return,
+            'stock_in':self.stock_in(),
+            'stock_out':self.stock_out(),
+            'next':InventoryMaterial.objects.filter(id__gt=self.id).first().id if InventoryMaterial.objects.filter(id__gt=self.id).count() > 0 else 0,
+            'prev':InventoryMaterial.objects.filter(id__lt=self.id).last().id if InventoryMaterial.objects.filter(id__lt=self.id).count() > 0 else 0,
+            'auto_issue':self.auto_issue,
+            'service_rates':self.service_rates(),
+            'loc_stock':self.loc_stock()
         }
+    
+    def service_rates(self):
+        return [rt.obj() for rt in ServiceMaterialRates.objects.filter(material=self)]
     def stock(self):
         return Cardex.objects.filter(material=self).aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
+
+    def loc_stock(self,loc_id='*'):
+        locations = Location.objects.all() if loc_id == '*' else Location.objects.filter(loc_id=loc_id)
+        arr = []
+        for loc in locations:
+            arr.append({
+                'location':loc.loc_name,
+                'stock': Cardex.objects.filter(material=self,location=loc).aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
+            })
+        return arr
+
     def low(self):
         return Cardex.objects.filter(material=self).aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
     def out(self):
@@ -76,6 +131,17 @@ class InventoryMaterial(models.Model):
         for item in cardex:
             obj.append(item.obj())
         return obj
+
+    def stock_in(self):
+        grn = Cardex.objects.filter(material=self,doc_type='GR').aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
+        #returns = Cardex.objects.filter(material=self,doc_type='RET').aggregate(total_qty=models.Sum('qty'))['total_qty']  or 0
+        #xr = returns * -1
+        #return grn + xr
+        
+        return grn
+    def stock_out(self):
+        issue = Cardex.objects.filter(material=self,doc_type='ISS').aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
+        return issue
     
     def stock_level(self):
         stock = self.stock()
@@ -104,9 +170,17 @@ class Contractor(models.Model):
     payable = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    code = models.CharField(max_length=255, unique=False, null=True, blank=True)
 
     def __str__(self):
         return self.company
+
+    def error_limit(self):
+        return {
+            'week': 3,
+            'month': 10,
+            'year': 20,
+        }
 
     # def materials(self):
         
@@ -247,6 +321,11 @@ class Contractor(models.Model):
                     'total_balance':total_balance
             }
 
+
+    def issued(self):
+        iss = Issue.objects.filter(contractor=self)
+        return [x.obj() for x in iss]
+
     def obj(self):
         return {
             'id':self.id,
@@ -272,7 +351,9 @@ class Contractor(models.Model):
             'paid':self.paid,
             'balance':self.balance,
             # 'matched':self.matched(),
-            'ledger':self.ledger_sum()
+            'ledger':self.ledger_sum(),
+            'code':self.code,
+            
         }
 
 class Supplier(models.Model):
@@ -320,6 +401,7 @@ class Grn(models.Model):
     total_qty = models.DecimalField(max_digits=10, decimal_places=2)
     is_posted = models.BooleanField(default=False)
     posted_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='posted_grns')
+    location = models.ForeignKey(Location,on_delete=models.CASCADE,null=False)
     
 
     def __str__(self):
@@ -343,7 +425,8 @@ class Grn(models.Model):
             'status':self.status(),
             'grn_no':self.grn_no,
             'is_posted':self.is_posted,
-            'posted_by':self.posted_by.get_full_name() if self.posted_by else ""
+            'posted_by':self.posted_by.get_full_name() if self.posted_by else "",
+            'location':self.location.loc_name if self.location else 'NOT SET'
         }
     def status(self):
         if self.is_posted:
@@ -420,6 +503,7 @@ class Cardex(models.Model):
     doc_type_choices = [
         ('GR', 'GRN'),
         ('ISS', 'ISSUE'),
+        ('CIS', 'Contractor Issue Return'),
         ('RET', 'RETURN'),
     ]
     doc_type = models.CharField(max_length=3, choices=doc_type_choices)
@@ -427,8 +511,9 @@ class Cardex(models.Model):
     ref_no = models.CharField(max_length=255)
     material = models.ForeignKey(InventoryMaterial, on_delete=models.CASCADE)
     qty = models.DecimalField(max_digits=10, decimal_places=2)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    location = models.ForeignKey(Location,on_delete=models.CASCADE,null=False)
     
     def obj(self):
         return {
@@ -453,6 +538,8 @@ class Issue(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     modified_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='modified_issues')
+    car_no = models.CharField(max_length=255, null=True, blank=True)
+    location = models.ForeignKey(Location,on_delete=models.CASCADE,null=False)
     
     issue_type_choices = [
         ('ADJ', 'Adjustment'),
@@ -460,6 +547,7 @@ class Issue(models.Model):
         ('RET', 'Return'),
         ('SMP', 'Sample'),
         ('TRN', 'Transfer'),
+        ('CIS', 'Contractor Issue Return'),
     ]
     issue_type = models.CharField(max_length=255, choices=issue_type_choices)
     contractor = models.ForeignKey(Contractor, on_delete=models.CASCADE)
@@ -492,7 +580,8 @@ class Issue(models.Model):
             'status':self.status(),
             'total_amount':IssueTransaction.objects.filter(issue=self).aggregate(total_amount=models.Sum('amount'))['total_amount'] or 0,
             'total_qty':IssueTransaction.objects.filter(issue=self).aggregate(total_qty=models.Sum('total_qty'))['total_qty'] or 0,
-            'modified_by':self.modified_by.get_full_name() if self.modified_by else ""
+            'modified_by':self.modified_by.get_full_name() if self.modified_by else "",
+            'location':self.location.loc_name
         }
     def transactions(self):
         obj = []
@@ -504,6 +593,9 @@ class Issue(models.Model):
         return Issue.objects.filter(id__gt=self.id).first().id if Issue.objects.filter(id__gt=self.id).count() > 0 else 0
     def prev_row(self):
         return Issue.objects.filter(id__lt=self.id).last().id if Issue.objects.filter(id__lt=self.id).count() > 0 else 0
+
+    def total_qty(self):
+        return IssueTransaction.objects.filter(issue=self).aggregate(total_qty=models.Sum('total_qty'))['total_qty'] or 0
     
 class IssueTransaction(models.Model):
     issue = models.ForeignKey(Issue, on_delete=models.CASCADE)
@@ -534,7 +626,14 @@ class IssueTransaction(models.Model):
             'created_at':self.created_at,
             'updated_at':self.updated_at,
             'issue_no':self.issue.issue_no,
-            'issue_date':self.issue.issue_date
+            'issue_date':self.issue.issue_date,
+            'remarks':self.issue.remarks,
+            'contractor':self.issue.contractor.company,
+            'issue_type':self.issue.issue_type,
+            'car_no':self.issue.car_no,
+            'is_posted':self.issue.is_posted,
+            'posted_by':self.issue.posted_by.get_full_name() if self.issue.posted_by else "",
+            
 
         }
 
@@ -575,6 +674,13 @@ class ServiceType(models.Model):
 
     def __str__(self):
         return self.name
+
+    def total_installations(self):
+        return ServiceOrder.objects.filter(service_type=self).count()
+    
+
+    def today_jobs(self):
+        return ServiceOrder.objects.filter(service_type=self,service_date=datetime.now().date()).count()
     
     def obj(self):
         return {
@@ -582,7 +688,9 @@ class ServiceType(models.Model):
             'name':self.name,
             'description':self.description,
             'created_at':self.created_at,
-            'updated_at':self.updated_at
+            'updated_at':self.updated_at,
+            'total_installations':self.total_installations(),
+            'today_jobs':self.today_jobs()
         }
     
 
@@ -610,15 +718,39 @@ class Service(models.Model):
             'created_at':self.created_at,
             'updated_at':self.updated_at
         }
+    
+class ServiceTypeServices(models.Model):
+    service_type = models.ForeignKey(ServiceType,on_delete=models.CASCADE,null=False,blank=False)
+    service = models.ForeignKey(Service,on_delete=models.CASCADE,null=False,blank=False)
+
+    class Meta:
+        unique_together = (('service_type','service'),)
 
 
+class ServiceMaterialRates(models.Model):
+    service = models.ForeignKey(Service,on_delete=models.CASCADE,null=False,blank=False,related_name='material_service')
+    material = models.ForeignKey(InventoryMaterial,on_delete=models.CASCADE,null=False,blank=False,related_name='rate_material',verbose_name='rate_material')
+    break_point = models.DecimalField(decimal_places=2,default=0.00,max_digits=10)
+
+    class Meta:
+        unique_together = (('service','material'),)
+
+    def obj(self):
+        return {
+            'id':self.id,
+            'service':self.service.name,
+            'rate':self.service.rate,
+            'description':self.service.description,
+            'break_point':self.break_point
+
+        }
 
 class ServiceOrder(models.Model):
     service_type = models.ForeignKey(ServiceType, on_delete=models.CASCADE)
     service_date = models.DateField()
     contractor = models.ForeignKey(Contractor, on_delete=models.CASCADE)
-    plot = models.ForeignKey(Plot, on_delete=models.CASCADE)
-    geo_code = models.CharField(max_length=255)
+    plot = models.CharField(max_length=255,default="NOT SET")
+    geo_code = models.CharField(max_length=255,default="NOT SET")
     customer = models.CharField(max_length=255)
     customer_no = models.CharField(max_length=255)
     old_meter_no = models.CharField(max_length=255,unique=True)
@@ -633,6 +765,7 @@ class ServiceOrder(models.Model):
         ('in_progress', 'In Progress'),
         ('on_hold', 'On Hold'),
         ('rejected', 'Rejected'),
+        ('invoiced',"Invoiced"),
         ('paid', 'Paid'),
     ]
     status = models.CharField(max_length=255, choices=status_choices, default='pending')
@@ -640,6 +773,7 @@ class ServiceOrder(models.Model):
     new_meter_no_reading = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     closed_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='closed_service_orders')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    location = models.ForeignKey(Location,on_delete=models.CASCADE,null=False)
 
     def __str__(self):
         return self.service_date
@@ -657,7 +791,7 @@ class ServiceOrder(models.Model):
 
     def materials(self):
         obj = []
-        materials = MaterialOrderItem.objects.filter(service_order=self)
+        materials = MaterialOrderItem.objects.filter(service_order=self,material_type='is')
         for material in materials:
             obj.append(material.obj())
         return obj
@@ -678,7 +812,7 @@ class ServiceOrder(models.Model):
             'service_type':self.service_type.obj(),
             'service_date':self.service_date,
             'contractor':self.contractor.obj(),
-            'plot':self.plot.obj(),
+            'plot':self.plot,
             'geo_code':self.geo_code,
             'customer':self.customer,
             'customer_no':self.customer_no,
@@ -705,17 +839,26 @@ class ServiceOrder(models.Model):
 
 
 class Meter(models.Model):
-    issue = models.ForeignKey(Issue, on_delete=models.CASCADE)
+    issue = models.ForeignKey(Issue, on_delete=models.SET_NULL,null=True)
     meter_no = models.CharField(max_length=255,unique=True)
     contractor = models.ForeignKey(Contractor, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     is_issued = models.BooleanField(default=False)
-    service_order = models.ForeignKey(ServiceOrder, on_delete=models.CASCADE, null=True, blank=True)
+    service_order = models.ForeignKey(ServiceOrder, on_delete=models.SET_NULL, null=True, blank=True)
+    meter_type_choices = [
+        ('SIN', 'Single Phase'),
+        ('TRIN', 'Three Phase'),
+    ]
+    meter_type = models.CharField(max_length=255, choices=meter_type_choices, default='SIN')
+    location = models.ForeignKey(Location,on_delete=models.CASCADE,null=False)
 
     def __str__(self):
         return self.meter_no
+    
+    def meter_type_display(self):
+        return self.meter_type
     
     def obj(self):
         return {
@@ -854,6 +997,7 @@ class Reedem(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     is_valid = models.BooleanField(default=True)
+    location = models.ForeignKey(Location,on_delete=models.CASCADE,null=False)
 
     def next_row(self):
         return Reedem.objects.filter(id__gt=self.id).first().id if Reedem.objects.filter(id__gt=self.id).count() > 0 else 0
@@ -906,4 +1050,188 @@ class RedeemTransactions(models.Model):
 
 
 
+class ContractorError(models.Model):
+    contractor = models.ForeignKey(Contractor, on_delete=models.CASCADE)
+    error_date = models.DateField()
+    error_type_choices = [
+        ('CBL', 'Cabling'),
+        ('INS', 'Installation'),
+        ('MT',"Materials"),
+        ('OT',"Other")
+    ]   
+    error_type = models.CharField(max_length=255, choices=error_type_choices)
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    meter = models.ForeignKey(Meter, on_delete=models.CASCADE,to_field='meter_no')
+    is_cleared = models.BooleanField(default=False)
+    cleared_at = models.DateTimeField(null=True, blank=True)
+    cleared_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    cleared_remarks = models.TextField(null=True, blank=True)
+
+    def obj(self):
+        return {
+            'id':self.id,
+            'error_type':self.error_type,
+            'description':self.description,
+            'meter':self.meter.obj(),
+            'created_at':self.created_at,
+            'updated_at':self.updated_at,
+            'is_cleared':self.is_cleared,
+            'cleared_at':self.cleared_at,
+            'cleared_by':self.cleared_by.username if self.cleared_by else None,
+            'cleared_remarks':self.cleared_remarks
+        }
+    
+
+class Expense(models.Model):
+    direction_choices = [
+        ('in', 'In'),
+        ('out', 'Out'),
+    ]
+    direction = models.CharField(max_length=255, choices=direction_choices)
+    date = models.DateField()
+    category_choices = [
+        ('home', 'Home Expense'),
+        ('staff', 'Staff Expense'),
+        ('transport', 'Transport Expense'),
+        ('marketing', 'Marketing Expense'),
+        ('other', 'Other'),
+    ]
+    category = models.CharField(max_length=255, choices=category_choices)
+    transaction_type_choices = [
+        ('cash', 'Cash'),
+        ('momo', 'MoMo'),
+    ]
+    transaction_type = models.CharField(max_length=255, choices=transaction_type_choices)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    reference = models.CharField(max_length=255)
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def obj(self):
+        return {
+            'id':self.id,
+            'direction':self.direction,
+            'date':self.date,
+            'category':self.category,
+            'transaction_type':self.transaction_type,
+            'amount':self.amount,
+            'reference':self.reference,
+            'description':self.description,
+            'created_at':self.created_at,
+            'updated_at':self.updated_at,
+            'created_by':self.created_by.get_full_name()
+        }
+    
+    
+class InvoiceHD(models.Model):
+    entry_no = models.CharField(max_length=255,null=False, blank=False,unique=True)
+    entry_date = models.DateField(null=False)
+    contractor = models.ForeignKey(Contractor,on_delete=models.SET_NULL,null=True)
+    remarks = models.TextField()
+    total_amount = models.DecimalField(max_digits=10,max_length=10,decimal_places=2,default=0.00)
+
+    created_by = models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
+    date_created = models.DateField(auto_now_add=True)
+    time_created = models.TimeField(auto_now_add=True)
+
+    is_approved = models.BooleanField(default=False)
+    is_posted = models.BooleanField(default=False)
+
+    approved_by = models.ForeignKey(User,on_delete=models.SET_NULL,null=True,related_name='invapproved_by')
+    posted_by = models.ForeignKey(User,on_delete=models.SET_NULL,null=True,related_name='invposted_by')
+
+    class Meta:
+        unique_together = (('entry_date','contractor'),)
+
+    def status(self):
+        if not self.is_approved:
+            return 'pending approval'
+        elif not self.is_posted:
+            return 'pending posting'
+        elif self.is_approved and self.is_posted:
+            return 'posted'
+        else:
+            return 'unknwn'
+        
+    def stage(self):
+        if not self.is_approved:
+            return 1 # pending approve
+        elif not self.is_posted:
+            return 2 # pending posting
+        elif self.is_approved and self.is_posted:
+            return 3 # posted
+        else:
+            return 0 # unknown
+        
+    def transactions(self):
+        return [tran.obj(detailed=False) for tran in InvoiceTransactions.objects.filter(entry=self)]
+    
+    def next_row(self):
+        return InvoiceHD.objects.filter(id__gt=self.id).first().id if InvoiceHD.objects.filter(id__gt=self.id).count() > 0 else 0
+    def prev_row(self):
+        return InvoiceHD.objects.filter(id__lt=self.id).last().id if InvoiceHD.objects.filter(id__lt=self.id).count() > 0 else 0
+
+    def obj(self):
+        return{
+            'contractor':{
+                "name":self.contractor.company,
+            },
+            'id':self.id,
+            'entry_no':self.entry_no,
+            'entry_date':self.entry_date,
+            'remarks':self.remarks,
+            'total_amount':self.total_amount,
+            'created_by':self.created_by.get_full_name(),
+            'date_created':self.date_created,
+            'time_created':self.time_created,
+            'is_approved':self.is_approved,
+            'is_posted':self.is_posted,
+            'status':self.status(),
+            'transactions':self.transactions(),
+            'next':self.next_row(),
+            'previous':self.prev_row(),
+            'stage':self.stage()
+        }
+    
+
+class InvoiceTransactions(models.Model):
+    entry = models.ForeignKey(InvoiceHD,on_delete=models.CASCADE)
+    service_date = models.DateField(null=False)
+    asset = models.CharField(max_length=255,null=False, blank=False)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    remarks = models.CharField(max_length=255,null=False, blank=False)
+
+    class Meta:
+        unique_together = (('entry','asset'),)
+
+    def obj(self,detailed=False):
+        if detailed:
+            return {}
+        else:
+            return {
+
+                "service_date":self.service_date,
+                'asset':self.asset,
+                'amount':self.amount,
+                'remarks':self.remarks
+            }
+        
+class PaySlipHD(models.Model):
+    entry_no = models.CharField(max_length=255,null=False, blank=False,unique=True)
+    entry_date = models.DateField(null=False)
+    contractor = models.ForeignKey(Contractor,on_delete=models.SET_NULL,null=True)
+    remarks = models.TextField()
+    total_amount = models.DecimalField(max_digits=10,max_length=10,decimal_places=2,default=0.00)
+    due_date = models.DateField(null=False)
+
+    created_by = models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
+    date_created = models.DateField(auto_now_add=True)
+    time_created = models.TimeField(auto_now_add=True)
+
+class PaySlipTransactions(models.Model):
+    entry = models.ForeignKey(PaySlipHD,on_delete=models.CASCADE)
     

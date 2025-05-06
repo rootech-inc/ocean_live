@@ -167,7 +167,7 @@
                                                 <td>{{ forloop.counter }}</td>
                                                 <td id="mat_barcode_{{ forloop.counter }}">{{ mt.barcode }}</td>
                                                 <td id="mat_name_{{ forloop.counter }}">{{ mt.name }}</td>
-                                                <td><input style="width: 100px;" value="1" class="form_control" id="mat_qty_{{ forloop.counter }}" type="text"></td>
+                                                <td><input style="width: 100px;" value="{{ mt.issue_qty }}" class="form_control" id="mat_qty_{{ forloop.counter }}" type="text"></td>
                                             </tr>
                                         {% endfor %}
 

@@ -79,6 +79,7 @@
     <script src="{% static 'general/js/classes/form.js' %}"></script>
     <script src="{% static 'general/js/classes/maintenance.js' %}"></script>
     <script src="{% static 'general/js/classes/ssml.js' %}"></script>
+    <script src="{% static 'general/js/loader.js' %}"></script>
 
 
 
@@ -399,16 +400,66 @@
       </li><!-- End Dashboard Nav -->
 
       <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'ssml' %}">
+          <i class="bi bi-grid"></i>
+          <span>Landing</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" data-bs-target="#acct-nav" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-megaphone"></i><span>Accounts</span><i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="acct-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+          <li>
+            <a href="{% url 'accounts' %}">
+              <i class="bi bi-circle"></i><span>Finalcial Log</span>
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'cont-invoice' %}">
+              <i class="bi bi-circle"></i><span>Invoice</span>
+            </a>
+          </li>
+
+          
+
+        </ul>
+      </li>
+
+      <li class="nav-item">
         <a class="nav-link collapsed" data-bs-target="#Master-nav" data-bs-toggle="collapse" href="#">
           <i class="bi bi-megaphone"></i><span>Master</span><i class="bi bi-chevron-down ms-auto"></i>
         </a>
         <ul id="Master-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
           <li>
+            <a href="{% url 'accounts' %}">
+              <i class="bi bi-circle"></i><span>Accounts</span>
+            </a>
+          </li>
+          <li>
             <a href="{% url 'contractors' %}">
               <i class="bi bi-circle"></i><span>Contractors</span>
             </a>
           </li>
+          <li>
+            <a href="{% url 'ssml_location_master' %}">
+              <i class="bi bi-circle"></i><span>Locations</span>
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'meters' %}">
+              <i class="bi bi-circle"></i><span>Meters</span>
+            </a>
+          </li>
 
+          
+
+          <li>
+            <a href="{% url 'contractor_errors' %}">
+              <i class="bi bi-circle"></i><span>Contractor Errors</span>
+            </a>
+          </li>
           <li>
             <a href="javascript:void(0)" onclick="ssml.materialUsage()">
               <i class="bi bi-circle"></i><span>Consumption</span>
@@ -491,11 +542,21 @@
 
      
 
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'reports' %}">
-          <i class="bx bx-analyse"></i>
-          <span>REPORTS</span>
+      <li class="nav-item">
+        <a class="nav-link collapsed" data-bs-target="#report-nav" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-megaphone"></i><span>Report</span><i class="bi bi-chevron-down ms-auto"></i>
         </a>
+        <ul id="report-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+          <li>
+            <a id="availability-report" href="javascript:void(0)">
+              <i class="bi bi-circle"></i><span>Availability</span>
+            </a>
+          </li>
+
+
+          
+
+        </ul>
       </li>
 
 
@@ -619,6 +680,15 @@ window.addEventListener('load', () => {
 });
 
     </script>
+
+
+<script>
+  $(document).ready(function(){
+    $('#availability-report').click(function(){
+      ssml.itemAvailability()
+    })
+  })
+</script>
 
 </body>
 

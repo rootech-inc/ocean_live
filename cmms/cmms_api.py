@@ -1793,6 +1793,8 @@ def api(request):
                         quantity=quantity
                     ).save()
 
+                    # send sms to respondent
+
                     response['status_code'] = 200
                     response['message'] = "Request Sent"
 

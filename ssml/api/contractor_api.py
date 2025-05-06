@@ -1,3 +1,4 @@
+from decimal import Decimal
 import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -53,6 +54,12 @@ def contractor_api(request):
                 try:
                     contractor_id = data.get('contractor_id')
                     contractor = Contractor.objects.get(id=contractor_id)
+                    import openpyxl
+                    book = openpyxl.Workbook()
+                    sheet = book.active
+                    hd = ["MATERIAL","ISSUED","CONSUMED","REDEEMED","BALANCE","VALUE"]
+                    sheet.append(hd)
+                    transactions = []
                     barcodes = IssueTransaction.objects.filter(issue__contractor=contractor,issue__issue_type='ISS').values_list('barcode', flat=True).distinct()
                     for barcode in barcodes:
                         material = InventoryMaterial.objects.get(barcode=barcode)
@@ -65,7 +72,16 @@ def contractor_api(request):
                         negative_balance = this_obj['balance'] * -1
                         this_obj['value'] = negative_balance * material.value
                         this_obj['rate'] = material.value
-                        arr.append(this_obj)
+                        transactions.append(this_obj)
+                        li = [material.name,this_obj['issued'],this_obj['consumed'],this_obj['redeemed'],this_obj['balance'],this_obj['value']]
+                        sheet.append(li)
+
+                    file = f"static/general/tmp/{contractor.company}_materials.xlsx"
+                    book.save(file)
+                    arr = {
+                        'transactions':transactions,
+                        'file':file
+                    }
                 except Exception as e:
                     success_response['status_code'] = 505
                     arr = f"Error: {e}"
@@ -73,15 +89,22 @@ def contractor_api(request):
 
             elif module == 'returns':
                 try:
+                    
                     contractor_id = data.get('contractor_id')
                     contractor = Contractor.objects.get(id=contractor_id)
                     returns = ServiceOrderReturns.objects.filter(service_order__contractor=contractor).values_list('material_id',flat=True).distinct()
                     total_returns = 0
                     transactions = []
+                    import openpyxl
+                    book = openpyxl.Workbook()
+                    sheet = book.active
+                    hd = ["MATERIAL","EXPECTED","RETURNED","REDEEMED","BALANCE","VALUE"]
+                    sheet.append(hd)
+
                     for rt in returns:
                         material = InventoryMaterial.objects.get(id=rt)
                         this_obj = material.obj()
-                        this_obj['expected'] = ServiceOrderReturns.objects.filter(service_order__contractor=contractor,material=material).aggregate(tot_qty=Sum('quantity'))['tot_qty'] or 0
+                        this_obj['expected'] = ServiceOrderReturns.objects.filter(service_order__contractor=contractor,material=material).exclude(service_order__service_type__name='Installation').aggregate(tot_qty=Sum('quantity'))['tot_qty'] or 0
                         this_obj['redeemed'] = RedeemTransactions.objects.filter(material=material,redeem__contractor=contractor,redeem__transaction_type='RET').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
                         this_obj['returned'] = IssueTransaction.objects.filter(material=material,issue__contractor=contractor,issue__issue_type='RET').aggregate(total_qty=Sum('total_qty'))['total_qty'] or 0
                         this_obj['balance'] = this_obj['returned'] - this_obj['expected'] + this_obj['redeemed']
@@ -89,10 +112,15 @@ def contractor_api(request):
                         this_obj['rate'] = material.value
                         total_returns += this_obj['total_value']
                         transactions.append(this_obj)
+                        li = [material.name,this_obj['expected'],this_obj['returned'],this_obj['redeemed'],this_obj['balance'],this_obj['total_value']]
+                        sheet.append(li)
 
+                    file = f"static/general/tmp/{contractor.company}_returns.xlsx"
+                    book.save(file)
                     arr = {
                         'transactions':transactions,
-                        'total':total_returns
+                        'total':total_returns,
+                        'file':file
                     }
                     print(arr['total'])
                 
@@ -252,10 +280,14 @@ def contractor_api(request):
             elif module == 'contractor_usage':
                 try:
                     barcode = data.get('barcode')
-                    contractor_id = data.get('contractor_id')
-                    contractor = Contractor.objects.get(id=contractor_id)
+                    contractor_id = data.get('contractor_id','*')
+                    if contractor_id == '*':
+                        usages = MaterialOrderItem.objects.filter(material__barcode=barcode)
+                    else:
+                        contractor = Contractor.objects.get(id=contractor_id)
+                        usages = MaterialOrderItem.objects.filter(service_order__contractor=contractor,material__barcode=barcode)
                     trans = []
-                    for usage in MaterialOrderItem.objects.filter(service_order__contractor=contractor,material__barcode=barcode):
+                    for usage in usages:
                         item = usage.material
                         trans.append({
                             'barcode':item.barcode,
@@ -271,12 +303,18 @@ def contractor_api(request):
 
 
             elif module == 'contractor_issue':
-                contractor_id = data.get('issue_contractor')
-                contractor = Contractor.objects.get(id=contractor_id)
+                contractor_id = data.get('issue_contractor','*')
+                
                 issue_type = data.get('issue_type','ISS')
                 mat_barcode = data.get('mat_barcode')
-                for issue in IssueTransaction.objects.filter(issue__issue_type=issue_type,issue__contractor=contractor,barcode=mat_barcode).order_by('issue__issue_date'):
-                    arr.append(issue.obj())
+
+                if contractor_id == '*':
+                    for issue in IssueTransaction.objects.filter(issue__issue_type=issue_type,barcode=mat_barcode).order_by('issue__issue_date'):
+                        arr.append(issue.obj())
+                else:
+                    contractor = Contractor.objects.get(id=contractor_id)
+                    for issue in IssueTransaction.objects.filter(issue__issue_type=issue_type,issue__contractor=contractor_id,barcode=mat_barcode).order_by('issue__issue_date'):
+                        arr.append(issue.obj())
 
                 success_response['message'] = arr
                 
@@ -287,13 +325,24 @@ def contractor_api(request):
                     import openpyxl
                     contractor = Contractor.objects.get(id=id)
                     doc = data.get('document')
+                    services = ServiceOrder.objects.filter(contractor=contractor).order_by('service_date')
+                    filt = data.get('filter','*')
+                    if filt != '*':
+                        services.filter(status=filt)
+                    tr = []
                     if doc == 'excel':
                         book = openpyxl.Workbook()
                         sheet = book.active
                         hd = ["DATE","TYPE","METER","CUSTOMER","AMOUNT"]
                         sheet.append(hd)
-                    for service in ServiceOrder.objects.filter(contractor=contractor).order_by('service_date'):
+                    for service in services:
                         li = [service.service_date,service.service_type.name,service.new_meter,service.customer,service.total_amount()]
+                        tr.append({
+                            "date":service.service_date,
+                            "meter":service.new_meter,
+                            "amount":Decimal(service.total_amount()),
+                            'service':service.service_type.name
+                        })
                         if doc == 'excel':
                             sheet.append(li)
 
@@ -301,6 +350,8 @@ def contractor_api(request):
                         file = f"static/general/tmp/{contractor.company}.xlsx"
                         book.save(file)
                         arr = file
+                    if doc == 'json':
+                        arr =tr
 
                 except Exception as e:
                     success_response['status_code'] = 500

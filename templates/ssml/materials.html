@@ -5,8 +5,11 @@
 
 <div class="card-header">
     <div class="d-flex justify-content-between">
-        <div class="w-50">
-            <h4>{{page.page_title}}</h4>
+        <div class="w-50 d-flex justify-content-start">
+            <button class="btn btn-sm btn-primary ms-2" id="edit_material">Edit</button>
+            <button class="btn btn-sm btn-primary ms-2" id="rates">Rates</button>
+            <button class="btn btn-sm btn-primary ms-2" id="prev-material"><i class="fas fa-arrow-left"></i> Previous</button>
+            <button class="btn btn-sm btn-primary ms-2" id="next-material">Next <i class="fas fa-arrow-right"></i></button>
         </div>
         <div class="w-50 d-flex justify-content-end">
             <button id="add-material" class="btn btn-primary">Add Material</button>
@@ -15,7 +18,134 @@
     </div>
 </div>
 <div class="card-body p-1 overflow-auto">
-    <div class="table-responsive">
+    
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-4">
+                <div class="row">
+                    <input type="hidden" id="material_id" name="material_id" value="">
+                    <div class="col-sm-4 mb-2"><label for="barcode">Barcode</label></div>
+                    <div class="col-sm-8 mb-2"><input type="text" readonly class="form-control rounded-0" id="barcode" name="barcode" value=""></div>
+
+                    <div class="col-sm-4 mb-2"><label for="name">Name</label></div>
+                    <div class="col-sm-8 mb-2"><input type="text" readonly class="form-control rounded-0" id="name" name="name" value=""></div>
+
+                    
+                    
+
+                </div>
+            </div>
+
+            <div class="col-sm-4">
+                <div class="row">
+                    <div class="col-sm-4 mb-2"><label for="value">Value</label></div>
+                    <div class="col-sm-8 mb-2"><input type="text" readonly class="form-control rounded-0" id="value" name="value" value=""></div>
+    
+                    <div class="col-sm-4 mb-2"><label for="group">Group</label></div>
+                    <div class="col-sm-8 mb-2"><input type="text" readonly class="form-control rounded-0" id="group" name="group" value=""></div>
+    
+                </div>
+            </div>
+
+            <div class="col-sm-4">
+                <div class="row">
+                    <div class="col-sm-4 mb-2"><label for="reorder_qty">Reorder Qty</label></div>
+                    <div class="col-sm-8 mb-2"><input type="text" readonly class="form-control rounded-0" id="reorder_qty" name="reorder_qty" value=""></div>
+
+                    <div class="col-sm-4 mb-2"><label for="stock_in">Stock In</label></div>
+                    <div class="col-sm-8 mb-2"><input type="text" readonly class="form-control rounded-0" id="stock_in" name="stock_in" value=""></div>
+
+                    <div class="col-sm-4 mb-2"><label for="stock_out">Stock Out</label></div>
+                    <div class="col-sm-8 mb-2"><input type="text" readonly class="form-control rounded-0" id="stock_out" name="stock_out" value=""></div>
+
+                    <div class="col-sm-4 mb-2"><label for="stock">Stock</label></div>
+                    <div class="col-sm-8 mb-2"><input type="text" readonly class="form-control rounded-0" id="stock" name="stock" value=""></div>
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="container mt-4">
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                      <li class="nav-item">
+                        <a class="nav-link active" id="home-tab" data-toggle="tab" href="#cardex" role="tab">Cardex</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="profile-tab" data-toggle="tab" href="#ratesx" role="tab">Rates</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="profile-tab" data-toggle="tab" href="#stockx" role="tab">Stock</a>
+                      </li>
+                    </ul>
+                  
+                    <!-- Tab content -->
+                    <div class="tab-content" id="myTabContent">
+                      <div class="tab-pane fade show active p-3" id="cardex" role="tabpanel">
+                        <div class="card">
+                            <div class="card-header"><strong class="card-title">Cardex</strong></div>
+                            <div style="height: 50vh; overflow-y: auto;" class="card-body">
+                                <table class="table table-bordered table-striped">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Doc Type</th>
+                                            <th>Doc No</th>
+                                            <th>Qty</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody id="cardex_table">
+
+                                    </tbody>
+                                    
+                                </table>
+                            </div>
+                            <div class="card-footer">
+                                <a href="" id="download-cardex" class="btn btn-primary">Download</a>
+                            </div>
+                        </div>
+                      </div>
+                      <div class="tab-pane fade p-3" id="ratesx" role="tabpanel">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Description</th>
+                                        <th>Rate</th>
+                                        <th>Breakpoint</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rates_table"></tbody>
+                            </table>
+                      </div>
+                      <div class="tab-pane fade p-3" id="stockx" role="tabpanel">
+                        <table class="table table-sm w-50 table-bordered">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Location</th>
+                                    <th>Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stock_table"></tbody>
+                        </table>
+                  </div>
+                    </div>
+                  </div>
+                  
+                <div class="card">
+                    
+                </div>
+            </div>
+        </div>
+        
+
+        
+    </div>
+
+    <!-- <div class="table-responsive">
         <table class="table table-bordered table-striped">
             <thead class="table-dark">
                 <tr>
@@ -24,6 +154,8 @@
                     <th>NAME</th>
                     <th>VALUE</th>
                     <th>GROUP</th>
+                    <th>STOCK IN</th>
+                    <th>STOCK OUT</th>
                     <th>STOCK</th>
                     <th>REORDER QTY</th>
                     <th>STATUS</th>
@@ -36,11 +168,13 @@
 
             </tbody>
         </table>
-    </div>
+    </div> -->
 </div>
 
 
 <script>
+    let rt_options = `{{service_rates | safe}}`
+    
     async function getMaterials() {
         let payload = {
             module: 'material',
@@ -62,6 +196,8 @@
                                 <td>${material.name}</td>
                                 <td>${material.value}</td>
                                 <td>${material.group.name}</td>
+                                <td class='text-success'>${material.stock_in}</td>
+                                <td class='text-danger'>${material.stock_out}</td>
                                 <td>${material.stock}</td>
                                 <td>${material.reorder_qty}</td>
                                 <td>${material.status}</td>
@@ -73,9 +209,10 @@
                                             <i class="fas fa-ellipsis-v"></i>
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                            <a class="dropdown-item see-cardex" href="javascript:void(0)" arial-id="${material.id}"><i class="fas fa-image"></i> Cardex</a>
                                             <a class="dropdown-item change-image" href="javascript:void(0)" arial-id="${material.id}"><i class="fas fa-image"></i> Change Image</a>
                                             <a class="dropdown-item edit-material" href="javascript:void(0)" arial-id="${material.id}"><i class="fas fa-edit"></i> Edit</a>
-                                            <a class="dropdown-item" href="#"><i class="fas fa-trash"></i> Delete</a>
+                                            <a class="dropdown-item delete-material" href="javascript:void(0)" arial-id="${material.id}"><i class="fas fa-trash"></i> Delete</a>
                                         </div>
                                     </div>
                                 </td>
@@ -107,7 +244,28 @@
         });
     }
 
+    let last_pk = `{{page.last_material.id}}`;
+    
+
     $(document).ready(function () {
+
+        // getMaterials();
+
+        $('#materials-table').on('click', '.delete-material', function(){
+            let id = $(this).attr('arial-id');
+            let payload = {
+                module: 'material',
+                data: {
+                    id: id
+                }
+            };
+
+            kasa.confirm(
+                api.call('DELETE', payload, '/ssml/api/'),
+                1,
+                'here'
+            );
+        });
         
         document.addEventListener('click', async function (e) {
             if (e.target.classList.contains('change-image')) {
@@ -161,7 +319,7 @@
                     let form = `
                             <div class="form-group">
                                 <label for="barcode">Barcode</label>
-                                <input type="text" class="form-control" id="barcode" name="barcode">
+                                <input type="text" class="form-control" id="barcode" name="barcode" value="{{ next_barcode }}">
                             </div>
                             <hr>
                             <div class="form-group">
@@ -224,7 +382,47 @@
             $('#cancel-material').click(function () {
                 amodal.hide();
             });
+
+            
         });
+
+        $('#rates').click(function(){
+            let barcode = $('#barcode').val();
+            let table = `
+                <table class='table table-sm table-bordered'>
+                    <thead>
+                        <tr>
+                            <th>Service</th><th>Rate</th><th>Brake Point</th> 
+                        </tr>
+                    </thead>    
+                </table>
+            `
+            amodal.setBodyHtml(table)
+            amodal.setTitleText("Product Rates")
+            amodal.setFooterHtml(`<button class='btn btn-info' id='add_product_rate'>Add Rates</button>`)
+            amodal.show()
+
+
+            $('#add_product_rate').click(function(){
+                let form = `
+                    <form id='add_rate_form' action='/ssml/material/add-rate/' method='post'>
+                        <input type='hidden' name='mat_id' id = 'mat_id' value='${$('#material_id').val()}' >
+                        <label for='service_rate'>Select Rate</label>
+                        <select class='form-control mb-2' name='service_rate' name='service_rate'>${rt_options}</select>
+                        <input type='number' required name='break_point' class='form-control' >
+                    </form>
+                `
+
+                amodal.setBodyHtml(form)
+                amodal.setTitleText("Adding Product Rate")
+                amodal.setFooterHtml(`<button class='btn btn-info' id='add_product_rate'>Save</button><button class='btn btn-info' id='add_product_rate'>Cancel</button>`)
+
+                $('#add_product_rate').click(function(){
+                    $('#add_rate_form').submit()
+                })
+            });
+
+        })
 
         $('#groups').click(async function () {
             let bd = `
@@ -315,8 +513,8 @@
         });
 
         document.addEventListener('click', async function (e) {
-            if (e.target.classList.contains('edit-material')) {
-                let id = e.target.getAttribute('arial-id');
+            if (e.target.id.includes('edit_material')) {
+                let id = $('#material_id').val();
 
                 // get material
                 let payload = {
@@ -356,67 +554,85 @@
                                                <option selected value='1'>Yes</option>`
                                 }
 
+                                let auto_issue = `<option value='0'>NO</option>
+                                               <option value='1'>Yes</option>`
+                                if(material.auto_issue){
+                                    auto_issue = `<option value='0'>NO</option>
+                                               <option selected value='1'>Yes</option>`
+                                }
+                                
+
                                 let form = `
-                                    
-                                    <div class="form-group">
-                                        <label for="barcode">Barcode</label>
-                                        <input type="text" class="form-control" id="barcode" name="barcode" value="${material.barcode}">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="name">Name</label>
-                                        <input type="text" class="form-control" id="name" name="name" value="${material.name}">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="group">Group</label>
-                                        <select class="form-control" id="group" name="group">
-                                                ${groupOptions}
-                                        </select>
-                                    </div>
-                                    <hr>
-                                    <div class="form-group">
-                                        <label for="reorder_qty">Reorder Qty</label>
-                                        <input type="number" class="form-control" id="reorder_qty" name="reorder_qty" value="${material.reorder_qty}">
-                                    </div>
-                                    <hr>
-                                    <div class="form-group">
-                                        <label for="value">Value</label>
-                                        <input type="number" class="form-control" id="value" name="value" value="${material.value}">
-                                    </div><hr>
+                                    <div class='container'>
+                                        <div class='row'>
+                                            <div class='col-sm-4'>
+                                                <div class="form-group mb-3">
+                                                    <label for="barcode">Barcode</label>
+                                                    <input type="text" readonly class="form-control" id="barcode" name="barcode" value="${material.barcode}">
+                                                </div>
+                                                <div class="form-group mb-3">
+                                                    <label for="name">Name</label>
+                                                    <input type="text" class="form-control" id="name" name="name" value="${material.name}">
+                                                </div>
+                                                <div class="form-group mb-3">
+                                                    <label for="group">Group</label>
+                                                    <select class="form-control" id="group" name="group">
+                                                            ${groupOptions}
+                                                    </select>
+                                                </div>                                            
+                                            </div>  
+                                            
+                                            <div class='col-sm-4'>
+                                                <div class="form-group mb-3">
+                                                    <label for="reorder_qty">Reorder Qty</label>
+                                                    <input type="number" class="form-control" id="reorder_qty" name="reorder_qty" value="${material.reorder_qty}">
+                                                </div>
+                                                
+                                                <div class="form-group mb-3">
+                                                    <label for="value">Value</label>
+                                                    <input type="number" class="form-control" id="value" name="value" value="${material.value}">
+                                                </div>
 
-                                    <div class="form-group">
-                                        <label for="is_return">Is Return?</label>
-                                        <select class="form-control" id="is_return" name="is_return">
-                                        ${is_ret}
-                                        </select>
+                                                <div class="form-group mb-3">
+                                                    <label for="is_return">Is Return?</label>
+                                                    <select class="form-control" id="is_return" name="is_return">
+                                                    ${is_ret}
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <div class='col-sm-4'>
+                                                <div class="form-group mb-3">
+                                                    <label for="is_issue">Is Issue?</label>
+                                                    <select class="form-control" id="is_issue" name="is_issue">
+                                                    ${is_is_opt}
+                                                    </select>
+                                                </div>
+                                                <div class="form-group mb-3">
+                                                    <label for="auto_issue">Auto Issue?</label>
+                                                    <select class="form-control" id="auto_issue" name="is_issue">
+                                                    ${auto_issue}
+                                                    </select>
+                                                </div>
+                                                <div class="form-group mb-3">
+                                                    <label for="issue_qty">issue_qty</label>
+                                                    <input type="number" class="form-control" id="issue_qty" name="issue_qty" value="${material.issue_qty}">
+                                                </div>
+                                            </div>
+                                            
+                                        </div>    
                                     </div>
-                                    <div class="form-group">
-                                        <label for="is_issue">Is Issue?</label>
-                                        <select class="form-control" id="is_issue" name="is_issue">
-                                        ${is_is_opt}
-                                        </select>
-                                    </div>
-                                    <hr>
-                                    <div class="form-group">
-                                        <label for="issue_qty">issue_qty</label>
-                                        <input type="number" class="form-control" id="issue_qty" name="issue_qty" value="${material.issue_qty}">
-                                    </div>
-
-
-
-
-                                    
-                                    
-                                    
                                         
                                 `;
                                 console.table(material);
                                 amodal.setTitleText('Edit Material');
                                 amodal.setBodyHtml(form);
+                                amodal.setSize("XL")
                                 amodal.setFooterHtml('<button class="btn btn-primary" id="save-material">Save</button> <button class="btn btn-secondary" id="cancel-material">Cancel</button>');
                                 amodal.show();
 
                                 $('#save-material').click(async function () {
-                                    let ids = ['barcode', 'name', 'group', 'reorder_qty', 'value','is_return','is_issue','issue_qty'];
+                                    let ids = ['barcode', 'name', 'group', 'reorder_qty', 'value','is_return','is_issue','issue_qty','auto_issue'];
                                     if (anton.validateInputs(ids)) {
                                         let payload = {
                                             module: 'material',
@@ -429,9 +645,12 @@
                                                 value: $('#value').val(),
                                                 is_return:$('#is_return').val(),
                                                 is_issue:$('#is_issue').val(),
-                                                issue_qty:$('#issue_qty').val()
+                                                issue_qty:$('#issue_qty').val(),
+                                                auto_issue:$('#auto_issue').val()
                                             }
                                         };
+
+                                        console.log("THIS IS WHERE WE HAVE FISHES")
                                         await api.v2('PATCH', payload, '/ssml/api/').then(res => {
                                             kasa.response(res);
                                             getMaterials();
@@ -461,10 +680,64 @@
                 }).catch(err => {
                     kasa.error(err.message || 'Failed to get material');
                 });
+            }  
+
+            if(e.target.classList.contains('see-cardex')){
+                let id = $('#material_id').val();
+                
+                let payload = {
+                    module:'cardex',
+                    data:{
+                        pk:id
+                    }
+                }
+
+                await api.v2('VIEW',payload,'/ssml/api/').then(response => {
+                    if(anton.IsRequest(response)){
+                        let message = response.message;
+                        //console.table(message)
+                        let rows = "";
+                        message.map(item => {
+                            console.table(item)
+                            rows += `
+                                <tr>
+                                    <td>${item['created_at'].split('T')[0]}</td> 
+                                    <td>${item['doc_type']}</td> 
+                                    <td>${item['doc_no']}</td> 
+                                    <td>${item['qty']}</td>   
+                                </tr>
+                            `
+                        })
+
+                        let ht = `<table class='table table-sm table-bordered'><tbody>${rows}</tbody></table>`
+
+                        amodal.setBodyHtml(ht);
+                        amodal.setTitleText('Cardex')
+                        amodal.show()
+
+                    } else {
+                        kasa.response(response)
+                    }
+                }).catch(error => {
+                    kasa.error(error)
+                })
+                
             }
         });
 
-        getMaterials();
+        //getMaterials();
+
+        $('#next-material').click(function(){   
+            let pk = $('#next-material').val();
+            ssml.loadMaterial(pk);
+        })
+
+        $('#prev-material').click(function(){
+            let pk = $('#prev-material').val();
+            ssml.loadMaterial(pk);
+        })
+
+        ssml.loadMaterial(last_pk);
     });
 
 </script>

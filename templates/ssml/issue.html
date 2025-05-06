@@ -17,6 +17,19 @@
             <button class="btn btn-danger ms-2 btn-sm" id="print_issue">Print</button>
             <button class="btn btn-danger ms-2 btn-sm" id="delete_issue">Delete</button>
             <button class="btn btn-secondary ms-2 btn-sm" id="issue_meters">Meters</button>
+            <div class="dropdown ms-2">
+                <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="adminDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-gear"></i> Admin
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                    {% if request.user.is_superuser %}
+                    <li><a class="dropdown-item" href="javascript:void(0)" id="unpost_all"><i class="bi bi-arrow-counterclockwise"></i> Unpost All</a></li>
+                    <li><a class="dropdown-item" href="javascript:void(0)" id="post_all"><i class="bi bi-arrow-counterclockwise"></i> Post All</a></li>
+                    {% endif %}
+                    <div class="dropdown-divider"></div>
+                    <li><a class="dropdown-item" href="javascript:void(0)" id="advance_issue"><i class="bi bi-arrow-counterclockwise"></i> Advance Issue</a></li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
@@ -25,13 +38,6 @@
     <div class="container p-1">
         <div class="row bg-warning text-dark py-4">
             <div class="col-md-4">
-                <div class="form-group row mb-2">
-                    <label for="supplier" class="col-sm-4 col-form-label">Contractor</label>
-                    <div class="col-sm-8">
-                        <input type="text" placeholder="" disabled class="form-control" id="contractor" name="contractor">
-                        <input type="hidden" id="id" name="id">
-                    </div>
-                </div>
                 <div class="form-group row mb-2">
                     <label for="issue_no" class="col-sm-4 col-form-label">issue No</label>
                     <div class="col-sm-8">
@@ -44,19 +50,27 @@
                         <input type="date" readonly class="form-control" id="issue_date" name="issue_date">
                     </div>
                 </div>
+                <div class="form-group row mb-2">
+                    <label for="location" class="col-sm-4 col-form-label">Location</label>
+                    <div class="col-sm-8">
+                        <input type="text" placeholder="" disabled class="form-control" id="location" name="location">
+                        <input type="hidden" id="id" name="id">
+                    </div>
+                </div>
 
             </div>
             <div class="col-md-4">
                 <div class="form-group row mb-2">
-                    <label for="total_qty" class="col-sm-4 col-form-label">Total Qty</label>
+                    <label for="supplier" class="col-sm-4 col-form-label">Contractor</label>
                     <div class="col-sm-8">
-                        <input type="text" readonly class="form-control" id="total_qty" name="total_qty">
+                        <input type="text" placeholder="" disabled class="form-control" id="contractor" name="contractor">
+                        <input type="hidden" id="id" name="id">
                     </div>
                 </div>
                 <div class="form-group row mb-2">
-                    <label for="total_amount" class="col-sm-4 col-form-label">Total Amount</label>
+                    <label for="total_qty" class="col-sm-4 col-form-label">Total Qty</label>
                     <div class="col-sm-8">
-                        <input type="text" readonly class="form-control" id="total_amount" name="total_amount">
+                        <input type="text" readonly class="form-control" id="total_qty" name="total_qty">
                     </div>
                 </div>
                 <div class="form-group row mb-2">
@@ -120,11 +134,12 @@
     let next_row = "";
     let prev_row = "";
 
-    async function load_issue(id){
+    async function load_issue(id,find_by='id'){
         let payload = {
             module:'issue',
             data:{
-                id:id
+                id:id,
+                find_by:find_by
             }
         }
 
@@ -146,6 +161,7 @@
                 $('#issue_status').val(issue.status);
                 $('#created_by').val(issue.created_by);
                 $('#posted_by').val(issue.posted_by);
+                $('#location').val(issue.location)
                 $('#row_list').empty();
 
                 if(issue.status == 'Posted'){
@@ -309,6 +325,63 @@
             }
         });
 
+        $('#advance_issue').click(async function(){
+            ssml.getIssueds();
+        });
+
+        $('#unpost_all').click(async function(){
+            if(confirm('Are you sure you want to unpost all issues?')){
+                loader.show();
+                let payload = {
+                    module:'unpost_issue',
+                    data:{}
+                }
+                await api.v2('PATCH',payload,'/ssml/api/').then(response => {
+                    kasa.response(response);
+                    if(anton.IsRequest(response)){
+                        kasa.response(response);
+                        load_issue('{{last_issue.pk}}');
+                        loader.hide();
+                    } else {
+                        kasa.error(response.message);
+                        loader.hide();
+                    }
+                }).catch(error => {
+                    kasa.error(error);
+                    loader.hide();
+                });
+            } else {
+                kasa.info('Operation cancelled');
+            }
+        });
+
+        $('#post_all').click(async function(){
+            if(confirm('Are you sure you want to post all issues?')){
+                loader.show();
+                let payload = {
+                    module:'post_issue',
+                    data:{
+                        mypk:$('#mypk').val()
+                    }
+                }
+                await api.v2('PATCH',payload,'/ssml/api/').then(response => {
+                    kasa.response(response);
+                    if(anton.IsRequest(response)){
+                        kasa.response(response);
+                        load_issue('{{last_issue.pk}}');
+                        loader.hide();
+                    } else {
+                        kasa.error(response.message);
+                        loader.hide();
+                    }
+                }).catch(error => {
+                    kasa.error(error);
+                    loader.hide();
+                });
+            } else {
+                kasa.info('Operation cancelled');
+            }
+        });
         $('#print_issue').click(async function(){
             let ids  = ['id'];
             let payload = {
@@ -335,6 +408,17 @@
                 ssml.deleteIssue($('#id').val());
             } else {
                 kasa.info('Operation cancelled');
+            }
+        });
+
+        
+
+        $('#searchQuery').keypress(function(e) {
+            if(e.which == 13) { // Enter key pressed
+                let issue_no = $(this).val();
+                if(issue_no.trim().length > 0) {
+                    load_issue(issue_no,'issue_no');
+                }
             }
         });
     });

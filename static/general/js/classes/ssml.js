@@ -731,7 +731,11 @@ class SSML {
 
                 let form = `
                     <div class='row'>
-                        <div class="form-group mb-2 col-sm-6">
+                        <div class="form-group mb-2 col-sm-3">
+                            <label for="code" class="text-primary">Code</label>
+                            <input type="text" class="form-control" value="${contractor.code}" id="code" name="code">
+                        </div>
+                        <div class="form-group mb-2 col-sm-3">
                             <label for="link" class="text-primary">Link</label>
                             <input type="text" class="form-control" value="${contractor.link}" id="link" name="link">
                         </div>
@@ -789,7 +793,7 @@ class SSML {
                 amodal.show();
 
                 $('#update_contractor').click(async function() {
-                    let ids = ['link','company','owner','phone','email','country','city','postal_code','gh_post_code','gh_card_no']
+                    let ids = ['link','company','owner','phone','email','country','city','postal_code','gh_post_code','gh_card_no','code']
                     if(anton.validateInputs(ids)) {
                             let payload = {
                                 module: 'contractor',
@@ -881,10 +885,12 @@ class SSML {
 
                             
                         </div>
-
+                        
                         <h4 class="mt-4">Materials <span class="text-primary" id="total_amount"></span></h4>
 
                         <div class='col-sm-12' style="background-color:rgba(248, 249, 250, 0.57); padding: 20px; border-radius: 10px; border: 2px dotted #808080;">
+                            <a class='btn btn-primary download_materials mb-2' href=''>Download</a>
+
                             <table class="table table-bordered table-stripped table-bordered">
                                 <thead class="table-dark">
                                     <tr>
@@ -910,9 +916,10 @@ class SSML {
                             </table>
                         </div>
 
-                        <h4 class="mt-4">Returns <span class="text-primary" id="total_returns"></span></h4>
+                        <h4 class="mt-4"><span> Returns <span class="text-primary" id="total_returns"></span></h4>
                         <div class='col-sm-12' style="background-color:rgba(248, 249, 250, 0.57); padding: 20px; border-radius: 10px; border: 2px dotted #808080;">
-                            <table class="table table-bordered table-stripped table-bordered">
+                            <a class='btn btn-primary download_returns mb-2' href=''>Download</a>
+                        <table class="table table-bordered table-stripped table-bordered">
                                 <thead class="table-dark">
                                     <tr>
                                         <th>Barcode</th>
@@ -942,7 +949,7 @@ class SSML {
                 amodal.setTitleText('Contractor Details');
                 amodal.setBodyHtml(body);
                 amodal.setFooterHtml('<button class="btn btn-primary" id="print_contractor">Print</button>');
-                amodal.setSize('L');
+                amodal.setSize('XL');
                 amodal.show();
                 loader.hide();
 
@@ -960,7 +967,10 @@ class SSML {
                 let mat_rows = ``;
                 api.v2('VIEW', mat_load, '/ssml/api/contractor/').then(response => {
                     if(anton.IsRequest(response)) {
-                        let materials = response.message;
+                        let materials = response.message.transactions;
+                        let file = response.message.file;
+                        $('.download_materials').attr('href',`/${file}`);
+                       
                         let total_amount = 0;
                         materials.forEach(material => {
                             mat_rows += `
@@ -1021,6 +1031,8 @@ class SSML {
                     if(anton.IsRequest(response)) {
                         let returns = response.message.transactions;
                         let total_returns = response.message.total;
+                        let file = response.message.file;
+                        $('.download_returns').attr('href',`/${file}`);
                         returns.forEach(ret => {
                             ret_rows += `
                                 <tr>
@@ -1476,7 +1488,7 @@ class SSML {
 
                 payload = {}
 
-                api.v2('VIEW', payload, '/ssml/api/').then(response => {
+                api.v2('VIEW', payload, '/ssml/api/contractor/').then(response => {
                     if(anton.IsRequest(response)) {
                         let jobs = response.message;
                         
@@ -1515,6 +1527,7 @@ class SSML {
                             <tr>
                                 <td colspan="7" class="text-center">
                                     ${response.message}
+                                    
                                 </td>
                             </tr>
                         `);
@@ -1522,12 +1535,204 @@ class SSML {
                 }).catch(error => {
                     kasa.error(error);
                 });
+
+               
+
+
             } else {
                 kasa.error(response.message);
             }
         }).catch(error => {
             kasa.error(error);
         });
+    }
+
+    async getContractor(id='*'){
+        return api.call('VIEW',{module:'contractor',data:{id:id}},'/ssml/api/')
+    }
+
+    async getIssueds(){
+
+        let contractor = "";
+        await this.getContractor().then(response => {
+            contractor = response.message;
+            console.table(contractor);
+            let ops = "";
+            contractor.map(c => {
+                console
+                ops +=  `<option value='${c.id}'>${c.company}</option>`
+            })
+
+            let form = `
+                <label for='contractor_issued'>Contractor</label>
+                <select class='form-control rounded-0 mb-2' id='contractor_issued'>
+                    ${ops}
+                </select>
+                <label for='type'>Type</label>
+                <select class='form-control rounded-0 mb-2' id='type'>
+                    <option value='*'>All</option>
+                    <option value='ISS'>Issued</option>
+                    <option value='RET'>Received</option>
+                </select>
+            `;
+
+            amodal.setTitleText('Issueds');
+            amodal.setBodyHtml(form);
+            amodal.setFooterHtml('<button class="btn btn-primary" id="get_issueds">Get Issueds</button>');
+            amodal.show();
+
+            $('#get_issueds').click(async function(){
+                let contractor_id = $('#contractor_issued').val();
+                let tp = $('#type').val();
+                let load = {
+                    module:'cont_issued',
+                    data:{
+                        contractor:contractor_id,
+                        type:tp
+                    }
+                }
+
+                await api.v2('VIEW',load,'/ssml/api/').then(response => {
+                    if(anton.IsRequest(response)){ 
+                        let rows = "";
+                        response.message.forEach(issue => {
+                            console.table(issue);
+                            let status = issue.is_posted ? 'text-success' : 'text-warning';
+                            if(issue.deleted) {
+                                status = 'text-muted';
+                            }
+                            rows += `
+                                <tr class='${status}'> 
+                                    <td>${issue.entry}</td>
+                                    <td>${issue.date}</td>
+                                    <td>${issue.remarks}</td>
+                                    <td>${issue.total_qty}</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                Action
+                                            </button>
+                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                                <a class="dropdown-item disabled" href="javascript:void(0)" onclick="ssml.printIssued(${issue.pk})"><i class="bi bi-printer"></i> Print</a>
+                                                <a class="dropdown-item" href="javascript:void(0)" onclick="load_issue(${issue.pk})"><i class="bi bi-pencil"></i> View</a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        })
+                        
+                        amodal.setBodyHtml(`
+                            <table id='issued_table' class='table table-bordered table-stripped table-bordered'>
+                                <thead class='table-dark'>
+                                    <tr>
+                                        <th>Entry</th>
+                                        <th>Date</th>
+                                        <th>Remarks</th>
+                                        <th>Total Qty</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rows}
+                                </tbody>
+                            </table>
+                        `)
+
+                        amodal.setFooterHtml('<button class="btn btn-primary" id="print_issued">Print Issued</button>');
+                        amodal.setSize('L');
+                        amodal.show();
+
+                        $('#print_issued').click(function(){
+                            let rows = $('#issued_table').find('tbody').find('tr');
+                            let html = ``;
+                            rows.each(function(){
+                                let cells = $(this).find('td');
+                                html += `<tr>
+                                    <td>${cells[0].innerText}</td>
+                                    <td>${cells[1].innerText}</td> 
+                                    <td>${cells[2].innerText}</td>
+                                    <td>${cells[3].innerText}</td>
+                                    <td>${cells[4].innerText}</td>
+                                </tr>`;
+                            });
+
+                            let print_window = window.open('', '', 'height=400,width=600');
+                            print_window.document.write(`
+                                <html>
+                                    <head>
+                                        <style>
+                                            body {
+                                                font-family: Arial, sans-serif;
+                                                padding: 10px;
+                                            }
+                                            table {
+                                                width: 100%;
+                                                border-collapse: collapse;
+                                                margin-bottom: 1rem;
+                                                background-color: #fff;
+                                            }
+                                            th, td {
+                                                padding: 8px;
+                                                border: 1px solid #dee2e6;
+                                                text-align: left;
+                                            }
+                                            thead {
+                                                background-color: #343a40;
+                                                color: #fff;
+                                            }
+                                            tbody tr:nth-child(even) {
+                                                background-color: #f8f9fa;
+                                            }
+                                            tbody tr:hover {
+                                                background-color: #e9ecef;
+                                            }
+                                            @media print {
+                                                body {
+                                                    padding: 0;
+                                                }
+                                                table {
+                                                    border: 1px solid #000;
+                                                }
+                                                th, td {
+                                                    border: 1px solid #000;
+                                                }
+                                            }
+                                        </style>
+                                    </head>
+                                    <body>
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>Entry</th>
+                                                    <th>Date</th>
+                                                    <th>Remarks</th>
+                                                    <th>Total Qty</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${html}
+                                            </tbody>
+                                        </table>
+                                    </body>
+                                </html>
+                            `);
+                            print_window.document.close();
+                            print_window.focus();
+                            print_window.print();
+                        })
+                     } else {
+                        kasa.error(response.message)
+                     }
+                }).catch(error => {
+                    kasa.error(error)
+                })
+            })
+        }).catch(error => {
+            kasa.error(error)
+        })
+
+            
     }
 
 
@@ -1571,7 +1776,7 @@ class SSML {
         await api.v2('VIEW', payload, '/ssml/api/').then(response => {
             if(anton.IsRequest(response)) {
                 let service_order = response.message[0];
-                console.table(service_order);
+                // console.table(service_order);
                 $('#contractor').val(service_order.contractor.company);
                 $('#service_type').val(service_order.service_type.name);
                 $('#service_date').val(service_order.service_date);
@@ -1602,6 +1807,7 @@ class SSML {
 
                 let materials = service_order.materials;
                 let materials_table = ``;
+                console.table(materials);
                 materials.forEach(material => {
                     materials_table += `
                         <tr>
@@ -1849,7 +2055,7 @@ class SSML {
         await api.v2('VIEW',payload,'/ssml/api/').then(response => {
             if(anton.IsRequest(response)){
                 let conts = response.message
-                let option = ``
+                let option = `<option value='*'>ALL</option>`
                 for(let x = 0; x < conts.length; x++){
                     let contractor = conts[x];
                     console.table(contractor)
@@ -1939,6 +2145,46 @@ class SSML {
         }
 
         return api.call('VIEW',payload,'/ssml/api/')
+    }
+
+    async exportData(service_type,doc='JSON'){
+        loader.show()
+        let payload = {
+            module:'export_installations',
+            data:{
+                service_type:service_type,
+                doc:doc
+            }
+        }
+
+        await api.v2('VIEW',payload,'/ssml/api/').then(response => {
+            if(anton.IsRequest(response)){
+                loader.hide()
+                anton.viewFile('/'+response.message)
+            } else {
+                kasa.response(response)
+                loader.hide()
+            }
+        }).catch(error => {
+            kasa.error(error)
+            loader.hide()
+        })
+    }   
+
+    async getDailyReport(){
+        loader.show()
+        await api.v2('VIEW',{module:'daily_report'},'/ssml/api/').then(response => {
+            if(anton.IsRequest(response)){
+                anton.viewFile('/'+response.message)
+                loader.hide()
+            } else {
+                kasa.error(response.message)
+                loader.hide()
+            }
+        }).catch(error => {
+            kasa.error(error)
+            loader.hide()
+        })
     }
 
     loadByMeterNumber(meter_no){
@@ -2073,6 +2319,19 @@ class SSML {
         }).catch(error => {kasa.error(error);loader.hide()})
     }
 
+    async getJobs(doc,id,filter){
+        let payload = {
+            module:'service_order',
+            data:{
+                document:doc,
+                contractor_id:id,
+                filter:filter
+            }
+        }
+
+        return api.call('VIEW',payload,'/ssml/api/contractor/')
+    }
+
     async exportContractorService(doc='excel',id){
         loader.show()
         let payload = {
@@ -2112,7 +2371,7 @@ class SSML {
             if(anton.IsRequest(response)){
 
 
-                let opts = ``;
+                let opts = `<option value='*'>All</option>`;
                 for(let x = 0; x < response.message.length; x++){
                     let contractor = response.message[x];
                     opts += `<option value='${contractor.id}'>${contractor.company}</option>`
@@ -2171,12 +2430,14 @@ class SSML {
                                         <tr>
                                             <td>${issue.issue_no}</td>
                                             <td>${issue.issue_date}</td>
+                                            <td>${issue.contractor}</td>
+                                            <td>${issue.remarks}</td>
                                             <td>${issue.material.barcode}</td>
                                             <td>${issue.material.name}</td>
                                             <td>${issue.total_qty}</td>
                                         </tr>
                                     `
-                                    export_list.push([issue.issue_no,issue.issue_date,issue.material.name,issue.total_qty])
+                                    export_list.push([issue.issue_no,issue.issue_date,issue.material.name,issue.total_qty,issue.contractor,issue.remarks])
                                 }
 
                                 let table = `
@@ -2185,6 +2446,8 @@ class SSML {
                                             <tr>
                                                 <th>ENTRY</th>
                                                 <th>DATE</th>
+                                                <th>CONTRACTOR</th>
+                                                <th>REMARKS</th>
                                                 <th>BARCODE</th>
                                                 <th>NAME</th>
                                                 <th>QUANTITY</th>
@@ -2325,5 +2588,519 @@ class SSML {
             kasa.error('Operation Cancelled')
         }
     }
+
+
+    async itemAvailability(){
+        loader.show()
+        await api.v2('VIEW',{module:'item_availability',data:{}},'/ssml/api/').then(response => {
+            
+            if(anton.IsRequest(response)){
+                let data = response.message
+                console.table(data)
+                let json = data.data
+                let html = ``;
+                for(let x = 0; x < json.length; x++){
+                    let item = json[x];
+                    html += `<tr>
+                        <td>${item.name}</td>
+                        <td>${item.stock_qty}</td>
+                        <td>${item.value}</td>
+                        <td>${item.total_amount}</td>
+                    </tr>`
+
+                }
+                amodal.setBodyHtml(`<table class='table table-bordered table-stripped table-hover'><thead><tr><th>Name</th><th>Stock Qty</th><th>Value</th><th>Total Amount</th></tr></thead><tbody>${html}</tbody></table>`)
+                amodal.setTitleText('Item Availability')
+                amodal.setSize('L')
+                amodal.show()
+                amodal.setFooterHtml(`<a href='/${data.file}' class='btn btn-primary' target='_blank' id='export_pdf'>Export PDF</a>`)
+                loader.hide()
+            } else {
+                kasa.response(response)
+                loader.hide()
+            }
+        }).catch(error => {
+            kasa.error(error)
+            loader.hide()
+        })
+    }
+
+    async contractorWise(){
+        loader.show()
+        await api.v2('VIEW',{module:'contractor_wise',data:{}},'/ssml/api/').then(response => {
+            if(anton.IsRequest(response)){
+                let data = response.message
+                console.log()
+                let d2 = [
+                    ['Month', 'Bolivia', 'Ecuador', 'Madagascar', 'Papua New Guinea', 'Rwanda', 'Average'],
+                    ['2004/05',  165,      938,         522,             998,           450,      614.6],
+                    ['2005/06',  135,      1120,        599,             1268,          288,      682],
+                    ['2006/07',  157,      1167,        587,             807,           397,      623],
+                    ['2007/08',  139,      1110,        615,             968,           215,      609.4],
+                    ['2008/09',  136,      691,         629,             1026,          366,      569.6]
+                ]
+                console.table(data)
+                console.table(d2)
+
+                google.charts.load('current', {'packages':['corechart']});
+                google.charts.setOnLoadCallback(drawVisualization);
+
+                function drawVisualization() {
+                    // Some raw data (not necessarily accurate)
+                    var data = google.visualization.arrayToDataTable(data);
+
+                    var options = {
+                    title : 'Monthly Coffee Production by Country',
+                    vAxis: {title: 'Cups'},
+                    hAxis: {title: 'Days'},
+                    seriesType: 'bars',
+                    series: {5: {type: 'line'}}
+                    };
+
+                    var chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
+                    chart.draw(data, options);
+                }
+
+                loader.hide()
+            } else {
+                kasa.response(response)
+                loader.hide()
+            }
+        })
+    }
+
+    async loadMaterial(pk){
+        loader.show()
+        await api.v2('VIEW',{module:'material',data:{id:pk}},'/ssml/api/').then(async response => {
+            if(anton.IsRequest(response)){
+                console.table(response)
+                let data = response.message
+                $('#barcode').val(data.barcode)
+                $('#name').val(data.name)
+                $('#value').val(data.value)
+                $('#group').val(data.group.name)
+                $('#reorder_qty').val(data.reorder_qty)
+                $('#stock_in').val(data.stock_in)
+                $('#stock_out').val(data.stock_out)
+                $('#stock').val(data.stock)
+                $('#next-material').val(data.next)
+                $('#prev-material').val(data.prev)
+
+                let services_rate = data.service_rates
+                let services_tr = "";
+                services_rate.map(item => {
+                    services_tr += `
+                        <tr>
+                            <td>${item.description}</td>
+                            <td>${item.rate}</td>
+                            <td>${item.break_point}</td>
+                            <td><a href='/ssml/delete-service-rate/${item.id}/'>Delete</a></td>
+                            
+                        </tr>
+                    `
+                })
+
+                $('#rates_table').html(services_tr)
+
+                let loc_stock = data.loc_stock;
+                let loc_stock_tr = "";
+                loc_stock.map(stk => {
+                    loc_stock_tr += `
+                        <tr>
+                            <td>${stk.location}</td>
+                            <td>${stk.stock}</td>
+                        </>
+                    `
+                })
+                $('#stock_table').html(loc_stock_tr)
+                
+
+
+                let cardex_payload = {
+                    module:'cardex',    
+                    data:{
+                        pk:pk
+                    }
+                }
+
+                // console.table(cardex_payload)
+                let card_rows = ``;
+
+                await api.v2('VIEW',cardex_payload,'/ssml/api/').then(response => {
+                    if(anton.IsRequest(response)){
+                        let cardex = response.message
+                        let js = response.message.json
+                        let excel = response.message.excel
+                        
+                        js.forEach(row => {
+                            card_rows += `
+                                <tr>
+                                    <td>${row.doc_no}</td>
+                                    <td>${row.doc_type}</td>
+                                    <td>${row.qty}</td>
+                                    <td>${row.created_at}</td>
+                                </tr>
+                            `
+                        })
+                        $('#cardex_table').html(card_rows)
+                        $('#download-cardex').attr('href',`/${excel}`)
+                        $('#material_id').val(pk)
+                    } else {
+                        kasa.response(response)
+                    }
+                }).catch(error => {
+                    kasa.error(error)
+                    loader.hide()
+                })
+                loader.hide()
+            } else {
+                kasa.response(response)
+                loader.hide()
+            }
+        }).catch(error => {
+            kasa.error(error)
+            loader.hide()
+        })
+    }
+
+    async addExpTransaction(){
+        let form = `
+            <div class="form-group container">
+                <div class="row mb-3">
+                    <div class="col-sm-6">
+                        <label for="direction">Direction</label>
+                        <select class="form-control" id="direction">
+                            <option value="in">In</option>
+                            <option value="out">Out</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-6">
+                        <label for="date">Date</label>
+                        <input type="date" class="form-control" id="date" name="date">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-sm-6">
+                        <label for="category">Category</label>
+                        <select class="form-control" id="category">
+                        <option value="home">Home Expense</option>
+                            <option value="staff">Staff Expense</option>
+                            <option value="transport">Transport Expense</option>
+                            <option value="marketing">Marketing Expense</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <label for="transaction_type">Transaction Type</label>
+                        <select class="form-control" id="transaction_type">
+                        <option value="cash">Cash</option>
+                            <option value="momo">MoMo   </option>
+                        </select>
+                    </div>
+
+                    
+                </div>
+
+
+                <div class="row mb-3">
+                    <div class="col-sm-6">
+                        <label for="amount">Amount</label>
+                        <input type="number" class="form-control" id="amount" name="amount">
+                    </div>
+
+                    <div class="col-sm-6">
+                        <label for="reference">Reference</label>
+                        <input type="text" class="form-control" id="reference" name="reference">
+                    </div>
+                    
+                </div>
+
+                
+
+                
+
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea class="form-control" id="description" name="description"></textarea>
+                </div>
+            </div>
+        `
+        amodal.setTitleText('Add Expense Transaction')
+        amodal.setBodyHtml(form)
+        amodal.setFooterHtml(`<button class="btn btn-primary" id="save_transaction">Save</button>`)
+        amodal.show()
+
+
+        $('#save_transaction').click(async function(){
+
+            let ids = ['direction','date','category','transaction_type','amount','reference','description','mypk']
+            if(anton.validateInputs(ids)){
+                let payload = {
+                    module:'finance',
+                    data:anton.Inputs(ids)
+                }
+            
+
+            await api.v2('PUT',payload,'/ssml/api/').then(response => {
+                kasa.response(response)
+                ssml.loadExpenses()
+                amodal.hide()
+            }).catch(error => {
+                kasa.error(error)
+            })
+
+            } else {
+                kasa.error('Please fill all the fields')
+            }
+        })
+
+    }
+
+    getExpenses(pk='*',limit=10000,as_of=new Date().getFullYear() + '-01-01',doc='json'){    
+        return api.v2('VIEW',{module:'expense',data:{id:pk,limit:limit,as_of:as_of,doc:doc}},'/ssml/api/')
+    }
+
+    async loadExpenses(){
+        await ssml.getExpenses('*',100)
+        .then(response => {
+            if(anton.IsRequest(response)){
+                console.table(response.message)
+                $('#total_expenses').text(response.message.total)
+                let rows = ``;
+                response.message.expenses.forEach(expense => {
+                    rows += `
+                        <tr>
+                            <td>${expense.direction}</td>
+                            <td>${expense.category}</td>
+                            <td>${expense.amount}</td>
+                            <td>${expense.created_at}</td>
+                            <td>${expense.reference}</td>
+                        </tr>
+                    `   
+                })
+                $('#expenses_table').html(rows)
+            } else {
+                kasa.response(response)
+            }
+        })
+        .catch(error => {
+            kasa.error(error)
+        })
+    }
+
+    async getInvoice(id = '*') {
+        return await api.call('VIEW', {
+            module: 'invoice',
+            data: { id }
+        }, '/ssml/api/');
+    }
+    
+    async viewInvoice(id) {
+        try {
+            const response = await ssml.getInvoice(id);
+            if(anton.IsRequest(response)){
+                let data = response.message[0];
+                anton.setValues(data)
+                $('#contractor').val(data.contractor.name)
+                console.table(data)
+                if(data.previous){
+                    $('#prev_btn').attr('disabled',false)
+                } else {
+                    $('#prev_btn').attr('disabled',true)
+                }
+
+                if(data.next){
+                    $('#next_btn').attr('disabled',false)
+                } else {
+                    $('#next_btn').attr('disabled',true)
+                }
+
+                switch(data.stage){
+                    case 1: // pending approval
+                        $('#approve').attr('disabled',false)
+                        $('#post').attr('disabled',true)
+                        break;
+                    case 2: // pending posting
+                        $('#approve').attr('disabled',true)
+                        $('#post').attr('disabled',false)
+                        break;
+                    case 3: // posted
+                        $('#approve').attr('disabled',true)
+                        $('#post').attr('disabled',true)
+                        break;
+                    default:
+                        $('#approve').attr('disabled',true)
+                        $('#post').attr('disabled',true)
+
+                }
+
+                
+
+                let tr = ``;
+                data.transactions.map(tran => {
+                    tr += `<tr>
+                        <td>${tran.remarks}</td>
+                         <td>${tran.asset}</td>
+                          <td>${tran.amount}</td>
+                    </tr>`
+                })
+                $('#god').html(tr)
+            } else {
+                kasa.response(response)
+            }
+        } catch (error) {
+            // handle error here if needed
+            console.error('Error viewing invoice:', error);
+        }
+    }
+
+    async approveInvoice(id){
+        if(confirm("Are You Sure")){
+            loader.show()
+            await api.v2('PUT',{module:'approve_invoice',data:{id:id,mypk:$('#mypk').val()}},'/ssml/api/').then(res => {
+                kasa.response(res);
+                ssml.viewInvoice(id)
+                loader.hide()
+            }).catch(error => {
+                kasa.error(error)
+                loader.hide()
+            })
+        } else {
+            kasa.info("Operation Cancelled")
+        }
+    }
+
+    async postInvoice(id){
+        if(confirm("Are You Sure")){
+            loader.show()
+            await api.v2('PUT',{module:'post_invoice',data:{id:id,mypk:$('#mypk').val()}},'/ssml/api/').then(res => {
+                kasa.response(res);
+                ssml.viewInvoice(id)
+                loader.hide()
+            }).catch(error => {
+                kasa.error(error)
+                loader.hide()
+            })
+        } else {
+            kasa.info("Operation Cancelled")
+        }
+    }
+
+    async printInvoice(id){
+        let payload = {
+            module:'print_invoice',
+            data:{
+                id:id
+            }
+        }
+
+        await api.v2('VIEW',payload,'/ssml/api/').then(response => {
+            console.table(response)
+            if(anton.IsRequest(response)){
+                anton.viewFile(response.message)
+            } else {
+                kasa.error(response)
+            }
+        }).catch(error => {
+            kasa.error(error)
+        })
+    }
+
+    async getLocations(id='*'){
+        return api.call('VIEW',{module:'location',data:{id:id}},'/ssml/api/')
+    }
+
+    async loadLocations(){
+        await ssml.getLocations().then(response=>{
+            if(anton.IsRequest(response)){
+                let data = response.message;
+                let tr = "";
+                data.map(loc => {
+                    console.table(loc)
+                    tr += `
+                        <tr>
+                            <td>${loc.loc_id}</td>
+                            <td>${loc.name}</td>
+                            <td>${loc.street}</td>
+                            <td>${loc.address}</td>
+                        </tr>
+                        
+                    `
+                })
+
+                $('#loc_list').html(tr)
+                console.table(response)
+            } else {
+                kasa.response(response)
+            }
+        }).catch(error => {
+            kasa.error(error)
+        })
+    }
+
+    newLocationScreen(){
+        let form = "";
+        form += fom.input('loc_id','loc_id','',true,255)
+        form += fom.input('loc_name','loc_name','',true,255)
+        form += fom.input('loc_desc','loc_desc','',true,255)
+        form += fom.input('country','country','',true,255)
+        form += fom.input('city','city','',true,255)
+        form += fom.input('street','street','',true,255)
+        form += fom.input('address','address','',true,255)
+        form += fom.input('phone','phone','',true,255)
+        form += fom.input('email','email','',true,255)
+
+        amodal.setBodyHtml(form)
+        amodal.setTitleText('Create New Location')
+        amodal.setFooterHtml(`<button id='save_location' class='btn btn-success'>SAVE</button>`)
+        amodal.show()
+
+        $('#save_location').click(async function(){
+            let ids = ['loc_id','loc_name','loc_desc','country','city','street','address','phone','email','mypk']
+            if(anton.validateInputs(ids)){
+                let payload = {
+                    module:'location',
+                    data:anton.Inputs(ids)
+                }
+
+                await api.v2('PUT',payload,'/ssml/api/').then(response => {
+                    kasa.confirm(response.message,1,'here')
+                }).catch(error=>{kasa.error(error)})
+
+            } else {
+                kasa.warning("Please Fill All Fields")
+            }
+        })
+    }
+
+    async exportExpenses(){
+        let form = "";
+        form += fom.date('as_of','',true)
+        amodal.setBodyHtml(form)
+        amodal.setFooterHtml(`<button id='exp_expensis' class='btn btn-info'>Export</button>`)
+        amodal.show()
+
+        $('#exp_expensis').click(async function(){
+            if(anton.validateInputs(['as_of'])){
+                await ssml.getExpenses('*',100000,$('#as_of').val(),'excel').then(response => {
+                    if(anton.IsRequest(response)){
+                        anton.viewFile(`/${response.message.expenses}`)
+                    } else {
+                        kasa.response(response)
+                    }
+                }).catch(error=>{
+                    kasa.error(error)
+                })
+            } else {
+                kasa.info("Set Fields")
+            }
+            
+        })
+        // 
+    }
+    
+
 }
 const ssml = new SSML();

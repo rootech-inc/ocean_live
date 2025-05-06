@@ -50,9 +50,9 @@ class Api {
     }
 
     async v2(method, data, int = '/api/') {
-        console.log(data)
-        console.log(int)
-        console.log(method)
+        // console.log(data)
+        // console.log(int)
+        // console.log(method)
         try {
             const response = await fetch(int, {
                 method: method,
@@ -69,13 +69,13 @@ class Api {
 
             // Parse the JSON response
             const result = await response.json();
-            console.log(result);
+            // console.log(result);
             return result;
         } catch (error) {
             console.error('Error:', error);
             return error;
         }
-}
+    }
 
     view(data){
         return this.call('VIEW',data)
