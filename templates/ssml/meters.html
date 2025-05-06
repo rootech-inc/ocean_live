@@ -1,0 +1,241 @@
+{% extends 'ssml/ssmlbase.html' %}
+{% load static %}
+
+
+{% block body %}
+
+
+    <div class="card-header">
+        <div class="w-100 d-flex">
+            <div class="w-50 d-flex">
+                <button id="new" class="btn btn-sm ms-2 btn-primary">NEW</button>
+                <button id="delete" class="btn btn-sm ms-2 btn-danger">DELETE</button>
+
+                <button id="prev_row" class="btn btn-sm ms-2 btn-primary">PREV</button>
+                <button id="next_row" class="btn btn-sm ms-2 btn-primary">NEXT</button>
+            </div>
+            <div class="w-50 d-flex">
+
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table datatable table-bordered">
+            <thead>
+                <tr>
+                    <th>Meter No.</th>
+                    <th>Meter Type</th>
+                    <th>Meter Status</th>
+                    <th>Contractor</th>
+                    <th>Meter Action</th>
+                    
+                </tr>
+            </thead>
+            <tbody>
+                {% for meter in meters %}
+                    <tr>
+                        <td>{{ meter.meter_no }}</td>
+                        <td>{{ meter.meter_type_display }}</td>
+                        <td>{{ meter.is_issued }}</td>
+                        <td>{{ meter.contractor.company }}</td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fas fa-cog"></i> Actions
+                                </button>
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                    <a class="dropdown-item disabled" href="#"><i class="fas fa-edit"></i> Edit</a>
+                                    {% if meter.is_issued == False %}   
+                                        <a class="dropdown-item" onclick="deleteMeter('{{meter.id}}')" aria-id="{{meter.id}}" href="javascript:void(0)"><i class="fas fa-trash"></i> Delete</a>
+                                        <a class="dropdown-item" onclick="issueMeter('{{meter.id}}','assigned')" aria-id="{{meter.id}}" href="javascript:void(0)"><i class="fas fa-check"></i> Issue</a>
+                                    {% else %}
+                                        <a class="dropdown-item" onclick="issueMeter('{{meter.id}}','unassigned')" aria-id="{{meter.id}}" href="javascript:void(0)"><i class="fas fa-check"></i> Unassign</a>
+                                    {% endif %}
+                                    <a class="dropdown-item diabled" href="#"><i class="fas fa-info-circle"></i> View Details</a>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+    <script>
+        let next_row = 0
+        let prev_row = 0
+
+        async function deleteMeter(id){
+                console.log(id)
+                if(confirm('Are you sure you want to delete this meter? ' + id)){
+                    let payload = {
+                        module:'meter',
+                        data:{
+                            id:id,
+                            mypk:$('#mypk').val()
+                        }
+                    }
+
+                    await api.v2('DELETE',payload,'/ssml/api/').then(res=>{
+                        if(anton.IsRequest(res)){
+                            kasa.success('Meter deleted successfully')
+                            amodal.hide()
+                        } else {
+                            kasa.response(res)
+                        }
+                    }).catch(err=>{
+                            kasa.error(err.response.data.message)
+                    })
+                }
+        }
+
+        async function issueMeter(id,status){
+            // get contracttors
+            let payload = {
+                module:'contractor',
+                data:{
+                    mypk:$('#mypk').val()
+                }
+            }
+
+            loader.show()
+            await api.v2('VIEW',payload,'/ssml/api/').then(res=>{
+                if(anton.IsRequest(res)){
+                    let options = ``;
+                    res.message.map(cont => {
+                        options += `<option value='${cont['id']}'>${cont['company']}</option>`
+                    })
+                    let ht = `
+                        <select id='contractor' class='form-control rounded-0 mb-2'>${options}</select>
+                    `
+
+                    amodal.setBodyHtml(ht)
+                    amodal.setTitleHtml(`${id}`)
+                    amodal.setFooterHtml(`<button id="issue" class="btn btn-sm btn-primary rounded-0">ISSUE</button>`)
+                    loader.hide()
+                    amodal.show()
+
+                    $("#issue").click(async function(){
+                        loader.show()
+                        let ids = ['contractor']
+                        let payload = {
+                            module:'issue_meter',
+                            data:{
+                                id:id,
+                                contractor:$('#contractor').val(),
+                                status:status
+                            }
+                        }
+
+                        await api.v2('PATCH',payload,'/ssml/api/').then(res=>{
+                            if(anton.IsRequest(res)){
+                                loader.hide()
+                                kasa.success('Meter issued successfully')
+                                amodal.hide()
+                            } else {
+                                loader.hide()
+                                kasa.response(res)
+                            }
+                        }).catch(err=>{
+                            kasa.error(err.response.data.message)
+                            loader.hide()
+                        })  
+                    })
+                } else {
+                    loader.hide()
+                    kasa.response(res)
+                }
+            })
+            
+        }
+
+        $(document).ready(function(){
+            $('#new').click(async function(){
+
+                // get all contractors
+                let payload = {
+                    module:'contractor',
+                    data:{
+                        mypk:$('#mypk').val()
+                    }
+                }
+
+                loader.show()
+                await api.v2('VIEW',payload,'/ssml/api/').then(res=>{
+                    if(anton.IsRequest(res)){
+                        loader.hide()
+                        let options = ``;
+                        res.message.map(cont => {
+                            options += `<option value='${cont['id']}'>${cont['company']}</option>`
+                        })
+                        let ht = `
+                            <select id='contractor' class='form-control rounded-0 mb-2'>${options}</select>
+                            <label>Meter Type</label>
+                            <select id="meter_type" class="form-control rounded-0 mb-2">
+                                <option value="SIN">Single Phase</option>
+                                <option value="TRIN">Three Phase</option>
+                            </select>
+                            <label>Meter No.</label>
+                            <input type="text" placeholder="Meter No separated by comma" id="meter_no" value="" class="form-control rounded-0 mb-2">
+                 
+                        `
+
+                        amodal.setBodyHtml(ht)
+                        amodal.setFooterHtml(`<button id="save" class="btn btn-sm btn-primary rounded-0">SAVE</button>`)
+                        amodal.show()
+
+
+                        $('#save').click(async function(){
+                            let meter_no = $('#meter_no').val().split(',')
+                            let meter_type = $('#meter_type').val()
+
+                            if(meter_no.length > 0){
+                                let payload = {
+                                    module:'meters',
+                                    data:{
+                                        meters:meter_no,
+                                        meter_type:meter_type,
+                                        mypk:$('#mypk').val(),
+                                        contractor:$('#contractor').val()
+                                    }
+                                }
+
+                                console.table(payload)
+
+                                console.table(payload)
+
+                                await api.v2('PUT',payload,'/ssml/api/').then(res=>{
+                                    if(anton.IsRequest(res)){
+                                        kasa.success('Meter added successfully')
+                                        amodal.hide()
+                                    } else {
+                                        kasa.response(res)
+                                    }
+                                }).catch(err=>{
+                                    kasa.error(err.response.data.message)
+                                })
+
+                            } else {
+                                kasa.error('Please enter meter no')
+                            }
+
+
+                                            
+                        })
+
+                        
+                    }
+                })  
+
+                
+
+
+                
+            })
+
+            
+        })
+    </script>
+
+{% endblock %}

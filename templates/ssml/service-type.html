@@ -1,0 +1,67 @@
+{% extends 'ssml/ssmlbase.html' %}
+{% load static %}
+
+{% block body %}
+
+<div class="modal fade" id="service_modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <form method="post" id="save-rates" action="{% url 'add_service_to_type' %}">
+                    <input type="hidden" name="s_type" value="{{service.id}}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        {% for rate in service_rates %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="service[]" id="service1" value="{{rate.id}}">
+                            <label class="form-check-label" for="service1">
+                                {{rate.name}}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                  </form>
+                  
+            </div>
+
+            <div class="modal-footer">
+                <button type="submit" form="save-rates" class="btn btn-success" id="save">SAVE</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card-header">
+    <div class="d-flex w-100">
+        <div class="w-50"><strong class="card-title">{{service.name}}</strong></div>
+        <div class="w-50 d-flex flex-wrap justify-content-end">
+            <button data-bs-toggle="modal" data-bs-target="#service_modal" class="btn btn-info">Add Service</button>
+        </div>
+    </div>
+</div>
+
+<div class="card-body">
+    
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>NAME</th>
+                <th>DESCRIPTION</th>
+                <th>RATE</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rate in my_rates%}
+                <tr>
+                    <td>{{rate.service.name}}</td>
+                    <td>{{rate.service.description}}</td>
+                    <td>{{rate.service.rate}}</td>
+                    <td><a href="/ssml/delete-service-type-rate/{{rate.id}}/">Delete</a></td>
+                </tr>
+            {%endfor%}
+        </tbody>
+    </table>
+</div>
+
+{%endblock%}

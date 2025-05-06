@@ -1,0 +1,39 @@
+{% extends 'ssml/ssmlbase.html' %}
+{% load static %}
+
+{% block body %}
+
+<div class="card-header">
+    <button class="btn btn-sm btn-info" id="new_location">NEW</button>
+</div>
+
+<div class="card-body">
+    <div class="table-response">
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>LOC ID</th>
+                    <th>NAME</th>
+                    <th>STREET</th>
+                    <th>ADDRESS</th>
+
+                </tr>
+            </thead>
+            <tbody id="loc_list">
+
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function(){
+        ssml.loadLocations()
+
+        $('#new_location').click(function(){
+            ssml.newLocationScreen()
+        })
+    })
+</script>
+
+{%endblock%}

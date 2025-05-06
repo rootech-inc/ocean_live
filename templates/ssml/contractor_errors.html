@@ -1,0 +1,105 @@
+{% extends 'ssml/ssmlbase.html' %}
+
+{% block body %}
+
+
+    <div class="modal fade" id="addContractorErrorModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Contractor Error</h5>
+                </div>
+                <div class="modal-body">
+                    <form action="{% url 'save_contractor_error' %}" method="post">
+                        {% csrf_token %}
+                        <div class="form-group mb-3">
+                            <label for="error_date">Error Date</label>
+                            <input required type="date" name="error_date" id="error_date" class="form-control">
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="contractor">Contractor</label>
+                            <select required class="form-control" id="contractor" name="contractor">
+                                {% for contractor in contractors %}
+                                    <option value="{{ contractor.id }}">{{ contractor.company | slice:":20" }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="meter">Meter</label>
+                            <input required type="text" class="form-control" id="meter" name="meter">
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="error_type">Error Type</label>
+                            <select required class="form-control" id="error_type" name="error_type">
+                                <option value="CBL">Cabling</option>
+                                <option value="INS">Installation</option>
+                                <option value="MT">Materials</option>
+                                <option value="OT">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="description">Description</label>
+                            <textarea required class="form-control" id="description" name="description"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Contractor Error</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-header">
+        <div class="w-100 d-flex">
+            <div class="w-50 d-flex"></div>
+            <div class="w-50 d-flex justify-content-end">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addContractorErrorModal">Add Contractor Error</button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <table class="table datatable table-bordered">
+            <thead>
+                <tr>
+                    <th>Error Type</th>
+                    <th>Contractor</th>
+                    <th>Description</th>
+                    <th>Meter</th>
+                    <th>Created At</th>
+                    <th>Updated At</th>
+                    <th>Is Cleared</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for error in contractor_errors %}
+                    <tr>
+                        <td>{{ error.error_type }}</td>
+                        <td>{{ error.contractor.company|truncatechars:20 }}</td>
+                        <td>{{ error.description }}</td>
+                        <td>{{ error.meter.meter_no }}</td>
+                        <td>{{ error.created_at }}</td>
+                        <td>{{ error.updated_at }}</td>
+                        <td>{{ error.is_cleared }}</td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-secondary dropdown-toggle" type="button" id="actionDropdown{{ error.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Actions
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="actionDropdown{{ error.id }}">
+                                    <li><a class="dropdown-item" href="javascript:void(0)">View</a></li>
+                                    <li><a class="dropdown-item" href="javascript:void(0)">Edit</a></li>
+                                    <li><a class="dropdown-item" href="javascript:void(0)">Delete</a></li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+                    
+                    
+    </div>
+{% endblock %}

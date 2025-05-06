@@ -1,0 +1,77 @@
+{% extends 'ssml/ssmlbase.html' %}
+{% load static %}
+
+{% block body %}
+<div class="card-header">
+    <div class="d-flex justify-content-between">
+        <div class="w-50">
+            
+        </div>
+        <div class="w-50 d-flex justify-content-end">
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" type="button" id="reportsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-file-earmark-text"></i> Reports
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="reportsDropdown">
+                    <li><a class="dropdown-item" href="#" onclick="ssml.exportExpenses()"><i class="bi bi-calendar-day"></i> Export Exponses</a></li>
+                </ul>
+            </div>
+            <button class="btn btn-primary" onclick="ssml.addExpTransaction()"><i class="bi bi-plus"></i> Add Transaction</button>
+        </div>
+    </div>
+</div>
+<div class="card-body p-3 overflow-auto">
+    <div class="container-fluid p-0">
+        <div class="row d-flex justify-content-center">
+            <div class="col-xxl-4 col-md-4">
+                <div class="card info-card sales-card">
+                    <div class="card-body p-0">
+                        <div class="w-100 d-flex justify-content-center align-items-center p-5">
+                            <h2 id="total_expenses" class="display-6 m-0">0.00</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div class="col-sm-12">
+                <div class="card overflow-auto">
+                    <div class="card-body overflow-auto">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>DIRECTION</th>
+                                    <th>TYPE</th>
+                                    <th>AMOUNT</th>
+                                    <th>DATE</th>
+                                    <th>REFERENCE</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenses_table">
+                                
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+
+            
+        </div>
+    </div>
+</div>
+
+
+<script>
+    // $(document).ready(function(){
+    //     setInterval(() => {
+    //         ssml.loadExpenses()
+    //     }, 3000)
+    // })
+</script>
+
+
+
+{% endblock %}

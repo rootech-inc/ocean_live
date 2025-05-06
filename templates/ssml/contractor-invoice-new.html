@@ -1,0 +1,141 @@
+{% extends 'ssml/ssmlbase.html' %}
+{% load static %}
+
+{% block body %}
+    <div class="card-header">
+        <div class="w-100 d-flex">
+            <button class="btn btn-success btn-sm rounded-0" id="save">SAVE</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="container-fluid p-2">
+            <div class="row bg-primary text-light py-3">
+                <div class="col-sm-3">
+                    <div class="row">
+                        <!-- DATE -->
+                        <div class="col-sm-4"><label for="entry_date">Date</label></div>
+                        <div class="col-sm-8"><input id="entry_date" type="date" class="form-control mb-3 rounded-0"></div>
+                        <!-- CONTRACTOR-->
+                        <div class="col-sm-4"><label for="contractor">Contactor</label></div>
+                        <div class="col-sm-8">
+                            <select name="" id="contractor" class="form-control rounded-0">
+                                {%for contractor in contractors %}
+                                <option value="{{contractor.id}}">{{contractor.company}}</option>
+                                {%endfor%}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-3">
+                    <div class="row">
+                        <!-- DATE -->
+                        <div class="col-sm-4"><label for="remarks">Remarks</label></div>
+                        <div class="col-sm-8"><input id="remarks" type="text" class="form-control mb-3 rounded-0"></div>
+                        <!-- CONTRACTOR-->
+                        <div class="col-sm-4"><label for=""></label></div>
+                        <div class="col-sm-8">
+                            <button id="retrieve" class="btn btn-light btn-sm">RETRIEVE</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="row">
+                        <!-- DATE -->
+                        <div class="col-sm-4"><label for="total">Total</label></div>
+                        <div class="col-sm-8"><input id="total" type="text" class="form-control mb-3 rounded-0"></div>
+                        
+                    </div>
+                </div>
+
+                
+
+                
+
+            </div>
+
+            <div style="height: 60vh; overflow: auto;" class="table-responsive pt-2">
+                <table class="table table-stripped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>DATE</th>
+                            <th>SERVICE</th>
+                            <th>METER</th>
+                            <th>AMOUNT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="jesus">
+                        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        let dt = []
+        $(document).ready(function(){
+            $('#retrieve').click(async function(){
+                let ids = ['contractor','entry_date']
+                if(anton.validateInputs(ids)){
+                    // lets
+                    await ssml.getJobs('json',$('#contractor').val(),'completed').then(res => {
+                        if(anton.IsRequest(res)){
+                            let data = res.message;
+                            dt = data
+                            let tr = "";
+                            let total_amount = 0;
+                            data.map(service => {
+                                tr += `
+                                    <tr>
+                                        <td>${service.date}</td>
+                                        <td>${service.service}</td>
+                                        <td>${service.meter}</td>
+                                        <td>${service.amount}</td></tr>
+                                    
+                                `
+
+                                total_amount += parseFloat(service.amount)
+                            })
+
+                            $('#jesus').html(tr)
+                            $('#total').val(total_amount.toFixed(2))
+                        } else {
+                            kasa.response(res)
+                        }
+                    }).catch(error => {
+                        kasa.error(error)
+                    })
+                } else {
+                    kasa.info("Set Parameters")
+                }
+            })
+        
+            $('#save').click(async function(){
+                let ids  = ['contractor','entry_date','remarks','mypk'];
+                if(anton.validateInputs(ids) && dt.length > 0){
+
+                    let payload = {
+                        module:'invoice',
+                        data:anton.Inputs(ids)
+                    }
+                    payload['data']['transactions'] = dt
+
+                    console.table(payload)
+
+                    await api.v2('PUT',payload,'/ssml/api/').then(res => {
+                        kasa.confirm(res.message,1,'/ssml/accounts/invoice/')
+                    }).catch(error => {
+                        kasa.error(error)
+                    })
+
+                } else {
+                    kasa.error("Please fill fields")
+                }
+            })
+        })
+    </script>
+
+{%endblock%}
