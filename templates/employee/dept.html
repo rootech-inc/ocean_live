@@ -1,0 +1,98 @@
+{% extends 'employee/emp_base.html' %}
+{% load static %}
+
+{% block  body %}
+	<div class="card-header">
+
+    </div>
+    <div class="card-body overflow-auto p-2">
+        <div class="container h-100">
+            <div class="row h-100">
+                <div class="col-sm-6 h-50">
+                    <div class="card border border-primary h-100 overflow-hidden">
+                        <div class="card-header">
+                            <div class="w-100 d-flex">
+                                <div class="w-50 d-flex">
+                                    <span class="">Areas</span>
+                                </div>
+                                <div class="w-50 d-flex justify-content-end"><button id="new_area" class="btn btn-sm btn-info">NEW</button></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 h-50">
+                    <div class="card border border-primary h-100 overflow-hidden">
+                        <div class="card-header">
+                            <div class="w-100 d-flex">
+                                <div class="w-50 d-flex">
+                                    <span class="">Departments</span>
+                                </div>
+                                <div class="w-50 d-flex justify-content-end"><button id="new_department" class="btn btn-sm btn-info">NEW</button></div>
+                            </div>
+                        </div>
+                        <div class="card-body overflow-auto">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped table-bordered">
+                                    <thead class="thead-dark">
+                                        <tr>
+                                            <th>CODE</th><th>NAME</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dept_ids">
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 h-50">
+                    <div class="card border border-primary h-100 overflow-hidden">
+                        <div class="card-header">
+                            <div class="w-100 d-flex">
+                                <div class="w-50 d-flex">
+                                    <span class="">Positions</span>
+                                </div>
+                                <div class="w-50 d-flex justify-content-end"><button id="new_position" class="btn btn-sm btn-info">NEW</button></div>
+                            </div>
+                        </div>
+                        <div class="card-body overflow-auto">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>CODE</th>
+                                            <th>NAME</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="position_ids">
+                                        <tr>
+
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function (){
+            staff.loadDepartment()
+            staff.loadPosition()
+
+            $('#new_department').click(function(){
+                staff.newDepartment()
+            })
+
+            $('#new_position').click(function(){
+                staff.newPosition()
+            })
+        })
+    </script>
+{% endblock %}

@@ -78,7 +78,7 @@
     <script src="{% static 'general/js/classes/modal.js' %}"></script>
     <script src="{% static 'general/js/classes/form.js' %}"></script>
     <script src="{% static 'general/js/classes/maintenance.js' %}"></script>
-    <script src="{% static 'general/js/classes/ssml.js' %}"></script>
+    <script src="{% static 'general/js/classes/staff.js' %}"></script>
     <script src="{% static 'general/js/loader.js' %}"></script>
 
 
@@ -412,10 +412,24 @@
         </a>
         <ul id="acct-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
           <li>
-            <a href="{% url 'accounts' %}">
-              <i class="bi bi-circle"></i><span>Attendance</span>
+            <a href="{% url 'area' %}">
+              <i class="bi bi-circle"></i><span>Area</span>
             </a>
           </li>
+            <li>
+            <a href="{% url 'departments' %}">
+              <i class="bi bi-circle"></i><span>Departments</span>
+            </a>
+          </li>
+
+            <li>
+            <a href="{% url 'staffs' %}">
+              <i class="bi bi-circle"></i><span>Staffs</span>
+            </a>
+          </li>
+
+
+
 
           
 

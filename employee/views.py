@@ -1,6 +1,7 @@
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-# Create your views here.
+@login_required()
 def index(request):
     context = {
         'nav': True,
@@ -11,3 +12,39 @@ def index(request):
     }
 
     return render(request,'employee/landing.html',context=context)
+
+@login_required()
+def area(request):
+    context = {
+        'nav': True,
+        'page': {
+            'title': "Area",
+            'nav':True
+        }
+    }
+
+    return render(request,'employee/area.html',context=context)
+
+@login_required()
+def departments(request):
+    context = {
+        'nav': True,
+        'page': {
+            'title': "Departments",
+            'nav':True
+        }
+    }
+
+    return render(request,'employee/dept.html',context=context)
+
+@login_required()
+def employees(request):
+    context = {
+        'nav': True,
+        'page': {
+            'title': "Employees",
+            'nav':True
+        }
+    }
+
+    return render(request,'employee/staff.html',context=context)

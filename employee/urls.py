@@ -19,5 +19,8 @@ from . import views,employee_api
 
 urlpatterns = [
     path('', views.index, name='company'),
+    path('area/', views.area, name='area'),
+    path('departments/', views.departments, name='departments'),
+    path('employees/', views.employees, name='staffs'),
     path('api/', employee_api.interface, name='reports_api'),
 ]

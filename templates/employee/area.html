@@ -1,0 +1,33 @@
+{% extends 'employee/emp_base.html' %}
+{% load static %}
+
+{% block  body %}
+    <div class="card-header">
+        <button class="btn btn-info" id="new">New</button>
+    </div>
+	<div class="card-body p-2">
+        <div class="table-responsive w-25">
+            <table class="table table-bordered table-sm table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>CODE</th><th>NAME</th>
+                    </tr>
+                </thead>
+                <tbody id="dept_ids">
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function(){
+            // load areas
+            staff.loadArea()
+
+            $('#new').click(function(){
+                staff.newArea()
+            })
+        })
+    </script>
+{% endblock %}

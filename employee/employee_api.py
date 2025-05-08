@@ -2,7 +2,10 @@ import json
 import sys
 from decimal import Decimal
 
+from ocean.settings import ATTENDANCE_URL
+from .modric import token
 import requests
+
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
@@ -31,125 +34,118 @@ def interface(request):
         module = body.get('module')
         data = body.get('data')
 
+
         if method == 'PUT':
-            if module == 'company':
-                name = data.get('name')
-                address = data.get('address')
-                city = data.get('city')
-                country = data.get('country')
-                postal_code = data.get('postal_code')
-                phone = data.get('phone')
-                email = data.get('email')
-                website = data.get('website', '')
+            if module == 'area':
+                import requests
 
-                
-                Company.objects.create(
-                    name=name,
-                    address=address,
-                    city=city,
-                    country=country,
-                    postal_code=postal_code,
-                    phone=phone,
-                    email=email,
-                    website=website
-                )
+                url = "http://192.168.2.15/personnel/api/areas/"  # Replace with actual domain
 
-                success_response['message'] = "Company Created Successfully"
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"JWT {token('solomon', 'Szczesny@411')}"
+                }
+
+                data = {
+                    "area_code": data.get('area_code'),
+                    "area_name": data.get('area_name'),
+                    "parent_area": None
+                }
+
+                response = requests.post(url, json=data, headers=headers)
+
+
+                success_response['message'] = "Area Created Successfully"
 
 
             elif module == 'department':
-                name = data.get('name')
-                description = data.get('description', '')
+                import requests
 
-                Department.objects.create(
-                    name=name,
-                    description=description,
-                )
+                url = f"{ATTENDANCE_URL}personnel/api/departments/"  # Replace with actual domain
 
-                success_response['message'] = "Department Created Successfully"
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"JWT {token('solomon', 'Szczesny@411')}"
+                }
+
+                data = {
+                    "dept_code": data.get('dept_code'),
+                    "dept_name": data.get('dept_name'),
+                    "parent_dept": None
+                }
+
+                response = requests.post(url, json=data, headers=headers)
+                success_response['message'] = "Dept Created Successfully"
+                response = success_response
 
             elif module == 'position':
-                name = data.get('name')
-                description = data.get('description', '')
-                department_id = data.get('department_id')
+                import requests
 
-                Position.objects.create(
-                    name=name,
-                    description=description,
-                    department_id=department_id
-                )
+                url = f"{ATTENDANCE_URL}personnel/api/positions/"  # Replace with actual domain
 
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"JWT {token('solomon', 'Szczesny@411')}"
+                }
+
+                data = {
+                    "position_code": data.get('position_code'),
+                    "position_name": data.get('position_name'),
+                    "parent_position": None
+                }
+
+                response = requests.post(url, json=data, headers=headers)
                 success_response['message'] = "Position Created Successfully"
+                response = success_response
 
-            elif module == 'employee':
-                emp_code = data.get('emp_code')
-                first_name = data.get('first_name')
-                last_name = data.get('last_name')
-                email = data.get('email')
-                phone = data.get('phone')
-                address = data.get('address')
-                city = data.get('city')
-                country = data.get('country')
-                postal_code = data.get('postal_code')
-                company_id = data.get('company_id')
-                department_id = data.get('department_id')
-                position_id = data.get('position_id')
-                hire_date = data.get('hire_date')
-                salary = data.get('salary')
-                is_active = data.get('is_active', True)
 
-                Employee.objects.create(
-                    first_name=first_name,
-                    last_name=last_name,
-                    email=email,
-                    phone=phone,
-                    address=address,
-                    city=city,
-                    country=country,
-                    postal_code=postal_code,
-                    company_id=company_id,
-                    department_id=department_id,
-                    position_id=position_id,
-                    hire_date=hire_date,
-                    salary=salary,
-                    is_active=is_active
-                )
-
-                success_response['message'] = "Employee Created Successfully"
-
-            elif module == 'attendance':
-                employee_id = data.get('employee_id')
-                date = data.get('date')
-                time_in = data.get('time_in')
-                time_out = data.get('time_out')
-                status = data.get('status')
-                notes = data.get('notes', '')
-
-                Attendance.objects.create(
-                    employee_id=employee_id,
-                    date=date,
-                    time_in=time_in,
-                    time_out=time_out,
-                    status=status,
-                    notes=notes
-                )
-
-                success_response['message'] = "Attendance Created Successfully"
 
         if method == 'VIEW':
             if module == 'area':
                 url = 'http://192.168.2.15/personnel/api/areas/'
-                from .modric import token
+
                 tk = token('solomon','Szczesny@411')
                 headers = {
                     'Authorization': f'JWT {tk}',
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'ordering': 'dept_id'
                 }
-                response = requests.get(url, headers=headers)
+                import requests
+                response = requests.get(url, headers=headers,json={})
                 response = response.json()
                 data = response.get('data')
 
                 success_response['message'] = data
+                response = success_response
+
+            elif module == 'department':
+                import requests
+                url = f"{ATTENDANCE_URL}personnel/api/departments/"
+                tk   = token('solomon','Szczesny@411')
+                headers = {
+                    "Authorization": f"JWT {tk}",
+                    "Content-Type": "application/json",
+                }
+                response = requests.get(url, headers=headers,params={
+                    "page_size": 10000, "ordering": "dept_name"
+                })
+                response = response.json()
+                success_response['message'] = response.get('data')
+                response = success_response
+
+            elif module == 'position':
+                import requests
+                url = f"{ATTENDANCE_URL}personnel/api/positions/"
+                tk   = token('solomon','Szczesny@411')
+                headers = {
+                    "Authorization": f"JWT {tk}",
+                    "Content-Type": "application/json",
+                }
+                response = requests.get(url, headers=headers,params={
+                    "page_size": 10000, "ordering": "dept_name"
+                })
+                response = response.json()
+                success_response['message'] = response.get('data')
                 response = success_response
 
     except Exception as e:

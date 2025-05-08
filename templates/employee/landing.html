@@ -1,0 +1,26 @@
+{% extends 'employee/emp_base.html' %}
+
+{% load static %}
+
+{% block body %}
+    <div class="card-body p-1">
+        <table class="table table-bordered table-striped table-hover table-sm table-responsive">
+            <thead class="thead-dark">
+                <tr>
+                    <th>EMPLOYEE</th>
+                    <th>LOCATION</th>
+                    <th>CHECK IN</th>
+                    <th>STATUS</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>JANE DOE</td>
+                    <td>SPINTEX</td>
+                    <th>00:00</th>
+                    <th><kbd class="bg-danger">absent</kbd></th>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
