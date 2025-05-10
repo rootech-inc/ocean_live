@@ -2,6 +2,7 @@ import json
 import sys
 from decimal import Decimal
 
+from admin_panel.models import Sms, SmsApi
 from ocean.settings import ATTENDANCE_URL
 from .modric import token
 import requests
@@ -98,6 +99,45 @@ def interface(request):
                 success_response['message'] = "Position Created Successfully"
                 response = success_response
 
+            elif module == 'staff':
+                import requests
+
+                url = f"{ATTENDANCE_URL}personnel/api/employees/"  # Replace with actual domain
+
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"JWT {token('solomon', 'Szczesny@411')}"
+                }
+
+                data = {
+                    "emp_code": data.get('emp_code'),
+                    "department": data.get('department'),
+                    "area": data.get('area'),
+                    "first_name": data.get('first_name'),
+                    "last_name": data.get('last_name'),
+                    "mobile": data.get('mobile'),
+                    "email": data.get('email'),
+                    "contact_tel":data.get('mobile'),
+                    'position':data.get('position')
+
+                }
+
+                response = requests.post(url, json=data, headers=headers)
+                print("RESPONSE")
+                print(response.json())
+                print("RESPONSE")
+                success_response['message'] = "Staff Created Successfully"
+                # make sms
+                Sms.objects.create(
+                    api=SmsApi.objects.get(is_default=True),
+                    to=data.get('mobile'),
+                    message=f"Dear {data.get('first_name')} {data.get('last_name')} your records have been entered into attendace / company records. Follow up to record your bio-data"
+                )
+
+                print("CREATED")
+                response = success_response
+
+
 
 
         if method == 'VIEW':
@@ -143,6 +183,21 @@ def interface(request):
                 }
                 response = requests.get(url, headers=headers,params={
                     "page_size": 10000, "ordering": "dept_name"
+                })
+                response = response.json()
+                success_response['message'] = response.get('data')
+                response = success_response
+
+            elif module == 'staff':
+                import requests
+                url = f"{ATTENDANCE_URL}personnel/api/employees/"
+                tk   = token('solomon','Szczesny@411')
+                headers = {
+                    "Authorization": f"JWT {tk}",
+                    "Content-Type": "application/json",
+                }
+                response = requests.get(url, headers=headers,params={
+                    "page_size": 10000, "ordering": "id"
                 })
                 response = response.json()
                 success_response['message'] = response.get('data')

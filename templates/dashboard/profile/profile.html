@@ -5,7 +5,7 @@
     <div class="card-body overflow-auto">
         <div class="container-fluid overflow-auto p-2">
 
-            <div class="jumbotron py-5 d-flex flex-wrap align-content-center text-center bg-dark">
+            <div class="jumbotron py-5 d-flex flex-wrap align-content-center text-center bg-primary-light rounded-4">
 
                 <div class="w-100 d-flex flex-wrap justify-content-center">
                     <div style="height: 150px; width: 150px" class="mx-auto overflow-hidden rounded-circle shadow text-center">
@@ -15,7 +15,7 @@
                     </div>
                 </div>
                 <div class="w-100 text-center">
-                    <h1 class="text-light">{{ user.first_name }} {{ user.last_name }}</h1>
+                    <h1 class="text-dark">{{ user.first_name }} {{ user.last_name }}</h1>
                     <div class="social-links mt-2">
                         <a href="#" class="twitter"><i class="bi bi-twitter"></i></a>
                         <a href="#" class="facebook"><i class="bi bi-facebook"></i></a>
@@ -49,6 +49,10 @@
 
                         <li class="nav-item">
                           <button class="nav-link" data-bs-toggle="tab" data-bs-target="#profile-change-password">Change Password</button>
+                        </li>
+
+                          <li class="nav-item">
+                          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#bio-data">Bio-Credentials</button>
                         </li>
 
                       </ul>
@@ -262,6 +266,27 @@
 
                         </div>
 
+                        <div class="tab-pane fade container pt-3" id="bio-data">
+                          <!-- Change Password Form -->
+                          <div class="w-50">
+                              <div class="row mb-3">
+                                  <label for="bio-id" class="col-md-4 col-lg-3 col-form-label">Bio ID</label>
+                                  <div class="col-md-8 col-lg-9">
+                                    <input name="bio-id" type="text" value="{{ ad_on.bio_id }}" disabled class="form-control" id="bio-id">
+                                  </div>
+                              </div>
+                              <div class="row mb-3">
+                                  <label for="bio-password" class="col-md-4 col-lg-3 col-form-label">Bio Password</label>
+                                  <div class="col-md-8 col-lg-9">
+                                    <input name="bio-password" value="{{ ad_on.bio_password }}" disabled type="password" class="form-control" id="bio-password">
+                                  </div>
+                              </div>
+
+                              <button id="change_bio_credentials" class="btn btn-warning btn-sm">Change</button>
+                          </div>
+
+                        </div>
+
                       </div><!-- End Bordered Tabs -->
 
                     </div>
@@ -270,5 +295,14 @@
 
         </div>
     </div>
+
+
+    <script>
+        $(document).ready(function(){
+            $('#change_bio_credentials').click(function(){
+                staff.setBioData()
+            })
+        })
+    </script>
 
 {% endblock %}

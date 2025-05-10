@@ -106,6 +106,28 @@ class Form {
     password(ini,comment='',required=false,max_val=100) {
         return this.input('password',ini,comment,required,max_val)
     }
+
+    multiselect(ini, options = [], comment = '', required = false) {
+        let opxt = '';
+        for (let i = 0; i < options.length; i++) {
+            let option = options[i];
+            opxt += `<option value="${option['val']}">${option.desc}</option>`;
+        }
+
+        let req = '';
+        if (required) {
+            req = `<span class="text-danger">*</span><br>`;
+        }
+
+        return `
+            <label class="text-info" for="${ini}">${ini.toUpperCase().replace('_', ' ')} ${req}</label>
+            <select id="${ini}" name="${ini}[]" multiple required="${required}" class="form-control mb-2 rounded-0">
+                ${opxt}
+            </select>
+            <i class="text-muted">${comment}</i><br>
+        `;
+    }
+
 }
 
 const fom = new Form()

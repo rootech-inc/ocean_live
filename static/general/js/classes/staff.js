@@ -145,6 +145,144 @@ class Staff {
             }
         })
     }
+
+    async getStaff(){
+        return api.call('VIEW',{module:'staff',data:{}},this.int)
+    }
+
+    async loadStaff(){
+        loader.show()
+        await this.getStaff().then(response => {
+
+            if(anton.IsRequest(response)){
+                let tr = "";
+                next_code = response.message.length + 1
+                response.message.map(staff => {
+
+                    // console.table(staff)
+                    tr +=  `<tr>
+                                <td>${staff.emp_code}</td>
+                                <td>${staff.first_name} ${staff.last_name}</td>
+                                <td>${staff.department.dept_name}</td>
+                                <td>${staff.position.position_name}</td>
+                           </tr>`
+                })
+
+                $('#empl').html(tr)
+                $('#myTable').DataTable();
+                loader.hide()
+            } else {
+                kasa.response(response)
+                loader.hide()
+            }
+        }).catch(error => {
+            kasa.error(error)
+            loader.hide()
+        })
+    }
+
+    async newStaff() {
+        let form = "";
+        form += fom.text('emp_code', '', true, 5)
+
+        let deps = []
+        await this.getDepartments().then(response => {
+            if(anton.IsRequest(response)){
+                response.message.map(dep => {
+                    console.table(dep)
+                    deps.push({val:dep.id,desc:dep.dept_name})
+                })
+            } else {
+                kasa.response(response)
+                return
+            }
+        })
+        form += fom.selectv2('department', deps, '', true)
+
+
+        let posts = []
+        await staff.getPosition().then(response => {
+            if(anton.IsRequest(response)){
+                response.message.map(pos => {
+                    posts.push({
+                        val:pos.id,desc:pos.position_name
+                    })
+                })
+            } else {
+                kasa.response(response);
+                return
+            }
+        }).catch(error => {kasa.error(error); return })
+        form += fom.selectv2('position', posts, '', true)
+
+        // get areas
+        let areas = []
+        await this.getArea().then(response => {
+            if (anton.IsRequest(response)) {
+                response.message.map(area => {
+                    areas.push({
+                        val:area.id,
+                        desc:area.area_name
+                    })
+                })
+            } else {
+                kasa.response(response)
+
+            }
+        })
+        form += fom.multiselect('area', areas, '', true)
+
+
+        form += fom.text('first_name', '', true, 20)
+        form += fom.text('last_name', '', true, 20)
+
+        form += fom.text('mobile', '', true, 10)
+        form += fom.text('email', '', true, 50)
+
+
+        amodal.setBodyHtml(form)
+        amodal.setTitleHtml("New pos")
+        amodal.setFooterHtml(`<button class="btn btn-success" id="save_staff">SAVE</button>`)
+        $('#emp_code').val(parseInt(next_code) + 1)
+        amodal.show()
+
+        $('#save_staff').click(function () {
+            let ids = ['emp_code', 'department','area','first_name','last_name','mobile','email','position']
+
+            if (anton.validateInputs(ids)) {
+                let payload = {
+                    module: 'staff',
+                    data: anton.Inputs(ids)
+                }
+
+                console.table(payload)
+                kasa.confirm(api.call('PUT', payload, staff.int).message, 1, 'here')
+            } else {
+                kasa.error("Invalid Form")
+            }
+        })
+    }
+
+    setBioData() {
+        let form = '';
+        form += fom.number('bio_id','user id on clocking system',true,3)
+        form += fom.password('bio-password','password to use when accessing user data',true)
+
+        amodal.setBodyHtml(form)
+        amodal.setTitleHtml("Update BIO-Credentials")
+        amodal.setFooterHtml(`<button id="verify_bio_credentials" class="btn btn-info btn-sm">SAVE</button>`)
+        amodal.show()
+
+        $('#verify_bio_credentials').click(function(){
+            // get otp
+            let idsx = ['bio_id','bio-password']
+            if(anton.)
+            form = fom.text('otp','an one-time password has been sent to your number',true,6)
+            amodal.setBodyHtml(form)
+            amodal.setTitleHtml("Validate")
+            amodal.setFooterHtml(`<button class="btn btn-success">Complete</button>`)
+        })
+    }
 }
 
 const staff = new Staff()

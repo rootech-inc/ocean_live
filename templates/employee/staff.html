@@ -2,15 +2,34 @@
 {% load static %}
 
 {% block body %}
-	<div class="card-body">
+    <div class="card-header">
+        <button class="btn btn-info" id="new_employee">NEW</button>
+    </div>
+	<div class="card-body p-2">
         <div class="table-responsive">
-            <table class="table table-sm">
+            <table id="myTable" class="table table-sm">
                 <thead>
                     <tr>
-                        <th>NAME</th><th>DEPARTMENT</th><th>POSITION</th>
+                        <th>ID</th><th>NAME</th><th>DEPARTMENT</th><th>POSITION</th>
                     </tr>
                 </thead>
+                <tbody id="empl"></tbody>
             </table>
         </div>
     </div>
+
+    <script>
+        let next_code = 0;
+        $(document).ready(function () {
+
+            staff.loadStaff()
+
+            $('#new_employee').click(function (){
+                staff.newStaff()
+            })
+
+
+
+        })
+    </script>
 {% endblock %}

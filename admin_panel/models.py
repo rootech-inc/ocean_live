@@ -2,10 +2,12 @@ import os.path
 import pathlib
 from decimal import Decimal
 
+from attr.validators import max_len
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
+from pygments.lexer import default
 
 from community.models import questions, QuestionTags
 from blog.models import Providers
@@ -691,6 +693,8 @@ class UserAddOns(models.Model):
     pword_reset = models.IntegerField(default=1)
     api_token = models.TextField(null=True)
     auth_pin = models.CharField(max_length=200)
+    bio_id = models.CharField(max_length=3,null=True)
+    bio_password = models.TextField(null=True)
 
     department = models.ForeignKey(Departments, on_delete=models.SET_NULL, null=True, blank=True)
 
