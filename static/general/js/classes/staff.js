@@ -276,7 +276,10 @@ class Staff {
         $('#verify_bio_credentials').click(function(){
             // get otp
             let idsx = ['bio_id','bio-password']
-            if(anton.)
+            if(anton.validateInputs(idsx)){
+                
+            }
+
             form = fom.text('otp','an one-time password has been sent to your number',true,6)
             amodal.setBodyHtml(form)
             amodal.setTitleHtml("Validate")
