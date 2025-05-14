@@ -42,9 +42,21 @@ def employees(request):
     context = {
         'nav': True,
         'page': {
-            'title': "Employees",
+            'title': "Attendance",
             'nav':True
         }
     }
 
     return render(request,'employee/staff.html',context=context)
+
+@login_required()
+def attendance(request):
+    context = {
+        'nav': True,
+        'page': {
+            'title': "Employee",
+            'nav': True
+        }
+    }
+
+    return render(request, 'employee/attendance.html', context=context)

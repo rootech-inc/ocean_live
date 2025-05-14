@@ -1,7 +1,7 @@
 import json
 import sys
 from decimal import Decimal
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 from admin_panel.models import Sms, SmsApi, UserAddOns
 from ocean.settings import ATTENDANCE_URL
@@ -104,9 +104,10 @@ def interface(request):
             elif module == 'sync_attendance':
                 # get workers
                 tk = token('solomon', 'Szczesny@411')
-                current_datetime = datetime.now()
-                start = f"{str(current_datetime.strftime('%Y-%m-%d'))} 00:00:00"
-                end = f"{str(current_datetime.strftime('%Y-%m-%d'))} 23:59:59"
+                date_ini = data.get('date',datetime.now().strftime('%Y-%m-%d'))
+                current_datetime = date_ini
+                start = f"{str(current_datetime)} 00:00:00"
+                end = f"{str(current_datetime)} 23:59:59"
                 import requests
                 url = "http://192.168.2.15/personnel/api/employees/?page_size=10000"
 
@@ -128,6 +129,9 @@ def interface(request):
                 gl = []
                 count = j_resp['count']
                 data = j_resp['data']
+                js = []
+                ps = 0
+                abs = 0
                 for i in data:
                     emp_code = i['emp_code']
                     first_name = i['first_name']
@@ -166,13 +170,15 @@ def interface(request):
                     att_count = attendance['count']
                     att_data = attendance['data']
 
+
                     check_in = ""
                     check_out = ""
                     minutes_diff = 0
                     present = False
                     if attendance['count'] == 0:
-                        check_in = "N/A"
-                        check_out = "N/A"
+                        check_in = "00:00:00"
+                        check_out = "00:00:00"
+                        abs += 1
                     else:
                         first_record = att_data[0]
                         last_record = att_data[len(att_data) - 1]
@@ -189,12 +195,70 @@ def interface(request):
                         check_in = first_time_only
                         check_out = last_time_only
                         present = True
+                        ps += 1
 
-                    ali = [f"{first_name} {last_name}", dep_name, position_name, str(check_in), str(check_out), present,
-                          minutes_diff]
+                    st = 'absent'
+                    is_late = True
+                    late_duration = {
+                        "SHOP": datetime.strptime('10:05', '%H:%M').time(),
+                        "MOTOR": datetime.strptime('08:05', '%H:%M').time(),
+                        "METERS": datetime.strptime('08:05', '%H:%M').time()
+                    }
+
+                    if present:
+                        st = 'present'
+                        print(department)
+                        # dept = late_duration.get(dep_name,'00:00')
+                        dept_str = late_duration.get(dep_name, '00:00')
+                        dept = datetime.strptime(dept_str, '%H:%M').time() if isinstance(dept_str, str) else dept_str
+
+                        print(dept)
+                        if check_in > dept:
+                            is_late = True
+                        else:
+                            is_late = False
+
+                        # check late
+
+
+                    ali = [f"{first_name} {last_name}", dep_name, position_name, str(check_in), str(check_out), st,
+                          minutes_diff,is_late]
+                    js.append(ali)
                     print(ali)
+                    dt = start.split(' ')[0]
+                    if Attendance.objects.filter(date=dt,emp_code=emp_code).exists():
+                        # update
+                        Attendance.objects.filter(date=dt,emp_code=emp_code).update(
+                            emp_code=emp_code,
+                            date=dt,
+                            time_in=check_in,
+                            time_out=check_out,
+                            time_diff=minutes_diff,
+                            name=f"{first_name} {last_name}",
+                            status=st,
+                            is_late=is_late,
+                            dep_text = dep_name
+                        )
+                    else:
+                        Attendance(
+                            emp_code=emp_code,
+                            date=dt,
+                            time_in=check_in,
+                            time_out=check_out,
+                            time_diff=minutes_diff,
+                            name=f"{first_name} {last_name}",
+                            status=st,
+                            is_late=is_late,
+                            dep_text=dep_name
+                        ).save()
 
-
+                dat = {
+                    "present":ps,
+                    'absent':abs,
+                    'array':js
+                }
+                success_response['message'] = dat
+                response = success_response
 
 
             elif module == 'staff':
@@ -257,13 +321,41 @@ def interface(request):
                 response = success_response
 
             elif module == 'attendance':
-                mt = data.get('month')
-                yr = data.get('year')
+                rg = data.get('range','week')
                 mypk = data.get('mypk')
                 add_on = UserAddOns.objects.get(user_id=mypk)
-                bio_id = add_on.bio_id
+                emp_code = add_on.bio_id
+                res = []
+                if rg == 'week':
+                    today = date.today()
+                    start_date = today - timedelta(days=today.weekday())
+                    end_date = start_date + timedelta(days=6)
 
+                    res = [att.obj() for att in Attendance.objects.filter(
+                        emp_code=emp_code,
+                        date__range=[start_date, end_date]
+                    )]
+                    
+                
+                if rg == 'month':
+                    today = date.today()
+                    start_date = date(today.year, today.month, 1)
+                    if today.month == 12:
+                        end_date = date(today.year + 1, 1, 1) - timedelta(days=1)
+                    else:
+                        end_date = date(today.year, today.month + 1, 1) - timedelta(days=1)
+
+                    res = [att.obj() for att in Attendance.objects.filter(
+                        emp_code=emp_code,
+                        date__range=[start_date, end_date]
+                    )]
+
+                success_response['message'] = res
+
+
+                # success_response['message'] = emp_code
                 # get transactions
+
 
                 response = success_response
 

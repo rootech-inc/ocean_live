@@ -334,6 +334,88 @@ class Staff {
             
         })
     }
+
+    async loadAttendance(dt=today) {
+
+        await this.getAttendance(dt).then(response => {
+            loader.show()
+            if(anton.IsRequest(response)){
+                let attds = response.message.array;
+                let tr = "";
+                let st = "";
+                attds.map(attd => {
+                    let tx = ''
+                    if (attd[5] === 'absent'){
+                        tx = 'text-danger'
+                        st = attd[5]
+                    } else {
+                        if(attd[7]){
+                            tx = 'text-warning'
+                            st = 'late'
+                        } else {
+                            tx = 'text-success'
+                            st = 'on-time'
+                        }
+                    }
+
+
+                    tr += `
+                        <tr class="${tx}">
+                            <td>${attd[0]}</td>
+                            <td>${attd[1]}</td>
+                            <td>${st}</td>
+                            <td>${attd[3]}</td>
+                            <td>${attd[4]}</td>
+</tr>
+                    `
+                })
+
+                $('#att_bd').html(tr)
+                $('#attd_table').DataTable();
+                loader.hide()
+            } else {
+                kasa.response(response)
+                // loader.hide()
+            }
+        }).catch(error=>{
+            kasa.error(error);
+            loader.hide()}
+        )
+    }
+
+    async getAttendance(dt=today) {
+        return api.call('PUT',{module:'sync_attendance',data:{
+            date:dt
+        }},'/company/api/')
+    }
+
+    async loadMyAttendance(rg = 'week') {
+        await this.getMyAttendance(rg).then(response => {
+            if(anton.IsRequest(response)){
+                let recs = response.message;
+                let tr = ""
+                recs.map(record => {
+                    console.table(record)
+                    tr += `
+                        <tr>
+                            <td>${record['date']}</td>
+                            <td>${record['time_in']}</td>
+                            <td>${record['time_in']}</td>
+                        </tr>
+                        
+                    `
+                })
+
+                $('#att_bd').html(tr)
+            } else {
+                kasa.response(response)
+            }
+        }).catch(error => {kasa.error(error)})
+    }
+
+    async getMyAttendance(rg) {
+        return api.call('VIEW',{module:'attendance',data:{mypk:$('#mypk').val(),range:rg}},'/company/api/')
+    }
 }
 
 const staff = new Staff()

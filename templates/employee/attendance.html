@@ -1,0 +1,58 @@
+{% extends 'employee/emp_base.html' %}
+{% load static %}
+
+{% block body %}
+<div class="card-header">
+    <div class="w-100 d-flex">
+        <div class="w-50 d-flex"></div>
+        <div class="w-50 d-flex justify-content-end"><input id="attd_date" style="width: fit-content" type="date"  class="form-control"></div>
+    </div>
+</div>
+<div class=card-body>
+   <div id="x_start" class="table-responsive">
+
+   </div>
+</div>
+
+    <script>
+        let frm = `
+            <table id="attd_table" class="table table-responsive-md">
+           <thead>
+                <tr>
+                    <th>NAME</th>
+                    <th>POSITION</th>
+                    <th>STATUS</th>
+                    <th>FIRST CHECK</th>
+                    <th>LAST CHECK</th>
+                </tr>
+           </thead>
+
+           <tbody id="att_bd">
+           <tr class="loading-row">
+               <td colspan="5" class="text-center">
+                   <div class="spinner-border text-primary" role="status">
+                       <span class="sr-only">Loading...</span>
+                   </div>
+               </td>
+           </tr>
+           </tbody>
+       </table>
+        `
+
+        $('#x_start').html(frm)
+
+        $(document).ready(function(){
+            // laod attendance
+            staff.loadAttendance()
+
+            $('#attd_date').change(function () {
+                $('#x_start').empty()
+                $('#x_start').html(frm)
+                let dt = $(this).val()
+                staff.loadAttendance(dt)
+            })
+        })
+    </script>
+
+
+{% endblock %}

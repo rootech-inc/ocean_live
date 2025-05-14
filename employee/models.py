@@ -20,6 +20,8 @@ class Attendance(models.Model):
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_late = models.BooleanField(default=True)
+    dep_text = models.CharField(null=True,max_length=20)
 
     def obj(self):
         return {
@@ -31,8 +33,11 @@ class Attendance(models.Model):
             'status': self.status,
             'notes': self.notes,
             'created_at': self.created_at,
-            'updated_at': self.updated_at
+            'updated_at': self.updated_at,
+            'is_late':self.is_late,
+            'dept':self.dep_text
         }
+
 
     def __str__(self):
         return f"{self.emp_code} - {self.date}"
