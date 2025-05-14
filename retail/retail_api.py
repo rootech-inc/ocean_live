@@ -920,7 +920,7 @@ def interface(request):
                     barcode = str(product[1]).strip()
                     item_des = product[2].strip()
                     group = product[3]
-                    #print(product[4])
+                    print(product[2])
                     try:
                         sub_group = product[4].strip()
                     except Exception as e:
@@ -930,7 +930,7 @@ def interface(request):
                     retail1 = product[6]
 
                     # add to products
-                    subgroup = ProductSubGroup.objects.get(code='999')
+                    # subgroup = ProductSubGroup.objects.get(code='999')
                     if ProductSubGroup.objects.filter(name=sub_group).count() == 1:
                         subgroup = ProductSubGroup.objects.get(name=sub_group)
                         # delete product
@@ -945,7 +945,7 @@ def interface(request):
                     else:
                         # save new
                         Products.objects.get_or_create(subgroup=subgroup, name=item_des, barcode=barcode,
-                                                           code=code, price=retail1)
+                                                           code=code, price=retail1,is_active=True)
                         saved = saved + 1
                     # else:
                     #     not_synced = not_synced + 1

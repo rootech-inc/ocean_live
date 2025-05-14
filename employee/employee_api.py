@@ -2,7 +2,7 @@ import json
 import sys
 from decimal import Decimal
 
-from admin_panel.models import Sms, SmsApi
+from admin_panel.models import Sms, SmsApi, UserAddOns
 from ocean.settings import ATTENDANCE_URL
 from .modric import token
 import requests
@@ -140,7 +140,7 @@ def interface(request):
 
 
 
-        if method == 'VIEW':
+        elif method == 'VIEW':
             if module == 'area':
                 url = 'http://192.168.2.15/personnel/api/areas/'
 
@@ -201,6 +201,66 @@ def interface(request):
                 })
                 response = response.json()
                 success_response['message'] = response.get('data')
+                response = success_response
+
+            elif module == 'otp_auth':
+                bio_id = data.get('bio_id')
+                # bio_id = 2000
+                import requests
+                url = f"{ATTENDANCE_URL}personnel/api/employees/{bio_id}/"
+                tk   = token('solomon','Szczesny@411')
+                headers = {
+                    "Authorization": f"JWT {tk}",
+                    "Content-Type": "application/json",
+                }
+                rsp1 = requests.get(url, headers=headers,params={
+                    "page_size": 10000, "ordering": "id"
+                })
+                rsp = rsp1.json()
+                if rsp.get('detail'):
+                    response['status_code'] = 404
+                    response['message'] = rsp.get('detail')
+                else:
+
+                    # make otp
+                    import random
+                    otp = random.randint(100000, 999999)
+                    message = f"Your verification code is {otp}. Do not share this code with anyone."
+                    mobile = rsp.get('mobile')
+                    if len(mobile) == 10:
+                        success_response['message'] = {
+                            'otp':otp,
+                            'msg':f"OTP sent to {mobile}, please confirm it is you"
+                        }
+                        Sms.objects.create(
+                            api=SmsApi.objects.get(is_default=True),
+                            to=mobile,
+                            message=message
+                        )
+                        response = success_response
+                    else:
+                        success_response['status_code'] = 505
+                        success_response['message'] = f"{mobile} is an invalid phone number"
+
+                    response = success_response
+
+
+            else:
+                response['message'] = "Invalid Module"
+                response['status_code'] = 505
+    
+        elif method == 'PATCH':
+            if module == 'update_auth':
+                bio_id = data.get('bio_id')
+                bio_password = data.get('bio_password')
+                mypk = data.get('mypk')
+
+                user = User.objects.get(pk=mypk)
+                ad_on = UserAddOns.objects.get(user=user)
+                ad_on.bio_id = bio_id
+                ad_on.bio_password = bio_password
+                ad_on.save()
+
                 response = success_response
 
     except Exception as e:

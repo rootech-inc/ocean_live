@@ -204,6 +204,7 @@ class Products(models.Model):
 
     is_butch = models.BooleanField(default=False)
     barcodes = models.TextField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         unique_together = (('subgroup', 'code','entity'),)

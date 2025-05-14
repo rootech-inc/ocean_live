@@ -1,0 +1,105 @@
+{% extends 'employee/emp_base.html' %}
+{% load static %}
+
+{% block body %}
+    <div class="card-body">
+    <div class="container">
+        <div class="calendar-wrapper">
+            <div class="row mb-3">
+                <div class="col">
+                    <h4 class="text-center">Attendance Calendar</h4>
+                </div>
+            </div>
+            
+            <div class="row text-center font-weight-bold mb-2">
+                <div class="col">Monday</div>
+                <div class="col">Tuesday</div> 
+                <div class="col">Wednesday</div>
+                <div class="col">Thursday</div>
+                <div class="col">Friday</div>
+            </div>
+
+            <div class="row mb-2">
+                <div class="col">
+                    <div class="card h-100 attendance-card present">
+                        <div class="card-body">
+                            <h5 class="card-title">16</h5>
+                            <small class="text-success">Present</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 attendance-card present">
+                        <div class="card-body">
+                            <h5 class="card-title">17</h5>
+                            <small class="text-success">Present</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 attendance-card present">
+                        <div class="card-body">
+                            <h5 class="card-title">18</h5>
+                            <small class="text-success">Present</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 attendance-card present">
+                        <div class="card-body">
+                            <h5 class="card-title">19</h5>
+                            <small class="text-success">Present</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 attendance-card present">
+                        <div class="card-body">
+                            <h5 class="card-title">20</h5>
+                            <small class="text-success">Present</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-2">
+                <div class="col">
+                    <div class="card h-100 attendance-card present">
+                        <div class="card-body">
+                            <h5 class="card-title">23</h5>
+                            <small class="text-success">Present</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 attendance-card absent">
+                        <div class="card-body">
+                            <h5 class="card-title">24</h5>
+                            <small class="text-danger">Absent</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 attendance-card present">
+                        <div class="card-body">
+                            <h5 class="card-title">25</h5>
+                            <small class="text-success">Present</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card h-100 attendance-card present">
+                        <div class="card-body">
+                            <h5 class="card-title">26</h5>
+                            <small class="text-success">Present</small>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        
+    
+    
+            </div>
+{% endblock %}

@@ -293,6 +293,8 @@ def interface(request):
                     issue_type = data.get('issue_type')
                     created_by = User.objects.get(id=data.get('created_by'))
                     car_no = data.get('car_no')
+                    loc_id = data.get('loc_id')
+                    location = Location.objects.get(pk=loc_id) if loc_id else Location.objects.get(loc_id='002')
                         
                     issue = Issue.objects.create(
                         contractor=contractor,
@@ -301,7 +303,8 @@ def interface(request):
                         issue_type=issue_type,
                         created_by=created_by,
                         issue_no=issue_no,
-                        car_no=car_no
+                        car_no=car_no,
+                        location=location
                     )
                     total_amount = 0
                     total_qty = 0

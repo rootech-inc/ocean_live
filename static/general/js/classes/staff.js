@@ -273,17 +273,65 @@ class Staff {
         amodal.setFooterHtml(`<button id="verify_bio_credentials" class="btn btn-info btn-sm">SAVE</button>`)
         amodal.show()
 
-        $('#verify_bio_credentials').click(function(){
+        $('#verify_bio_credentials').click(async function(){
             // get otp
             let idsx = ['bio_id','bio-password']
+            let bio_id = $('#bio_id').val()
+            let bio_password = $('#bio-password').val()
             if(anton.validateInputs(idsx)){
-                
+                let payload = {
+                    module:'otp_auth',
+                    data:anton.Inputs(idsx)
+                }
+
+                await api.v2('VIEW',payload,'/company/api/').then(response => {
+                    if(anton.IsRequest(response)){
+                        let msg = response.message
+                        let otp = msg.otp
+                        let comment = msg.msg
+                        form = fom.text('otp',comment,true,6)
+                        amodal.setBodyHtml(form)
+                        amodal.setTitleHtml("Validate")
+                        amodal.setFooterHtml(`<button id='valid_otp' class="btn btn-success">Complete</button>`)
+
+                        $('#valid_otp').click(async function(){
+                            let entered_otp = $('#otp').val();
+                            if(entered_otp == otp){
+                                // send update request
+                                let payload = {
+                                    module:'update_auth',
+                                    data:{
+                                        bio_id:bio_id,
+                                        bio_password:bio_password,
+                                        mypk:$('#mypk').val()
+                                    }
+                                }
+
+                                await api.v2('PATCH',payload,'/company/api/').then(response => {
+                                    console.table(response)
+                                    if(anton.IsRequest(response)){
+                                        kasa.confirm("Credentials Update",1,'here')
+                                    } else {
+                                        kasa.error(response)
+                                    }
+                                }).catch(error => {
+                                    kasa.error(error)
+                                })
+                            } else {
+                                kasa.error("Invalid Otp")
+                            }
+                        })
+                    } else {
+                        kasa.response(response)
+                    }
+                }).catch(error => {
+                    kasa.error(error)
+                })
             }
 
-            form = fom.text('otp','an one-time password has been sent to your number',true,6)
-            amodal.setBodyHtml(form)
-            amodal.setTitleHtml("Validate")
-            amodal.setFooterHtml(`<button class="btn btn-success">Complete</button>`)
+
+
+            
         })
     }
 }
