@@ -7,7 +7,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
-from pygments.lexer import default
+
 
 from community.models import questions, QuestionTags
 from blog.models import Providers

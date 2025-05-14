@@ -41,28 +41,36 @@ Calendar.prototype.nextMonth = function() {
     11 == this.CurrentMonth ? (this.CurrentMonth = 0, this.CurrentYear = this.CurrentYear + 1) : this.CurrentMonth = this.CurrentMonth + 1, this.divId = '[data-active="false"] .render', this.showCurrent()
 }, Calendar.prototype.prevMonth = async function() {
     console.table("Previous")
-    let month = this.CurrentMonth
-    let yr = this.CurrentYear
-    let payload = {}
-    payload['data'] = {
-        month:month,
-        year:yr,
-        mypk:$('#mypk').val()
-    }
-    console.table(payload)
-    await api.v2('VIEW',payload,'/employee/api/').then(response => {
-        console.table(response)
-    }).catch(error => {
-        kasa.error(error)
-    })
+
     0 == this.CurrentMonth ? (this.CurrentMonth = 11, this.CurrentYear = this.CurrentYear - 1) : this.CurrentMonth = this.CurrentMonth - 1, this.divId = '[data-active="false"] .render', this.showCurrent()
 }, Calendar.prototype.previousYear = function() {
     this.CurrentYear = this.CurrentYear - 1, this.showCurrent()
     
 }, Calendar.prototype.nextYear = function() {
     this.CurrentYear = this.CurrentYear + 1, this.showCurrent()
-}, Calendar.prototype.showCurrent = function() {
+}, Calendar.prototype.showCurrent = async function() {
     this.Calendar(this.CurrentYear, this.CurrentMonth)
+    let month = this.CurrentMonth
+    let yr = this.CurrentYear
+    let payload = {
+        module:'attendance'
+    }
+    payload['data'] = {
+        month:month,
+        year:yr,
+        mypk:$('#mypk').val()
+    }
+    console.table(payload)
+    await api.v2('VIEW',payload,'/company/api/').then(response => {
+        console.table(response)
+        if(anton.IsRequest(response)){
+            staff.getArea()
+        } else {
+            kasa.response(response)
+        }
+    }).catch(error => {
+        kasa.error(error)
+    })
 }, Calendar.prototype.checkActive = function() {
     1 == document.querySelector(".months").getAttribute("class").includes("active") ? document.querySelector(".months").setAttribute("class", "months") : document.querySelector(".months").setAttribute("class", "months active"), "true" == document.querySelector(".month-a").getAttribute("data-active") ? (document.querySelector(".month-a").setAttribute("data-active", !1), document.querySelector(".month-b").setAttribute("data-active", !0)) : (document.querySelector(".month-a").setAttribute("data-active", !0), document.querySelector(".month-b").setAttribute("data-active", !1)), setTimeout(function() {
         document.querySelector(".calendar .header").setAttribute("class", "header active")

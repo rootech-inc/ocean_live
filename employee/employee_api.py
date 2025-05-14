@@ -1,6 +1,7 @@
 import json
 import sys
 from decimal import Decimal
+from datetime import datetime, date
 
 from admin_panel.models import Sms, SmsApi, UserAddOns
 from ocean.settings import ATTENDANCE_URL
@@ -82,6 +83,7 @@ def interface(request):
             elif module == 'position':
                 import requests
 
+
                 url = f"{ATTENDANCE_URL}personnel/api/positions/"  # Replace with actual domain
 
                 headers = {
@@ -98,6 +100,102 @@ def interface(request):
                 response = requests.post(url, json=data, headers=headers)
                 success_response['message'] = "Position Created Successfully"
                 response = success_response
+
+            elif module == 'sync_attendance':
+                # get workers
+                tk = token('solomon', 'Szczesny@411')
+                current_datetime = datetime.now()
+                start = f"{str(current_datetime.strftime('%Y-%m-%d'))} 00:00:00"
+                end = f"{str(current_datetime.strftime('%Y-%m-%d'))} 23:59:59"
+                import requests
+                url = "http://192.168.2.15/personnel/api/employees/?page_size=10000"
+
+                payload = json.dumps({
+                    "start_time": "2024-01-01",
+                    "end_time": "2024-12-01",
+                    "emp_code": 1,
+                    "page_size": 500000,
+                    "terminal_sn": ""
+                })
+                headers = {
+                    'Authorization': f"JWT {tk}",
+                    'Content-Type': 'application/json'
+                }
+
+                resp = requests.request("GET", url, headers=headers, data=payload)
+                j_resp = json.loads(resp.text)
+
+                gl = []
+                count = j_resp['count']
+                data = j_resp['data']
+                for i in data:
+                    emp_code = i['emp_code']
+                    first_name = i['first_name']
+                    last_name = i['last_name']
+                    department = i['department']
+
+                    dep_name = department.get('dept_name')
+                    position = i['position']
+
+                    position_name = position.get('position_name') if position else ''
+                    contact = i['contact_tel']
+                    mobile = i['mobile']
+                    email = i['email']
+
+                    li = [emp_code,f"{first_name} {last_name}",dep_name,position_name,contact,email]
+                    print(li)
+
+                    # get attendance
+                    url = f"{ATTENDANCE_URL}iclock/api/transactions/?start_time={start}&end_time={end}&page_size=10000&emp_code={emp_code}"
+
+                    payload = json.dumps({
+                        "start_time": "2024-01-01T00:00:00",
+                        "end_time": "2024-01-30T00:00:00",
+                        "emp_code": 1,
+                        "page_size": 500000
+                    })
+                    headers = {
+                        'Authorization': f"JWT {tk}",
+                        'Content-Type': 'application/json'
+                    }
+
+                    att_response = requests.request("GET", url, headers=headers, data=payload)
+                    attendance = json.loads(att_response.text)
+
+                    # print(attendance)
+                    att_count = attendance['count']
+                    att_data = attendance['data']
+
+                    check_in = ""
+                    check_out = ""
+                    minutes_diff = 0
+                    present = False
+                    if attendance['count'] == 0:
+                        check_in = "N/A"
+                        check_out = "N/A"
+                    else:
+                        first_record = att_data[0]
+                        last_record = att_data[len(att_data) - 1]
+
+                        first_date_time = datetime.strptime(str(first_record['punch_time']), '%Y-%m-%d %H:%M:%S')
+                        first_time_only = first_date_time.time()
+
+                        last_date_time = datetime.strptime(str(last_record['punch_time']), '%Y-%m-%d %H:%M:%S')
+                        last_time_only = last_date_time.time()
+
+                        total_time = last_date_time - first_date_time
+                        minutes_diff = "{:.2f}".format(total_time.total_seconds() / 60)
+
+                        check_in = first_time_only
+                        check_out = last_time_only
+                        present = True
+
+                    ali = [f"{first_name} {last_name}", dep_name, position_name, str(check_in), str(check_out), present,
+                          minutes_diff]
+                    print(ali)
+
+
+
 
             elif module == 'staff':
                 import requests
@@ -156,6 +254,17 @@ def interface(request):
                 data = response.get('data')
 
                 success_response['message'] = data
+                response = success_response
+
+            elif module == 'attendance':
+                mt = data.get('month')
+                yr = data.get('year')
+                mypk = data.get('mypk')
+                add_on = UserAddOns.objects.get(user_id=mypk)
+                bio_id = add_on.bio_id
+
+                # get transactions
+
                 response = success_response
 
             elif module == 'department':
