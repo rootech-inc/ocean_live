@@ -81,7 +81,7 @@ def interface(request):
                     end_date=end_date,
                     reason=reason,
                     reliever=reliever,
-                    date_of_request=date_of_request
+                    date=date_of_request
                 )
 
                 # send sms
@@ -98,7 +98,7 @@ def interface(request):
                 Sms.objects.create(
                     api=sms_api,
                     to="0546310011",
-                    message=f"A leave request by {adon.user.username} from {start_date} to {end_date} is pending for approval."
+                    message=f"A {leave_type} leave request by {adon.user.username} from {start_date} to {end_date} is pending for approval."
                 )
 
 

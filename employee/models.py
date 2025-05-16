@@ -75,6 +75,7 @@ class Leave(models.Model):
         ('complete', 'Complete')
     ],default='pending')
     date = models.DateField()
+    reliever = models.CharField(max_length=255,null=True)
     
     def __str__(self):
         return f"{self.employee} - {self.leave_type} - {self.start_date}"

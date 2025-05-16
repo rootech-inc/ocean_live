@@ -494,14 +494,14 @@ class Staff {
         $('#emp_code').val(emp_code)
         $('#emp_code').attr('disabled',true)
 
-        $('#submit_leave_form').click(function(){
-            let ids = ['type_of_leave','emp_code','date_of_request','start_date','end_date','reliever_name','reason']
-            if(anton.validateInputs(ids)){
+        $('#submit_leave_form').click(async function () {
+            let ids = ['type_of_leave', 'emp_code', 'date_of_request', 'start_date', 'end_date', 'reliever_name', 'reason']
+            if (anton.validateInputs(ids)) {
                 let payload = {
-                    module:'leave',
-                    data:anton.Inputs(ids)
+                    module: 'leave',
+                    data: anton.Inputs(ids)
                 }
-                
+
                 // validate date
                 let start = new Date($('#start_date').val());
                 let end = new Date($('#end_date').val());
@@ -511,7 +511,15 @@ class Staff {
                     return;
                 }
 
-                console.table(payload)
+                await api.v2('PUT', payload, '/company/api/').then(response => {
+                    if(anton.IsRequest(response)){
+                        kasa.confirm(response.message,1,'here')
+                    } else {
+                        kasa.response(response)
+                    }
+                }).catch(error => {
+                    kasa.error(error)
+                })
             } else {
                 kasa.error("Invalid Form")
             }
