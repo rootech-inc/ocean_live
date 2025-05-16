@@ -12,6 +12,33 @@
     </div>
 </div>
 <div class="card-body p-2">
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <h3 class="card-title" id="total_leaves">0</h3>
+                    <p class="card-text">Total Leaves</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-warning text-warning">
+                <div class="card-body text-center">
+                    <h3 class="card-title" id="pending_leaves">0</h3>
+                    <p class="card-text">Pending Leaves</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-secondary text-success">
+                <div class="card-body text-center">
+                    <h3 class="card-title" id="approved_leaves">0</h3>
+                    <p class="card-text">Approved Leaves</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="table-responsive">
         <table id="leave_table" class="table table-bordered table-sm table-striped">
             <thead class="mt-2">
@@ -38,7 +65,7 @@
             staff.LeaveRequestForm(emp_code)
         })
 
-        staff.loadMyLeave()
+        staff.loadMyLeave('*','requested')
     })
 </script>
 {% endblock %}

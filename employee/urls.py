@@ -25,4 +25,5 @@ urlpatterns = [
     path('api/', employee_api.interface, name='reports_api'),
     path('master/attendance/',views.attendance,name='staff_attendance'),
     path('self-service/leave/', views.leave, name='staff_leave'),
+    path('master/leave/',views.master_leave,name='master_leave')
 ]
