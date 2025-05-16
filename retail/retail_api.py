@@ -908,9 +908,11 @@ def interface(request):
                 response = success_response
 
             elif module == 'sync_retail_products':
+                entity = data.get('entity',BusinessEntityTypes.objects.get(entity_type_name='retail').pk)
                 conn = ret_cursor()
                 cursor = conn.cursor()
-                query = "SELECT item_code, barcode, item_des, (SELECT group_des FROM group_mast WHERE group_mast.group_code = prod_mast.group_code) AS 'group', (SELECT sub_group_des FROM sub_group WHERE sub_group.group_code = prod_mast.group_code AND sub_group.sub_group = prod_mast.sub_group) AS 'sub_group', (SELECT supp_name FROM supplier WHERE supplier.supp_code = prod_mast.supp_code) AS 'supplier', retail1 FROM prod_mast WHERE item_type != 0"
+                query = ("SELECT item_code, barcode, item_des, (SELECT group_des FROM group_mast WHERE group_mast.group_code = prod_mast.group_code) AS 'group', (SELECT sub_group_des FROM sub_group WHERE sub_group.group_code = prod_mast.group_code AND sub_group.sub_group = prod_mast.sub_group) "
+                         "AS 'sub_group', (SELECT supp_name FROM supplier WHERE supplier.supp_code = prod_mast.supp_code) AS 'supplier', retail1 FROM prod_mast WHERE item_type != 0 order by item_code desc")
                 cursor.execute(query)
                 saved = 0
                 not_synced = 0
@@ -920,11 +922,14 @@ def interface(request):
                     barcode = str(product[1]).strip()
                     item_des = product[2].strip()
                     group = product[3]
-                    print(product[2])
+
+
                     try:
                         sub_group = product[4].strip()
                     except Exception as e:
                         sub_group = product[4]
+
+
 
                     supplier = product[5]
                     retail1 = product[6]
@@ -934,19 +939,25 @@ def interface(request):
                     if ProductSubGroup.objects.filter(name=sub_group).count() == 1:
                         subgroup = ProductSubGroup.objects.get(name=sub_group)
                         # delete product
+
                     if Products.objects.filter(code=code).exists():
-                            # update
+                        # update
                         prod = Products.objects.get(code=code)
                         prod.barcode = barcode
                         prod.name = item_des
                         prod.price = retail1
                         prod.subgroup = subgroup
+                        prod.entity_id = entity
+
                         prod.save()
+                        print("Okay")
+
                     else:
                         # save new
                         Products.objects.get_or_create(subgroup=subgroup, name=item_des, barcode=barcode,
-                                                           code=code, price=retail1,is_active=True)
+                                                           code=code, price=retail1,is_active=True,entity_id = entity)
                         saved = saved + 1
+                        print("CREATED", code, barcode, product[2])
                     # else:
                     #     not_synced = not_synced + 1
                     #     error.append(f"{barcode} - {item_des} # sub group {sub_group} / does not exist")
@@ -2355,6 +2366,7 @@ def interface(request):
 
                 if products.count() > 0:
                     for product in products:
+                        print(product)
                         # #print(product)
                         rec_list = []
                         for r in product.recipe():
@@ -2380,6 +2392,10 @@ def interface(request):
                             'previous': product.prev()
                         })
 
+                        print(len(arr))
+                        if len(arr) < 1:
+                            print("NO FISH HERE")
+                            raise Exception(f"Item not synced")
                         success_response['message'] = arr
                 else:
                     success_response['status_code'] = 404
@@ -3166,7 +3182,7 @@ ORDER BY
                 entity_pk = data.get('entity')
                 ini = data.get('ini','ini')
 
-                print(data)
+                # print(data)
                 entity = BusinessEntityTypes.objects.get(pk=entity_pk)
                 # if ini == 'ini':
                 #     pk = Products.objects.filter(entity=entity).last().pk
@@ -3179,7 +3195,10 @@ ORDER BY
                 for prod in prods:
                     print(prod.obj())
                     arr.append(prod.obj())
-                success_response['message'] = arr
+                if len(arr) > 0:
+                    success_response['message'] = arr
+                else:
+                    raise Exception("Item Not Synced")
 
 
             elif module == 'group_master':

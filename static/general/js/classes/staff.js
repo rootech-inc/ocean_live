@@ -462,7 +462,6 @@ class Staff {
                     <div class='col-sm-4'>${fom.date('start_date', 'Start of leave', true)}</div>
                     <div class='col-sm-4'>${fom.date('end_date', 'End of leave', true)}</div>
 
-                    <div class='col-sm-4'>${fom.number('total_days', 'Total number of days requested', true, 3)}</div>
                     <div class='col-sm-4'>${fom.text('reliever_name', 'Who will take over your tasks while you are away?', true)}</div>
 
                     <div class='col-sm-4'>${fom.file('supporting_document', 'Upload medical certificate or supporting documents if required')}</div>
@@ -496,11 +495,20 @@ class Staff {
         $('#emp_code').attr('disabled',true)
 
         $('#submit_leave_form').click(function(){
-            let ids = ['type_of_leave','emp_code','date_of_request','start_date','end_date','total_days','reliever_name','reason']
+            let ids = ['type_of_leave','emp_code','date_of_request','start_date','end_date','reliever_name','reason']
             if(anton.validateInputs(ids)){
                 let payload = {
                     module:'leave',
                     data:anton.Inputs(ids)
+                }
+                
+                // validate date
+                let start = new Date($('#start_date').val());
+                let end = new Date($('#end_date').val());
+
+                if (end <= start) {
+                    kasa.error("End date must be greater than start date");
+                    return;
                 }
 
                 console.table(payload)

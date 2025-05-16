@@ -13,7 +13,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 from django.contrib.auth.models import User
 
-from employee.models import Attendance
+from employee.models import Attendance, Leave
+
 
 @csrf_exempt
 def interface(request):
@@ -58,6 +59,53 @@ def interface(request):
 
 
                 success_response['message'] = "Area Created Successfully"
+
+            elif module == 'leave':
+                emp_code = data.get('emp_code')
+                leave_type = data.get('type_of_leave')
+                start_date = data.get('start_date')
+                end_date = data.get('end_date')
+                reason = data.get('reason')
+                reliever = data.get('reliever_name')
+                date_of_request = data.get('date_of_request')
+
+                # get user
+                adon = UserAddOns.objects.get(bio_id=emp_code)
+                user = adon.user
+
+                # create leave
+                Leave.objects.create(
+                    employee=user,
+                    leave_type=leave_type,
+                    start_date=start_date,
+                    end_date=end_date,
+                    reason=reason,
+                    reliever=reliever,
+                    date_of_request=date_of_request
+                )
+
+                # send sms
+                sms_api = SmsApi.objects.get(is_default=True)
+                # Message to employee
+                employee_message = f"Dear {user.first_name}, your leave request from {start_date} to {end_date} has been submitted and is pending approval."
+                Sms.objects.create(
+                    api=sms_api,
+                    to=user.useraddon.mobile,
+                    message=employee_message
+                )
+
+                # Notify provided phone number
+                Sms.objects.create(
+                    api=sms_api,
+                    to="0546310011",
+                    message=f"A leave request by {adon.user.username} from {start_date} to {end_date} is pending for approval."
+                )
+
+
+
+
+
+
 
 
             elif module == 'department':

@@ -1,6 +1,6 @@
+from django.contrib.auth.models import User
 from django.db import models
-
-
+from datetime import timedelta
 
 
 class Attendance(models.Model):
@@ -46,3 +46,38 @@ class Attendance(models.Model):
         db_table = 'attendance'
         ordering = ['-date', '-time_in']
         unique_together = ['emp_code', 'date']
+
+
+class Leave(models.Model):
+    employee = models.ForeignKey(User, on_delete=models.CASCADE,null=False)
+    
+    leave_type = models.CharField(max_length=255,null=False,choices=[
+        ('sick', 'Sick'),
+        ('casual', 'Casual'),
+        ('annual', 'Annual'),
+        ('maternity', 'Maternity'),
+        ('paternity', 'Paternity'),
+        ('marriage', 'Marriage'),
+        ('bereavement', 'Bereavement'),
+        ('compensatory', 'Compensatory'),
+        ('unpaid', 'Unpaid Leave')
+    ])
+
+    start_date = models.DateField(null=False)
+    end_date = models.DateField(null=False)
+
+    reason = models.TextField(null=False)
+    status = models.CharField(max_length=20, choices=[
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('pending', 'Pending'),
+        ('overdue', 'Overdue'),
+        ('complete', 'Complete')
+    ],default='pending')
+    date = models.DateField()
+    
+    def __str__(self):
+        return f"{self.employee} - {self.leave_type} - {self.start_date}"
+    
+    def number_of_days(self):
+        return (self.end_date - self.start_date).days + 1
