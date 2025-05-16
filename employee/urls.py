@@ -23,5 +23,6 @@ urlpatterns = [
     path('departments/', views.departments, name='departments'),
     path('employees/', views.employees, name='staffs'),
     path('api/', employee_api.interface, name='reports_api'),
-    path('master/attendance/',views.attendance,name='staff_attendance')
+    path('master/attendance/',views.attendance,name='staff_attendance'),
+    path('self-service/leave/', views.leave, name='staff_leave'),
 ]

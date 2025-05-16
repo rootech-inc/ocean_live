@@ -157,19 +157,39 @@ class Staff {
             if(anton.IsRequest(response)){
                 let tr = "";
                 next_code = response.message.length + 1
+                let arr_4_csv = [
+                    ['CODE','NAME','LOCATION','POSITION','ATTENDANCE','BIO']
+                ]
+
                 response.message.map(staff => {
 
-                    // console.table(staff)
+                    // console.table(staff['fingerprint'])
+                    const fingerprint = staff['fingerprint'];
+                    let is_bio = false;
+                    if(fingerprint !== '-'){
+                        is_bio = true;
+                    }
+
+                    arr_4_csv.push([staff.emp_code,`${staff.first_name} ${staff.last_name}`,
+                        staff.department.dept_name,staff.position.position_name,is_bio,fingerprint])
+                    
+                    console.log(is_bio)
                     tr +=  `<tr>
                                 <td>${staff.emp_code}</td>
                                 <td>${staff.first_name} ${staff.last_name}</td>
                                 <td>${staff.department.dept_name}</td>
                                 <td>${staff.position.position_name}</td>
+                                <td>${is_bio}</td>
+                                <td>${fingerprint}</td>
                            </tr>`
                 })
 
                 $('#empl').html(tr)
                 $('#myTable').DataTable();
+                $('#download').click(function(){
+                    let data = anton.convertToCSV(arr_4_csv);
+                    anton.downloadCSV('staff.csv',data)
+                })
                 loader.hide()
             } else {
                 kasa.response(response)
@@ -197,6 +217,7 @@ class Staff {
                 return
             }
         })
+
         form += fom.selectv2('department', deps, '', true)
 
 
@@ -344,6 +365,7 @@ class Staff {
                 let tr = "";
                 let st = "";
                 attds.map(attd => {
+                    console.table(attd)
                     let tx = ''
                     if (attd[5] === 'absent'){
                         tx = 'text-danger'
@@ -415,6 +437,77 @@ class Staff {
 
     async getMyAttendance(rg) {
         return api.call('VIEW',{module:'attendance',data:{mypk:$('#mypk').val(),range:rg}},'/company/api/')
+    }
+
+    LeaveRequestForm(emp_code){
+        let formHTML = `
+            <div id="employee_leave_form" class="p-3 container">
+                <div class='row'>
+                <div class='col-sm-4'>${fom.selectv2('type_of_leave', [
+                        { val: 'annual', desc: 'Annual Leave' },
+                        { val: 'sick', desc: 'Sick Leave' },
+                        { val: 'casual', desc: 'Casual Leave' },
+                        { val: 'maternity', desc: 'Maternity Leave' },
+                        { val: 'paternity', desc: 'Paternity Leave' },
+                        { val: 'study', desc: 'Study Leave' },
+                        { val: 'compassionate', desc: 'Compassionate Leave' },
+                        { val: 'unpaid', desc: 'Unpaid Leave' },
+                        { val: 'other', desc: 'Other' }
+                    ], '', true)}</div>
+
+
+                    <div class='col-sm-4'>${fom.text('emp_code', 'Unique ID assigned to employee', true)}</div>
+                    <div class='col-sm-4'>${fom.date('date_of_request', 'Date you are submitting this form', true)}</div>
+
+                    <div class='col-sm-4'>${fom.date('start_date', 'Start of leave', true)}</div>
+                    <div class='col-sm-4'>${fom.date('end_date', 'End of leave', true)}</div>
+
+                    <div class='col-sm-4'>${fom.number('total_days', 'Total number of days requested', true, 3)}</div>
+                    <div class='col-sm-4'>${fom.text('reliever_name', 'Who will take over your tasks while you are away?', true)}</div>
+
+                    <div class='col-sm-4'>${fom.file('supporting_document', 'Upload medical certificate or supporting documents if required')}</div>
+                    <div class='col-sm-6'></div>
+                </div>
+                
+                
+                
+                
+                
+                
+                
+                
+
+                
+                
+                
+
+                ${fom.textarea('reason', 3, true)}
+
+
+                
+
+                ${fom.button('submit_leave_form', 'submit', 'success')}
+            </div>
+            `;
+        amodal.setBodyHtml(formHTML)
+        amodal.setSize('L')
+        amodal.show()
+        $('#emp_code').val(emp_code)
+        $('#emp_code').attr('disabled',true)
+
+        $('#submit_leave_form').click(function(){
+            let ids = ['type_of_leave','emp_code','date_of_request','start_date','end_date','total_days','reliever_name','reason']
+            if(anton.validateInputs(ids)){
+                let payload = {
+                    module:'leave',
+                    data:anton.Inputs(ids)
+                }
+
+                console.table(payload)
+            } else {
+                kasa.error("Invalid Form")
+            }
+        })
     }
 }
 

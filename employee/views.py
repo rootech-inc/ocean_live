@@ -1,6 +1,8 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
+from admin_panel.models import UserAddOns
+
 @login_required()
 def index(request):
     context = {
@@ -60,3 +62,18 @@ def attendance(request):
     }
 
     return render(request, 'employee/attendance.html', context=context)
+
+
+@login_required()
+def leave(request):
+    context = {
+        'nav': True,
+        'page': {
+            'title': "Leave",
+            'nav': True
+        },
+        'my_adon':UserAddOns.objects.get(user=request.user)
+    }
+
+    return render(request, 'employee/leave.html', context=context)
+

@@ -200,9 +200,9 @@ def interface(request):
                     st = 'absent'
                     is_late = True
                     late_duration = {
-                        "SHOP": datetime.strptime('10:05', '%H:%M').time(),
-                        "MOTOR": datetime.strptime('08:05', '%H:%M').time(),
-                        "METERS": datetime.strptime('08:05', '%H:%M').time()
+                        "SHOP": datetime.strptime('10:06', '%H:%M').time(),
+                        "MOTORS": datetime.strptime('08:06', '%H:%M').time(),
+                        "METERS": datetime.strptime('08:06', '%H:%M').time()
                     }
 
                     if present:
@@ -212,13 +212,16 @@ def interface(request):
                         dept_str = late_duration.get(dep_name, '00:00')
                         dept = datetime.strptime(dept_str, '%H:%M').time() if isinstance(dept_str, str) else dept_str
 
-                        print(dept)
+                        
                         if check_in > dept:
                             is_late = True
                         else:
                             is_late = False
 
                         # check late
+                        print("Check In",check_in)
+                        print("Required Time", dept)
+                        print()
 
 
                     ali = [f"{first_name} {last_name}", dep_name, position_name, str(check_in), str(check_out), st,
@@ -306,7 +309,7 @@ def interface(request):
             if module == 'area':
                 url = 'http://192.168.2.15/personnel/api/areas/'
 
-                tk = token('solomon','Szczesny@411')
+                tk = token('solomon','')
                 headers = {
                     'Authorization': f'JWT {tk}',
                     'Content-Type': 'application/json',

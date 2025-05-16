@@ -3,14 +3,16 @@
 
 {% block body %}
     <div class="card-header">
-        <button class="btn btn-info" id="new_employee">NEW</button>
+        <button class="btn btn-primary" id="new_employee">NEW</button>
+        <button class="btn btn-info" id="download"> Download</button>
+        
     </div>
 	<div class="card-body p-2">
         <div class="table-responsive">
             <table id="myTable" class="table table-sm">
                 <thead>
                     <tr>
-                        <th>ID</th><th>NAME</th><th>DEPARTMENT</th><th>POSITION</th>
+                        <th>ID</th><th>NAME</th><th>DEPARTMENT</th><th>POSITION</th><th>IS_BIO</th><th>BIO</th>
                     </tr>
                 </thead>
                 <tbody id="empl"></tbody>

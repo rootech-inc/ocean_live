@@ -425,6 +425,20 @@
       </li>
 
       <li class="nav-item">
+        <a class="nav-link collapsed" data-bs-target="#acct-selfservice" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-megaphone"></i><span>Self Service</span><i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="acct-selfservice" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+          <li class="nav-item">
+            <a class="nav-link collapsed" href="{% url 'staff_leave' %}">
+              <i class="bi bi-grid"></i>
+              <span>Leave</span>
+            </a>
+          </li>
+        </ul>
+      </li>
+
+      <li class="nav-item">
         <a class="nav-link collapsed" data-bs-target="#acct-nav" data-bs-toggle="collapse" href="#">
           <i class="bi bi-megaphone"></i><span>Personal</span><i class="bi bi-chevron-down ms-auto"></i>
         </a>

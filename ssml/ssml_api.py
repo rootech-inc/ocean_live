@@ -1797,7 +1797,9 @@ def interface(request):
                         ct = 0
                         user = User.objects.get(id=mypk)
                         transactions = IssueTransaction.objects.filter(issue=issue)
+                        
                         for transaction in transactions:
+                            location = transaction.issue.location
                             ct += 1
                             qty = transaction.total_qty * -1
                             if tp == 'RET':

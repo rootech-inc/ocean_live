@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 
 from ssml.form import ContractorErrorForm
-from ssml.models import Contractor, ContractorError, Grn, GrnTransaction, InventoryMaterial, InvoiceHD, Issue, IssueTransaction, MaterialOrderItem, Meter, Plot, Reedem, Service, ServiceMaterialRates, ServiceOrder, ServiceOrderItem, ServiceType, ServiceTypeServices, Supplier
+from ssml.models import Contractor, ContractorError, Grn, GrnTransaction, InventoryMaterial, InvoiceHD, Issue, IssueTransaction, Location, MaterialOrderItem, Meter, Plot, Reedem, Service, ServiceMaterialRates, ServiceOrder, ServiceOrderItem, ServiceType, ServiceTypeServices, Supplier
 # Create your views here.
 @login_required
 def index(request):
@@ -502,7 +502,8 @@ def upload_service_order(request):
                             old_meter_no = old_meter,
                             new_meter=meter_no,
                             status=order_status,
-                            created_by=request.user
+                            created_by=request.user,
+                            location=Location.objects.get(loc_id='002')
                         ).save()
                     print("Meter Created")
                 except Exception as e:
