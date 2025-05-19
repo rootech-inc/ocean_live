@@ -49,7 +49,7 @@ def carjobs(request):
         'nav': True,
         'searchButton': 'carJob'
     }
-    messages.info(request, "You can now view all data but limited to 100 records")
+    # messages.info(request, "You can now view all data but limited to 100 records")
     return render(request, 'cmms/car-jobs.html', context=context)
 
 
