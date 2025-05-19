@@ -78,7 +78,7 @@ urlpatterns = [
     # path('inventory/receiving/new/', views.new_grn, name='new_grn'),
 
     # accounts urls
-    path('accounts/', views.accounts, name='accounts'),
+    path('accounts/', views.accounts, name='bank_accounts'),
     path('accounts/tax-master/', views.tax_master, name='tax_master'),
     path('accounts/bank-master/', views.bank_master, name='bank-master'),
     path('accounts/bank_master/post/', views.bank_posts, name='bank-post'),

@@ -2318,10 +2318,6 @@ def api(request):
                     response['message'] = "Work Closed"
 
 
-
-
-
-
                 elif module == 'approve':
                     doc = data.get('doc')
                     key = data.get('key')
@@ -2576,6 +2572,32 @@ def api(request):
 
                     response['status_code'] = 200
                     response['message'] = f'Proforma {task}'
+
+                elif module == 'service_feedback':
+                    job_id = data.get('job_id')
+                    user = User.objects.get(pk=data.get('mypk'))
+                    job = JobCard.objects.get(pk=job_id)
+                    status = data.get('feedback-status')
+
+                    # update job status
+                    job.is_feedback = True
+
+                    # add jobs feedback
+                    JobCardFeedback(
+                        jobcard=job,
+                        status='success' if status else 'issue',
+                        remarks=data.get('remarks'),
+                        created_by=user
+                    ).save()
+
+                    job.save()
+
+                    response['status_code'] = 200
+                    response['message'] = "Feedback Recorded"
+
+                else:
+                    raise Exception("Invalid Module")
+            
             except Exception as e:
                 error_type, error_instance, traceback = sys.exc_info()
                 tb_path = traceback.tb_frame.f_code.co_filename

@@ -240,6 +240,7 @@ class Staff {
         let areas = []
         await this.getArea().then(response => {
             if (anton.IsRequest(response)) {
+                console.table(response)
                 response.message.map(area => {
                     areas.push({
                         val:area.id,
@@ -250,7 +251,7 @@ class Staff {
                 kasa.response(response)
 
             }
-        })
+        }).catch(error => {kasa.error(error)})
         form += fom.multiselect('area', areas, '', true)
 
 
