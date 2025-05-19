@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.contrib.auth.models import User
 
 
-from ssml.models import Cardex,Location, InvoiceHD,InvoiceTransactions, Contractor, Expense, InventoryGroup, InventoryMaterial, Issue, IssueTransaction, Ledger, MaterialOrderItem, Meter, Plot, RedeemTransactions, Reedem, Service, ServiceOrder, ServiceOrderItem, ServiceOrderReturns, ServiceType, Supplier, Grn, GrnTransaction, ContractorError
+from ssml.models import Cardex,Location, InvoiceHD,InvoiceTransactions, Contractor, Expense, InventoryGroup, InventoryMaterial, Issue, IssueTransaction, Ledger, MaterialOrderItem, Meter, PaySlipHD, Plot, RedeemTransactions, Reedem, Service, ServiceOrder, ServiceOrderItem, ServiceOrderReturns, ServiceType, Supplier, Grn, GrnTransaction, ContractorError
 
 
 @csrf_exempt
@@ -1692,7 +1692,76 @@ def interface(request):
 
                 success_response['message'] = f"UPDATED {updated}, CREATED:{created}"
 
-            
+            elif module == 'post_invoice':
+                entry_no = data.get('entry_no')
+                invoice = InvoiceHD.objects.get(entry_no=entry_no)
+                regs = 0
+                reg_amt = 0
+
+                reps = 0
+                rep_amt = 0
+
+                news = 0
+                new_amt = 0
+
+                
+
+                for tran in invoice.transactions():
+                    meter_no = tran.get('asset')
+                    remarks = tran.get('remarks')
+
+                    srv = ServiceOrder.objects.get(new_meter=meter_no)
+
+                    tm = srv.total_amount()
+                    
+
+                    if remarks == 'Installation':
+                        news += 1
+                        new_amt += tm
+                    
+                    if remarks == 'Replacement':
+                        reps += 1
+                        rep_amt += tm
+
+                    if remarks == 'Regularization':
+                        regs += 1
+                        reg_amt += tm
+
+                ps_entry_no = f"SSML-PS-{PaySlipHD.objects.all().conut()}"
+                ref = entry_no
+                entry_date = data.get('entry_date',timezone.now())
+                ps_type = 'CI'
+                remarks = f"Payslip for {regs + reps + news} jobs done ({regs} Regularization, {reps} Replacements, {news} New Installations)"
+                total_amount = reg_amt + rep_amt + new_amt
+
+
+                from datetime import datetime, timedelta
+
+                # Ensure entry_date is a date object
+                if isinstance(entry_date, str):
+                    entry_date_obj = datetime.strptime(entry_date, "%Y-%m-%d").date()
+                else:
+                    entry_date_obj = entry_date
+
+                due_date = entry_date_obj + timedelta(days=60)
+                created_by = User.objects.get(pk=data.get('mypk'))
+
+                print("Regularization",regs,reg_amt)
+                print("Replacement",reps,rep_amt)
+                print("Installations",news,new_amt)
+
+                # create header
+                PaySlipHD.objects.create(
+                    entry_no=ps_entry_no,
+                    etry_date=entry_date,
+                    ps_type=ps_type,
+                    ref=entry_no,
+                    remarks=remarks,
+                    
+                )
+
+                print(reg_amt + rep_amt + new_amt)
+
                 
                 
             
@@ -1960,6 +2029,26 @@ def interface(request):
                     success_response['message'] = str(e)
 
                 print(success_response)
+
+            elif module == "service_type":
+                debit_account = data.get('debit_account')
+                credit_account = data.get('credit_account')
+                service_id = data.get('service_id')
+
+                try:
+                    service_type = ServiceType.objects.get(pk=service_id)
+                    service_type.debit_account_id = debit_account
+                    service_type.credit_account_id = credit_account
+                    service_type.save()
+                    success_response['status_code'] = 200
+                    success_response['message'] = "Service type updated successfully"
+                except ServiceType.DoesNotExist:
+                    success_response['status_code'] = 404
+                    success_response['message'] = "Service type not found"
+                except Exception as e:
+                    success_response['status_code'] = 500
+                    success_response['message'] = str(e)
+                
 
             else:
                 success_response['status_code'] = 505

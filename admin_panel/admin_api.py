@@ -11,7 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from admin_panel.anton import md5only, remove_html_tags, generate_random_password
 from admin_panel.cron_exe import execute_script
-from admin_panel.models import DocApprovals, GeoCity, GeoCitySub, Reminder, SmsApi, UserAddOns, EvatCredentials, \
+from admin_panel.models import BankAccounts, DocApprovals, GeoCity, GeoCitySub, Reminder, SmsApi, UserAddOns, EvatCredentials, \
     Locations, \
     Departments, TicketTrans, Sms, TicketHd, MailSenders, MailQueues, MailAttachments, BusinessEntityTypes
 from blog.anton import make_md5
@@ -828,6 +828,15 @@ def index(request):
 
                 success_response['message'] = arr
                 response = success_response
+
+            elif module == 'bank_accounts':
+                pk = data.get('pk','*')
+                if pk == '*':
+                    response['message'] = [acct.obj() for acct in BankAccounts.objects.all().order_by('acct_name')]
+                else:
+                    response['message'] = [acct.obj() for acct in BankAccounts.objects.get(pk=pk)]
+                
+                response['status_code'] = 200
 
             else:
                 response['status_code'] = 503

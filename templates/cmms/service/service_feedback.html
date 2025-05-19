@@ -1,0 +1,206 @@
+{% extends 'cmms/service/serv_base.html' %}
+
+{% load static %}
+
+{% block cmms %}
+<div class="modal fade" id="pending">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title">Pending Feedbacks</span>
+        <button class="close btn btn-warning" data-bs-dismiss="modal">&times;</button>
+      </div>
+        <div class="modal-body" style="height: 75vh; overflow: auto;">
+          <div class="accordion" id="feedbackAccordion">
+            {% for job in jobs %}
+            <div class="accordion-item mb-2">
+              <h2 class="accordion-header text-light" id="heading{{job.pk}}">
+                <button class="accordion-button bg-info" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{job.pk}}" aria-expanded="true" aria-controls="collapseOne">
+                  {{job.carno}}
+                </button>
+              </h2>
+              <div id="collapse{{job.pk}}" class="accordion-collapse collapse" aria-labelledby="heading{{job.pk}}" data-bs-parent="#feedbackAccordion">
+                <div class="accordion-body">
+                  
+                  <strong>Customer</strong><br>
+                  <small>{{job.company}}</small>
+          
+                  <div class="w-100 d-flex justify-content-center">
+                    <button 
+                      class="btn btn-info view-feedback" 
+                      data-id="{{job.pk}}"
+                      data-carno="{{ job.carno }}"
+                      data-company="{{ job.company }}"
+                      data-driver="{{ job.driver }}"
+                      data-contact="{{ job.contact }}"
+                      data-brand="{{ job.brand }}"
+                      data-model="{{ job.model }}"
+                      data-report="{{ job.report }}"
+                      data-owner="{{ job.owner.get_full_name }}"
+                      data-created_on="{{ job.created_on }}"
+                      data-is_started="{{ job.is_started }}"
+                      data-is_ended="{{ job.is_ended }}"
+                      data-wr_no="{{ job.wr_no }}"
+                      data-mechanic="{{ job.mechanic }}"
+                      data-close_remark="{{ job.close_remark }}"
+                      data-next_service_date="{{ job.next_service_date }}"
+                      data-end_date="{{ job.end_date }}"
+                      data-is_feedback="{{ job.obj.is_due_feedback }}"
+                    >VIEW</button>
+                  </div>
+          
+          
+                </div>
+          
+                
+              </div>
+            </div>
+          
+            {%endfor%}
+          
+            
+          </div>
+        </div>
+        <div class="modal-footer"></div>
+    </div>
+  </div>
+</div>
+  <div class="card h-100 overflow-hidden">
+      <div class="card-header">
+        <button data-bs-toggle="modal" data-bs-target="#pending" class="btn btn-info">Pending <span class="badge text-dark bg-light">{{jobs.count}}</span></button>
+      </div>
+      <div class="card-body overflow-auto">
+        <div class="table-responsive">
+          <table id="tts" class="table table-sm">
+            <thead>
+                <tr>
+                  <th>ASSET</th>
+                  <th>STATUS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for feed in feeds%}
+                  <tr class="{%if feed.status == 'success'%}text-success{%else%}text-danger{%endif%}">
+                    <td>{{feed.jobcard.carno}}</td>
+                    <td>{{feed.status}}</td>
+                  </tr>
+                {%endfor%}
+            </tbody>
+          </table>
+        </div>
+      </div>
+  </div>
+
+
+
+<script>
+  $(document).ready(function(){
+
+    $('#tts').DataTable();
+    $('#dt-search-0').remove()
+    $('.dt-search').remove()
+    $('.dt-length').remove()
+    $('.view-feedback').click(function(){
+      $('#pending').modal('hide')
+      let id = $(this).attr('data-id')
+      let carno = $(this).attr('data-carno')
+      // Get all data-* attributes of the clicked button and log each
+      let value;
+      $.each(this.attributes, function() {
+        if(this.name.startsWith('data-')) {
+          value = this.value;
+          console.log(this.name + ': ' + value);
+        }
+      });
+      
+
+      let ht = `
+        <div class='card'>
+          <div class='card-header'>Customer Information</div>
+          <div class='card-body'>
+            <p><strong>Name:</strong> <span id="modal-customer-name">${$(this).attr('data-driver')}</span></p>
+            <p><strong>Phone:</strong> <a href='tel:${$(this).attr('data-contact')}' id="modal-customer-phone">${$(this).attr('data-contact')}</a></p>
+          </div>
+        </div>
+        <div class='card mt-3'>
+          <div class='card-header'>Asset Information</div>
+          <div class='card-body'>
+            <p><strong>Car Number:</strong> <span id="modal-carno">${$(this).attr('data-carno')}</span></p>
+            <p><strong>Car Model:</strong> <span id="modal-model">${$(this).attr('data-model')}</span></p>
+            <p><strong>Car Brand:</strong> <span id="modal-brand">${$(this).attr('data-brand')}</span></p>
+          </div>
+        </div>
+        <div class='card mt-3'>
+          <div class='card-header'>Job Details</div>
+          <div class='card-body'>
+            <p><strong>Started On:</strong> <span id="modal-started-on">${$(this).attr('data-created_on')}</span></p>
+            <p><strong>Ended On:</strong> <span id="modal-ended-on">${$(this).attr('data-end_date')}</span></p>
+            <p><strong>Feedback Status:</strong> <span id="modal-feedback-status">${$(this).attr('data-is_feedback')}</span></p>
+          </div>
+        </div>
+      `
+
+      amodal.setBodyHtml(ht)
+      amodal.setTitleHtml(`${$(this).attr('data-carno')}`)
+      amodal.setFooterHtml(`
+      <button type="button" class="btn btn-primary" id="feedback-btn">Feedback</button>
+      `)
+      amodal.show()
+
+    $('#feedback-btn').click(function() {
+      let feedbackForm = `
+        <form id="feedback-form">
+          <div class="mb-3">
+            <label for="feedback-status" class="form-label">Status</label>
+            <select class="form-select" id="feedback-status" name="status" required>
+              <option value="">Select status</option>
+              <option value="1">Success</option>
+              <option value="0">Issue</option>
+            </select>
+            <input value='${id}' type='hidden' id='job_id'>
+          </div>
+          <div class="mb-3">
+            <label for="feedback-remarks" class="form-label">Remarks</label>
+            <textarea class="form-control" id="remarks" name="remarks" rows="3" required></textarea>
+          </div>
+        </form>
+      `;
+      amodal.setBodyHtml(feedbackForm);
+      amodal.setTitleHtml(`${carno}`)
+      amodal.setFooterHtml(`
+        <button type="button" class="btn btn-secondary" id="cancel-feedback">Cancel</button>
+        <button type="button" class="btn btn-primary" id="submit-feedback">Submit</button>
+      `);
+      // amodal.show();
+
+      // Cancel button logic
+      $('#cancel-feedback').off('click').on('click', function() {
+        // Re-trigger the view-feedback click to show the previous modal
+        $('.view-feedback[data-id="' + id + '"]').trigger('click');
+      });
+
+      $('#submit-feedback').click(async function(){
+        let ids = ['feedback-status','remarks','mypk','job_id']
+        if(anton.validateInputs(ids)){
+          let payload = {
+            module:'service_feedback',
+            data:anton.Inputs(ids)
+          }
+          await api.v2('PATCH',payload,'/cmms/api/').then(response => {
+            if(anton.IsRequest(response)){
+              kasa.confirm(response.message,1,'here')
+            } else {
+              kasa.response(response)
+            }
+          }).catch(error => {
+            kasa.error(error)
+          })
+        } else {
+          kasa.error("There is an issue")
+        }
+      })
+    });
+    })
+  })
+</script>
+{% endblock %}

@@ -357,7 +357,7 @@ def interface(request):
             if module == 'area':
                 url = 'http://192.168.2.15/personnel/api/areas/'
 
-                tk = token('solomon','')
+                tk = token('solomon','Szczesny@411')
                 headers = {
                     'Authorization': f'JWT {tk}',
                     'Content-Type': 'application/json',

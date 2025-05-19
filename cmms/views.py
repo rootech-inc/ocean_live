@@ -492,3 +492,20 @@ def view_service_close(request,pk):
 
     }
     return render(request, 'cmms/service/close.html', context=context)
+
+@login_required()
+def cmms_servicing_feedback(request):
+    # JobCardFeedback.objects.all().delete()
+    # JobCard.objects.all().update(is_feedback=False)
+
+    context = {
+        'nav': True,
+        'page': {
+
+            'title': "CMMS SERVICE / Feedbacks"
+        },
+        'jobs':JobCard.objects.filter(is_feedback=False,is_ended=True)[:50],
+        'feeds':JobCardFeedback.objects.all()
+
+    }
+    return render(request, 'cmms/service/service_feedback.html', context=context)

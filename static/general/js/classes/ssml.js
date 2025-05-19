@@ -3100,6 +3100,103 @@ class SSML {
         })
         // 
     }
+
+    async getInstallSeriveType(pk='*'){
+        let payload = {
+            module: 'service_type',
+            data: {
+                id:pk
+            }
+        }
+
+        return api.call('VIEW',payload,'/ssml/api/');
+    }
+
+    async editService(pk){
+        loader.show()
+        await this.getInstallSeriveType(pk).then(response => {
+            if(anton.validateInputs(response)){
+                let data = response.message;
+                console.table(data)
+                
+                
+                // get bank accounts
+                let account_response = api.call('VIEW',{
+                    module:'bank_accounts',
+                    data:{
+                        pk:'*'
+                    }
+                },'/adapi/')
+
+                let accts = []
+                if(anton.IsRequest(account_response)){
+                    console.table(account_response)
+                    account_response.message.map(account => {
+                        accts.push({
+                            val:account.pk,
+                            desc:account.name
+                        })
+                    })
+                } else {
+                    kasa.response(account_response)
+                    return;
+                }
+
+                
+
+                let form = '';
+
+                // Debit Account selection
+                form += fom.selectv2('debit_account', accts,'Who is making payment',true);
+                
+                // Credit Account selection
+                form += fom.selectv2('credit_account', accts,'Who is recieving payment',true);
+                
+
+                amodal.setTitleText('Edit Service Type');
+                amodal.setBodyHtml(form);
+                amodal.setFooterHtml(`<button class="btn btn-success" id="save_service_type">Save</button>`);
+                amodal.show();
+
+                $('#save_service_type').click(async function() {
+                    let ids = ['debit_account', 'credit_account'];
+                    let debit = $('#debit_account').val();
+                    let credit = $('#credit_account').val();
+                    if (debit === credit) {
+                        kasa.error("Debit and Credit accounts cannot be the same.");
+                        return;
+                    }
+                    if (anton.validateInputs(ids)) {
+                        let payload = {
+                            module: 'service_type',
+                            data: {
+                                service_id: pk,
+                                ...anton.Inputs(ids)
+                            }
+                        };
+                        console.table(payload)
+                        
+                        await api.v2('PATCH', payload, '/ssml/api/').then(response => {
+                            kasa.response(response);
+                            amodal.hide();
+                            // Optionally reload or update the UI here
+                        }).catch(error => {
+                            kasa.error(error);
+                        });
+                    } else {
+                        kasa.warning("Please fill all fields");
+                    }
+                });
+
+                loader.hide()
+            } else {
+                kasa.response(response)
+                loader.hide()
+            }
+            
+        }).catch(error => {kasa.error(error)})
+
+    }
     
 
 }

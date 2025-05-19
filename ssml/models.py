@@ -4,6 +4,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import Sum, F
 
+from admin_panel.models import BankAccounts
+
 
 # locations class
 class Location(models.Model):
@@ -671,6 +673,8 @@ class ServiceType(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    debit_account = models.ForeignKey(BankAccounts,null=True,blank=True,on_delete=models.CASCADE,related_name='debit_account')
+    credit_account = models.ForeignKey(BankAccounts,null=True,blank=True,on_delete=models.CASCADE,related_name='credit_account')
 
     def __str__(self):
         return self.name
@@ -690,7 +694,17 @@ class ServiceType(models.Model):
             'created_at':self.created_at,
             'updated_at':self.updated_at,
             'total_installations':self.total_installations(),
-            'today_jobs':self.today_jobs()
+            'today_jobs':self.today_jobs(),
+            'accounts': {
+            'debit': {
+                'serial': self.debit_account.acct_serial if self.debit_account else None,
+                'name': self.debit_account.acct_name if self.debit_account else None
+            },
+            'credit': {
+                'serial': self.credit_account.acct_serial if self.credit_account else None,
+                'name': self.credit_account.acct_name if self.credit_account else None
+            }
+        }
         }
     
 
@@ -775,8 +789,6 @@ class ServiceOrder(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     location = models.ForeignKey(Location,on_delete=models.CASCADE,null=False)
 
-    def __str__(self):
-        return self.service_date
     
 
     def items(self):
@@ -1223,7 +1235,11 @@ class InvoiceTransactions(models.Model):
 class PaySlipHD(models.Model):
     entry_no = models.CharField(max_length=255,null=False, blank=False,unique=True)
     entry_date = models.DateField(null=False)
-    contractor = models.ForeignKey(Contractor,on_delete=models.SET_NULL,null=True)
+    ps_type = models.CharField(max_length=10,null=False,choices=[
+        ('CI',"Contractor Invoice")
+    ],default='CI')
+
+    ref = models.CharField(max_length=255,null=False, blank=False,unique=True)
     remarks = models.TextField()
     total_amount = models.DecimalField(max_digits=10,max_length=10,decimal_places=2,default=0.00)
     due_date = models.DateField(null=False)
@@ -1234,4 +1250,9 @@ class PaySlipHD(models.Model):
 
 class PaySlipTransactions(models.Model):
     entry = models.ForeignKey(PaySlipHD,on_delete=models.CASCADE)
+    remarks = models.TextField()
+    acct = models.CharField(max_length=200)
+    debit = models.DecimalField(default=0.00,decimal_places=2,max_digits=10)
+    credit = models.DecimalField(default=0.00,decimal_places=2,max_digits=10)
+
     

@@ -249,6 +249,15 @@ class BankAccounts(models.Model):
     edited_on = models.DateTimeField(auto_now=True)
     status = models.IntegerField(default=1)
 
+    def obj(self):
+        return {
+            'name':self.acct_name,
+            'serial':self.acct_serial,
+            'acct_descr':self.acct_descr,
+            'created_on':self.created_on,
+            'pk':self.pk
+        }
+
 
 class SuppMaster(models.Model):
     company = models.TextField()

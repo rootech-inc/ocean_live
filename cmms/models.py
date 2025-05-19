@@ -636,15 +636,18 @@ class JobCard(models.Model):
     close_remark = models.TextField()
     next_service_date = models.DateField(null=True, blank=True)
     is_synced = models.BooleanField(default=False)
+    is_feedback = models.BooleanField(default=False)
+    end_date = models.DateField(auto_now_add=True)
 
 
     def obj(self):
         return {
-            "company":self.company,
-            "driver":self.driver,
-            "date":self.created_on,
-            "carno":self.carno,
-            'pk':self.pk
+            "company": self.company,
+            "driver": self.driver,
+            "date": self.created_on,
+            "carno": self.carno,
+            'pk': self.pk,
+            'is_due_feedback': (timezone.now().date() - self.end_date).days >= 3 if self.end_date else False,
 
         }
 
@@ -697,6 +700,23 @@ class JobCardTransactions(models.Model):
     details = models.TextField()
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     created_on = models.DateField(auto_now_add=True)
+
+class JobCardFeedback(models.Model):
+    jobcard = models.ForeignKey(JobCard, on_delete=models.CASCADE, related_name='feedbacks')
+    status = models.CharField(max_length=100)
+    remarks = models.TextField(null=True, blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_date = models.DateField(auto_now_add=True)
+    created_time = models.TimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Feedback for {self.jobcard} by {self.created_by} on {self.created_date} {self.created_time}"
+
+    def obj(self):
+        return {
+            'status':self.status
+        }
+
 
 class JobMaterials(models.Model):
     jobcard = models.ForeignKey(JobCard, on_delete=models.CASCADE)
