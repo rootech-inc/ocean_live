@@ -73,6 +73,12 @@
     <script src="{% static 'general/js/classes/cmms_cust.js' %}"></script>
     <script src="{% static 'general/js/classes/modal.js' %}"></script>
     <script src="{% static 'general/js/classes/form.js' %}"></script>
+      <!-- <link rel="stylesheet" href="https://cdn.datatables.net/2.3.0/css/dataTables.bootstrap4.min.css"> -->
+      <link href="{% static 'general/css/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+      <!-- <script src="https://cdn.datatables.net/2.3.0/js/dataTables.min.js"></script>
+      <script src="https://cdn.datatables.net/2.3.0/js/dataTables.bootstrap4.min.js"></script> -->
+      <script src="{% static 'general/js/dataTables.min.js' %}"></script>
+      <script src="{% static 'general/js/dataTables.bootstrap4.min.js' %}"></script>
 
 
   <script>
@@ -513,6 +519,11 @@
 {#          <i class="bi bi-tools"></i><span>New Job</span>#}
 {#        </a>#}
         <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'cmms_servicing_feedback' %}">
+          <i class="bi bi-chat-dots"></i></i><span>Feedbacks</span>
+        </a>
+      </li>
+      <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'cmms_servicing' %}">
           <i class="bi bi-tools"></i><span>Servicing</span>
         </a>
@@ -574,11 +585,11 @@
     </div><!-- End Page Title -->
 
     <section class="section h-100" style="height: 85vh !important">
-      <div class="card bg-dark-light h-100">
+      
+      
           {% block cmms %}
 
       {% endblock %}
-      </div>
     </section>
 
   </main><!-- End #main -->
