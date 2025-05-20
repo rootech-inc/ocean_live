@@ -1774,6 +1774,50 @@ def api(request):
                             response['statys_code'] = 404
                             response['message'] = f"CANNOT FIND FROZEN with entry {frozen_ref}"
 
+                elif module == 'job_request':
+                    fuel_type = data.get('fuel_type')
+                    service_type = data.get('service_type')
+                    car_type = data.get('car_type')
+
+                    company_name = data.get('company_name')
+                    driver_name = data.get('driver_name')
+                    driver_phone = data.get('driver_phone')
+                    car_brand = data.get('car_brand')
+                    car_model = data.get('car_model')
+                    reg_no = data.get('reg_no')
+                    problem = data.get('problem')
+
+                    next_entry_no = JobRequest.objects.filter(created_date=timezone.now()).count() + 1
+                    entry_no = f"{timezone.now().strftime('%Y%m%d')}-{next_entry_no}"
+                    JobRequest(
+                        entry_no = entry_no,
+                        fuel_type=fuel_type,
+                        service_type=service_type,
+                        car_type=car_type,
+                        company_name=company_name,
+                        driver_name=driver_name,
+                        driver_phone=driver_phone,
+                        car_brand=car_brand,
+                        car_model=car_model,
+                        car_no=reg_no,
+                        problem=problem
+                    ).save()
+
+                    # send sms
+                    Sms(
+                        api=SmsApi.objects.get(is_default=True),
+                        to=driver_phone,
+                        message=f"Your job request no. {entry_no} is created. Please check your vehicle details."
+                    ).save()
+
+                    response['status_code'] = 200
+                    response['message'] = "Request Sent"
+
+
+
+
+
+
                 elif module == 'material_request':
                     pk = data.get('pk')
                     part = data.get('part')

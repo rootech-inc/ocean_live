@@ -518,16 +518,32 @@
 {#        <a class="nav-link collapsed" href="{% url 'new_servicing_job' %}">#}
 {#          <i class="bi bi-tools"></i><span>New Job</span>#}
 {#        </a>#}
-        <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'cmms_servicing_feedback' %}">
-          <i class="bi bi-chat-dots"></i></i><span>Feedbacks</span>
+
+    <li class="nav-item">
+        <a class="nav-link collapsed" data-bs-target="#Community-nav" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-boxes"></i><span>Servicing</span><i class="bi bi-chevron-down ms-auto"></i>
         </a>
+        <ul id="Community-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="{% url 'service_request' %}">
+                  <i class="bi bi-tools"></i><span>Request</span>
+                </a>
+              </li>
+
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="{% url 'cmms_servicing' %}">
+                  <i class="bi bi-tools"></i><span>On-going</span>
+                </a>
+              </li>
+            <li class="nav-item">
+                <a class="nav-link collapsed" href="{% url 'cmms_servicing_feedback' %}">
+                  <i class="bi bi-chat-dots"></i></i><span>Feedbacks</span>
+                </a>
+              </li>
+        </ul>
       </li>
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'cmms_servicing' %}">
-          <i class="bi bi-tools"></i><span>Servicing</span>
-        </a>
-      </li>
+
         <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'service_customers' %}">
           <i class="bi bi-file"></i><span>Customers</span>

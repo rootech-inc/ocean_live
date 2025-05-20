@@ -761,3 +761,39 @@ class JobCardImages(models.Model):
     def image_exists(self):
         """Checks if the image file exists on the filesystem."""
         return os.path.exists(self.get_image_full_path())
+
+
+class JobRequest(models.Model):
+    entry_no = models.CharField(max_length=20, unique=True)
+    fuel_type = models.CharField(max_length=10,choices=[
+        ('petrol','Petrol'),
+        ('disel','Diesel'),
+        ('gas','Gas')
+    ],null=False,blank=False)
+    service_type = models.CharField(max_length=10, choices=[
+        ('engine', 'Engine'),
+        ('interior', 'Interior'),
+        ('exterior', 'Exterior') ,
+        ('other', 'Other')
+    ], null=False, blank=False)
+    car_type = models.CharField(max_length=10, choices=[
+        ('sedan', 'Sedan'),
+        ('suv', 'SUV'),
+        ('hatchback', 'Hatchback'),
+        ('van', 'Van'),
+        ('pickup', 'Pickup'),
+        ('minivan', 'Minivan'),
+    ])
+    company_name = models.CharField(null=False,blank=False,max_length=100)
+    driver_name = models.CharField(null=False,blank=False,max_length=100)
+    driver_phone = models.CharField(null=False,blank=False,max_length=100)
+    car_brand = models.CharField(null=False,blank=False,max_length=100)
+    car_model = models.CharField(null=False,blank=False,max_length=100)
+    car_no = models.CharField(null=False,blank=False,max_length=100)
+    problem = models.TextField(null=True,blank=True)
+       
+    created_date = models.DateField(auto_now_add=True)
+    created_time = models.TimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+    is_started = models.BooleanField(default=False)
+    jobcard = models.ForeignKey(JobCard, on_delete=models.SET_NULL, blank=True, null=True)

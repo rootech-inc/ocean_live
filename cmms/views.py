@@ -10,8 +10,10 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from fpdf import FPDF
 
+from admin_panel.models import SmsApi, Sms
 from cmms.forms import NewSalesCustomer, NewSaleTransactions
 from inventory.models import Assets
+from maintenance.models import WorkOrder
 from ocean.settings import DB_SERVER, DB_NAME, DB_USER, DB_PORT, DB_PASSWORD
 from django.contrib.auth import get_user_model
 import pyodbc
@@ -428,11 +430,11 @@ def invoices(request):
     }
     return render(request, 'cmms/service/invoices.html', context=context)
 
-@login_required()
+
 def newjob(request):
 
     context = {
-        'nav': True,
+        'nav': False,
         'page': {
 
             'title': ""
@@ -509,3 +511,95 @@ def cmms_servicing_feedback(request):
 
     }
     return render(request, 'cmms/service/service_feedback.html', context=context)
+
+
+def service_request(request):
+    context = {
+        'nav': True,
+        'page': {
+            'nav':True,
+            'title': "CMMS SERVICE / Requests"
+        },
+        'reqs':JobRequest.objects.filter(is_started=False)
+
+
+    }
+    return render(request, 'cmms/service/service_requests.html', context=context)
+
+@login_required()
+@csrf_exempt
+def start_job(request):
+    if request.method == 'POST':
+        form = request.POST
+        job_id = form.get('job_id')
+        job_request = JobRequest.objects.get(pk=job_id)
+
+        # create work order
+        work_order = JobCard.objects.create(
+            company=job_request.company_name,
+            driver=job_request.driver_name,
+            contact=job_request.driver_phone,
+            brand = job_request.car_brand,
+            model = job_request.car_model,
+            carno=job_request.car_no,
+            owner=request.user,
+            wr_no=form.get('wr_no'),
+            mechanic="auto",
+            report=job_request.problem,
+
+
+        )
+
+        # make images
+        JobCardImages(
+            jobcard_id=work_order.pk,
+            image=request.FILES.get('interior'),
+            part='interior'
+        ).save()
+
+        JobCardImages(
+            jobcard_id=work_order.pk,
+            image=request.FILES.get('exterior'),
+            part='exterior'
+        ).save()
+
+        JobCardImages(
+            jobcard_id=work_order.pk,
+            image=request.FILES.get('toolbox'),
+            part='toolbox'
+        ).save()
+
+        JobCardImages(
+            jobcard_id=work_order.pk,
+            image=request.FILES.get('fire_extinguisher'),
+            part='fire_extinguisher'
+        ).save()
+
+        JobCardImages(
+            jobcard_id=work_order.pk,
+            image=request.FILES.get('mileage'),
+            part='mileage'
+        ).save()
+
+        JobCardImages(
+            jobcard_id=work_order.pk,
+            image=request.FILES.get('triangle'),
+            part='triangle'
+        ).save()
+
+        sms_message = f"Job for car with registeration {job_request.car_no} started"
+        sms_to = job_request.driver_phone
+
+        job_request.is_started = True
+        job_request.jobcard = work_order
+        job_request.save()
+        Sms(
+            api=SmsApi.objects.get(is_default=True),
+            to=sms_to,
+            message=sms_message
+        ).save()
+        messages.success(request, "JOB STARTED")
+        previous_page = request.META.get('HTTP_REFERER')
+        return redirect(previous_page)
+    else:
+        return HttpResponse("ERROR")
