@@ -145,7 +145,7 @@
                                     <a class="nav-link active" data-toggle="pill" href="#home">Stock</a>
                                   </li>
                                   <li class="nav-item">
-                                    <a class="nav-link" data-toggle="pill" href="#menu1">Cardex</a>
+                                    <a class="nav-link" id="cd_a" data-toggle="pill" href="#menu1">Cardex</a>
                                   </li>
                                   <li class="nav-item">
                                     <a class="nav-link" data-toggle="pill" href="#menu2">Activities</a>
@@ -263,7 +263,47 @@
 
             });
 
+            $('#cd_a').click(async function () {
+                let card_load = {
+                    module: 'cardex',
+                    data: {
+                        barcode: $('#barcode').val(),
+                        entity: $('#entity').val(),
+                        // location: $('#location').val(),
+                        // date: $('#date').val(),
+                        // doc: $('#doc').val(),
+                        // entry: $('#entry').val(),
+                        // quantity: $('#quantity').val(),
+                        // status: $('#status').val(),
+                        // shelf: $('#shelf').val(),
+                        // is_on_bolt: $('#is_on_bolt').val(),
+                    }
+                }
+                await api.v2('VIEW', card_load, '/retail/api/').then(res => {
+                    let ctr = "";
+                    res.message.forEach(element => {
+                        ctr += `
+                            <tr>
+                                                        <td>${element['location']['code']}</td>
+                                                        <td>${element['move_type']}</td>
+                                                        <td>${element['ref']}</td>
+                                                        <td>${element['date']}</td>
+                                                        <td>${element['qty']}</td>
+                                                    </tr>
+                        `
+                    })
 
+                    let htl = `
+                        <table class="table table-sm">
+
+
+                        </table>
+                    `
+
+                }).catch(err => {
+                    kasa.error(err)
+                })
+            })
         });
 
     </script>

@@ -1811,7 +1811,7 @@ def api(request):
                     ).save()
 
                     response['status_code'] = 200
-                    response['message'] = "Request Sent"
+                    response['message'] = entry_no
 
 
 

@@ -506,7 +506,7 @@ def cmms_servicing_feedback(request):
 
             'title': "CMMS SERVICE / Feedbacks"
         },
-        'jobs':JobCard.objects.filter(is_feedback=False,is_ended=True)[:50],
+        'jobs':JobCard.objects.filter(is_feedback=False,is_ended=True).order_by('-pk')[:50],
         'feeds':JobCardFeedback.objects.all()
 
     }
@@ -543,7 +543,6 @@ def start_job(request):
             model = job_request.car_model,
             carno=job_request.car_no,
             owner=request.user,
-            wr_no=form.get('wr_no'),
             mechanic="auto",
             report=job_request.problem,
 
@@ -587,7 +586,7 @@ def start_job(request):
             part='triangle'
         ).save()
 
-        sms_message = f"Job for car with registeration {job_request.car_no} started"
+        sms_message = f"Job for car with registeration {job_request.car_no} started, teack with link below. \n\nhttps://titmouse-in-perch.ngrok-free.app/cmms/servcing/track/{job_request.entry_no}/"
         sms_to = job_request.driver_phone
 
         job_request.is_started = True
@@ -598,8 +597,38 @@ def start_job(request):
             to=sms_to,
             message=sms_message
         ).save()
+
+        JobCardTransactions(
+            jobcard=work_order,
+            title="JOB STARTED",
+            details=f"Job started with internal work order number {form.get('wr_no')}",
+            owner=request.user,
+        ).save()
         messages.success(request, "JOB STARTED")
         previous_page = request.META.get('HTTP_REFERER')
         return redirect(previous_page)
     else:
         return HttpResponse("ERROR")
+
+
+def delete_job_request(request):
+    pk = request.GET.get('id')
+    JobRequest.objects.get(pk=pk).delete()
+    previous_page = request.META.get('HTTP_REFERER')
+    return redirect(previous_page)
+
+
+def track_job(request,req_id):
+    job = None
+    try:
+        req = JobRequest.objects.get(entry_no=req_id)
+        job = req.jobcard
+    except Exception as e:
+        messages.error(request, f"NO JOB FOR {req_id}")
+    return render(request,'cmms/service/track_job.html',context={
+
+        'page':{
+            'title':"CMMS SERVICE / Track Job"
+        },
+        'job':job
+    })

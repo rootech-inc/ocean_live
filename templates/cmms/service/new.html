@@ -12,7 +12,7 @@
 
     <div class="container-fluid">
 
-        <div id="car_type" class="d-flex flex-wrap justify-content-center align-content-center" style="height: 85vh">
+        <div id="car_type" class="d-flex flex-wrap justify-content-center align-content-center" style="height: 100vh">
             <div class="card">
                 <div class="card-header"><div class="col-sm-12"><strong class="text-muted">Car Type</strong></div></div>
                 <div class="card-body py-2">
@@ -49,7 +49,7 @@
             </div>
         </div>
 
-        <div id="service_type" style="height: 85vh" class="d-flex flex-wrap justify-content-center align-content-center">
+        <div id="service_type" style="height: 100vh" class="d-flex flex-wrap justify-content-center align-content-center">
             <div class="card">
                 <div class="card-header"><strong>Service Type</strong></div>
                 <div class="card-body py-2">
@@ -88,7 +88,7 @@
         </div>
 
 
-        <div id="fuel_type" style="height: 85vh" class="d-flex flex-wrap justify-content-center align-content-center">
+        <div id="fuel_type" style="height: 100vh" class="d-flex flex-wrap justify-content-center align-content-center">
             <div class="card">
                 <div class="card-header"><strong class="card-title">Fuel</strong></div>
                 <div class="card-body py-2">
@@ -122,7 +122,7 @@
 
 
         <strong id="other_details" class="text-muted">Customer Details</strong>
-        <div class="mb-5">
+        <div class="mb-5 pb-2 col-sm-6">
 
             <div class="input-group mb-2">
                 <label for="company_name" class="text-info">Organization</label>
@@ -135,14 +135,14 @@
             </div>
 
             <div class="input-group mb-2">
-                <label for="driver_phone" class="text-info">Driver Phone</label>
+                <label for="driver_phone" class="text-info">Driver's Contact</label>
                 <input type="tel" id="driver_phone" placeholder="" class="form-control w-100 rounded-0">
             </div>
 
         </div>
 
         <strong class="text-muted">Car Details</strong>
-        <div class="mb-5">
+        <div class="mb-5 pb-2 col-sm-6">
 
             <div class="input-group mb-2">
                 <label for="car_brand" class="text-info">Brand</label>
@@ -168,7 +168,7 @@
         </div>
 
         <strong class="text-muted">Problem</strong>
-        <div class="">
+        <div class="col-sm-6">
 
             <div class="input-group mb-2">
 
@@ -178,9 +178,9 @@
         </div>
 
         <hr>
-    <div class="container">
+    <div class="container pb-5">
         <div class="row d-flex flex-wrap justify-content-center">
-            <div class="col-sm-4"><button id="submit" class="btn btn-success w-100">SUBMIT</button></div>
+            <div class="col-sm-6"><div class="col-sm-4"><button id="submit" class="btn btn-success w-100">SUBMIT</button></div></div>
         </div>
     </div>
 
@@ -470,7 +470,7 @@
                     $('#confirmSubmit').click(async function () {
                         await api.v2('PUT', payload, '/cmms/api/').then(res => {
                             if (anton.IsRequest(res)) {
-                                kasa.confirm('Job Card Submitted Successfully',1,'www.snedapp.com/cmms/job_card/'+res.data.job_id)
+                                kasa.confirm('Job Card Submitted Successfully',1,`/cmms/servcing/track/${res.message}/`)
 
                             } else {
                                 kasa.response(res)

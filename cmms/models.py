@@ -639,6 +639,11 @@ class JobCard(models.Model):
     is_feedback = models.BooleanField(default=False)
     end_date = models.DateField(auto_now_add=True)
 
+    def req(self):
+        return JobRequest.objects.get(jobcard=self).obj() if JobRequest.objects.filter(jobcard=self) else {
+            'entry_no':"not started"
+        }
+
 
     def obj(self):
         return {
@@ -797,3 +802,16 @@ class JobRequest(models.Model):
     updated_date = models.DateTimeField(auto_now=True)
     is_started = models.BooleanField(default=False)
     jobcard = models.ForeignKey(JobCard, on_delete=models.SET_NULL, blank=True, null=True)
+
+    def obj(self):
+        return {
+            'entry_no':self.entry_no,
+            'fuel_type':self.fuel_type,
+            'service_type':self.service_type,
+            'car_type':self.car_type,
+            'company_name':self.company_name,
+            'driver_name':self.driver_name,
+            'driver_phone':self.driver_phone,
+            'car_brand':self.car_brand,
+        }
+
