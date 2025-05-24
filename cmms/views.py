@@ -632,3 +632,17 @@ def track_job(request,req_id):
         },
         'job':job
     })
+
+
+def cmms_service_due(request):
+    context = {
+        'nav': True,
+        'page': {
+
+            'title': "CMMS SERVICE / Service Due"
+        },
+        'jobs': JobCard.objects.filter(is_feedback=False, is_ended=True).order_by('-pk')[:50],
+        'feeds': JobCardFeedback.objects.all()
+
+    }
+    return render(request, 'cmms/service/servcice_due.html', context=context)

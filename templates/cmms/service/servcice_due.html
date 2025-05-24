@@ -1,0 +1,90 @@
+{% extends 'cmms/service/serv_base.html' %}
+
+{% load static %}
+
+{% block cmms %}
+    <div class="card h-100">
+        <div class="card-header"></div>
+        <div class="card-body p-2">
+            <div class="table-responsive">
+                <table id="chatsav" class="table table-striped table-bordered table-hover table-sm table-responsive">
+                    <thead>
+                        <tr>
+                            <th>DATE</th><th>Due Days</th><th>CUSTOMER</th><th>JOB</th><th>STATUS</th><th>ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="t_body">
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer"></div>
+    </div>
+
+
+    <script>
+        async function get_due_service() {
+            let payload = {
+                module: 'service_follow_ups',
+                data: {}
+            }
+
+            await api.v2('VIEW',payload,'/cmms/api/').then(response => {
+                if(anton.IsRequest(response)){
+                    let tr = ""
+                    response.message.forEach(element => {
+                        console.table(element)
+                        tr += `<tr>
+                        <td>${element.service_date}</td>
+                        <td>${element.days_due}</td>
+                        <td>${element.driver_name}</td>
+                        <td>${element.carno}</td>
+                        <td>${element.car_brand} ${element.car_model}</td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Actions
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><button class="dropdown-item follow-up" 
+                                        data-id="${element.id}" 
+                                        data-carno="${element.carno}"
+                                        data-driver="${element.driver_name}">Follow Up</button></li>
+                                </ul>
+                            </div>
+                        </td>
+                        `
+                    })
+                    $('#t_body').html(tr)
+                    $('#chatsav').DataTable()
+
+                    $('.follow-up').on('click', function () {
+                        let id = $(this).data('id')
+                        let carno = $(this).data('carno')
+                        let driver = $(this).data('driver')
+
+                        let form = "";
+
+                        form += fom.selectv2('status',[
+                            {val:1,desc:'Successful'},
+                            {val:0,desc:'Not Successful'}
+                        ],'',true)
+                        form += fom.textarea('remarks','',true)
+
+
+                        amodal.setBodyHtml(form)
+                        amodal.setTitleHtml('Follow Up')
+                        amodal.setFooterHtml(`<button class="btn btn-primary follow-up-btn" data-id="${id}" data-carno="${carno}" data-driver="${driver}">Save</button>`)
+                        amodal.show()
+                    })
+                } else {
+                    kasa.response(response)
+                }
+            }).catch(error => {kasa.error(error)})
+        }
+        $(document).ready(function () {
+            get_due_service()
+        })
+    </script>
+{% endblock %}

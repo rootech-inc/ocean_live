@@ -60,6 +60,7 @@ urlpatterns = [
     path('servcing/start-job/',views.start_job,name='start_job'),
     path('servicing/delete_job_request/',views.delete_job_request,name='delete_job_request'),
     path('servcing/track/<req_id>/',views.track_job,name='track_job'),
+    path('servicing/cmms-service-due/',views.cmms_service_due,name='cmms_service_due'),
 
 ]
 
