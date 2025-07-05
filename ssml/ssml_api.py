@@ -45,9 +45,10 @@ def interface(request):
                 gh_post_code = data.get('gh_post_code')
                 gh_card_no = data.get('gh_card_no')
                 created_by = User.objects.get(id=data.get('mypk'))
+                code = data.get('code')
 
                 
-                Contractor.objects.create(link=link,company=company, owner=owner, phone=phone,email=email,country=country,
+                Contractor.objects.create(code=code,link=link,company=company, owner=owner, phone=phone,email=email,country=country,
                                           city=city,postal_code=postal_code,gh_card_no=gh_card_no,gh_post_code=gh_post_code,created_by=created_by)
 
                 success_response['message'] = "Contractor Created Successfully"
@@ -231,6 +232,7 @@ def interface(request):
                     remarks = data.get('remarks')
                     grn_type = data.get('grn_type')
                     created_by = User.objects.get(id=data.get('created_by'))
+                    location = Location.objects.get(pk=data.get('location')) if data.get('location') else Location.objects.get(loc_id='002')
                     grn = Grn.objects.create(
                         supplier=supplier, 
                         grn_date=grn_date, 
@@ -239,7 +241,8 @@ def interface(request):
                         created_by=created_by,
                         total_amount=0,
                         total_qty=0,
-                        grn_no = f"GRN-{Grn.objects.all().count() + 1}"
+                        grn_no = f"GRN-{Grn.objects.all().count() + 1}",
+                        location=location
                         )
                     total_amount = 0
                     total_qty = 0
@@ -338,7 +341,7 @@ def interface(request):
                             # change contractor
                             Meter.objects.filter(meter_no=meter).update(contractor=contractor)
                         else:
-                            Meter.objects.create(meter_no=meter, contractor=contractor, created_by=created_by, issue=issue)
+                            Meter.objects.create(meter_no=meter, contractor=contractor, created_by=created_by, issue=issue,location=location)
 
                     issue.save()
 
@@ -958,7 +961,19 @@ def interface(request):
                     for transaction in GrnTransaction.objects.filter(grn=grn):
                         pdf.cell(10, 5, txt=str(line), ln=False, border=1, align="L")
                         pdf.cell(25, 5, txt=transaction.barcode, ln=False, border=1, align="L")
-                        pdf.cell(50, 5, txt=transaction.name, ln=False, border=1, align="L")
+                        replacements = {
+                            '\u2018': "'",
+                            '\u2019': "'",
+                            '\u201C': '"',
+                            '\u201D': '"',
+                            '\u2014': '-',
+                        }
+
+
+                        for orig, repl in replacements.items():
+                            transaction.name = transaction.name.replace(orig, repl)
+
+                        pdf.cell(50, 5, txt=transaction.name[:20], ln=False, border=1, align="L")
                         pdf.cell(18, 5, txt=transaction.uom, ln=False, border=1, align="C")
                         pdf.cell(18, 5, txt=str(transaction.pack_qty), ln=False, border=1, align="C")
                         pdf.cell(18, 5, txt=str(transaction.qty), ln=False, border=1, align="C")
@@ -1208,7 +1223,7 @@ def interface(request):
                             
                         success_response['message'] = [service_order.obj() for service_order in service_orders]
                     else:
-                        service_order = ServiceOrder.objects.get(id=id)
+                        service_order = ServiceOrder.objects.filter(Q(id=id) | Q(new_meter=id)).first()
                         success_response['message'] = [service_order.obj()]
                 
                 elif module == 'service_order_item':
@@ -1243,11 +1258,15 @@ def interface(request):
 
                 elif module == 'daily_report':
                     from django.utils import timezone
+                    from datetime import datetime
+                    print(data)
+                    day_date = data.get('date',datetime.now().date())
+                    print(day_date)
                     from fpdf import FPDF
                     pdf = FPDF('P','mm','A4')
                     pdf.add_page()
                     pdf.set_font("Arial","B", size=12)
-                    pdf.cell(190, 5, txt=f"Daily Report {timezone.now().date()}", ln=True, border=0, align="C")
+                    pdf.cell(190, 5, txt=f"Daily Report {day_date}", ln=True, border=0, align="C")
                     pdf.ln(5)
                     
                     pdf.set_font("Arial","B", size=10)
@@ -1260,8 +1279,8 @@ def interface(request):
                     
                     for st in ServiceType.objects.all():
                         
-                        today_jobs = ServiceOrder.objects.filter(service_type=st,service_date=timezone.now().date()).count()
-                        total_jobs = ServiceOrder.objects.filter(service_type=st).count()
+                        today_jobs = st.today_jobs(day_date)
+                        total_jobs = st.total_installations()
                         
                         pdf.set_font("Arial","", size=10)
                         pdf.cell(100, 5, txt=f"{st.name}", ln=False, align="L",border=1)
@@ -1290,8 +1309,8 @@ def interface(request):
                     total_total_jobs = 0
 
                     for contractor in Contractor.objects.filter(~Q(company="A TRADITION")):
-                        today_jobs = ServiceOrder.objects.filter(contractor=contractor,service_date=timezone.now().date()).count()
-                        total_jobs = ServiceOrder.objects.filter(contractor=contractor).count()
+                        today_jobs = ServiceOrder.objects.filter(contractor=contractor,service_date=day_date).count()
+                        total_jobs = ServiceOrder.objects.filter(contractor=contractor, service_date__lte=day_date).count()
 
                         pdf.set_font("Arial","", size=10)   
                         pdf.cell(100, 5, txt=f"{contractor.company[:30]}", ln=False, align="L",border=1)
@@ -1421,6 +1440,36 @@ def interface(request):
                     pdf.cell(30, 5, txt=f"{'{:,.2f}'.format(total_value)}", ln=False, align="L",border=1)
                     pdf.cell(30, 5, txt=f"{'{:,.2f}'.format(total)}", ln=True, align="L",border=1)
 
+                    # list all meters installed today
+                    pdf.ln(5)
+                    pdf.set_font("Arial","B", size=8)
+                    pdf.cell(190, 5, txt="Meters Installed Today", ln=True, border=0, align="C")
+
+                    pdf.set_font("Arial","B", size=10)
+                    pdf.cell(5, 5, txt="LN.", ln=False, align="L",border=1)
+                    pdf.cell(20, 5, txt="Meter No", ln=False, align="L",border=1)
+                    pdf.cell(65, 5, txt="Customer", ln=False, align="L",border=1)
+                    pdf.cell(30, 5, txt="Mob. ", ln=False, align="L",border=1)
+                    pdf.cell(65, 5, txt="Contractor", ln=True, align="L",border=1)
+
+                    pdf.set_font("Arial","", size=8)
+
+                    meters = ServiceOrder.objects.filter(service_date=day_date)
+                    ln = 1
+                    for meter in meters:
+                        pdf.cell(5, 5, txt=f"{ln}", ln=False, align="L",border=1)
+                        pdf.cell(20, 5, txt=f"{meter.new_meter}", ln=False, align="L",border=1)
+                        pdf.cell(65, 5, txt=f"{meter.customer[:40]}", ln=False, align="L",border=1)
+                        pdf.cell(30, 5, txt=f"{meter.customer_no}", ln=False, align="L",border=1)
+                        pdf.cell(65, 5, txt=f"{meter.contractor.company[:35]}", ln=True, align="L",border=1)
+                        ln += 1
+
+                    
+
+                    
+                    
+
+
 
 
                     
@@ -1428,7 +1477,7 @@ def interface(request):
                     
                     
                     
-                    file_name = f"Daily Report {timezone.now().date()}.pdf"
+                    file_name = f"Daily Report {day_date}.pdf"
                     file = f"static/general/tmp/{file_name}"
                     pdf.output(file)
                     success_response['message'] = file

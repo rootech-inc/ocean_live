@@ -463,28 +463,35 @@ def upload_service_order(request):
 
         service_rates = ServiceTypeServices.objects.filter(service_type=service)
 
+        cts = 0
+
         for row in sheet.iter_rows(min_row=2, values_only=True):
+            cts += 1
             row_dict = dict(zip(headers, row))
             customer = row_dict['CUSTOMER NAME']
             customer_phone = row_dict['CUSTOMER PHONE']
             contractor_code = row_dict['CONTRACTOR CODE']
+            print(contractor_code)
             contractor = Contractor.objects.get(code=contractor_code)
-            dt = row_dict['DATE RESOLVED']
+            dt = row_dict['DATE APPROVED'] if row_dict.get('DATE APPROVED')  else row_dict['DATE RESOLVED']
             from datetime import datetime
             resolved_on = datetime.strptime(dt, "%d/%m/%Y %H:%M")
+            print(resolved_on)
             meter_no = row_dict['MFG Serial Number']
             ip_address = row_dict['IP Address']
 
             order_status = row_dict['PREPAID SYNC STATUS']
             address = row_dict['DIGITAL ADDRESS']
-            old_meter = row_dict['SERVICE POINT NUMBER']
+            old_meter = row_dict['OLD METER NUMBER'] if row_dict.get('OLD METER NUMBER') else row_dict['SERVICE POINT NUMBER']
+
 
             
 
             # get materials
             service_charge = 0
 
-            if order_status == 'Completed': 
+            #if order_status == 'Completed': 
+            if True:
                 hd = [service_name,customer,customer_phone,contractor.company,resolved_on,meter_no,ip_address]
 
                 # check if meter job created
@@ -505,15 +512,17 @@ def upload_service_order(request):
                             created_by=request.user,
                             location=Location.objects.get(loc_id='002')
                         ).save()
-                    print("Meter Created")
+                    print("Service Created")
                 except Exception as e:
+                    # update type
+                    ServiceOrder.objects.filter(new_meter=meter_no).update(service_type=service,service_date=resolved_on)
                     print(e)
                 print(meter_no)
                 met_service = ServiceOrder.objects.get(new_meter=meter_no)
             
 
-                print(hd)
-                print('RATES')
+                # print(hd)
+                # print('RATES')
                 rate_message = ""
                 total_rate = 0
                 for rate in service_rates:
@@ -521,7 +530,7 @@ def upload_service_order(request):
                     name = rate.service.name
                     rt = rate.service.rate
                     total_rate += rt
-                    rate_message += f"{name},1,{rt},{rt*1}\n"
+                    # rate_message += f"{name},1,{rt},{rt*1}\n"
 
                     if ServiceOrderItem.objects.filter(service_order=met_service,service=rate.service).exists:
                         ServiceOrderItem.objects.filter(service_order=met_service,service=rate.service).delete()
@@ -560,7 +569,7 @@ def upload_service_order(request):
                                 rate = extra_rate.service.rate
                                 name = extra_rate.service.name
                                 total_rate += extra_rate.service.rate
-                                rate_message += f"{name},1,{rt},{rt*1}\n"
+                                # rate_message += f"{name},1,{rt},{rt*1}\n"
                             else:
                                 pass
                                 # print("NOT GREATER")
@@ -583,14 +592,16 @@ def upload_service_order(request):
 
 
             # print(f'###### {contractor.company} ##### {meter_no}')
-            print("MATERIALS")
-            print(materials_message)
-            print("SERVICE RATES")
-            print(rate_message)
+            # print("MATERIALS")
+            # print(materials_message)
+            # print("SERVICE RATES")
+            # print(rate_message)
 
             # print(f'###### total ##### {total_rate}')
-            print('\n')
+            # print('\n')
             sample_data.append(row_dict)
+
+        print(cts, service_name, "Added")
 
         return HttpResponse(sample_data[:5])
 

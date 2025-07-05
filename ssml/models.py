@@ -513,7 +513,7 @@ class Cardex(models.Model):
     ref_no = models.CharField(max_length=255)
     material = models.ForeignKey(InventoryMaterial, on_delete=models.CASCADE)
     qty = models.DecimalField(max_digits=10, decimal_places=2)
-    created_at = models.DateField(auto_now_add=True)
+    created_at = models.DateField(null=False)
     updated_at = models.DateTimeField(auto_now=True)
     location = models.ForeignKey(Location,on_delete=models.CASCADE,null=False)
     
@@ -679,12 +679,13 @@ class ServiceType(models.Model):
     def __str__(self):
         return self.name
 
-    def total_installations(self):
-        return ServiceOrder.objects.filter(service_type=self).count()
+    def total_installations(self,date=datetime.now().date()):
+        return ServiceOrder.objects.filter(service_type=self,service_date__lte=date).count()
     
 
-    def today_jobs(self):
-        return ServiceOrder.objects.filter(service_type=self,service_date=datetime.now().date()).count()
+    def today_jobs(self,date=datetime.now().date()):
+        print(date)
+        return ServiceOrder.objects.filter(service_type=self,service_date=date).count()
     
     def obj(self):
         return {
@@ -694,7 +695,7 @@ class ServiceType(models.Model):
             'created_at':self.created_at,
             'updated_at':self.updated_at,
             'total_installations':self.total_installations(),
-            'today_jobs':self.today_jobs(),
+            'today_jobs':self.today_jobs(datetime.now().date()),
             'accounts': {
             'debit': {
                 'serial': self.debit_account.acct_serial if self.debit_account else None,

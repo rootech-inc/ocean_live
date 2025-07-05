@@ -1944,6 +1944,10 @@ class SSML {
             $("#add_contractor").click(function(){
                 amodal.setTitleText('Add Contractor');
                 let form = `
+                <div class="form-group mb-2">
+                        <label for="code" class="text-info">Code</label>
+                        <input type="text" placeholder='COntractor code in ECG Portal' class="form-control" id="code" name="code">
+                    </div>
                     <div class="form-group mb-2">
                         <label for="link" class="text-info">Link</label>
                         <input type="text" class="form-control" id="link" name="link">
@@ -1993,7 +1997,7 @@ class SSML {
                 amodal.setFooterHtml('<button class="btn btn-primary" id="save_contractor">Save</button>');
                 amodal.show();
                 $("#save_contractor").click(async function(){
-                    let ids = ['link', 'company', 'owner', 'phone', 'email','country','city','postal_code','gh_post_code','gh_card_no','mypk'];
+                    let ids = ['link', 'company', 'owner', 'phone', 'email','country','city','postal_code','code','gh_post_code','gh_card_no','mypk'];
                     if(anton.validateInputs(ids)){
                         let payload = {
                             module: 'contractor',
@@ -2089,7 +2093,7 @@ class SSML {
                     await api.v2('VIEW',payload,'/ssml/api/contractor/').then(response => {
                         if(anton.IsRequest(response)){
                             let records = response.message
-                            let to_export = []
+                            let to_export = [['CONTRACTOR','METER NO.','MATERIAL','QUANTITY']]
                             let tr = ``;
                             for(let m = 0; m < records.length; m++){
                                 let record = records[m];
@@ -2103,7 +2107,7 @@ class SSML {
                                     </tr>
                                 `
 
-                                to_export.push([record.meter,record.name,record.quantity])
+                                to_export.push([record.contractor,record.meter,record.name,record.quantity])
                             }
 
                             let table = `<table class='table table-sm table-bordered'>
@@ -2171,9 +2175,29 @@ class SSML {
         })
     }   
 
-    async getDailyReport(){
+    reportByDate(){
+        let form = "";
+        form += `
+            <div class="form-group">
+                <label for="date">Date</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="${new Date().toISOString().split('T')[0]}">
+            </div>
+        `
+
+        amodal.setTitleText('Daily Report')
+        amodal.setBodyHtml(form)
+        amodal.setFooterHtml('<button class="btn btn-primary" id="get_report">Get Report</button>')
+        amodal.show()
+
+        $('#get_report').click(async function(){
+            let start_date = $('#start_date').val()
+            ssml.getDailyReport(start_date)
+        })
+    }
+
+    async getDailyReport(start_date=new Date().toISOString().split('T')[0]){
         loader.show()
-        await api.v2('VIEW',{module:'daily_report'},'/ssml/api/').then(response => {
+        await api.v2('VIEW',{module:'daily_report',data:{date:start_date}},'/ssml/api/').then(response => {
             if(anton.IsRequest(response)){
                 anton.viewFile('/'+response.message)
                 loader.hide()
@@ -2188,14 +2212,15 @@ class SSML {
     }
 
     loadByMeterNumber(meter_no){
-        let meter = ssml.getMeter(meter_no)
-        if(anton.IsRequest(meter)){
+        // let meter = ssml.getMeter(meter_no)
+        let meter = true
+        if(true){
             // console.log("METER")
             // console.table(meter)
 
             // console.log("SERVICE #")
             // console.table(meter.message.service)
-            ssml.LoadServiceOrder(meter.message.service)
+            ssml.LoadServiceOrder(meter_no)
         } else {
             kasa.response(meter)
         }

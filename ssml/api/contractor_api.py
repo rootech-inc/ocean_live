@@ -293,7 +293,8 @@ def contractor_api(request):
                             'barcode':item.barcode,
                             'name':item.name,
                             'meter':usage.service_order.new_meter,
-                            'quantity':usage.quantity
+                            'quantity':usage.quantity,
+                            'contractor':usage.service_order.contractor.company
                         })
 
                     arr = trans
