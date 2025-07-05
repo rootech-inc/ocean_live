@@ -635,9 +635,15 @@ class JobCard(models.Model):
     mechanic = models.CharField(max_length=64, blank=True, null=True)
     close_remark = models.TextField()
     next_service_date = models.DateField(null=True, blank=True)
+    service_follow_up_log = models.BooleanField(default=False)
     is_synced = models.BooleanField(default=False)
     is_feedback = models.BooleanField(default=False)
     end_date = models.DateField(auto_now_add=True)
+
+    def req(self):
+        return JobRequest.objects.get(jobcard=self).obj() if JobRequest.objects.filter(jobcard=self) else {
+            'entry_no':"not started"
+        }
 
 
     def obj(self):
@@ -761,3 +767,87 @@ class JobCardImages(models.Model):
     def image_exists(self):
         """Checks if the image file exists on the filesystem."""
         return os.path.exists(self.get_image_full_path())
+
+
+class JobRequest(models.Model):
+    entry_no = models.CharField(max_length=20, unique=True)
+    fuel_type = models.CharField(max_length=10,choices=[
+        ('petrol','Petrol'),
+        ('disel','Diesel'),
+        ('gas','Gas')
+    ],null=False,blank=False)
+    service_type = models.CharField(max_length=10, choices=[
+        ('engine', 'Engine'),
+        ('interior', 'Interior'),
+        ('exterior', 'Exterior') ,
+        ('other', 'Other')
+    ], null=False, blank=False)
+    car_type = models.CharField(max_length=10, choices=[
+        ('sedan', 'Sedan'),
+        ('suv', 'SUV'),
+        ('hatchback', 'Hatchback'),
+        ('van', 'Van'),
+        ('pickup', 'Pickup'),
+        ('minivan', 'Minivan'),
+    ])
+    company_name = models.CharField(null=False,blank=False,max_length=100)
+    driver_name = models.CharField(null=False,blank=False,max_length=100)
+    driver_phone = models.CharField(null=False,blank=False,max_length=100)
+    car_brand = models.CharField(null=False,blank=False,max_length=100)
+    car_model = models.CharField(null=False,blank=False,max_length=100)
+    car_no = models.CharField(null=False,blank=False,max_length=100)
+    problem = models.TextField(null=True,blank=True)
+       
+    created_date = models.DateField(auto_now_add=True)
+    created_time = models.TimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+    is_started = models.BooleanField(default=False)
+    jobcard = models.ForeignKey(JobCard, on_delete=models.SET_NULL, blank=True, null=True)
+
+    def obj(self):
+        return {
+            'entry_no':self.entry_no,
+            'fuel_type':self.fuel_type,
+            'service_type':self.service_type,
+            'car_type':self.car_type,
+            'company_name':self.company_name,
+            'driver_name':self.driver_name,
+            'driver_phone':self.driver_phone,
+            'car_brand':self.car_brand,
+        }
+
+class ServiceFollowup(models.Model):
+    carno = models.CharField(max_length=100)
+    car_model = models.CharField(max_length=100)
+    car_year = models.CharField(max_length=100)
+    car_brand = models.CharField(max_length=100)
+    driver_name = models.CharField(max_length=100)
+    driver_phone = models.CharField(max_length=100)
+    service_date = models.DateField(null=True, blank=True)
+    is_followed = models.BooleanField(default=False)
+    is_completed = models.BooleanField(default=False)
+    follow_up_date = models.DateField(null=True, blank=True)
+
+    def obj(self):
+        days_due = (self.service_date - timezone.now().date()).days if self.service_date else 0
+        return {
+            'carno': self.carno,
+            'car_model': self.car_model,
+            'car_year': self.car_year,
+            'car_brand': self.car_brand,
+            'driver_name': self.driver_name,
+            'driver_phone': self.driver_phone,
+            'service_date': self.service_date,
+            'is_followed': self.is_followed,
+            'is_completed': self.is_completed,
+            'follow_up_date': self.follow_up_date,
+            'days_due': days_due
+        }
+
+class ServiceFollowupLog(models.Model):
+    followup = models.ForeignKey(ServiceFollowup, on_delete=models.CASCADE)
+    details = models.TextField()
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_on = models.DateField(auto_now_add=True)
+    created_time = models.TimeField(auto_now_add=True)
+

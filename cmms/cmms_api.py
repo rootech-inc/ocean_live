@@ -81,6 +81,28 @@ def api(request):
                     cursor.close()
                     connection.close()
 
+                elif module == 'service_follow_ups':
+                    response['message'] = [ff.obj() for ff in ServiceFollowup.objects.filter(is_completed=False)]
+                    response['status_code'] = 200
+
+                elif module == 'service_follow_ups_excel':
+                    import openpyxl
+                    book = openpyxl.Workbook()
+                    sheet = book.active
+
+                    hd = ["DATE","Due Days","Customer","Car","Phone", "Car NO.","Car"]
+                    sheet.append(hd)
+
+                    for ff in ServiceFollowup.objects.filter(is_completed=False):
+                        li = [ff.service_date,ff.obj.days_due,ff.driver_name,ff.driver_phone,ff.carno,f"{ff.car_brand} - {ff.car_model}"]
+                        sheet.append(li)
+
+                    file = "static/general/tmp/service_follow_ups.xlsx"
+                    response['message'] = file
+                    response['status_code'] = 200
+
+
+
                 elif module == 'sync_job_card_to_cloud':
                     import gspread
                     from oauth2client.service_account import ServiceAccountCredentials
@@ -201,6 +223,27 @@ def api(request):
                         "Images":im_c
                     }
 
+                elif module == 'service_due':
+                    arr = []
+                    due_services = ServiceFollowup.objects.filter(is_completed=False)
+                    for service in due_services:
+                        arr.append({
+                            'jobcard': {
+                                'pk': service.jobcard.pk,
+                                'wr_no': service.jobcard.wr_no,
+                                'company': service.jobcard.company,
+                                'driver': service.jobcard.driver,
+                                'contact': service.jobcard.contact,
+                                'carno': service.jobcard.carno,
+                                'brand': service.jobcard.brand,
+                                'model': service.jobcard.model
+                            },
+                            'next_service_date': service.next_service_date,
+                            'created_on': service.created_on,
+                            'created_by': service.created_by.get_full_name()
+                        })
+                    response['status_code'] = 200
+                    response['message'] = arr
 
                 elif module == 'groups':
                     cursor = db()
@@ -1773,6 +1816,108 @@ def api(request):
                         else:
                             response['statys_code'] = 404
                             response['message'] = f"CANNOT FIND FROZEN with entry {frozen_ref}"
+
+                elif module == 'job_request':
+                    fuel_type = data.get('fuel_type')
+                    service_type = data.get('service_type')
+                    car_type = data.get('car_type')
+
+                    company_name = data.get('company_name')
+                    driver_name = data.get('driver_name')
+                    driver_phone = data.get('driver_phone')
+                    car_brand = data.get('car_brand')
+                    car_model = data.get('car_model')
+                    reg_no = data.get('reg_no')
+                    problem = data.get('problem')
+
+                    next_entry_no = JobRequest.objects.filter(created_date=timezone.now()).count() + 1
+                    entry_no = f"{timezone.now().strftime('%Y%m%d')}-{next_entry_no}"
+                    JobRequest(
+                        entry_no = entry_no,
+                        fuel_type=fuel_type,
+                        service_type=service_type,
+                        car_type=car_type,
+                        company_name=company_name,
+                        driver_name=driver_name,
+                        driver_phone=driver_phone,
+                        car_brand=car_brand,
+                        car_model=car_model,
+                        car_no=reg_no,
+                        problem=problem
+                    ).save()
+
+                    # send sms
+                    Sms(
+                        api=SmsApi.objects.get(is_default=True),
+                        to=driver_phone,
+                        message=f"Your job request no. {entry_no} is created. Please check your vehicle details."
+                    ).save()
+
+                    response['status_code'] = 200
+                    response['message'] = entry_no
+
+
+                if module == 'check_service_due_date':
+                    JobCard.objects.all().update(service_follow_up_log=False)
+                    ServiceFollowup.objects.all().delete()
+                    ServiceFollowupLog.objects.all().delete()
+
+                    for service in JobCard.objects.filter(service_follow_up_log=False):
+                        next_service_date = service.next_service_date
+                        if next_service_date:
+                            current_date = timezone.now().date()
+                            days_remaining = (next_service_date - current_date).days
+
+                            if days_remaining <= 3 or current_date > next_service_date:
+                                # # Create service follow up
+                                # ServiceFollowup(
+                                #     jobcard=service,
+                                #     next_service_date=next_service_date,
+                                #     created_by=service.owner
+                                # ).save()
+
+                                # Send SMS notification
+                                sms_message = f"""
+                                Dear {service.driver}, Your vehicle {service.carno} is due for service on {next_service_date}.
+                                Please visit our workshop to avoid any inconvenience.
+                                
+                                Thanks
+                                Sneda Motors Limited
+                                """
+
+                                # Sms(
+                                #     api=SmsApi.objects.get(is_default=True),
+                                #     to=service.contact,
+                                #     message=sms_message
+                                # ).save()
+
+                                # make service log
+                                lg = ServiceFollowup.objects.create(
+                                    carno=service.carno,
+                                    car_model=service.model,
+                                    car_brand=service.brand,
+                                    driver_name=service.driver,
+                                    driver_phone=service.contact,
+                                    service_date=next_service_date,
+
+                                )
+
+                                ServiceFollowupLog(
+                                    followup=lg,
+                                    created_by=User.objects.get(pk=1),
+                                    details="Service Follow Up Log Created"
+                                ).save()
+
+                                # Update follow-up flag
+                                service.service_follow_up_log = True
+                                service.save()
+
+                    response['status_code'] = 200
+                    response['message'] = "Service due dates checked and notifications sent"
+
+
+
+
 
                 elif module == 'material_request':
                     pk = data.get('pk')

@@ -21,6 +21,7 @@
             <table class="table datatable">
                 <thead>
                     <tr>
+                        <th>REQUEST</th>
                         <th>DATE</th>
                         <th>COMPANY</th>
                         <th>DRIVER</th>
@@ -35,6 +36,7 @@
                 <tbody>
                 {% for job in jobs %}
                     <tr>
+                    <td><a href="{% url 'track_job' job.req.entry_no %}">{{ job.req.entry_no }}</a></td>
                         <td>
                             {% if user.is_superuser %}
                                 <button onclick="deleteServiceJob(`{{ job.pk }}`)" class="btn btn-danger">

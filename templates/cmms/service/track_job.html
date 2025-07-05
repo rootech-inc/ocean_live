@@ -1,0 +1,54 @@
+{% extends 'cmms/service/serv_base.html' %}
+{% load static %}
+
+{% block cmms %}
+    <div class="container p-2">
+        <div class="row d-flex flex-wrap justify-content-center align-content-center">
+            <div class="col-sm-4">
+                <div class="accordion" id="accordionExample">
+                    <div class="accordion-item mb-2">
+                        <h2 class="accordion-header" id="headingOne">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                Asset Details
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne"
+                             data-bs-parent="#accordionExample">
+                            <div class="accordion-body">
+                                <p><strong>Car No.</strong>: {{ job.carno|default:'not found' }}</p>
+                                <p><strong>Company.</strong>: {{ job.company | default:'not found' }}</p>
+                                <p><strong>Started.</strong>: {{ job.is_started | default:'not found' }}</p>
+                                {% if request.user.is_authenticated %}
+                                <hr>
+                                    <a href="{% url 'cmms_servicing' %}" class="btn btn-primary">Home</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                Transactions
+                            </button>
+                        </h2>
+                        <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo"
+                             data-bs-parent="#accordionExample">
+                            <div class="accordion-body">
+                                {% for tran in job.transactions %}
+                                <div class="border-bottom pb-2 mb-2">
+                                    <span class="text-muted">{{ tran.created_on }}</span>
+                                    <p>
+                                        {{ tran.details }}
+                                    </p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -419,6 +419,27 @@ class Staff {
                 let tr = ""
                 recs.map(record => {
                     console.table(record)
+
+                    // Add click handler for send button
+                    $(document).on('click', '.send-leave-request', function () {
+                        let leaveId = $(this).data('id');
+                        let payload = {
+                            module: 'leave_resend',
+                            data: {
+                                leave_id: leaveId
+                            }
+                        }
+                        api.v2('PUT', payload, '/company/api/').then(response => {
+                            if (anton.IsRequest(response)) {
+                                kasa.confirm("Leave request sent successfully", 1, 'here')
+                            } else {
+                                kasa.response(response)
+                            }
+                        }).catch(error => {
+                            kasa.error(error)
+                        })
+                    });
+
                     tr += `
                         <tr>
                             <td>${record['date']}</td>
@@ -525,6 +546,91 @@ class Staff {
                 kasa.error("Invalid Form")
             }
         })
+    }
+
+    async loadMyLeave(pk='*',status='*') {
+        await this.getLeave(pk,status).then(response => {
+            if(anton.IsRequest(response)){
+                let recs = response.message;
+                let tr = ""
+                recs.map(record => {
+                    console.table(record)
+                    let act = "";
+                    if(record['status'] == 'pending'){
+                        act = `
+                                <a class="dropdown-item leave_approval_request" data-id="${record['id']}" href="javascript:void(0)">Request Approval</a>
+                                <a class="dropdown-item cancel-leave"  data-id="${record['id']}" href="javascript:void(0)" >Cancel</a>
+                                `
+
+                    }
+                    tr += `
+                        <tr>
+                            <td>${record['req_date']}</td>
+                            <td>${record['type']}</td>
+                            <td>${record['start_date']}</td>
+                            <td>${record['end_date']}</td>
+                            <td>${record['status']}</td>
+                            <td>${record['reliever']}</td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-secondary btn-sm" type="button" id="dropdownMenuButton${record.id}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="fa fa-grip-horizontal"></i>
+                                    </button>
+                                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton${record.id}">
+                                       ${act}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                            
+                            
+                    `
+                })
+
+                $('#leave_bd').html(tr)
+                $('#leave_table').DataTable();
+                $('#leave_table').on('click','.cancel-leave',async function () {
+                    let leaveId = $(this).data('id');
+                    if(confirm('Are you sure you want to cancel this leave request?') === false){
+                        kasa.info('Cancelled')
+                        return;
+                    }
+                    let payload = {
+                        module: 'leave',
+                        data: {
+                            pk: leaveId
+                        }
+                    }
+                    await api.v2('DELETE', payload, '/company/api/').then(response => {
+                        kasa.confirm(response.message,1,'here')
+                    }).catch(error => {
+                        kasa.error(error)
+                    })
+                })
+                $('.leave_approval_request').click(async function () {
+                    let leaveId = $(this).data('id');
+                    if(confirm('Are you sure you want to request approval for this leave request?') === false){
+                        kasa.info('Cancelled')
+                        return;
+                    }
+                    let payload = {
+                        module: 'leave_approval_request',
+                        data: {
+                            leave_id: leaveId
+                        }
+                    }
+                    await api.v2('PATCH', payload, '/company/api/').then(response => {
+                        kasa.confirm(response.message,1,'here')
+                    })
+                })
+            } else {
+                kasa.response(response)
+            }
+        }).catch(error => {kasa.error(error)})
+    }
+
+    async getLeave(pk='*',status='*') {
+        return api.call('VIEW',{module:'leave',data:{mypk:$('#mypk').val(),pk:pk,status:status}},'/company/api/')
     }
 }
 

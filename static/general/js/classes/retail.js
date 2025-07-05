@@ -1746,31 +1746,31 @@ class Retail {
         }
     }
 
-    loadCard(s = '*',filter='pk',entity='*') {
+    async loadCard(s = '*', filter = 'pk', entity = '*') {
 
-        let product = this.getCardProduct(s,filter,entity);
+        let product = this.getCardProduct(s, filter, entity);
         console.table(product)
 
-        if(anton.IsRequest(product)){
+        if (anton.IsRequest(product)) {
             let message = product['message'][0];
 
 
             $('#previous').val(message['previous'])
             $('#next').val(message['next'])
-            $('#image').attr('src',`${message['image']}`)
+            $('#image').attr('src', `${message['image']}`)
             $('#group_name').val(message['group'])
             $('#sub_group_name').val(message['subgroup'])
 
-            if(message['previous'] === 0){
-                $('#previous').attr('disabled',true)
+            if (message['previous'] === 0) {
+                $('#previous').attr('disabled', true)
             } else {
-                $('#previous').attr('disabled',false)
+                $('#previous').attr('disabled', false)
             }
 
-            if(message['next'] === 0){
-                $('#next').attr('disabled',true)
+            if (message['next'] === 0) {
+                $('#next').attr('disabled', true)
             } else {
-                $('#next').attr('disabled',false)
+                $('#next').attr('disabled', false)
             }
 
             let stock = message['stock'];
@@ -1785,11 +1785,13 @@ class Retail {
             let live_product = this.getProduct(message['barcode'])['message'][0];
 
 
+
             let cardex = message['cardex'];
             let cl = 5;
-            if (cardex.length < cl +1){
+            if (cardex.length < cl + 1) {
                 cl = cardex.length
             }
+
             let ctr = ""
             for (let c = 0; c < cl; c++) {
                 let cr = cardex[c];
@@ -1805,7 +1807,7 @@ class Retail {
             }
             $('#cardex_tr').empty()
             $('#cardex_tr').html(ctr)
-            // console.table(cardex)
+            console.table(cardex)
             anton.setValues(live_product)
             anton.setValues(message)
 

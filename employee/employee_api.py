@@ -84,22 +84,10 @@ def interface(request):
                     date=date_of_request
                 )
 
-                # send sms
-                sms_api = SmsApi.objects.get(is_default=True)
-                # Message to employee
-                employee_message = f"Dear {user.first_name}, your leave request from {start_date} to {end_date} has been submitted and is pending approval."
-                Sms.objects.create(
-                    api=sms_api,
-                    to=user.useraddon.mobile,
-                    message=employee_message
-                )
 
-                # Notify provided phone number
-                Sms.objects.create(
-                    api=sms_api,
-                    to="0546310011",
-                    message=f"A {leave_type} leave request by {adon.user.username} from {start_date} to {end_date} is pending for approval."
-                )
+
+                success_response['message'] = "Leave Requested Successfully"
+                response = success_response
 
 
 
@@ -355,7 +343,7 @@ def interface(request):
 
         elif method == 'VIEW':
             if module == 'area':
-                url = 'http://192.168.2.15/personnel/api/areas/'
+                url = f'{ATTENDANCE_URL}personnel/api/areas/'
 
                 tk = token('solomon','Szczesny@411')
                 headers = {
@@ -496,6 +484,21 @@ def interface(request):
 
                     response = success_response
 
+            elif module == 'leave':
+                mypk = data.get('mypk','*')
+                if mypk != '*':
+                    user = User.objects.get(pk=mypk)
+                    success_response['message'] = [lv.obj() for lv in Leave.objects.filter(employee=user)]
+                else:
+                    leaves = Leave.objects.all()
+                    status = data.get('status','*')
+                    if status != '*':
+                        leaves = leaves.filter(status=status)
+                    success_response['message'] = [lv.obj() for lv in leaves]
+
+                response = success_response
+
+
 
             else:
                 response['message'] = "Invalid Module"
@@ -514,6 +517,42 @@ def interface(request):
                 ad_on.save()
 
                 response = success_response
+
+            elif module == 'leave_approval_request':
+                pk = data.get('leave_id')
+
+                leave = Leave.objects.get(pk=pk)
+                user = leave.employee
+                adon = UserAddOns.objects.get(user=user)
+                # send sms
+                sms_api = SmsApi.objects.get(is_default=True)
+                # Message to employee
+                employee_message = f"Dear {user.first_name}, your leave request from {leave.start_date} to {leave.end_date} has been submitted and is pending approval."
+                Sms.objects.create(
+                    api=sms_api,
+                    to=adon.phone,
+                    message=employee_message
+                )
+
+                # Notify provided phone number
+                Sms.objects.create(
+                    api=sms_api,
+                    to="0546310011",
+                    message=f"A {leave.leave_type} leave request by {adon.user.username} from {leave.start_date} to {leave.end_date} is pending for approval."
+                )
+                leave.status = 'requested'
+                leave.save()
+
+                success_response['message'] = "Request for Leave Approval Sent"
+                response = success_response
+
+        elif method == 'DELETE':
+            if module == 'leave':
+                Leave.objects.filter(pk=data.get('pk')).delete()
+                success_response['message'] = "Leave Deleted Successfully"
+                response = success_response
+            else:
+                raise Exception("Invalid Module")
 
     except Exception as e:
         error_type, error_instance, traceback = sys.exc_info()

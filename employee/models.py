@@ -71,6 +71,7 @@ class Leave(models.Model):
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
         ('pending', 'Pending'),
+        ('requested', 'Requested'),
         ('overdue', 'Overdue'),
         ('complete', 'Complete')
     ],default='pending')
@@ -82,3 +83,21 @@ class Leave(models.Model):
     
     def number_of_days(self):
         return (self.end_date - self.start_date).days + 1
+
+    def obj(self):
+        return {
+            'id': self.id,
+            "employee":{
+                "username":self.employee.username,
+                'pk':self.employee.pk,
+                'name':self.employee.get_full_name()
+            },
+            'req_date':self.date,
+            'start_date':self.start_date,
+            'end_date':self.end_date,
+            'days':self.number_of_days(),
+            'reason':self.reason,
+            'status':self.status,
+            'reliever':self.reliever,
+            'type':self.leave_type,
+        }

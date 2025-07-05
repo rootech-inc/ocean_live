@@ -77,3 +77,14 @@ def leave(request):
 
     return render(request, 'employee/leave.html', context=context)
 
+
+def master_leave(request):
+    context = {
+        'nav': True,
+        'page': {
+            'title': "Leave",
+            'nav': True
+        }
+    }
+
+    return render(request,'employee/leaves.html',context=context)

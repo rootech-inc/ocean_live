@@ -1187,6 +1187,11 @@ def interface(request):
                 success_response['message'] = arr
                 response = success_response
 
+            elif module == 'cardex':
+                barcode = data.get('barcode')
+                product = Products.objects.get(barcode=barcode)
+                success_response['message'] = [mv.obj() for mv in ProductMoves.objects.filter(product=product)]
+
             elif module == 'butch_items':
                 target_date = data.get('target_date',timezone.now().date())
                 for item in Products.objects.filter(is_butch=True).order_by('name'):
@@ -3635,19 +3640,37 @@ ORDER BY
                         # ni_stk = item.stock_nia
                         # os_stk = item.stock_osu
 
+                        nia_stock = item.stock_nia
+                        sp_stock = item.stock_spintex
+                        osu_stock = item.stock_osu
+
+                        if nia_stock < 0:
+                            nia_stock = 5
+                        if sp_stock < 0:
+                            sp_stock = 5
+
+                        if osu_stock < 0:
+                            osu_stock = 5
+
+
+                        if item.is_expired:
+                            nia_stock = 0
+                            osu_stock = 0
+                            sp_stock = 0
+
                         sp_stk = [
                             item.product.barcode,
-                            item.stock_spintex,
+                            sp_stock,
                             BOLT_PROVIDER_ID.get('001')['address']
                         ]
                         ni_stk = [
                             item.product.barcode,
-                            item.stock_nia,# if stock.get('nia') > 0 else 0,
+                            nia_stock,# if stock.get('nia') > 0 else 0,
                             BOLT_PROVIDER_ID.get('202')['address']
                         ]
                         os_stk = [
                             item.product.barcode,
-                            item.stock_osu,# 5) if stock.get('osu') > 0 else 5,
+                            osu_stock,# 5) if stock.get('osu') > 0 else 5,
                             BOLT_PROVIDER_ID.get('205')['address']
                         ]
 
@@ -3795,6 +3818,7 @@ ORDER BY
 
                     # check stock
                     stock_moved = stock_by_moved(item.product.pk,'*')
+                    print(stock_moved)
                     nia_stock = stock_moved.get('202',0)
                     osu_stock = stock_moved.get('205',0)
                     spi_stock = stock_moved.get('001',0)

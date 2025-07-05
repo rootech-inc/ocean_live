@@ -1,0 +1,137 @@
+{% extends 'cmms/service/serv_base.html' %}
+
+{% load static %}
+
+{% block cmms %}
+    <div class="card h-100">
+        <div class="card-header">
+            <div class="w-100 d-flex flex-wrap">
+                <button class="btn btn-info btn-sm new">New</button>
+            </div>
+        </div>
+        <div class="card-body p-2">
+            <div class="table-responsive h-100">
+                <table class="table table-striped table-bordered table-sm" id="jobs">
+                    <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Asset</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in reqs %}
+                            <tr>
+                                <td>{{ req.company_name }}</td>
+                                <td>{{ req.car_no }}</td>
+                                <td>{{ req.created_date }}</td>
+                                <td>{{ req.created_time }}</td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button class="btn btn-secondary btn-sm dropdown-toggle" type="button"
+                                                data-bs-toggle="dropdown" aria-expanded="false">
+                                            Actions
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a data-id="{{ req.pk }}" data-no="{{ req.car_no }}" class="dropdown-item start" href="javascript:void(0)">Start</a>
+                                            </li>
+                                            <li><a data-id="{{ req.pk }}" data-no="{{ req.car_no }}" class="dropdown-item delete text-danger" href="javascript:void(0)">Delete</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function(){
+            $('#jobs').DataTable()
+        })
+        $('.start').on('click',function(){
+            let id = $(this).data('id')
+            let no = $(this).data('no')
+            Swal.fire({
+                title: 'Start Job',
+                text: 'Are you sure you want to start job for ' + no,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, start it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let html = `
+                        <form id="job-images-form" method="post" enctype="multipart/form-data" action="{% url 'start_job' %}" class="mt-3">
+                            <input type="hidden" name="job_id" value="${id}">
+
+
+
+
+
+                            <div class="mb-3">
+                                <label class="form-label">Interior Image</label>
+                                <input type="file" class="form-control form-control-sm" name="interior" accept="image/*" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Exterior Image</label>
+                                <input type="file" class="form-control form-control-sm" name="exterior" accept="image/*" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Fire Extinguisher Image</label>
+                                <input type="file" class="form-control form-control-sm" name="fire_extinguisher" accept="image/*" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Toolbox Image</label>
+                                <input type="file" class="form-control form-control-sm" name="toolbox" accept="image/*" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Triangle Image</label>
+                                <input type="file" class="form-control form-control-sm" name="triangle" accept="image/*" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Mileage Image</label>
+                                <input type="file" class="form-control form-control-sm" name="mileage" accept="image/*" required>
+                            </div>
+                        </form>
+                                `
+                    amodal.setBodyHtml(html)
+                    amodal.setTitleHtml('Start Job')
+                    amodal.setFooterHtml(`<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            <button type="submit" class="btn btn-primary" form="job-images-form">Submit</button>`)
+                    amodal.show()
+                }
+            }).catch(err => {
+                console.log(err)
+            })
+        })
+
+        $('.delete').on('click',function(){
+            let id = $(this).data('id')
+            Swal.fire({
+                title: 'Delete Job',
+                text: 'Are you sure you want to delete job',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = `{% url 'delete_job_request' %}?id=${id}`
+                }
+            })
+        })
+
+        $('.new').on('click',function(){
+            window.location.href = `{% url 'new_servicing_job' %}`
+        })
+
+    </script>
+{% endblock %}

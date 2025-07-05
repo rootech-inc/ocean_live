@@ -55,7 +55,12 @@ urlpatterns = [
     path('servicing/card/<pk>/', views.view_service_card,name='view_service_card'),
     path('servicing/close/<pk>/', views.view_service_close,name='view_service_close'),
     path('servicing/mr/',views.servicing_mr,name='servicing_mr'),
-    path('servicing/feedback/',views.cmms_servicing_feedback,name='cmms_servicing_feedback')
+    path('servicing/feedback/',views.cmms_servicing_feedback,name='cmms_servicing_feedback'),
+    path('servicing/request/',views.service_request,name='service_request'),
+    path('servcing/start-job/',views.start_job,name='start_job'),
+    path('servicing/delete_job_request/',views.delete_job_request,name='delete_job_request'),
+    path('servcing/track/<req_id>/',views.track_job,name='track_job'),
+    path('servicing/cmms-service-due/',views.cmms_service_due,name='cmms_service_due'),
 
 ]
 
