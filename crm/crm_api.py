@@ -10,11 +10,12 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
 
-from admin_panel.anton import make_md5_hash, is_valid_email, is_valid_phone_number, md5only, get_client_ip
+from admin_panel.anton import fix_phone_number, make_md5_hash, is_valid_email, is_valid_phone_number, md5only, get_client_ip
 from admin_panel.models import Emails, GeoCity, GeoCitySub, MailQueues, MailSenders, MailAttachments, Reminder, Sms, SmsApi
 from cmms.models import CarModel, SalesDeals, SalesCustomers
-from crm.models import Logs, CrmUsers, Sector, Positions, FollowUp, Campaigns, LogValidity, CampaignTargets, \
+from crm.models import Contacts, Logs, CrmUsers, Sector, Positions, FollowUp, Campaigns, LogValidity, CampaignTargets, \
     CampaignSense
+from retail.db import ret_cursor
 
 
 @csrf_exempt
@@ -109,6 +110,73 @@ def api_interface(request):
                 if own.username == 'reza':
                     pass
                     #Logs.objects.filter(owner=own).delete()
+                response = success_response
+            
+
+            elif module == 'sync_contacts':
+                # get all logs
+                total_phones = 0
+                total_emails = 0
+
+                # sync logs
+                logs = Logs.objects.all()
+                for log in logs:
+                    # get contact
+                    email = log.email
+                    phone = log.phone
+                    if is_valid_email(email):
+                        total_emails += 1
+                    if is_valid_phone_number(phone):
+                        total_phones += 1
+
+                #syn loyalty customers
+                conn = ret_cursor()
+                cursor = conn.cursor()
+                query = """
+                SELECT Mobile,Email,labour_card_no,CONCAT(first_name,' ',last_name) as 'name' FROM LoyaltyCustomer
+                """
+                cursor.execute(query)
+                result = cursor.fetchall()
+                for row in result:
+                    x_li = []
+                    mobile = fix_phone_number(row[0])
+                    email = row[1] if row[1] is not None else ''
+                    labour_card_no = fix_phone_number(row[2])
+                    name = row[3].strip()
+
+                    
+
+                    if is_valid_phone_number(mobile):
+                        try:
+                            total_phones += 1
+                            Contacts(contact=mobile,source='lty',type='sms',name=name).save()
+                            x_li.append(mobile)
+                        except Exception as e:
+                            print(e)
+                            pass
+                    if labour_card_no != mobile:
+                        try:
+                            if is_valid_phone_number(labour_card_no):
+                                total_phones += 1
+                                Contacts(contact=labour_card_no,source='lty',type='sms',name=name).save()
+                                x_li.append(labour_card_no)
+                        except Exception as e:
+                            print(e)
+                            pass
+                    if is_valid_email(email):
+                        try:
+                            total_emails += 1
+                            Contacts(contact=email,source='lty',type='email',name=name).save()
+                            x_li.append(email)
+                        except Exception as e:
+                            print(e)
+                            pass
+
+                    if len(x_li) > 0:
+                        print(x_li)
+
+                conn.close()
+                success_response['message'] = f"Total Phones: {total_phones}, Total Emails: {total_emails}"
                 response = success_response
 
             elif module == 'deal_from_log':

@@ -264,3 +264,23 @@ class CampaignSense(models.Model):
     tail = models.TextField(blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
 
+
+class Contacts(models.Model):
+    contact = models.CharField(max_length=200,unique=True)
+    name = models.TextField()
+    created_on = models.DateTimeField(auto_now_add=True)
+    source_choice = (
+        ('lty','Loyalty'),
+        ('log','Logs'),
+    )
+    source = models.CharField(max_length=10, choices=source_choice,null=False,blank=False)
+    type_choice = (
+        ('email','Email'),
+        ('sms','SMS'),
+    )
+    type = models.CharField(max_length=10, choices=type_choice,null=False,blank=False)
+    is_active = models.BooleanField(default=True)
+    date_added = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
+    
+    

@@ -241,17 +241,17 @@ OLD_DB_NAME = 'PROC_CMMS_V1'
 # DB_PORT = '1433'
 # DB_NAME = 'PROC_CMMS_V1'
 
-RET_DB_HOST = '192.168.2.4'
-RET_DB_NAME = 'SMSEXPV17'
-RET_DB_USER = 'sa'
-RET_DB_PASS = 'sa@123456'
-RET_DB_PORT = '1433'
+RET_DB_HOST = os.environ.get('RET_DB_HOST','127.0.0.1')
+RET_DB_NAME = os.environ.get('RET_DB_NAME','SMSEXPV17')
+RET_DB_USER = os.environ.get('RET_DB_USER','sa')
+RET_DB_PASS = os.environ.get('RET_DB_PASS','sa@123456')
+RET_DB_PORT = os.environ.get('RET_DB_PORT','1433')
 
-REST_DB_HOST = '192.168.2.4'
-REST_DB_NAME = 'SMSEXP_REST_2022'
-REST_DB_USER = 'sa'
-REST_DB_PASS = 'sa@123456'
-REST_DB_PORT = '1433'
+REST_DB_HOST = os.environ.get('REST_DB_HOST','192.168.2.4') 
+REST_DB_NAME = os.environ.get('REST_DB_NAME','SMSEXP_REST_2022')
+REST_DB_USER = os.environ.get('REST_DB_USER','sa')
+REST_DB_PASS = os.environ.get('REST_DB_PASS','sa@123456')
+REST_DB_PORT = os.environ.get('REST_DB_PORT','1433')
 
 
 # approvers email

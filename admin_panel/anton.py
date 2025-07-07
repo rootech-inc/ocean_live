@@ -40,8 +40,17 @@ def is_valid_email(email):
 
 def is_valid_phone_number(phone):
     import re
-    pattern = r'^\d{10}$'
+    pattern = r'^0[1-9]\d{8}$'
     return re.match(pattern, phone) is not None
+
+def fix_phone_number(phone):
+    if phone is not None:
+        phone = phone.replace(' ', '').replace('+233', '0')
+        if not phone.startswith('0') and phone != '':
+            phone = '0' + phone
+        return phone
+    else:
+        return ''
 
 def push_notification(user_pk, subject='', message=''):
     user = User.objects.get(pk=user_pk)
