@@ -97,35 +97,36 @@
         $('#see_clients').click(function () {
             let select = $('#type').val();
             let payload = {
-                module:"get_crm_contact",
+                module:"contacts",
                 data:{}
             }
             if(select === 'email'){
                 payload['data']['type'] = 'email'
             } else if(select === 'sms'){
-                payload['data']['type'] = 'phone'
+                payload['data']['type'] = 'sms'
             } else {
                 kasa.error("Cannot get type")
                 throw new Error("Unknown Type Selection")
             }
+            
 
-            let response = api.v2('VIEW',payload,'/crm/api/');
-            response.then(function (res) {
+            api.v2('VIEW',payload,'/crm/api/').then(res => {
                 if(anton.IsRequest(res)){
                     let message = res['message'];
                     let tr = ``;
+                    console.table(res)
 
 
                     for (let i = 0; i < message.length; i++) {
                         let row = message[i];
                         let cont;
                         if(select === 'email'){
-                            cont = row['email'].split('@')[0] + "@**********.com";
+                            cont = row['contact'].split('@')[0] + "@**********.com";
                         }
 
                         if(select === 'sms'){
 
-                            cont = row['phone'].replace('0','*').replace('5','*').replace('3','***@$#:');
+                            cont = row['contact'].replace('0','*').replace('5','*').replace('3','***@$#:');
                         }
                         tr += `<tr>
                                     <td>${row['name']}</td>
@@ -154,8 +155,8 @@
                 } else {
                     kasa.response(res)
                 }
-            })
-            console.table(payload)
+            }).catch(error => {kasa.error(error)})
+            
         })
     </script>
 {% endblock %}

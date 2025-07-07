@@ -9,7 +9,7 @@
                 <label for="switch_contacts">Contact Type: </label>
                 <select name="" id="switch_contacts" class="form-control w-25 form-control-sm">
                     <option value="email">Emails</option>
-                    <option value="mobile">Mobile Number</option>
+                    <option value="sms">SMS</option>
                 </select>
             </div>
         </div>
@@ -17,7 +17,18 @@
 
     <div class="card-body overflow-hidden">
         <div id="container" class="table-responsive overflow-auto h-100">
-
+            <table id="contacts_table" class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>NAME</th>
+                        <th>CONTACT</th>
+                        <th>SOURCE</th>
+                    </tr>
+                </thead>
+                <tbody id="contacts_body">
+                    
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -27,10 +38,15 @@
         crm.PreviewContacts('email')
 
         $(document).ready(
-            $('#switch_contacts').change(function(){
-                let val = this.value;
-                crm.PreviewContacts(val)
-            })
+            function (){
+                // $('#contacts_table').DataTable();
+
+                $('#switch_contacts').change(function(){
+                    let val = this.value;
+                    crm.PreviewContacts(val)
+                })
+            }
+            
         );
     </script>
 {% endblock %}

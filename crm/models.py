@@ -237,6 +237,7 @@ class Campaigns(models.Model):
             'heat':CampaignSense.objects.filter(campaign=self).count(),
             'is_scheduled':self.is_scheduled,
             'shc':self.schedule_date,
+            'targets':self.pending().count()
         }
 
     def pending(self):

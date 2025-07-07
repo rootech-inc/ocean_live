@@ -787,55 +787,63 @@ class Crm {
             }
         };
 
-        let unknown_dom = ``;
-        let email_dom = `<table class="table table-responsive datatable">
-                <thead>
-                    <tr>
-                        <th>First Name</th><th>Last Name</th><th>Address</th>
-                    </tr>
-                </thead>
-                <tbody id="emailBody">
+        // let unknown_dom = ``;
+        // let email_dom = `<table class="table table-responsive datatable">
+        //         <thead>
+        //             <tr>
+        //                 <th>First Name</th><th>Last Name</th><th>Address</th><th>Source</th>
+        //             </tr>
+        //         </thead>
+        //         <tbody id="emailBody">
 
-                </tbody>
-            </table>`;
-        let mobile_dom = `<table class="table table-responsive datatable">
-                <thead>
-                    <tr>
-                        <th>First Name</th><th>Last Name</th><th>Mobile</th>
-                    </tr>
-                </thead>
-                <tbody id="emailBody">
+        //         </tbody>
+        //     </table>`;
+        // let mobile_dom = `<table class="table table-responsive datatable">
+        //         <thead>
+        //             <tr>
+        //                 <th>First Name</th><th>Last Name</th><th>Mobile</th><th>Source</th>
+        //             </tr>
+        //         </thead>
+        //         <tbody id="emailBody">
 
-                </tbody>
-            </table>`;
-        let cont = $('#container');
-        if(val === 'email'){
-            cont.html(email_dom)
-        } else if (val === 'mobile'){
-            cont.html(mobile_dom)
-        } else {
-            cont.html(unknown_dom)
-        }
+        //         </tbody>
+        //     </table>`;
+        // let cont = $('#container');
+        // if(val === 'email'){
+        //     cont.html(email_dom)
+        // } else if (val === 'sms'){
+        //     cont.html(mobile_dom)
+        // } else {
+        //     cont.html(unknown_dom)
+        // }
 
         // send payload
-        let response = api.call('VIEW',payload,'/crm/api/')
-        if(anton.IsRequest(response)){
-            console.table(response)
-            if(val === 'email' || val === 'mobile'){
-                let resp = response['message'];
-                let rows = "";
-                for(let r = 0; r < resp.length; r++){
-                    let row = resp[r];
-                    rows += `<tr><td>${row['first_name']}</td><td>${row['last_name']}</td><td>${row['contact']}</td></tr>`
-                    console.table(row)
-                }
+        loader.show()
+        api.v2('VIEW',payload,'/crm/api/').then(response => {
+            if(anton.IsRequest(response)){
+                let contacts = response['message'];
+                let tr = "";
+                contacts.map(contact=>{
+                    console.table(contact)
+                    tr += `
+                        <tr>
+                            <td>${contact['first_name']} ${contact['last_name']}</td>
+                            <td>${contact['contact']}</td>
+                             <td>${contact['source']}</td>
+                        </tr>
+                    `
+                })
 
-                $('tbody').html(rows)
+                $('#contacts_body').html(tr)
+                loader.hide()
+                
+            } else {
+                kasa.response(response)
+                loader.hide()
             }
-        } else {
-            kasa.response(response)
-        }
-        console.table(payload)
+        }).catch(error => {kasa.info(error)})
+        
+        
 
     }
 

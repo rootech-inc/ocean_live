@@ -684,12 +684,14 @@ def api_interface(request):
                 c_type = data.get('type')
                 arr = []
                 # get emails from logs
-                lgs = Logs.objects.all()
+                lgs = Contacts.objects.filter(type=c_type)
                 for lg in lgs:
                     arr.append({
-                        'first_name': lg.customer.split(' ')[0],
-                        'last_name': lg.customer.split(' ')[-1],
-                        'contact': lg.email if c_type == 'email' else lg.phone
+                        'first_name': lg.name.split(' ')[0],
+                        'last_name': lg.name.split(' ')[-1],
+                        'name':f"{lg.name}",
+                        'contact': lg.contact,
+                        'source': lg.source
                     })
 
                 success_response['message'] = arr
@@ -786,6 +788,7 @@ def api_interface(request):
             elif module == 'request_campaing_approval':
                 key = data.get('key')
                 cp = Campaigns.objects.get(pk=key)
+                print(cp.obj())
                 sender_pk = cp.sender
                 li = ""
                 if cp.type == 'email':
@@ -800,7 +803,8 @@ def api_interface(request):
 
                     text_recipeients = [
                         'ajay@snedaghana.com',
-                        'rootech.inc@proton.me'
+                        'rootech.inc@proton.me',
+                        'bharat@snedaghana.com'
                     ]
 
                     for rec in text_recipeients:
@@ -813,6 +817,26 @@ def api_interface(request):
                         )
 
                         li += f"{rec},"
+
+                elif cp.type == 'sms':
+                    test_sms_recipient = [
+                        '0546310011',
+                        '0243500687',
+                        '0244325598'
+                    ]
+
+                    for num in test_sms_recipient:
+                        
+                        Sms(
+                            api=SmsApi.objects.get(pk=sender_pk),
+                            to=num,
+                            message=f"""Campaign Approval Request\n\nMessage: {cp.message_template} 
+                            \n\nTotal Targets: {cp.obj()['targets']} 
+                            \nSMS Length:{len(cp.message_template)}
+                            \nCost Per SMS: 0.20\nTotal Cost:{cp.obj()['targets']/30 * 0.2}"""
+                        ).save()
+
+                        li += f"{num},"
 
                 success_response['message'] = f"Approval request sent to {li}"
 
