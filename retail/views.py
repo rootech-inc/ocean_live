@@ -6,6 +6,7 @@ from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from sympy import Product
 
+from admin_panel.anton import format_currency
 from admin_panel.models import Locations, SmsApi, Sms, BusinessEntityTypes
 from cmms.extra import db
 from retail.forms import NewClerk
@@ -437,7 +438,10 @@ def bolt_landing(request):
         "matrix": {
             'cent':"{:.2f}".format(cent),
             'on_bolt':BoltItems.objects.all().count() ,
-            'all':Products.objects.all().count()
+            'all':Products.objects.all().count(),
+            'groups':BoltGroups.objects.all().order_by('sold'),
+            'best_group':BoltGroups.objects.all().order_by('sold').first(),
+            'best_value':format_currency(abs(BoltGroups.objects.all().order_by('sold').first().sold))
         },
     }
     return render(request, 'retail/bolt-landing.html', context=context)
@@ -454,3 +458,13 @@ def bolt_menu(request,entity):
         'entity':BusinessEntityTypes.objects.get(entity_type_name=entity)
     }
     return render(request, 'retail/bolt-products.html', context=context)
+
+
+def wholesales(request):
+    context = {
+        'nav': False,
+        'page': {
+            'title': f"WholeSales"
+        },
+    }
+    return render(request, 'retail/whsales.html', context=context)

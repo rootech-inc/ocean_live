@@ -1,0 +1,48 @@
+{% extends 'employee/emp_base.html' %}
+{% load static %}
+{% block body %}
+    <div class="card-body overflow-auto">
+        <div class="table-responsive" id="table-container">
+            <table class="table" id="table">
+                <thead>
+                    <tr>
+                        <th>NAME</th>
+                        <th>DEPARTMENT</th>
+                        <th>TOTAL LATE</th>
+                        <th>LATE ABSENT</th>
+                        <th>ABSENTS</th>
+                        <td>TOTAL ABSENT</td>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="att_bd">
+                <tr>
+                    <td colspan="5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+
+    </div>
+
+    <div class="card-footer">
+            <button id="export_attendance" class="btn-info">Export</button>
+        </div>
+    <script>
+        $(document).ready(function () {
+            var currentDate = new Date()
+            var day = currentDate.getDate()
+            var month = String(currentDate.getMonth() + 1).padStart(2, '0')
+            var year = currentDate.getFullYear()
+            var date = year + '-' + month
+
+
+            staff.loadMonthlyAttendance(date)
+        })
+    </script>
+{% endblock %}

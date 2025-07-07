@@ -365,19 +365,29 @@ class Staff {
                 let attds = response.message.array;
                 let tr = "";
                 let st = "";
+                let attd_data = [
+                    ["NAME","LOCATION","CHECK IN","STATUS"]
+                ]
+                let ontime_count = 0
+                let late_count = 0
+                let absent_count = 0
+
                 attds.map(attd => {
                     console.table(attd)
                     let tx = ''
                     if (attd[5] === 'absent'){
                         tx = 'text-danger'
                         st = attd[5]
+                        absent_count++
                     } else {
                         if(attd[7]){
                             tx = 'text-warning'
                             st = 'late'
+                            late_count++
                         } else {
                             tx = 'text-success'
                             st = 'on-time'
+                            ontime_count++
                         }
                     }
 
@@ -391,11 +401,22 @@ class Staff {
                             <td>${attd[4]}</td>
 </tr>
                     `
+
+                    attd_data.push([attd[0],attd[1],attd[3],st])
                 })
+
+                $('#absent-count').text(absent_count)
+                $('#late-count').text(late_count)
+                $('#ontime-count').text(ontime_count)
+
+
 
                 $('#att_bd').html(tr)
                 $('#attd_table').DataTable();
                 loader.hide()
+                $('#exp_attendance').click(async function () {
+                    anton.downloadCSV(`${dt.replace('-','_')}_attendance.csv`,anton.convertToCSV(attd_data))
+                })
             } else {
                 kasa.response(response)
                 // loader.hide()
@@ -415,9 +436,11 @@ class Staff {
     async loadMyAttendance(rg = 'week') {
         await this.getMyAttendance(rg).then(response => {
             if(anton.IsRequest(response)){
+                console.table(response)
                 let recs = response.message;
                 let tr = ""
-                recs.map(record => {
+                if(recs.length > 0){
+                    recs.map(record => {
                     console.table(record)
 
                     // Add click handler for send button
@@ -439,16 +462,27 @@ class Staff {
                             kasa.error(error)
                         })
                     });
-
+                    let text = '';
+                    if(record['is_late']){
+                        text = 'text-warning'
+                    } else {
+                        text = 'text-success'
+                    }
                     tr += `
-                        <tr>
+                        <tr class="${text}">
                             <td>${record['date']}</td>
                             <td>${record['time_in']}</td>
                             <td>${record['time_in']}</td>
+                            <td>${record['is_late']}</td>
                         </tr>
                         
                     `
                 })
+                } else {
+                    tr = `<tr><td colspan="4"  class="text-danger text-center">NO RECORDS</td></tr>`
+                }
+
+
 
                 $('#att_bd').html(tr)
             } else {
@@ -631,6 +665,118 @@ class Staff {
 
     async getLeave(pk='*',status='*') {
         return api.call('VIEW',{module:'leave',data:{mypk:$('#mypk').val(),pk:pk,status:status}},'/company/api/')
+    }
+
+    async loadMonthlyAttendance(month = `${year}-${month}`) {
+        let payload = {
+            module: 'month_attendance',
+            data: {
+                month: month
+            }
+        }
+
+        loader.show()
+        await api.v2('VIEW', payload, '/company/api/').then(response => {
+            if (anton.IsRequest(response)) {
+                console.table(response)
+                let recs = response.message.data;
+                let tr = ""
+                let transactions = {}
+                let att_file_data = [
+                    ["Name", "Department",  "Total Late","Late Absent","Absent", "Total Absent + Late"],
+                ]
+                recs.map(record => {
+                    let  user_uni = anton.md5(record['name'].replace(' ','').toLowerCase())
+                    let abscent = parseInt(record['total_absent']) / 3
+                    tr += `
+                        <tr>
+                            <td>${record['name']}</td>
+                            <td>${record['department']}</td>
+                            <td>${record['total_late']}</td>
+                            <td>${record['late_absent']}</td>
+                            <td>${record['absent']}</td>
+                            <th>${record['total_absent']}</th>
+                            <td><button data-user="${record['name']}" data-id="${user_uni}" class="btn btn-info see-trans">Transactions</button></td>
+                        </tr>
+                        
+                    `
+
+                    att_file_data.push([record['name'],record['department'],record['total_absent'],record['total_late'],abscent + record['total_absent']])
+
+                    // make transactions HTML
+                    let attendance = record['attendance'];
+                    let this_att_html = "";
+                    let this_att_arr = [
+                        ['DATE','TIME IN','TIME OUT','STATUS','IS LATE']
+                    ]
+                    attendance.map(att => {
+                        let text_clor = ""
+                        if(att['status'] == 'absent'){
+                            text_clor = 'text-danger'
+                        } else {
+                            if(att['is_late']){
+                                text_clor = 'text-warning'
+                            } else {
+                                text_clor = 'text-success'
+                            }
+                        }
+                        this_att_html += `
+                            <tr class="${text_clor}">
+                                <td>${att['date']}</td>
+                                <td>${att['time_in']}</td>
+                                <td>${att['time_out']}</td>
+                                <td>${att['status']}</td>
+                                <td>${att['is_late']}</td>
+                            </tr>
+                        `
+
+                        this_att_arr.push([att['date'],att['time_in'],att['time_out'],att['status'],att['is_late']])
+                    })
+
+                    transactions[user_uni] = {
+                        html:this_att_html,arr:this_att_arr
+                    };
+
+                })
+
+
+                $('#att_bd').html(tr)
+
+                // $('#table').DataTable();
+
+                $('.see-trans').click(function () {
+                    let user_uni = $(this).data('id');
+                    let name = $(this).data('user');
+                    let html = transactions[user_uni]['html']
+                    let table = `
+                        <table id="${user_uni}" class="table">
+                            <thead><tr><th>DATE</th><th>TIME IN</th><th>TIME OUT</th><th>STATUS</th><th>IS LATE</th></tr></thead>
+                            <tbody>${html}</tbody>
+                        </table>
+                    `
+                    const md = new Modal()
+                    md.setBodyHtml(table)
+                    md.setSize('L')
+                    md.setTitleHtml(name)
+                    amodal.setFooterHtml(`<button class="btn btn-success download-att" id="">Download</button>`)
+                    md.show()
+                    $('#'+user_uni).DataTable();
+                    $('.download-att').click(function () {
+                        let att_arr = transactions[user_uni]['arr']
+                        anton.downloadCSV(`${name}.csv`,anton.convertToCSV(att_arr))
+                    })
+                })
+
+                $('#export_attendance').click(function () {
+                    // anton.downloadCSV('attendance.csv',anton.convertToCSV(att_file_data))
+                    anton.viewFile(`/${response.message.file}`)
+                })
+
+            } else {
+                kasa.response(response)
+            }
+            loader.hide()
+        }).catch(error => {kasa.error(error)})
     }
 }
 

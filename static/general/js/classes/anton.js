@@ -182,6 +182,7 @@ class Anton {
     }
 
     convertToCSV(l_arr) {
+        console.table(l_arr)
         return l_arr.map(row => row.join(',')).join('\n');
     }
 
@@ -241,6 +242,13 @@ class Anton {
                 window.onblur = null;
             };
         }
+    }
+
+    md5(text='') {
+        const timestamp = Date.now(); // current time in milliseconds
+        const combined = text + timestamp;
+
+        return SparkMD5.hash(combined);
     }
 }
 

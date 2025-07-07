@@ -506,8 +506,9 @@ def cmms_servicing_feedback(request):
 
             'title': "CMMS SERVICE / Feedbacks"
         },
-        'jobs':JobCard.objects.filter(is_feedback=False,is_ended=True).order_by('-pk')[:50],
-        'feeds':JobCardFeedback.objects.all()
+        'jobs': JobCard.objects.filter(is_feedback=False, is_ended=True,
+                                       end_date__lte=date.today() - timedelta(days=3)).order_by('-pk')[:50],
+        'feeds':JobCardFeedback.objects.all().order_by('-created_date')[:50]
 
     }
     return render(request, 'cmms/service/service_feedback.html', context=context)

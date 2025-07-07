@@ -4,35 +4,35 @@
 
 
 {% block body %}
-    <div class="card-header">
-        <div class="w-100 d-flex flex-wrap">
-            <div class="w-50"></div>
-            <div class="w-50 d-flex flex-wrap justify-content-end">
-                <button onclick="retail.seeStockToSend()" class="btn btn-info">RETRIEVE</button>
+    <div class="card">
+        <div class="card-header">
+            <div class="w-100 d-flex flex-wrap">
+                <div class="w-50"></div>
+                <div class="w-50 d-flex flex-wrap justify-content-end">
+                    <button onclick="retail.seeStockToSend()" class="btn btn-info">RETRIEVE</button>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="card-body overflow-auto">
-        <table class="table table-responsive">
-            <thead>
-                <tr>
-                    <th>LN</th>
-                    <th><input type="checkbox" id="sel_all"></th>
-                    <th>LOCATION</th>
-                    <th>ITEMCODE</th>
-                    <th>BARCODE</th>
-                    <th>NAME</th>
-                    <th>TRASFTER</th>
-                    <th>TRANSFER QTY</th>
-                    <th>SOLD</th>
-                    <th>2 WEEKS</th>
-                    <th>HEALTH</th>
-                </tr>
-            </thead>
-            <tbody id="items"></tbody>
-        </table>
-    </div>
-    <div class="card-footer">
-        <button onclick="retail.downloadMaterialRequest()" class="btn btn-info"><i class="fa fa-download"></i> DOWNLOAD</button>
+        <div class="card-body overflow-auto">
+            <table id="tabs" class="table table-responsive">
+                <thead>
+                    <tr>
+                        <th>LN</th>
+                        <th><input type="checkbox" id="sel_all"></th>
+                        <th>LOCATION</th>
+                        <th>BARCODE</th>
+                        <th>NAME</th>
+                        <th>TRASFTER</th>
+                        <th>TRANSFER QTY</th>
+                        <th>SOLD</th>
+                        <th>STOCK</th>
+                    </tr>
+                </thead>
+                <tbody id="items"></tbody>
+            </table>
+        </div>
+        <div class="card-footer">
+            <button onclick="retail.downloadMaterialRequest()" class="btn btn-info"><i class="fa fa-download"></i> DOWNLOAD</button>
+        </div>
     </div>
 {% endblock %}

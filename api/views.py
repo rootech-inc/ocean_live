@@ -1060,7 +1060,7 @@ def api_call(request, module, crud):
 
             # start of que a sms
             elif crud == 'que':  # que message
-                sms_api = api_body.get('api')
+                sms_api = api_body.get('api',0)
                 to = api_body.get('to')
                 message = api_body.get('message')
 
@@ -1135,7 +1135,9 @@ def api_call(request, module, crud):
                         response['status'] = 505
                         response['message'] = str(e)
 
-            # end of sending pending sms
+                # end of sending pending sms
+                response['status'] = 200
+                response['message'] = "Synced"
 
             # BULK QUE
             elif crud == 'bulkQue':
@@ -1183,7 +1185,7 @@ def api_call(request, module, crud):
                 limit = data['records']
 
                 # check if car exit with car number
-                server = f"{DB_SERVER}\MOTOR,{DB_PORT}"
+                server = f"{DB_SERVER}\/MOTOR,{DB_PORT}"
                 database = DB_NAME
                 username = DB_USER
                 password = DB_PASSWORD

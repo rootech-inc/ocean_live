@@ -5,13 +5,42 @@
 <div class="card-header">
     <div class="w-100 d-flex">
         <div class="w-50 d-flex"></div>
-        <div class="w-50 d-flex justify-content-end"><input id="attd_date" style="width: fit-content" type="date"  class="form-control"></div>
+        <div class="w-50 d-flex justify-content-end">
+            <input id="attd_date" style="width: fit-content" type="date"  class="form-control">
+            <button class="btn btn-info ms-2" id="exp_attendance">Export</button>
+        </div>
     </div>
 </div>
-<div class=card-body>
+<div class="card-body overflow-auto">
     <div class="container-fluid">
         <div class="row">
-            <div class="col-sm-4"></div>
+            <div class="col-sm-12">
+                <div class="card">
+{#                    <div class="card-header">#}
+{#                        <strong class="card-title">Present</strong>#}
+{#                    </div>#}
+                    <div class="card-body">
+                        <div class="d-flex justify-content-around">
+                            <div class="text-center">
+                                <i class="fas fa-clock text-success fa-2x mb-2"></i>
+                                <h4 class="text-success">On Time</h4>
+                                <h3 class="text-success" id="ontime-count">0</h3>
+                            </div>
+                            <div class="text-center">
+                                <i class="fas fa-running text-warning fa-2x mb-2"></i>
+                                <h4 class="text-warning">Late</h4>
+                                <h3 class="text-warning" id="late-count">0</h3>
+                            </div>
+                            <div class="text-center">
+                                <i class="fas fa-user-times text-danger fa-2x mb-2"></i>
+                                <h4 class="text-danger">Absent</h4>
+                                <h3 class="text-danger" id="absent-count">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
    <div id="x_start" class="table-responsive">
@@ -49,6 +78,7 @@
         $(document).ready(function(){
             // laod attendance
             staff.loadAttendance()
+            $('#atte_date').val(today)
 
             $('#attd_date').change(function () {
                 $('#x_start').empty()

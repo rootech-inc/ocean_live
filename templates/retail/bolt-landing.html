@@ -3,6 +3,7 @@
 {% block body %}
     <div class="container-fluid">
         <div class="row">
+
             <div class="col-sm-12 col-md-3 col-lg-4">
                 <div class="card">
                     <div class="card-body p-2">
@@ -13,9 +14,48 @@
                                 <span class="text-success">{{ matrix.cent }}%</span>
                             </div>
                             <div class="w-50 d-flex flex-wrap justify-content-end">
-{#                                <div style="height: 50px; width: 50px"#}
-{#                                     class="rounded-circle border border-2 border-info d-flex flex-wrap justify-content-center align-content-center bg-info"#}
-{#                                >20%</div>#}
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-12 col-md-3 col-lg-4">
+                <div class="card">
+                    <div class="card-body p-2">
+                        <h5 class="text-muted">Best Group</h5>
+                        <div class="w-100 d-flex">
+                            <div class="w-50">
+                                {{ matrix.best_group.name }} <br>
+                                <span class="text-success">{{ matrix.best_value }}</span>
+                            </div>
+                            <div class="w-50 d-flex flex-wrap justify-content-end">
+                                <button data-bs-target="#cats" data-bs-toggle="modal" class="btn btn-info">View</button>
+                                <div class="modal" id="cats">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-body">
+                                                <table class="table table-sm table-bordered table-hover">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Groups</th>
+                                                            <th>SOLD</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for s in matrix.groups %}
+                                                            <tr>
+                                                                <td>{{ s.name }}</td>
+                                                                <td>{{ s.sold }}</td>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

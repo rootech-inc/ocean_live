@@ -228,7 +228,8 @@
                 await api.v2('PATCH',payload,'/ssml/api/').then(response => {
                     kasa.response(response);
                     if(anton.IsRequest(response)){
-                        load_grn(`${$('#grn_id').val()}`);
+                        console.table(response);
+                        {#load_grn(`${$('#grn_id').val()}`);#}
                     }
                 }).catch(error => {
                     console.log(error);

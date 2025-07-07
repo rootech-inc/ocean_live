@@ -13,5 +13,14 @@ def db(host=DB_SERVER, port=DB_PORT, db=DB_NAME, user=DB_USER, password=DB_PASSW
     connection = pyodbc.connect(connection_string)
     return connection.cursor()
 
+def cmms_db(host=DB_SERVER, port=DB_PORT, db=DB_NAME, user=DB_USER, password=DB_PASSWORD):
+    server = f"{host},{port}"
+    database = db
+    username = user
+    password = password
+    driver = '{ODBC Driver 17 for SQL Server}'  # Change this to the driver you're using
+    connection_string = f"DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}"
+    return pyodbc.connect(connection_string)
+
 
 # DB_CURSOR = db()

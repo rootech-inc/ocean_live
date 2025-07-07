@@ -3,9 +3,10 @@ import os
 
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import ForeignKey, Sum
+from django.db.models import ForeignKey, Sum, Sum
 from django.utils import timezone
 from sympy.logic.inference import valid
+from tifffile import product
 
 import admin_panel.models
 from admin_panel.models import Locations
@@ -38,7 +39,7 @@ class Clerk(models.Model):
 
 class BoltGroups(models.Model):
     name = models.CharField(unique=True, max_length=266)
-
+    sold = models.DecimalField(max_digits=10, decimal_places=3,default=0.000)
     created_on = models.DateTimeField(auto_now_add=True)
     edited_on = models.DateTimeField(auto_now=True)
 
@@ -48,11 +49,21 @@ class BoltGroups(models.Model):
     def items(self):
         return BoltItems.objects.filter(group=self)
 
+    def sales(self,date):
+        total = 0
+
+        for item in self.items():
+            sold_total = BoltSales.objects.filter(product=item, date=date).aggregate(Sum('total'))['total__sum']
+            if sold_total:
+                total += sold_total
+        return total
+
 
 
 class BoltSubGroups(models.Model):
     name = models.CharField(unique=False, max_length=266)
     group = models.ForeignKey(BoltGroups, on_delete=models.CASCADE)
+    sales = models.DecimalField(max_digits=10, decimal_places=3,default=0.000)
 
     entity = models.ForeignKey(admin_panel.models.BusinessEntityTypes, on_delete=models.CASCADE, null=False, blank=False)
 
@@ -136,6 +147,17 @@ class BoltItems(models.Model):
         
         return obj
 
+class BoltSales(models.Model):
+    loc = models.ForeignKey(Locations, on_delete=models.CASCADE)
+    product = models.ForeignKey(BoltItems, on_delete=models.CASCADE)
+    bill_ref = models.CharField(max_length=200)
+    date = models.DateField()
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    created_on = models.DateTimeField(auto_now_add=True)
+    edited_on = models.DateTimeField(auto_now=True)
+
 
 
 
@@ -205,6 +227,8 @@ class Products(models.Model):
     is_butch = models.BooleanField(default=False)
     barcodes = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
+    is_wholesales = models.BooleanField(default=False)
+    wholesale_price = models.DecimalField(decimal_places=2, max_digits=60, default=0.00)
 
     class Meta:
         unique_together = (('subgroup', 'code','entity'),)
@@ -216,6 +240,13 @@ class Products(models.Model):
 
         print(arr)
         return arr
+
+    def ws(self):
+        return {
+            'name':self.name,
+            'barcode':self.barcode,
+            'price':self.wholesale_price,
+        }
 
     def obj(self,date=timezone.now().date()):
         from retail.db import stock_by_moved
@@ -236,7 +267,8 @@ class Products(models.Model):
             'stock':stock_by_moved(self.pk,'*'),
             'shelf':self.shelf,
             'moves':self.moves(date),
-            'cardex':[]
+            'cardex':[],
+            'wholesale_price':self.wholesale_price,
         }
 
     def is_on_bolt(self):
@@ -537,6 +569,7 @@ class StockToSend(models.Model):
     cust_sold = models.DecimalField(decimal_places=3,default=0.00,max_digits=10)
     percentage_sold = models.DecimalField(decimal_places=3,default=0.00,max_digits=10)
     healthy = models.BooleanField(default=False)
+    stock = models.DecimalField(decimal_places=3,default=0.00,max_digits=10)
 
     # def sold_2_weeks(self):
     #     today = timezone.now().date()
@@ -556,7 +589,8 @@ class StockToSend(models.Model):
             'last_transfer_quantity':self.last_transfer_quantity,
             'sold_qty':self.sold_quantity,
             'percentage_sold':self.percentage_sold,
-            'health':self.healthy
+            'health':self.healthy,
+            'stock':self.stock
         }
 
     def html(self,line=1):
@@ -718,6 +752,7 @@ class BillTrans(models.Model):
     product = models.ForeignKey(Products,on_delete=models.CASCADE)
     quantity = models.DecimalField(decimal_places=3,max_digits=10,default=0.000)
     price = models.DecimalField(decimal_places=3,max_digits=10,default=0.000)
+    bolt_sync = models.BooleanField(default=False)
 
     added_on = models.DateTimeField(auto_now=True)
 

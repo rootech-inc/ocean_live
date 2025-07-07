@@ -157,3 +157,134 @@ def get_client_ip(request):
         # Direct IP
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
+# create user
+def create_new_user(first_name,last_name, email, phone,company,position,emp_code=None):
+    # check if email exist
+    if email != 'none@domain.com' and User.objects.filter(email=email).count() > 0:
+        # update user details
+        User.objects.filter(email=email).update(first_name=first_name, last_name=last_name)
+        user = User.objects.get(email=email)
+        addon = UserAddOns.objects.get(user=user)
+        addon.company = company
+        addon.position = position
+        addon.bio_id=emp_code
+        addon.save()
+        print("Updated base on email")
+        return False
+
+    # check phone number
+    if UserAddOns.objects.filter(phone=phone).exists():
+        # update user details
+        adon = UserAddOns.objects.get(phone=phone)
+        adon.user.first_name = first_name
+        adon.user.last_name = last_name
+        adon.bio_id = emp_code
+        print("Updated base on phone")
+        User.objects.filter(pk=adon.user.pk).update(first_name=first_name, last_name=last_name)
+
+        return False
+
+    # make username
+    if User.objects.filter(username=last_name).exists():
+            # generate username
+        number = '{:03d}'.format(random.randrange(1, 99))
+        username = '{}{}'.format(last_name, number)
+    else:
+        username = last_name.replace(' ', '').lower()
+
+    pass_w = generate_random_password()
+    user = User.objects.create_user(username=username, password=pass_w)
+    user.first_name = first_name
+    user.last_name = last_name
+    user.email = email
+    user.is_active = True
+    user.save()
+
+    md_mix = f"{pass_w} {first_name} {last_name} {username} "
+    hash_object = hashlib.md5(md_mix.encode())
+    api_token = hash_object.hexdigest()
+
+    try:
+        created_account = User.objects.get(username=username)
+        AuthToken(user=created_account, token=api_token).save()
+
+        use_ad_on = UserAddOns(user=created_account, company=company,
+                               app_version=VersionHistory.objects.get(version=settings.APP_VERSION),
+                               position=position, phone=phone)
+
+        md_mix = f" {first_name} {last_name} {username} "
+        hash_object = hashlib.md5(md_mix.encode())
+        resettoken = hash_object.hexdigest()
+        respwrd = PasswordResetToken(user=created_account, token=resettoken, valid=1)
+
+        use_ad_on.save()
+        respwrd.save()
+
+        sms_api = SmsApi.objects.get(is_default=1)
+        sms_template = """
+                            Hello [User's Name],\n
+
+                            We are pleased to inform you that a profile has been created for you in our Ocean system. Here are your login credentials:\n\n
+
+                            Username: [Username]\n
+                            Password: [Password]\n
+
+                            You can now log in to your account using the provided credentials. Please make sure to change your password after your first login for security reasons.\n
+
+                            If you have any questions or need assistance, please don't hesitate to contact our support team at [Support Email] or [Support Phone Number].\n
+
+
+
+                            Best regards,
+                            SNEDA IT
+        """
+        sms_message = sms_template.replace("[User's Name]", f"{first_name} {last_name}")
+        sms_message = sms_message.replace("[Username]", username)
+        sms_message = sms_message.replace("[Password]", pass_w)
+        sms_message = sms_message.replace("[Support Email]", "solomon@snedaghana.com")
+        sms_message = sms_message.replace("[Support Phone Number]", "054 631 0011 / 020 199 8184")
+
+        Sms(api=sms_api, to=phone, message=sms_message).save()
+
+        return True
+
+    except Exception as e:
+        User.objects.filter(username=username).delete()
+        return False
+
+
+def staffs():
+    import requests
+    url = f"{ATTENDANCE_URL}personnel/api/employees/"
+    tk = token('solomon', 'Szczesny@411')
+    headers = {
+        "Authorization": f"JWT {tk}",
+        "Content-Type": "application/json",
+    }
+    response = requests.get(url, headers=headers, params={
+        "page_size": 10000, "ordering": "id"
+    })
+    return response.json()['data']
+
+
+def get_week_of_month():
+    from datetime import datetime
+    today = datetime.today()
+    day_of_month = today.day
+
+    # Divide month into 4 equal parts (7 or 8 days each)
+    week_number = (day_of_month - 1) // 7 + 1
+
+    # Cap at week 4 for the last days
+    return min(week_number, 4)
+
+def month_by_name():
+    from datetime import datetime
+
+    # Get full month name (e.g., "May")
+    month_name = datetime.now().strftime("%B")
+
+    # Get abbreviated month name (e.g., "May")
+    month_abbr = datetime.now().strftime("%b")
+    return month_abbr

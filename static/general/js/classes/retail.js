@@ -634,13 +634,110 @@ class Retail {
 
     checkExpiryScreen(){
         let form = ``;
-        form += fom.text('days','Days before expiry',true)
-        form += fom.select('remove_flagged',`<option value="YES">YES</option><option value="NO">NO</option>`,'',true)
-        form += fom.select('document',`<option value="json">VIEW</option><option value="excel">Excel</option>`,'',true)
-        amodal.setTitleText("Expiry Report")
+        form = `
+            <div class="d-flex flex-wrap w-100 justify-content-center">
+                
+                <button id="by_days" class="btn btn-lg btn-info ms-2 p-5 w-30" style="height: 75px">By Days</button>
+                <button id="by_month_target" class="btn btn-lg btn-info ms-2 p-5 w-30" style="height: 75px">Target Month</button>
+            
+            </div>
+        `
+        amodal.setTitleText("Check Expiry")
         amodal.setBodyHtml(form);
-        amodal.setFooterHtml(`<button onclick="retail.RetrieveExpiry()" class="btn btn-success w-100 rounded_c">RETRIEVE</button>`);
+        //
         amodal.show();
+        $('#by_days').click(function (){
+            let by_days_form = ""
+
+                by_days_form += fom.text('days','Days before expiry',true)
+                by_days_form += fom.select('remove_flagged',`<option value="YES">YES</option><option value="NO">NO</option>`,'',true)
+                by_days_form += fom.select('document',`<option value="json">VIEW</option><option value="excel">Excel</option>`,'',true)
+                amodal.setTitleText("Expiry Report")
+                amodal.setBodyHtml(by_days_form);
+            amodal.setFooterHtml(`<button onclick="retail.RetrieveExpiry()" class="btn btn-success w-100 rounded_c">RETRIEVE</button>`);
+        })
+        
+        $('#by_month_target').click(function (){
+            let by_month_form = ""
+
+            by_month_form += fom.select('month', `
+                <option value="01">January</option>
+                <option value="02">February</option>
+                <option value="03">March</option>
+                <option value="04">April</option>
+                <option value="05">May</option>
+                <option value="06">June</option>
+                <option value="07">July</option>
+                <option value="08">August</option>
+                <option value="09">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+            `, 'Select Month', true)
+
+            amodal.setBodyHtml(by_month_form)
+            amodal.setTitleText("Expiry Report By Month")
+            amodal.setFooterHtml(`<button class="btn btn-info" id="retrieve_by_month">Retrieve</button>`)
+
+            $('#retrieve_by_month').click(function (){
+                loader.show()
+                let month = $('#month').val()
+                let payload = {
+                    module:'expiry_by_month',
+                    data:{
+
+                        "month":month,
+                        "document":$('#document').val(),
+                    }
+                }
+
+                api.v2('VIEW',payload,'/retail/api/').then(result => {
+                    if(anton.IsRequest(result)){
+
+                        console.table(result)
+                        let doc = $('#document').val();
+                        if(true){
+                            let header = ['EXPIRY DATE','GRN','BARCODE','ITEM CODE','ITEM NAME','WAREHOUSE',"SPINTEX",'NIA',"OSU",'STOCK']
+                            let tr = '';
+                            let res = result.message;
+                            let dt = []
+                            dt.push(['BARCODE','NAME','GRN','EXPIRY DATE','WAREHOUSE',"SPINTEX",'NIA',"OSU",'KITCHEN'])
+
+                            for(let m = 0; m < res.length; m++){
+                                let row = res[m];
+                                tr += `<tr>
+                                            <td>${row.barcode}</td>
+                                            <td>${row.item_des}</td>
+                                            <td>${row.entry_no}</td>
+                                            <td>${row.expiry_date}</td>
+                                            <td>${row.warehouse}</td>
+                                            <td>${row.spintex_stock}</td>
+                                            <td>${row.nia_stock}</td>
+                                            <td>${row.osu_stock}</td>
+                                            <td>${row.kitchen_stock}</td>
+                                      </tr>`
+                                dt.push([row.barcode,row.item_des,row.entry_no,row.expiry_date,row.warehouse,row.spintex_stock,row.nia_stock,row.osu_stock,row.kitchen_stock])
+                            }
+                            header = ['BARCODE','NAME','GRN','EXPIRY DATE','WAREHOUSE',"SPINTEX",'NIA',"OSU",'KITCHEN']
+                            reports.render(header,tr,`EXPIRY REPORT <button id="dnlod">EXPORT</button>`)
+                            amodal.hide()
+                            loader.hide()
+                            $('#dnlod').click(function (){
+
+
+                                anton.downloadCSV('expiry.csv',anton.convertToCSV(dt))
+                            })
+
+
+                        }
+                    } else {
+                        kasa.response(result)
+                        loader.hide()
+                    }
+                }).catch(err => {kasa.error(error);loader.hide()})
+            })
+
+        })
     }
 
 
@@ -751,7 +848,7 @@ class Retail {
         amodal.show();
     }
 
-    StockToSend() {
+    async StockToSend() {
         let id = ['location','ripe','view'];
         if(anton.validateInputs(id)){
             let payload = {
@@ -764,11 +861,8 @@ class Retail {
             console.table(payload)
 
             let ripe = $('#ripe').val()
-
-
-
-            let response = api.call('VIEW',payload,'/retail/api/')
-            if(anton.IsRequest(response)){
+            await api.v2('VIEW',payload,'/retail/api/').then(response => {
+                if(anton.IsRequest(response)){
                 let message = response.message
                 let rows = ``;
                 let v = $('#view').val()
@@ -777,40 +871,43 @@ class Retail {
                     kasa.html(`<a href="/${message}">DOWNLOAD</a>`)
                 } else {
                     for (let i = 0; i < message.length; i++) {
-                    let row = message[i];
-                    let text = ''
-                    if(row['health']){
-                        text = 'bg-info'
+                        let row = message[i];
+                        console.table(row)
+                        let text = ''
+                        // if(row['health']){
+                        //     text = 'bg-info'
+                        // }
+
+                        let line = i + 1;
+
+
+                        rows += `
+                            <tr class="${text}">
+                                <td>${line}<input type="hidden" id="sold_${line}" value="${row['sold_qty']}"> </td>
+                                <td><input type="checkbox" id="sel_${line}"></td>
+                                <td>${row['location']}</td>
+                                <td id="barcode_${line}">${row['barcode']}</td>
+                                <td>${row['name']}</td>
+                                <td>${row['last_transfer']} <br>${row['last_transfer_date']}</td>
+                                <td>${row['last_transfer_quantity']}</td>
+                                <td>${row['sold_qty']} (${row['percentage_sold']})</td>
+                                
+                                <td>${row['stock']}</td>
+                            </tr>
+                        `
+
                     }
 
-                    let line = i + 1;
-
-
-                    rows += `
-                        <tr class="${text}">
-                            <td>${line}<input type="hidden" id="sold_${line}" value="${row['sold_qty']}"> </td>
-                            <td><input type="checkbox" id="sel_${line}"></td>
-                            <td>${row['location']}</td>
-                            <td id="itemcode_${line}">${row['itemcode']}</td>
-                            <td id="barcode_${line}">${row['barcode']}</td>
-                            <td>${row['name']}</td>
-                            <td>${row['last_transfer']} (${row['last_transfer_date']})</td>
-                            <td>${row['last_transfer_quantity']}</td>
-                            <td>${row['sold_qty']} (${row['percentage_sold']})</td>
-                            <td>${row['two_weeks_sales']} (${row['percentage_sold']})</td>
-                            <td>${row['health']}</td>
-                        </tr>
-                    `
-
-                }
-
                     $('#items').html(rows)
+                    $('#tabs').DataTable()
                 }
 
             } else {
-                kasa.response(response)
-            }
-            console.table(response)
+                    kasa.response(response)
+                }
+                console.table(response)
+            }).catch(error => {kasa.info(error)})
+
         }
     }
 
@@ -2408,7 +2505,7 @@ class Retail {
                 }
 
                 let html = `
-                <input type="date" id="as_of_date">
+<!--                <input type="date" id="as_of_date">-->
                     <p>Barcode: ${barcode}</p>
                     <p>Namr: ${name}</p>
                     
@@ -2420,10 +2517,10 @@ class Retail {
                 amodal.show()
                 amodal.setFooterHtml(`<button class="btn btn-warning" id="reset_stock">RESET</button>`)
                 $('#reset_stock').click(function(){
-                    if(!anton.validateInputs(['as_of_date'])){
-                        kasa.error("Select Date")
-                        return
-                    }
+                    // if(!anton.validateInputs(['as_of_date'])){
+                    //     kasa.error("Select Date")
+                    //     return
+                    // }
                     $('#rs_body tr').each(function (){
                         let id = $(this).attr('id');
                         let line = id.split('_')[1];

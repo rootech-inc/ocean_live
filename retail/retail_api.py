@@ -25,7 +25,7 @@ from retail.db import ret_cursor, get_stock, updateStock, percentage_difference,
 from retail.models import BoltItems, BoltGroups, ProductSupplier, ProductGroup, ProductSubGroup, Products, Stock, \
     RecipeGroup, RecipeProduct, Recipe, StockHd, StockMonitor, RawStock, ButcheryLiveTransactions, ButchSales, \
     StockToSend, TranHd, TranTr, RetailSales, SampleHd, SampleTran, BoltSubGroups, BillHeader, BillTrans, ProductMoves, \
-    Barcode, MoveStock
+    Barcode, MoveStock, BoltSales
 from retail.prodMast import ProdMaster
 from retail.retail_tools import create_recipe_card
 
@@ -102,7 +102,7 @@ def interface(request):
 
             elif module == 'moves':
                 move_type = data.get('type','')
-                print(data)
+                # print(data)
                 if move_type == 'CB':
                     from datetime import datetime, timedelta
                     # closing balance
@@ -132,7 +132,7 @@ def interface(request):
 
                 elif move_type == 'SR':
                     transactions = data.get('transactions')
-                    entry_date = data.get('entry_date')
+                    entry_date = data.get('entry_date', timezone.now().date())
                     loc_id = data.get('loc_id')
                     location = Locations.objects.get(code=loc_id)
                     remarks = data.get('remarks')
@@ -146,15 +146,16 @@ def interface(request):
 
                         # Get the current stock from ProductMoves
                         current_stock = \
-                        ProductMoves.objects.filter(product=product, location=location,date__lt=entry_date).aggregate(Sum('quantity'))[
+                        ProductMoves.objects.filter(product=product, location=location).aggregate(Sum('quantity'))[
                             'quantity__sum'] or 0
 
                         # Calculate the adjustment needed
                         adjustment = counted_stock - current_stock  # Ensure total matches counted stock
-
+                        print(f"{barcode} Counted: {counted_stock} \nSYSTEM STOCK : {current_stock} \nADJUSTMENT : {adjustment}")
                         # Only create adjustment if there's a difference
-                        if adjustment != 0:
-                            ProductMoves.objects.create(
+                        print("HELLOW")
+                        try:
+                            ProductMoves(
                                 product=product,
                                 location=location,
                                 move_type=move_type,
@@ -163,7 +164,64 @@ def interface(request):
                                 ref="SR",
                                 date=entry_date,
                                 line_no=1
+                            ).save()
+                        except Exception as e:
+                            print(e)
+                        print("WORLD")
+
+                elif move_type == 'BS': #bolt sales
+                    total_sync = 0
+                    total_erro = 0
+                    BillTrans.objects.all().update(bolt_sync=False)
+                    BoltSales.objects.all().delete()
+
+                    for bill in BillTrans.objects.filter(bill__pay_mode='BOLT',bolt_sync=False):
+                        try:
+                            # check if product is in bbolt
+                            if not BoltItems.objects.filter(product=bill.product).exists():
+                                BoltItems.objects.create(
+                                    menu=BusinessEntityTypes.objects.get(entity_type_name='retail'),
+                                    product=bill.product,
+                                    price=bill.price,
+                                    group=BoltGroups.objects.all().first(),
+                                    subgroup=BoltSubGroups.objects.filter(group=BoltGroups.objects.all().first()).first(),
+                                    stock_nia=0,
+                                    stock_spintex=0,
+                                    stock_osu=0,
+                                    is_sync=True,
+                                    is_hidden=False
+                                )
+
+                            bp = BoltItems.objects.get(product=bill.product)
+                            BoltSales.objects.create(
+                                loc=bill.bill.loc,
+                                bill_ref = bill.bill.bill_ref,
+                                date=bill.bill.bill_date,
+                                quantity=bill.quantity,
+                                price=bill.price,
+                                total=bill.quantity * bill.price,
+                                product=bp,
+
                             )
+                            bill.bolt_sync = True
+                            bill.save()
+
+                            gp = bp.group
+                            gp.sold += bill.quantity * bill.price
+                            gp.save()
+
+
+                            total_sync += 1
+                        except Exception as e:
+                            print(e)
+                            total_erro += 1
+                            pass
+
+                    success_response['message'] = f"Total Synced: {total_sync} \nTotal Error: {total_erro}"
+                    response = success_response
+
+
+
 
                 elif move_type == 'IN':
                     conn = ret_cursor()
@@ -171,7 +229,7 @@ def interface(request):
                     print("INVOICES")
 
                     # get invoice tran
-                    query = "select hd.entry_no,hd.entry_date,tr.total_units,tr.line_no,hd.loc_id,'',tr.item_code,hd.remark from inv_tran tr join inv_hd hd on hd.entry_no = tr.entry_no where ocean is NULL and hd.valid = 1 and hd.posted = 1"
+                    query = "select hd.entry_no,hd.entry_date,tr.total_units,tr.line_no,hd.loc_id,'',tr.item_code,hd.remark from inv_tran tr join inv_hd hd on hd.entry_no = tr.entry_no where ocean != 1 and hd.valid = 1 and hd.posted = 1"
                     cursor.execute(query)
                     print(query)
                     rows = cursor.fetchall()
@@ -268,7 +326,7 @@ def interface(request):
 
                     # get invoice tran
                     query = ("select hd.entry_no,hd.grn_date,tr.total_units,tr.line_no,hd.loc_id,'',tr.item_code,"
-                             "hd.remark from grn_tran tr join grn_hd hd on hd.entry_no = tr.entry_no where ocean is NULL and hd.valid = 1 and hd.posted = 1")
+                             "hd.remark from grn_tran tr join grn_hd hd on hd.entry_no = tr.entry_no where ocean != 1 and hd.valid = 1 and hd.posted = 1")
                     cursor.execute(query)
                     print(query)
                     rows = cursor.fetchall()
@@ -316,15 +374,16 @@ def interface(request):
 
                     # get invoice tran
                     query = ("select hd.entry_no,hd.entry_date,tr.total_units,tr.line_no,hd.loc_id,'',tr.item_code,"
-                             "hd.reason from adj_tran tr join adj_hd hd on hd.entry_no = tr.entry_no where ocean is NULL and hd.valid = 1 and hd.posted = 1")
+                             "hd.reason,tr.item_ref from adj_tran tr join adj_hd hd on hd.entry_no = tr.entry_no where ocean != 1 and hd.valid = 1 and hd.posted = 1 and hd.entry_date >= '2023-01-01'")
                     cursor.execute(query)
                     print(query)
+
                     rows = cursor.fetchall()
                     over_lines = len(rows)
                     compare_line = 1
                     for row in rows:
-                        entry_no, entry_date, quantity, line_no, loc_id, loc_to, item_code, remarks = row
-                        log = f"{move_type} : {compare_line} / {over_lines} {item_code}"
+                        entry_no, entry_date, quantity, line_no, loc_id, loc_to, item_code, remarks,barcode = row
+                        log = f"{move_type} {entry_no}: {compare_line} / {over_lines} {barcode}"
                         # get product
                         product = Products.objects.filter(code=item_code)
                         if product.exists():
@@ -363,7 +422,7 @@ def interface(request):
                     print("TRANSFER")
 
                     # get invoice tran
-                    query = "select hd.entry_no,hd.entry_date,tr.total_units,tr.line_no,hd.loc_from,loc_to,tr.item_code,hd.remark,tr.item_ref,tr.item_des from tran_tr tr join tran_hd hd on hd.entry_no = tr.entry_no where ocean is NULL and hd.valid = 1 and hd.posted = 1;"
+                    query = "select hd.entry_no,hd.entry_date,tr.total_units,tr.line_no,hd.loc_from,loc_to,tr.item_code,hd.remark,tr.item_ref,tr.item_des from tran_tr tr join tran_hd hd on hd.entry_no = tr.entry_no where ocean != 1 and hd.valid = 1 and hd.posted = 1;"
                     cursor.execute(query)
                     print(query)
                     rows = cursor.fetchall()
@@ -428,7 +487,7 @@ def interface(request):
                     print("GRN")
 
                     # get invoice tran
-                    query = "select hd.entry_no,hd.entry_date,tr.total_units,tr.line_no,hd.loc_id,'',tr.item_code,hd.remark from return_tran tr join return_hd hd on hd.entry_no = tr.entry_no where ocean is NULL and hd.valid = 1 and hd.posted = 1;"
+                    query = "select hd.entry_no,hd.entry_date,tr.total_units,tr.line_no,hd.loc_id,'',tr.item_code,hd.remark from return_tran tr join return_hd hd on hd.entry_no = tr.entry_no where ocean != 1 and hd.valid = 1 and hd.posted = 1;"
                     cursor.execute(query)
                     print(query)
                     rows = cursor.fetchall()
@@ -475,7 +534,7 @@ def interface(request):
                     print("PURCHASE RETURN")
 
                     # get invoice tran
-                    query = "select hd.entry_no,hd.entry_date,tr.total_units * -1 as 'total_units',tr.line_no,hd.loc_id,'',tr.item_code,hd.remark from purch_ret_tran tr join purch_ret_hd hd on hd.entry_no = tr.entry_no where ocean is NULL and hd.valid = 1 and hd.posted = 1;;"
+                    query = "select hd.entry_no,hd.entry_date,tr.total_units * -1 as 'total_units',tr.line_no,hd.loc_id,'',tr.item_code,hd.remark from purch_ret_tran tr join purch_ret_hd hd on hd.entry_no = tr.entry_no where ocean != 1 and hd.valid = 1 and hd.posted = 1;;"
                     cursor.execute(query)
                     print(query)
                     rows = cursor.fetchall()
@@ -1187,6 +1246,10 @@ def interface(request):
                 success_response['message'] = arr
                 response = success_response
 
+            elif module == 'wholesale_prices':
+                success_response['message'] = [pd.ws() for pd in Products.objects.filter(is_wholesales=True)]
+                response = success_response
+
             elif module == 'cardex':
                 barcode = data.get('barcode')
                 product = Products.objects.get(barcode=barcode)
@@ -1409,6 +1472,97 @@ def interface(request):
                 success_response['message'] = arr
                 response = success_response
 
+            elif module == 'expiry_by_month':
+                month = data.get('month')
+                document = data.get('document')
+
+                # Calculate start and end dates for the given month in current year
+                from datetime import datetime, date, timedelta
+
+                current_year = datetime.now().year
+
+                # Create date object for first day of month
+                start_date = date(current_year, int(month), 1)
+
+                # Get last day of month by getting first day of next month and subtracting 1 day
+                if int(month) == 12:
+                    end_date = date(current_year, 12, 31)
+                else:
+                    end_date = date(current_year, int(month) + 1, 1)
+                    end_date = end_date.replace(day=1) - timedelta(days=1)
+
+                query = f"""
+                    WITH DistinctBarcodes AS (
+                        SELECT
+                            item_ref AS barcode,
+                            MIN(exp_date) AS exp_date
+                        FROM grn_tran
+                        WHERE exp_date BETWEEN '{start_date}' AND '{end_date}'
+                        GROUP BY item_ref
+                    ),
+                    Filtered AS (
+                        SELECT
+                            t.exp_date,
+                            t.entry_no,
+                            t.item_ref AS barcode,
+                            t.item_code,
+                            t.item_des AS name,
+                            DATEDIFF(day, GETDATE(), t.exp_date) AS days_to_expire,
+                            ROW_NUMBER() OVER (PARTITION BY t.item_ref ORDER BY t.entry_no) AS rn
+                        FROM grn_tran t
+                        INNER JOIN DistinctBarcodes d
+                            ON t.item_ref = d.barcode
+                            AND t.exp_date = d.exp_date
+                        WHERE t.exp_date BETWEEN '{start_date}' AND '{end_date}'
+                    )
+                    SELECT *
+                    FROM Filtered
+                    WHERE rn = 1
+                    ORDER BY name;
+
+
+        
+                """
+
+                conn = ret_cursor()
+                cursor = conn.cursor()
+                cursor.execute(query)
+                ar = []
+                for row in cursor.fetchall():
+                    exp_date,entry_no,barcode,item_code,item_des,days_to_expire,rn = row
+
+                    # get stock
+                    stock = get_stock(item_code)
+                    sp = stock.get('001')
+                    wh = stock.get('999')
+                    osu = stock.get('205')
+                    nia = stock.get('202')
+                    kitchen = stock.get('201')
+
+                    exp_date = str(exp_date).split('T')[0]
+
+                    obj = {
+                        'expiry_date': str(exp_date),
+                        'entry_no':entry_no,
+                        'barcode':barcode,
+                        'item_code':item_code,
+                        'item_des':item_des,
+                        'days_to_expire':days_to_expire,
+                        'spintex_stock':sp,
+                        'nia_stock':nia,
+                        'osu_stock':osu,
+                        'kitchen_stock':kitchen,
+                        'warehouse':wh
+                    }
+                    arr.append(obj)
+                    li = [exp_date, entry_no, barcode, item_code, item_des, days_to_expire,wh,sp,nia,osu,kitchen]
+
+                    print(li)
+                conn.close()
+
+                success_response['message'] = arr
+                response = success_response
+
             elif module == 'transactions_today':
                 from datetime import datetime
                 today = datetime.now().strftime('%Y-%m-%d')
@@ -1435,7 +1589,7 @@ def interface(request):
                     sheet = book.active
 
                     sheet.title = loc.descr
-                    header = ['SN',"ITEM CODE","BARCODE","NAME","TRANSFER", "TRANSFER QUANTITY","SOLD","SOLD %","SOLD(2 weeks)","HEALTH","SYSTEM STOCK"]
+                    header = ['SN',"BARCODE","NAME","TRANSFER", "TRANSFER QUANTITY","SOLD","SOLD %","SENDER STOCK","RECIEPIENT STOCK"]
                     sheet.append(header)
 
                 #print("JESUS")
@@ -1444,17 +1598,25 @@ def interface(request):
                 #print("JESUS")
                 if ripe == 'YES':
                     #print("YES RIPE")
-                    to_sends = StockToSend.objects.filter(location=loc,healthy=True).order_by('name')
+                    to_sends = StockToSend.objects.filter(location=loc,healthy=True,stock__gt = 0,last_transfer_date__gt=date(2024, 1, 1)).order_by('name')
                 elif ripe == 'NO':
                     #print("NO RIPE")
-                    to_sends = StockToSend.objects.filter(location=loc,healthy=False).order_by('name')
+                    to_sends = StockToSend.objects.filter(location=loc,healthy=False,stock__gt = 0,last_transfer_date__gt=date(2024, 1, 1)).order_by('name')
                 else:
-                    to_sends = StockToSend.objects.filter(location=loc).order_by('name')
+                    to_sends = StockToSend.objects.filter(location=loc,stock__gt = 0,last_transfer_date__gt=date(2024, 1, 1)).order_by('name')
 
 
 
                 line = 1
                 for to_send in to_sends:
+                    item_code = to_send.item_code
+                    stkk = get_stock(item_code)
+                    print(stkk)
+                    stok = stkk.get(loc_id)
+                    print(stok)
+                    print()
+                    # get recipient stock
+
                     if out == 'json':
                         arr.append(to_send.obj())
 
@@ -1462,17 +1624,12 @@ def interface(request):
                         arr.append(to_send.html(line))
 
                     if out == 'excel':
-                        header = ['SN', "ITEMCODE", "BARCODE", "NAME", "TRANSFER", "TRANSFER QUANTITY", "SOLD",
-                                  "HEALTH"]
+                        header = ['SN',  "BARCODE", "NAME", "TRANSFER", "TRANSFER QUANTITY", "SOLD",
+                                  "SENDER STOCK","RECIPIENT STOCK"]
 
-                        # if Products.objects.filter(code=to_send.item_code).count() == 1:
-                        #     pd = Products.objects.get(code=to_send.item_code)
-                        #     stk  = Stock.objects.filter(product=pd,location=loc_id).aggregate(Sum('quantity'))['quantity__sum']
-                        # else:
-                        #     stk = get_stock(item_code=to_send.item_code).get(loc_id)
                         stk = RawStock.objects.filter(loc_id=loc_id,prod_id=to_send.item_code).aggregate(Sum('qty'))['qty__sum']
                         tr_en = f"{to_send.last_transfer_entry} ({to_send.last_transfer_date})"
-                        li = [line,to_send.item_code,to_send.barcode,to_send.name,tr_en,to_send.last_transfer_quantity,to_send.sold_quantity,to_send.percentage_sold,to_send.cust_sold,to_send.healthy,stk]
+                        li = [line,to_send.barcode,to_send.name,tr_en,to_send.last_transfer_quantity,to_send.sold_quantity,to_send.percentage_sold,to_send.stock,stok]
                         #print(li)
                         sheet.append(li)
 
@@ -1488,6 +1645,8 @@ def interface(request):
             elif module == 'sync_analyse_for_transfer':
                 arr = []
                 loc_id = data.get('loc','*')
+                # StockToSend.objects.all().delete()
+
                 if loc_id == '*':
                     locations = Locations.objects.filter(type='retail')
                 else:
@@ -1589,16 +1748,22 @@ def interface(request):
 
                                 }
 
+                        # print(obj)
+
                         StockToSend.objects.filter(item_code=item_code,location=loc).delete()
                         #print("SAVING POINT")
                         #print(two_weeks_sales)
                         #print("SAVING POINT")
+                        stk = get_stock(item_code)
+
+                        stock = get_stock(item_code).get('999') or 0
 
                         StockToSend(location=loc,item_code=item_code, name=name, barcode=barcode,last_transfer_entry=last_tr_entry,
                                     last_transfer_date=last_tran_date,last_transfer_quantity=last_tran_qty,sold_quantity=sold_qty,
-                                    percentage_sold=percentage_sold,healthy=health,cust_sold=two_weeks_sales).save()
+                                    percentage_sold=percentage_sold,healthy=health,cust_sold=two_weeks_sales,stock=stock).save()
 
                         arr.append(obj)
+                        print(barcode,name,stock)
                         #print(name)
                         # #print(obj)
 
@@ -2927,6 +3092,49 @@ def interface(request):
                             (SELECT SUM(tot_retail) FROM adj_hd where entry_date between @start_date and @end_date and valid = 0) AS deleted_value
                         FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
                     ) AS Data
+                    -- TRANSFER
+                    UNION ALL
+                    SELECT 'TRANSFERS' AS document, (
+                        SELECT 
+                            (SELECT COUNT(*) FROM tran_hd where entry_date between @start_date and @end_date) AS total_entries,
+                            (SELECT COUNT(*) FROM tran_hd where entry_date between @start_date and @end_date and valid = 1 AND posted = 1) AS posted,
+                            (SELECT COUNT(*) FROM tran_hd where entry_date between @start_date and @end_date and valid = 1 AND posted = 0) AS not_posted,
+                            (SELECT COUNT(*) FROM tran_hd where entry_date between @start_date and @end_date and valid = 0) AS deleted,
+                            (SELECT SUM(tot_retail) FROM tran_hd where entry_date between @start_date and @end_date) AS total_value,
+                            (SELECT SUM(tot_retail) FROM tran_hd where entry_date between @start_date and @end_date and valid = 1 and posted = 1) AS posted_value,
+                            (SELECT SUM(tot_retail) FROM tran_hd where entry_date between @start_date and @end_date and valid = 1 and posted = 0) AS pending_value,
+                            (SELECT SUM(tot_retail) FROM tran_hd where entry_date between @start_date and @end_date and valid = 0) AS deleted_value
+                        FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
+                    ) AS Data
+                    
+                    -- SALES RETURN
+                    UNION ALL
+                    SELECT 'SALES RETURN' AS document, (
+                        SELECT 
+                            (SELECT COUNT(*) FROM return_hd where entry_date between @start_date and @end_date) AS total_entries,
+                            (SELECT COUNT(*) FROM return_hd where entry_date between @start_date and @end_date and valid = 1 AND posted = 1) AS posted,
+                            (SELECT COUNT(*) FROM return_hd where entry_date between @start_date and @end_date and valid = 1 AND posted = 0) AS not_posted,
+                            (SELECT COUNT(*) FROM return_hd where entry_date between @start_date and @end_date and valid = 0) AS deleted,
+                            (SELECT SUM(inv_amt) FROM return_hd where entry_date between @start_date and @end_date) AS total_value,
+                            (SELECT SUM(inv_amt) FROM return_hd where entry_date between @start_date and @end_date and valid = 1 and posted = 1) AS posted_value,
+                            (SELECT SUM(inv_amt) FROM return_hd where entry_date between @start_date and @end_date and valid = 1 and posted = 0) AS pending_value,
+                            (SELECT SUM(inv_amt) FROM return_hd where entry_date between @start_date and @end_date and valid = 0) AS deleted_value
+                        FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
+                    ) AS Data
+                    -- PURCHASE RETURN
+                    UNION ALL
+                    SELECT 'PURCHASE RETURN' AS document, (
+                        SELECT 
+                            (SELECT COUNT(*) FROM purch_ret_hd where entry_date between @start_date and @end_date) AS total_entries,
+                            (SELECT COUNT(*) FROM purch_ret_hd where entry_date between @start_date and @end_date and valid = 1 AND posted = 1) AS posted,
+                            (SELECT COUNT(*) FROM purch_ret_hd where entry_date between @start_date and @end_date and valid = 1 AND posted = 0) AS not_posted,
+                            (SELECT COUNT(*) FROM purch_ret_hd where entry_date between @start_date and @end_date and valid = 0) AS deleted,
+                            (SELECT SUM(inv_amt) FROM purch_ret_hd where entry_date between @start_date and @end_date) AS total_value,
+                            (SELECT SUM(inv_amt) FROM purch_ret_hd where entry_date between @start_date and @end_date and valid = 1 and posted = 1) AS posted_value,
+                            (SELECT SUM(inv_amt) FROM purch_ret_hd where entry_date between @start_date and @end_date and valid = 1 and posted = 0) AS pending_value,
+                            (SELECT SUM(inv_amt) FROM purch_ret_hd where entry_date between @start_date and @end_date and valid = 0) AS deleted_value
+                        FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
+                    ) AS Data
 
                     
 
@@ -3013,6 +3221,35 @@ def interface(request):
                 success_response['message'] = arr
                 response = success_response
 
+            elif module == 'bolt_graph_week_category':
+                locations = Locations.objects.filter(type='retail')
+                from datetime import timedelta
+                # Calculate the start date (7 days ago)
+                from django.utils.timezone import now
+                start_date = now().date() - timedelta(days=7)
+                end_date = now().date()
+                date_range = [start_date + timedelta(days=x) for x in range(0, (end_date - start_date).days + 1)]
+                categories = BoltGroups.objects.all()
+                # date_range.append('Total')
+                labels = []
+
+                for dr in date_range:
+                    labels.append(dr)
+                sales_data = {}
+
+                total_arr = []
+                total_sales = 0
+
+                for dr in date_range:
+                    for cat in categories:
+                        print(dr)
+                        total_sales = cat.sales(dr)
+                        li = [cat.name,total_sales]
+
+                        print(li)
+
+
+                response = success_response
 
             elif module == 'revenue':
                 target_date = data.get('date')
@@ -3763,6 +4000,48 @@ ORDER BY
                 for item in items:
                     item.price = item.product.price
                     item.save()
+
+            elif module == 'wholesale_price_update':
+                conn = ret_cursor()
+                cursor = conn.cursor()
+                Products.objects.all().update(is_wholesales=False,wholesale_price=0)
+
+                cursor.execute("SELECT barcode,item_des,retail1, wh_rate,item_code from prod_mast where wh_rate != 0 order by item_des")
+                for prod in cursor.fetchall():
+
+                    barcode,name,price,rate,item_code = prod
+                    print([barcode,name,price,rate,item_code])
+                    wh_price = (price - (price * Decimal((rate / 100)))).quantize(Decimal('0.001'))
+                    barcode = barcode.strip()
+                    name = name.strip()
+                    Products.objects.filter(barcode=barcode).update(wholesale_price=wh_price,is_wholesales=True)
+                    cursor.execute(f"select prev_price1,prev_price2,retail from price_lev where item_code = '{item_code}' and price_group = '999'")
+                    lr = cursor.fetchone()
+                    if lr:
+                        pp = lr
+                        p1, p2, pr = pp[0], pp[1], pp[2]
+                        if pr != wh_price:
+                            print(f"UPDATE because {pr} != {wh_price}")
+                            cursor.execute(
+                                f"UPDATE price_lev set prev_price2 = prev_price1, prev_price1 = retail, retail = {wh_price} where item_code = '{item_code}' and price_group = '999'"
+                            )
+                            cursor.commit()
+                        else:
+                            print("SKIP")
+                        print("There is price")
+
+                        # li = [barcode,name,price,rate,wh_price]
+                        # print(li)
+                        # print("NO PRICE")
+                    else:
+                        query = (f"insert into price_lev(item_code,price_group,price_lev,retail,pack_id,user_id,dwnd_flag) VALUES "
+                                 f"('{item_code}','999','1','{wh_price}','PCS','411',1)")
+                        cursor.execute(query)
+                        cursor.commit()
+                        print(f"{barcode} NO PRICE")
+                        pass
+                conn.close()
+
 
             elif module == 'hide_bolt':
                 reason = data.get('hide_reason')

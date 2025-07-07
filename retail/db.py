@@ -1,5 +1,5 @@
 import pyodbc
-from django.db.models import Sum
+from django.db.models import Sum, Q
 
 from admin_panel.models import Locations
 from ocean.settings import RET_DB_HOST, RET_DB_PORT, RET_DB_NAME, RET_DB_USER, RET_DB_PASS
@@ -82,7 +82,7 @@ def stock_by_moved(prod_id,loc_id='*'):
     obj = {}
     if loc_id == '*':
         pass
-        for location in Locations.objects.filter(type='retail'):
+        for location in Locations.objects.filter(Q(type='retail') | Q(code=999)):
             code = location.code
             name = location.descr
             stock = ProductMoves.objects.filter(location=location,product_id=prod_id).aggregate(Sum('quantity'))['quantity__sum'] or 0

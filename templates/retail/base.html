@@ -75,6 +75,8 @@
     <script src="{% static 'general/js/classes/retail.js' %}"></script>
     <script src="{% static 'general/js/classes/recipe.js' %}"></script>
     <script src="{% static 'general/js/classes/form.js' %}"></script>
+    <script src="{% static 'general/js/dataTables.min.js' %}"></script>
+    <script src="{% static 'general/js/dataTables.bootstrap4.min.js' %}"></script>
 
 
   <script>
@@ -514,6 +516,10 @@
           </li><li>
             <a href="{% url 'retail_price_change' %}">
               <i class="bi bi-alarm-fill"></i><span>Price Change</span>
+            </a>
+          </li><li>
+            <a href="{% url 'wholesales' %}">
+              <i class="bi bi-alarm-fill"></i><span>Wholesales</span>
             </a>
           </li>
 

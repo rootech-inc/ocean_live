@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
-from datetime import timedelta
+from datetime import timedelta, datetime
+from time import strftime
 
 
 class Attendance(models.Model):
@@ -22,6 +23,18 @@ class Attendance(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_late = models.BooleanField(default=True)
     dep_text = models.CharField(null=True,max_length=20)
+    
+    def is_off(self):
+        import calendar
+        day = calendar.day_name[datetime.strptime(str(self.date).split(' ')[0], '%Y-%m-%d').weekday()]
+        if self.dep_text == "METERS" or self.dep_text == 'MOTORS':
+            if day == 'Sunday':
+                return True
+            else:
+                return True
+        else:
+            return False
+
 
     def obj(self):
         return {
@@ -35,7 +48,9 @@ class Attendance(models.Model):
             'created_at': self.created_at,
             'updated_at': self.updated_at,
             'is_late':self.is_late,
-            'dept':self.dep_text
+            'dept':self.dep_text,
+            'name':self.name,
+            'dep_text':self.dep_text
         }
 
 

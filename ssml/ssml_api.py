@@ -232,7 +232,7 @@ def interface(request):
                     remarks = data.get('remarks')
                     grn_type = data.get('grn_type')
                     created_by = User.objects.get(id=data.get('created_by'))
-                    location = Location.objects.get(pk=data.get('location')) if data.get('location') else Location.objects.get(loc_id='002')
+                    location = Location.objects.get(pk=data.get('location'))
                     grn = Grn.objects.create(
                         supplier=supplier, 
                         grn_date=grn_date, 
@@ -1829,7 +1829,8 @@ def interface(request):
                             ref_no=grn.id,
                             material=transaction.material,
                             qty=transaction.total_qty,
-                            location=grn.location
+                            location=grn.location,
+                            created_at=grn.grn_date,
                         )
                     
                     grn.is_posted = True
@@ -1837,7 +1838,7 @@ def interface(request):
                     success_response['message'] = "GRN Posted Successfully"
                 except Exception as e:
                     Cardex.objects.filter(doc_no=grn.grn_no,doc_type='GR').delete()
-                    grn.delete()
+
                     grn.is_posted = False
                     success_response['status_code'] = 400
                     success_response['message'] = f"Error on line {sys.exc_info()[2].tb_lineno}: {e}"

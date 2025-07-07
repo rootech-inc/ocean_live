@@ -76,13 +76,23 @@
                 <tr>
                   <th>ASSET</th>
                   <th>STATUS</th>
+                    <th>ACT</th>
                 </tr>
             </thead>
             <tbody>
                 {% for feed in feeds%}
                   <tr class="{%if feed.status == 'success'%}text-success{%else%}text-danger{%endif%}">
-                    <td>{{feed.jobcard.carno}}</td>
-                    <td>{{feed.status}}</td>
+                    <td>
+                        {{ feed.jobcard.company }}<br>
+                        {{feed.jobcard.carno}}
+                    </td>
+                    <td>
+                        {{feed.status}}<br>
+                        {{ feed.remarks }}
+                    </td>
+                    <td>
+                        {{ feed.created_by.username }}<br>{{ feed.created_date }}
+                    </td>
                   </tr>
                 {%endfor%}
             </tbody>

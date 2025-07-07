@@ -1,4 +1,4 @@
-{% extends 'retail/base.html' %}
+ {% extends 'retail/base.html' %}
 {% load static %}
 
 
@@ -75,6 +75,12 @@
 
             <div class="card-body p-2 overflow-auto">
                 <div class="table-responsive ">
+                    <div class="w-100 d-flex my-2 flex-wrap">
+                        <kbd class="badge bg-info ms-2">total</kbd>
+                        <kbd class="badge bg-success ms-2">posted</kbd>
+                        <kbd class="badge bg-warning ms-2">pending</kbd>
+                        <kbd class="badge bg-danger ms-2">deleted</kbd>
+                    </div>
                     <table class="table table-bordered table-hover">
                         <thead>
                             <tr><th>DOCUMENT</th><th>ENTRIES</th><th>TOTAL VALUE</th></tr>

@@ -635,7 +635,7 @@ class JobCard(models.Model):
     mechanic = models.CharField(max_length=64, blank=True, null=True)
     close_remark = models.TextField()
     next_service_date = models.DateField(null=True, blank=True)
-    service_follow_up_log = models.BooleanField(default=False)
+    service_follow_up_log = models.BooleanField(default=False,null=True,blank=True)
     is_synced = models.BooleanField(default=False)
     is_feedback = models.BooleanField(default=False)
     end_date = models.DateField(auto_now_add=True)
@@ -823,6 +823,7 @@ class ServiceFollowup(models.Model):
     car_brand = models.CharField(max_length=100)
     driver_name = models.CharField(max_length=100)
     driver_phone = models.CharField(max_length=100)
+    company_name = models.CharField(max_length=100)
     service_date = models.DateField(null=True, blank=True)
     is_followed = models.BooleanField(default=False)
     is_completed = models.BooleanField(default=False)
@@ -841,7 +842,8 @@ class ServiceFollowup(models.Model):
             'is_followed': self.is_followed,
             'is_completed': self.is_completed,
             'follow_up_date': self.follow_up_date,
-            'days_due': days_due
+            'days_due': days_due,
+            'company':self.company_name,
         }
 
 class ServiceFollowupLog(models.Model):

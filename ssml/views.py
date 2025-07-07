@@ -48,7 +48,7 @@ def materials(request):
         sr_opt += f"<option value='{rt.id}'>{rt.name} - {rt.rate}</option>"
     context = {
         'page': page,
-        'next_barcode': f"MT0{InventoryMaterial.objects.filter(is_issue=False).last().id + 1}",
+        'next_barcode': f"MT0{InventoryMaterial.objects.filter(is_issue=False).last().id if InventoryMaterial.objects.filter(is_issue=False).exists() else 0 + 1}",
         'service_rates':sr_opt
         
     }
@@ -141,10 +141,12 @@ def grn_add(request):
         'page': 'grn_add',
         'page_title': 'Add GRN',
         'page_description': 'Add GRN',
-        'nav':True
+        'nav':True,
+
     }
     context = {
         'page': page,
+        'locations': Location.objects.all().order_by('loc_name')
         
     }   
     return render(request, 'ssml/grn_add.html', context)

@@ -41,7 +41,15 @@
     </div>
 
     <div class="card-header">
-        <strong class="card-title">EMAILS</strong>
+
+        <div class="w-100 d-flex">
+            <div class="w-50">
+                <strong class="card-title">EMAILS</strong>
+            </div>
+            <div class="w-50 d-flex flex-wrap justify-content-end">
+                <button class="btn btn-info" id="new_sender">NEW SENDER</button>
+            </div>
+        </div>
     </div>
 
     <div class="card-body p-2">
@@ -155,6 +163,11 @@
     </div>
 
     <script>
+        $(document).ready(function () {
+            $('#new_sender').click(function () {
+                NewSenderScreen()
+            })
+        })
         // new sender screen
         function NewSenderScreen() {
             amodal.setTitleText("Add New Email Sender");
@@ -177,8 +190,8 @@
                     <option value="False">False</option>
                     <option value="True">True</option>
                 </select>
-                <hr>
-                <button class="w-100 btn btn-success" onclick="saveNewSender()">ADD</button>
+
+
             `;
             amodal.setBodyHtml(form);
             amodal.setFooterHtml(`<button class="w-100 btn btn-success" onclick="saveNewSender()">ADD</button>`);
@@ -347,6 +360,9 @@
 
 
             }
+
+
+
         }
         const email = new Email();
 

@@ -1898,7 +1898,8 @@ def api(request):
                                     car_brand=service.brand,
                                     driver_name=service.driver,
                                     driver_phone=service.contact,
-                                    service_date=next_service_date,
+                                    service_date=service.next_service_date,
+                                    company_name=service.company
 
                                 )
 
@@ -2730,7 +2731,7 @@ def api(request):
                     # add jobs feedback
                     JobCardFeedback(
                         jobcard=job,
-                        status='success' if status else 'issue',
+                        status='success' if str(status) == '1' else 'issue',
                         remarks=data.get('remarks'),
                         created_by=user
                     ).save()

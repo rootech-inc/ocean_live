@@ -12,6 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from admin_panel.anton import fix_phone_number, make_md5_hash, is_valid_email, is_valid_phone_number, md5only, get_client_ip
 from admin_panel.models import Emails, GeoCity, GeoCitySub, MailQueues, MailSenders, MailAttachments, Reminder, Sms, SmsApi
+from cmms.extra import cmms_db
 from cmms.models import CarModel, SalesDeals, SalesCustomers
 from crm.models import Contacts, Logs, CrmUsers, Sector, Positions, FollowUp, Campaigns, LogValidity, CampaignTargets, \
     CampaignSense
@@ -37,6 +38,10 @@ def api_interface(request):
         body = json.loads(request.body)
         module = body.get('module')
         data = body.get('data')
+
+        print(body)
+        print(method)
+        print(module)
 
         if method == 'PUT':
             if module == 'log':
@@ -115,78 +120,136 @@ def api_interface(request):
 
             elif module == 'sync_contacts':
                 # get all logs
+
                 total_phones = 0
                 total_emails = 0
 
-                # sync logs
-                logs = Logs.objects.all()
-                for log in logs:
-                    # get contact
-                    email = log.email
-                    phone = log.phone
-                    name = log.customer
-                    if is_valid_email(email):
-                        total_emails += 1
-                        try:
-                            Contacts(contact=email,source='log',type='email',name=name).save()
-                        except Exception as e:
-                            print(e)
-                            pass    
-                    if is_valid_phone_number(phone):
-                        total_phones += 1
-                        try:
-                            Contacts(contact=phone,source='log',type='sms',name=name).save()
-                        except Exception as e:
-                            print(e)
-                            pass
-                #syn loyalty customers
-                conn = ret_cursor()
-                cursor = conn.cursor()
-                query = """
-                SELECT Mobile,Email,labour_card_no,CONCAT(first_name,' ',last_name) as 'name' FROM LoyaltyCustomer
-                """
-                cursor.execute(query)
-                result = cursor.fetchall()
-                for row in result:
-                    x_li = []
-                    mobile = fix_phone_number(row[0])
-                    email = row[1] if row[1] is not None else ''
-                    labour_card_no = fix_phone_number(row[2])
-                    name = row[3].strip()
-
-                    
-
-                    if is_valid_phone_number(mobile):
-                        try:
-                            total_phones += 1
-                            Contacts(contact=mobile,source='lty',type='sms',name=name).save()
-                            x_li.append(mobile)
-                        except Exception as e:
-                            print(e)
-                            pass
-                    if labour_card_no != mobile:
-                        try:
-                            if is_valid_phone_number(labour_card_no):
-                                total_phones += 1
-                                Contacts(contact=labour_card_no,source='lty',type='sms',name=name).save()
-                                x_li.append(labour_card_no)
-                        except Exception as e:
-                            print(e)
-                            pass
-                    if is_valid_email(email):
-                        try:
+                print(data)
+                try:
+                    # sync logs
+                    logs = Logs.objects.all()
+                    for log in logs:
+                        # get contact
+                        email = log.email
+                        phone = log.phone
+                        name = log.customer
+                        if is_valid_email(email):
                             total_emails += 1
-                            Contacts(contact=email,source='lty',type='email',name=name).save()
-                            x_li.append(email)
-                        except Exception as e:
-                            print(e)
-                            pass
+                            try:
+                                Contacts(contact=email,source='log',type='email',name=name).save()
+                            except Exception as e:
+                                print(e)
+                                pass
+                        if is_valid_phone_number(phone):
+                            total_phones += 1
+                            try:
+                                Contacts(contact=phone,source='log',type='sms',name=name).save()
+                            except Exception as e:
+                                print(e)
+                                pass
+                    #syn loyalty customers
+                    conn = ret_cursor()
+                    cursor = conn.cursor()
+                    query = """
+                    SELECT Mobile,Email,labour_card_no,CONCAT(first_name,' ',last_name) as 'name' FROM LoyaltyCustomer
+union
+SELECT phone,'',phone,cust_name FROM customer
+                    """
+                    cursor.execute(query)
+                    result = cursor.fetchall()
+                    for row in result:
+                        x_li = []
+                        mobile = fix_phone_number(row[0])
+                        email = row[1] if row[1] is not None else ''
+                        labour_card_no = fix_phone_number(row[2])
+                        name = row[3].strip()
 
-                    if len(x_li) > 0:
-                        print(x_li)
 
-                conn.close()
-                success_response['message'] = f"Total Phones: {total_phones}, Total Emails: {total_emails}"
+
+                        if is_valid_phone_number(mobile):
+                            try:
+                                total_phones += 1
+                                Contacts(contact=mobile,source='lty',type='sms',name=name).save()
+                                x_li.append(mobile)
+                            except Exception as e:
+                                print(e)
+                                pass
+                        if labour_card_no != mobile:
+                            try:
+                                if is_valid_phone_number(labour_card_no):
+                                    total_phones += 1
+                                    Contacts(contact=labour_card_no,source='lty',type='sms',name=name).save()
+                                    x_li.append(labour_card_no)
+                            except Exception as e:
+                                print(e)
+                                pass
+                        if is_valid_email(email):
+                            try:
+                                total_emails += 1
+                                Contacts(contact=email,source='lty',type='email',name=name).save()
+                                x_li.append(email)
+                            except Exception as e:
+                                print(e)
+                                pass
+
+                        if len(x_li) > 0:
+                            print(x_li)
+
+                    conn.close()
+
+                    # for cmms
+                    cmms_query = f"""
+                        SELECT cust_contact,email1,cust_contact,cust_name FROM customer_master
+    
+                    """
+                    cmms_conn = cmms_db()
+                    cursor = cmms_conn.cursor()
+                    cursor.execute(cmms_query)
+
+                    result = cursor.fetchall()
+                    for row in result:
+                        x_li = []
+                        mobile = fix_phone_number(row[0])
+                        email = row[1] if row[1] is not None else ''
+                        labour_card_no = fix_phone_number(row[2])
+                        name = row[3].strip()
+
+                        if is_valid_phone_number(mobile):
+                            try:
+                                total_phones += 1
+                                Contacts(contact=mobile, source='lty', type='sms', name=name).save()
+                                x_li.append(mobile)
+                            except Exception as e:
+                                print(e)
+                                pass
+                        if labour_card_no != mobile:
+                            try:
+                                if is_valid_phone_number(labour_card_no):
+                                    total_phones += 1
+                                    Contacts(contact=labour_card_no, source='lty', type='sms', name=name).save()
+                                    x_li.append(labour_card_no)
+                            except Exception as e:
+                                print(e)
+                                pass
+                        if is_valid_email(email):
+                            try:
+                                total_emails += 1
+                                Contacts(contact=email, source='lty', type='email', name=name).save()
+                                x_li.append(email)
+                            except Exception as e:
+                                print(e)
+                                pass
+
+                        if len(x_li) > 0:
+                            print(x_li)
+
+                    cmms_conn.close()
+
+                    success_response['message'] = f"Total Phones: {total_phones}, Total Emails: {total_emails}"
+                    print(success_response)
+                except Exception as e:
+                    success_response['message'] = str(e)
+                    success_response['status_code'] = 500
                 response = success_response
 
             elif module == 'deal_from_log':

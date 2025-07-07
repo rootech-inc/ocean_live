@@ -88,3 +88,15 @@ def master_leave(request):
     }
 
     return render(request,'employee/leaves.html',context=context)
+
+@login_required()
+def monthly_attendance(request):
+    context = {
+        'nav': True,
+        'page': {
+            'title': "Monthly Attendance",
+            'nav': True
+        }
+    }
+
+    return render(request, 'employee/monthly-attendance.html', context=context)
