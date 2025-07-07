@@ -124,11 +124,21 @@ def api_interface(request):
                     # get contact
                     email = log.email
                     phone = log.phone
+                    name = log.customer
                     if is_valid_email(email):
                         total_emails += 1
+                        try:
+                            Contacts(contact=email,source='log',type='email',name=name).save()
+                        except Exception as e:
+                            print(e)
+                            pass    
                     if is_valid_phone_number(phone):
                         total_phones += 1
-
+                        try:
+                            Contacts(contact=phone,source='log',type='sms',name=name).save()
+                        except Exception as e:
+                            print(e)
+                            pass
                 #syn loyalty customers
                 conn = ret_cursor()
                 cursor = conn.cursor()
