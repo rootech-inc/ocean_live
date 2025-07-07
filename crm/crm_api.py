@@ -903,13 +903,14 @@ def api_interface(request):
 
                                 target.is_sent = True
                                 pass_cunt += 1
+                                target.last_tried = timezone.now()
+                                target.save()
                             except Exception as e:
                                 target.tried_response = f"{e}"
                                 print(e)
                                 failded_cunt += 1
-                            finally:
-                                target.last_tried = timezone.now()
-                                target.save()
+                           
+                                
                     campaign.is_sent = True
                     campaign.save()
 
