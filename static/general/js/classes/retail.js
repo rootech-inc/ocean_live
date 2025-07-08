@@ -701,10 +701,11 @@ class Retail {
                             let tr = '';
                             let res = result.message;
                             let dt = []
-                            dt.push(['BARCODE','NAME','GRN','EXPIRY DATE','WAREHOUSE',"SPINTEX",'NIA',"OSU",'KITCHEN'])
+                            dt.push(['BARCODE','NAME','GRN','EXPIRY DATE','DAYS TO EXPIRY','WAREHOUSE',"SPINTEX",'NIA',"OSU",'KITCHEN'])
 
                             for(let m = 0; m < res.length; m++){
                                 let row = res[m];
+                                console.table(row)
                                 tr += `<tr>
                                             <td>${row.barcode}</td>
                                             <td>${row.item_des}</td>
@@ -716,7 +717,7 @@ class Retail {
                                             <td>${row.osu_stock}</td>
                                             <td>${row.kitchen_stock}</td>
                                       </tr>`
-                                dt.push([row.barcode,row.item_des,row.entry_no,row.expiry_date,row.warehouse,row.spintex_stock,row.nia_stock,row.osu_stock,row.kitchen_stock])
+                                dt.push([row.barcode,row.item_des,row.entry_no,row.expiry_date,row.days_to_expire,row.warehouse,row.spintex_stock,row.nia_stock,row.osu_stock,row.kitchen_stock])
                             }
                             header = ['BARCODE','NAME','GRN','EXPIRY DATE','WAREHOUSE',"SPINTEX",'NIA',"OSU",'KITCHEN']
                             reports.render(header,tr,`EXPIRY REPORT <button id="dnlod">EXPORT</button>`)
@@ -755,7 +756,7 @@ class Retail {
                     if(anton.IsRequest(result)){
                         let doc = $('#document').val();
                         if(doc === 'json'){
-                            let header = ['EXPIRY DATE','GRN','BARCODE','ITEM CODE','ITEM NAME','WAREHOUSE',"SPINTEX",'NIA',"OSU",'STOCK']
+                            let header = ['EXPIRY DATE','GRN','BARCODE','ITEM CODE','DAYS RO EXPIRY','ITEM NAME','WAREHOUSE',"SPINTEX",'NIA',"OSU",'STOCK']
                             let tr = '';
                             let res = result.message;
                             for(let m = 0; m < res.length; m++){

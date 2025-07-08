@@ -1530,34 +1530,47 @@ def interface(request):
                 ar = []
                 for row in cursor.fetchall():
                     exp_date,entry_no,barcode,item_code,item_des,days_to_expire,rn = row
+                    # get lastest expiry date
+                    latest_expiry_query = f"""
+                        select top(1) tr.exp_date from grn_tran tr join grn_hd hd on hd.entry_no = tr.entry_no where tr.item_code = '{item_code}' order by hd.grn_date desc
+
+                    """
+                    cursor.execute(latest_expiry_query)
+                    result = cursor.fetchone()
+                    is_exp = True
+                    if result:
+                        new_exp_date = result[0]
+                        if new_exp_date and new_exp_date > exp_date:
+                            is_exp = False
 
                     # get stock
-                    stock = get_stock(item_code)
-                    sp = stock.get('001')
-                    wh = stock.get('999')
-                    osu = stock.get('205')
-                    nia = stock.get('202')
-                    kitchen = stock.get('201')
+                    if is_exp:
+                        stock = get_stock(item_code)
+                        sp = stock.get('001')
+                        wh = stock.get('999')
+                        osu = stock.get('205')
+                        nia = stock.get('202')
+                        kitchen = stock.get('201')
 
-                    exp_date = str(exp_date).split('T')[0]
+                        exp_date = str(exp_date).split('T')[0]
 
-                    obj = {
-                        'expiry_date': str(exp_date),
-                        'entry_no':entry_no,
-                        'barcode':barcode,
-                        'item_code':item_code,
-                        'item_des':item_des,
-                        'days_to_expire':days_to_expire,
-                        'spintex_stock':sp,
-                        'nia_stock':nia,
-                        'osu_stock':osu,
-                        'kitchen_stock':kitchen,
-                        'warehouse':wh
-                    }
-                    arr.append(obj)
-                    li = [exp_date, entry_no, barcode, item_code, item_des, days_to_expire,wh,sp,nia,osu,kitchen]
+                        obj = {
+                            'expiry_date': str(exp_date),
+                            'entry_no':entry_no,
+                            'barcode':barcode,
+                            'item_code':item_code,
+                            'item_des':item_des,
+                            'days_to_expire':days_to_expire,
+                            'spintex_stock':sp,
+                            'nia_stock':nia,
+                            'osu_stock':osu,
+                            'kitchen_stock':kitchen,
+                            'warehouse':wh
+                        }
+                        arr.append(obj)
+                        li = [exp_date, entry_no, barcode, item_code, item_des, days_to_expire,wh,sp,nia,osu,kitchen]
 
-                    print(li)
+                        print(li)
                 conn.close()
 
                 success_response['message'] = arr

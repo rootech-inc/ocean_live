@@ -1,4 +1,7 @@
-echo "Building...."
+@echo off
+
+
+echo "Building with"
 docker buildx build --load -t rootleet411/ocean .
 
 echo "Pushing"
