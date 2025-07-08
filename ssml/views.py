@@ -692,3 +692,19 @@ def location_master(request):
 
     return render(request,'ssml/location-master.html',context=context)
 
+
+def transfer(request):
+    page = {
+        'title': 'Transfer',
+        'page': 'transfer',
+        'page_title': 'Transfer',
+        'page_description': 'Transfer',
+        'nav':True
+    }
+    context = {
+        'page': page,
+        'locations':Location.objects.all().order_by('loc_name'),
+        'nav':True
+    }
+
+    return render(request,'ssml/inventory/transfer.html',context=context)
