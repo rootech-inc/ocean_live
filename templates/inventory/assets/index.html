@@ -1,126 +1,10 @@
 {% extends 'dashboard/products/prod_base.html' %}
 {% load static %}
 
-{% block prod %}
-    <div  class="w-100 h-100 card">
+<!-- modal -->
 
-        <div class="card-header">
-            <div class="w-100 h-100 d-flex flex-wrap">
-                <div class="w-50 h-100"></div>
-                <div class="w-50 h-100 d-flex flex-wrap justify-content-end">
-                    <button data-bs-toggle="modal" data-bs-target="#newAsset" class="btn btn-info">CREATE ASSET</button>
-                    <div class="modal fade" id="newAsset">
-                        <div class="modal-dialog modal-lg">
-                            <form method="post" enctype="multipart/form-data" action="{% url 'assets_new' %}" class="modal-content">
-                                {% csrf_token %}
-                                <div class="modal-header">
-                                    <strong class="modal-title">New Asset</strong>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="container">
-                                        <div class="row">
-{#                                            <div class="col-sm-12 mb-2">#}
-{#                                                <label for="">Asset Type</label><select name="type" id="" class="form-control rounded-0">#}
-{#                                                    <option value="0">Default</option>#}
-{#                                                    <option value="1">Desk</option>#}
-{#                                                </select>#}
-{#                                            </div>#}
-                                            <!-- group and brand -->
-                                            <div class="col-sm-6 mb-2">
-                                                <label for="">Group</label><select name="group" id="" class="form-control rounded-0">
-                                                    {% for grp in assgrp %}
-                                                    <option value="{{ grp.pk }}">{{ grp.descr }}</option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
-
-                                            <div class="col-sm-6 mb-2">
-                                                <label class="w-100">Brand
-                                                    <input autocomplete="off" type="text" required name="brand" class="form-control rounded-0">
-                                                </label>
-                                            </div>
-
-                                            <div class="col-sm-6 mb-2">
-                                                <label class="w-100">SKU
-                                                    <input autocomplete="off" type="text" required name="sku" class="form-control rounded-0">
-                                                    <small class="text-info">Unique tag</small>
-                                                </label>
-                                            </div>
-
-                                            <!-- DESCR -->
-                                            <div class="col-sm-6 mb-2">
-                                                <label class="w-100">Description
-                                                    <input autocomplete="off" type="text" required name="descr" class="form-control rounded-0">
-                                                </label>
-                                            </div>
-
-                                            <!--  model and manufacturer -->
-                                            <div class="col-sm-6 mb-2">
-                                                <label class="w-100">Model
-                                                    <input autocomplete="off" type="text" required name="model" class="form-control rounded-0">
-                                                </label>
-                                            </div>
-                                            <div class="col-sm-6 mb-2">
-                                                <label class="w-100">Manufacturer
-                                                    <input autocomplete="off" type="text" required name="manufacturer" class="form-control rounded-0">
-                                                </label>
-                                            </div>
-
-                                            <!-- Processor -->
-                                            <div class="col-sm-12 mb-2">
-                                                <label class="w-100">Processor
-                                                    <input autocomplete="off" type="text" required name="processor" class="form-control rounded-0">
-                                                </label>
-                                            </div>
-
-
-                                            <!--  storage and memory -->
-                                            <div class="col-sm-6 mb-2">
-                                                <label class="w-100">Storage
-                                                    <input autocomplete="off" type="text" required name="storage" class="form-control rounded-0">
-                                                </label>
-                                            </div>
-                                            <div class="col-sm-6 mb-2">
-                                                <label class="w-100">Memory
-                                                    <input autocomplete="off" type="text" required name="memory" class="form-control rounded-0">
-                                                </label>
-                                            </div>
-
-                                            <!-- TAG -->
-                                            <div class="col-sm-12 mb-2">
-                                                <label class="w-100">Tags
-                                                    <input type="text" name="tags" class="form-control rounded-0">
-                                                </label>
-                                                <small class="txt-info">Separate tags by commas</small>
-                                            </div>
-
-                                            <!-- DETAILS -->
-                                            <div class="col-sm-12 p-2">
-                                                <textarea name="details" placeholder="More Details" id="" class="form-control rounded-0" rows="5"></textarea>
-                                            </div>
-
-                                            <!-- IMAGE -->
-                                            <input type="file" name="image" required accept="image/*" id="id_image">
-
-                                        </div>
-
-
-                                    </div>
-                                </div>
-
-                                <div class="modal-footer">
-                                    <button type="button" data-dismiss="modal" class="btn btn-warning">CANCEL</button>
-                                    <button type="submit" class="btn btn-success">SAVE</button>
-                                </div>
-
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card-body p-2">
+<!-- assets loop display -->
+    <div class="card-body p-2">
             <div class="container-fluid p-0">
                 <div class="w-100 h-100 d-flex flex-wrap">
                     {% for asset in assets %}
@@ -139,7 +23,229 @@
             </div>
         </div>
 
+{% block body %}
+    <div  class="w-100 h-100 card">
+
+        <div class="card-header">
+            <button class="btn btn-primary new" data-asset_no="3" data-bs-toggle="modal" >New</button>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered">
+                <thead class="table-white">
+                    <tr>
+                        <th>Company</th>
+                        <th>Name</th>
+                        <th>Manufacturer</th>
+                        <th>Year</th>
+                        <th>Number</th>
+                        <th>Color</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Acme Corp</td>
+                        <td>Office Desk</td>
+                        <td>FurniCo</td>
+                        <td>2022</td>
+                        <td>15</td>
+                        <td>Walnut</td>
+                        <td>
+                            <div class="dropdown d-inline"></div>
+                                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fa fa-bars">M</i>
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                    <li>
+                                        <button class="dropdown-item view-documents" type="button" data-asset_no="2" data-bs-toggle="modal" >
+                                            Document
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item view_asset" type="button" data-asset_no="1" data-bs-toggle="modal" >
+                                            View
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            </div>
+            
+        </div>
+    
+
         <div class="card-footer"></div>
 
     </div>
+
+<script>
+    $(document).ready(function(){
+        // view button
+        $('.view_asset').click(function(){
+            let asset_no = $(this).data('asset_no');
+            // after api fetch of data
+            let xhtml = `
+                <div class="container">
+                    <div class="col-12 mb-2">
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Registration Certificate (RC)</span>
+                                <a href="/media/documents/rc_${asset_no}.pdf" download class="btn btn-sm btn-outline-primary ms-2">
+                                    <i class="fa fa-download" aria-hidden="true"></i>
+                                </a>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Insurance Policy</span>
+                                <a href="/media/documents/insurance_${asset_no}.pdf" download class="btn btn-sm btn-outline-primary ms-2">
+                                    <i class="fa fa-download" aria-hidden="true"></i>
+                                </a>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Pollution Certificate</span>
+                                <a href="/media/documents/pollution_${asset_no}.pdf" download class="btn btn-sm btn-outline-primary ms-2">
+                                    <i class="fa fa-download" aria-hidden="true"></i>
+                                </a>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Fitness Certificate</span>
+                                <a href="/media/documents/fitness_${asset_no}.pdf" download class="btn btn-sm btn-outline-primary ms-2">
+                                    <i class="fa fa-download" aria-hidden="true"></i>
+                                </a>
+                </div>
+            `;
+            amodal.setBodyHtml(
+                xhtml
+            );
+            amodal.setTitleText("View Vehicle Documents")
+            amodal.setSize('L')
+            amodal.show()
+        })
+        // view docs
+        $('.view-documents').click(function(){
+            let asset_no = $(this).data('asset_no');
+            // after api fetch of data
+            let xhtml = `
+                <div class="container">
+                    <ul class="list-group mb-3">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <strong>Registration Certificate (RC)</strong>
+                                <span class="ms-3 small text-muted">Expiry: 2025-05-20</span>
+                            </div>
+                            <a href="/media/documents/rc_${asset_no}.pdf" download class="btn btn-sm btn-outline-primary ms-2">
+                                <i class="fa fa-download" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <strong>Insurance Policy</strong>
+                                <span class="ms-3 small text-muted">Expiry: 2024-12-31</span>
+                            </div>
+                            <a href="/media/documents/insurance_${asset_no}.pdf" download class="btn btn-sm btn-outline-primary ms-2">
+                                <i class="fa fa-download" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <strong>Pollution Certificate</strong>
+                                <span class="ms-3 small text-muted">Expiry: 2024-09-15</span>
+                            </div>
+                            <a href="/media/documents/pollution_${asset_no}.pdf" download class="btn btn-sm btn-outline-primary ms-2">
+                                <i class="fa fa-download" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <strong>Fitness Certificate</strong>
+                                <span class="ms-3 small text-muted">Expiry: 2026-03-10</span>
+                            </div>
+                            <a href="/media/documents/fitness_${asset_no}.pdf" download class="btn btn-sm btn-outline-primary ms-2">
+                                <i class="fa fa-download" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                    </ul>
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            `;
+            amodal.setBodyHtml(
+                xhtml
+            );
+            amodal.setTitleText("Dowload Vehicle Documents")
+            amodal.setSize
+            amodal.show()
+        })
+        // new vehicle asset
+          $('.new').click(function(){
+            let asset_no = $(this).data('asset_no');
+            // after api fetch of data
+            let xhtml = `
+                <div class="container">
+                    <form id="vehicle-asset-form">
+                        <input type="hidden" id="asset_no" value="${asset_no}">
+                        <div class="row g-2">
+                            <div class="col-12 col-md-6">
+                                <label for="company" class="form-label mb-1">Company</label>
+                                <select class="form-select form-select-sm" id="company" name="company" required>
+                                    <option value="" disabled selected>Select company</option>
+                                    <option value="Acme Corp">Acme Corp</option>
+                                    <option value="Globex Inc">Globex Inc</option>
+                                    <option value="Umbrella Ltd">Umbrella Ltd</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="owner" class="form-label mb-1">Owner</label>
+                                <input type="text" class="form-control form-control-sm" id="owner" name="owner" required>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="name" class="form-label mb-1">Vehicle Name</label>
+                                <input type="text" class="form-control form-control-sm" id="name" name="name" required>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="manufacturer" class="form-label mb-1">Manufacturer</label>
+                                <input type="text" class="form-control form-control-sm" id="manufacturer" name="manufacturer" required>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label for="year" class="form-label mb-1">Year</label>
+                                <input type="number" class="form-control form-control-sm" id="year" name="year" required>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label for="color" class="form-label mb-1">Color</label>
+                                <input type="color" class="form-control form-control-sm" id="color" name="color" required style="height: 38px;">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="number" class="form-label mb-1">Vehicle Number</label>
+                                <input type="text" class="form-control form-control-sm" id="number" name="number" required>
+                            </div>
+                            <div class="col-12 ">
+                                <label for="image" class="form-label mb-1">Image</label>
+                                <input type="file" class="form-control form-control-sm" id="image" name="image" accept="image/*">
+                            </div>
+                            <div class="col-12">
+                                <label for="descr" class="form-label mb-1 ">Description</label>
+                                <textarea class="form-control form-control-sm" id="descr" name="descr" rows="10"></textarea>
+                            </div>
+                            <div class="col-12 text-end mt-2">
+                                <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                                <button type="button" class="btn btn-danger btn-sm" data-bs-dismiss="modal">Cancel</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            `;
+            amodal.setBodyHtml(
+                xhtml
+            );
+            amodal.setTitleText("New Vehicle Asset")
+            amodal.setSize('L')
+            amodal.show()
+        })
+    })
+</script>
 {% endblock %}
