@@ -2,6 +2,53 @@
 {% load static %}
 
 {% block body %}
+    <div class="card-header">
+            <h5 class="">Document Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="container-fluid p-2">
+                <div class="row mb-3">
+                    <div class="col-sm-3">
+                        <div class="row mb-3">
+                            <div class="col-sm-4"><label for="entry_no">Enter No.</label></div>
+                            <div class="col-sm-8">
+                                <input type="text" id="entry_no" class="form-control form-control-sm rounded-0">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-4"><label for="entry_date">Enter Date.</label></div>
+                            <div class="col-sm-8">
+                                <input type="date" id="entry_date" class="form-control form-control-sm rounded-0">
+                            </div>
+                        </div>
+                    </div>
 
+                    <div class="col-sm-3">
+                        <div class="row">
+                            <div class="col-sm-4"><label for="loc_from">From Loc.</label></div>
+                            <div class="col-sm-8 mb-3">
+                                <select name="" id="loc_from" class="form-control form-control-sm rounded-0">
+                                    <option value="" disabled selected>Select From</option>
+                                    {% for loc in locations %}
+                                        <option value="{{ loc.id }}">{{ loc.loc_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-sm-4"><label for="loc_to">From Loc.</label></div>
+                            <div class="col-sm-8">
+                                <select name="" id="loc_to" class="form-control form-control-sm rounded-0">
+                                    <option value="" disabled selected>Select From</option>
+                                    {% for loc in locations %}
+                                        <option value="{{ loc.id }}">{{ loc.loc_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
 
 {% endblock %}

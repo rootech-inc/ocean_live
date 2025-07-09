@@ -8,7 +8,11 @@ from django.views.decorators.csrf import csrf_exempt
 
 
 from ssml.form import ContractorErrorForm
-from ssml.models import Contractor, ContractorError, Grn, GrnTransaction, InventoryMaterial, InvoiceHD, Issue, IssueTransaction, Location, MaterialOrderItem, Meter, Plot, Reedem, Service, ServiceMaterialRates, ServiceOrder, ServiceOrderItem, ServiceType, ServiceTypeServices, Supplier
+from ssml.models import Contractor, ContractorError, Grn, GrnTransaction, InventoryMaterial, InvoiceHD, Issue, \
+    IssueTransaction, Location, MaterialOrderItem, Meter, Plot, Reedem, Service, ServiceMaterialRates, ServiceOrder, \
+    ServiceOrderItem, ServiceType, ServiceTypeServices, Supplier, TransferHd
+
+
 # Create your views here.
 @login_required
 def index(request):
@@ -692,8 +696,11 @@ def location_master(request):
 
     return render(request,'ssml/location-master.html',context=context)
 
-
+@login_required()
 def transfer(request):
+
+    if TransferHd.objects.all().count() == 0:
+        return redirect('ssml_add_transfer')
     page = {
         'title': 'Transfer',
         'page': 'transfer',
@@ -703,8 +710,22 @@ def transfer(request):
     }
     context = {
         'page': page,
-        'locations':Location.objects.all().order_by('loc_name'),
+
         'nav':True
     }
 
     return render(request,'ssml/inventory/transfer.html',context=context)
+
+@login_required()
+def add_transfer(request):
+    page = {
+        'title': 'Add Transfer',
+        'nav':True
+    }
+
+    context = {
+        'page': page,
+        'locations': Location.objects.all().order_by('loc_name'),
+    }
+
+    return render(request,'ssml/inventory/transfer_add.html',context=context)

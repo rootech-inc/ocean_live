@@ -971,7 +971,7 @@ def interface(request):
                 conn = ret_cursor()
                 cursor = conn.cursor()
                 query = ("SELECT item_code, barcode, item_des, (SELECT group_des FROM group_mast WHERE group_mast.group_code = prod_mast.group_code) AS 'group', (SELECT sub_group_des FROM sub_group WHERE sub_group.group_code = prod_mast.group_code AND sub_group.sub_group = prod_mast.sub_group) "
-                         "AS 'sub_group', (SELECT supp_name FROM supplier WHERE supplier.supp_code = prod_mast.supp_code) AS 'supplier', retail1 FROM prod_mast WHERE item_type != 0 order by item_code desc")
+                         "AS 'sub_group', (SELECT supp_name FROM supplier WHERE supplier.supp_code = prod_mast.supp_code) AS 'supplier', retail1 FROM prod_mast where item_type = 0 order by item_code desc")
                 cursor.execute(query)
                 saved = 0
                 not_synced = 0
@@ -1009,7 +1009,7 @@ def interface(request):
                         prod.entity_id = entity
 
                         prod.save()
-                        print("Okay")
+                        print("Okay",product[2])
 
                     else:
                         # save new
