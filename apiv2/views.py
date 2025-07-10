@@ -48,7 +48,7 @@ def api_function(request):
                 response['status'] = "success"
                 response['message'] = "INITIALIZED"
                 module = body["module"]
-                data = body["data"]
+                data = body["data"] 
 
                 # code to handle PUT request and update data
                 if module == 'dev_mgmt':
@@ -252,7 +252,6 @@ def api_function(request):
                             response['message'] = "Task Updated!!"
                         else:
                             response['message'] = "Task not found!!"
-
 
                 elif module == 'assign_device':
                     user_pk = data.get('user')

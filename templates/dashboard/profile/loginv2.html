@@ -39,71 +39,156 @@
 <body>
 
   <main>
+    <!-- md screens and less  -->
+    <div class="d-block d-lg-none bg-primary" style="height: 100vh; position: relative;">
+      <div class="d-block d-lg-none bg-primary" style="height: 100vh; position: relative;">
+  <img src="{% static 'assets/img/oceanImage.webp' %}" alt=""
+       class="img-fluid"
+       style="object-fit: cover; width: 100%; height: 100%; position: absolute; left: 0; top: 0; z-index: 1; opacity: 0.5;">
+
+  <div style="position: relative; z-index: 2;" class="h-100 d-flex align-items-center justify-content-center">
     <div class="container">
+      <section class="section register min-vh-100 d-flex flex-column align-items-center justify-content-center py-4 ">
+         <div class="container ">
+              <div class="row justify-content-center">
+                <div class="col-lg-4 col-md-6 d-flex flex-column align-items-center justify-content-center">
 
-      <section class="section register min-vh-100 d-flex flex-column align-items-center justify-content-center py-4">
-        <div class="container">
-          <div class="row justify-content-center">
-            <div class="col-lg-4 col-md-6 d-flex flex-column align-items-center justify-content-center">
+                  <div class="d-flex justify-content-center py-4">
+                    <a href="" class="logo d-flex align-items-center w-auto">
+                      <img src="{% static 'assets/img/logo.png' %}" alt=""  >
+                      <span class="d-none d-lg-block">OCEAN</span>
+                    </a>
+                  </div><!-- End Logo -->
 
-              <div class="d-flex justify-content-center py-4">
-                <a href="" class="logo d-flex align-items-center w-auto">
-                  <img src="{% static 'assets/img/logo.png' %}" alt="">
-                  <span class="d-none d-lg-block">OCEAN</span>
-                </a>
-              </div><!-- End Logo -->
+                  <div class="card mb-3">
 
-              <div class="card mb-3">
+                    <div class="card-body">
 
-                <div class="card-body">
+                      <div class="pt-4 pb-2">
+                        <h5 class="card-title text-center pb-0 fs-4">Login to Your Account</h5>
+                      </div>
+                        <!-- login form -->
+                      <form id="regular_form" method="post" action="{% url 'login_process' %}"  class="row g-3 needs-validation" novalidate>
+                        {% csrf_token %}
+                        <div class="col-12">
+                          <label for="yourPassword" class="form-label"><small>Email Address</small></label>
+                          <input autocomplete="off" type="email" name="email" class="form-control" id="yourPassword" required>
+                          <div class="invalid-feedback">Please enter your password!</div>
+                        </div>
 
-                  <div class="pt-4 pb-2">
-                    <h5 class="card-title text-center pb-0 fs-4">Login to Your Account</h5>
+                        <div class="col-12">
+                          <label for="yourPassword" class="form-label"><small>Password</small></label>
+                          <input autocomplete="off" type="password" name="password" class="form-control" id="yourPassword" required>
+                          <div class="invalid-feedback">Please enter your password!</div>
+                        </div>
+
+                        <input type="hidden" name="next" value="{{ next }}">
+
+                          {% if messages %}
+                            {% for message in messages %}
+
+                                <div class="alert alert-danger small alert-dismissible fade show" role="alert">
+                                  <strong>{{message}}</strong> 
+                                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+
+                            {% endfor %}
+                        {% endif %}
+
+
+                        <div class="col-12">
+                          <button class="btn btn-primary w-100" type="submit">Login</button>
+                        </div>
+                      </form>
+
+                    </div>
                   </div>
 
-                  <form id="regular_form" method="post" action="{% url 'login_process' %}"  class="row g-3 needs-validation" novalidate>
-                    {% csrf_token %}
-                    <div class="col-12">
-                      <label for="yourPassword" class="form-label"><small>Email Address</small></label>
-                      <input autocomplete="off" type="email" name="email" class="form-control" id="yourPassword" required>
-                      <div class="invalid-feedback">Please enter your password!</div>
-                    </div>
-
-                    <div class="col-12">
-                      <label for="yourPassword" class="form-label"><small>Password</small></label>
-                      <input autocomplete="off" type="password" name="password" class="form-control" id="yourPassword" required>
-                      <div class="invalid-feedback">Please enter your password!</div>
-                    </div>
-
-                    <input type="hidden" name="next" value="{{ next }}">
-
-                      {% if messages %}
-                        {% for message in messages %}
-
-                            <small class="text-danger">
-                                {{ message }}
-                            </small>
-
-                        {% endfor %}
-                    {% endif %}
-
-
-                    <div class="col-12">
-                      <button class="btn btn-primary w-100" type="submit">Login</button>
-                    </div>
-                  </form>
 
                 </div>
               </div>
-
-
             </div>
-          </div>
-        </div>
-
       </section>
+    </div>
+  </div>
+</div>
 
     </div>
+<!-- large screens -->
+    <div class="d-none d-lg-block">
+        <div class="d-flex flex-row">
+          <div class="bg-primary flex-fill d-flex align-items-center justify-content-center" style="flex: 0 0 50%; height: 100vh;">
+        <img src="{% static 'assets/img/oceanImage.webp' %}" alt="" class="img-fluid" style="object-fit: cover; width: 100%; height: 100%;">
+          </div>
+      <div class="flex-fill" style="flex: 0 0 50%;"></div>
+        <div class="container">
+          <section class="section register min-vh-100 d-flex flex-column align-items-center justify-content-center py-4">
+            <div class="container ">
+              <div class="row justify-content-center">
+                <div class="col-4 col-md-6 d-flex flex-column align-items-center justify-content-center">
+                  <!-- logo -->
+                  <div class="d-flex justify-content-center py-4">
+                    <a href="" class="logo d-flex align-items-center w-auto">
+                      <img src="{% static 'assets/img/logo.png' %}" alt="" >
+                      <span class="d-none d-lg-block">OCEAN</span>
+                    </a>
+                  </div><!-- End Logo -->
+
+                  <div class="card mb-3 ">
+
+                    <div class="card-body ">
+
+                      <div class="pt-4 pb-2">
+                        <h5 class="card-title text-center pb-0 fs-4">Login to Your Account</h5>
+                      </div>
+
+                      <form id="regular_form" method="post" action="{% url 'login_process' %}"  class="row g-3 needs-validation" novalidate>
+                        {% csrf_token %}
+                        <div class="col-12">
+                          <label for="yourPassword" class="form-label"><small>Email Address</small></label>
+                          <input autocomplete="off" type="email" name="email" class="form-control" id="yourPassword" required>
+                          <div class="invalid-feedback">Please enter your password!</div>
+                        </div>
+
+                        <div class="col-12">
+                          <label for="yourPassword" class="form-label"><small>Password</small></label>
+                          <input autocomplete="off" type="password" name="password" class="form-control" id="yourPassword" required>
+                          <div class="invalid-feedback">Please enter your password!</div>
+                        </div>
+
+                        <input type="hidden" name="next" value="{{ next }}">
+
+                          {% if messages %}
+                            {% for message in messages %}
+
+                                <div class="alert  alert-danger small alert-dismissible fade show px-2" role="alert">
+                                  <strong>{{message}}</strong> 
+                                  <button type="button" class="btn-close " data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+
+                            {% endfor %}
+                        {% endif %}
+
+
+                        <div class="col-12">
+                          <button class="btn btn-primary w-100" type="submit">Login</button>
+                        </div>
+                      </form>
+
+                    </div>
+                  </div>
+
+
+                </div>
+              </div>
+            </div>
+
+          </section>
+        </div>
+      </div>
+        </div>
+    </div>
+    
   </main><!-- End #main -->
 
   <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
@@ -117,6 +202,38 @@
   <script src="assets/vendor/simple-datatables/simple-datatables.js"></script>
   <script src="assets/vendor/tinymce/tinymce.min.js"></script>
   <script src="assets/vendor/php-email-form/validate.js"></script>
+
+  <script >
+        var closeBtns = document.querySelectorAll('.btn-close');
+
+    // Loop through each button and attach the event listener
+    closeBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        // Select all alert elements on the page
+        var allAlert = document.querySelectorAll('.alert');
+        
+        allAlert.forEach(function(alert) {
+          alert.classList.add('fade-out');
+          alert.addEventListener('transitionend', function() {
+            alert.remove();
+          }, { once: true });
+        });
+      });
+    });
+
+  
+  </script>
+
+  <style>
+      .fade-out {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden;
+      }
+  </style>
 
   <!-- Template Main JS File -->
   <script src="assets/js/main.js"></script>
