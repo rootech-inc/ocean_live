@@ -141,7 +141,7 @@
                 if(anton.validateInputs(ids)){
                     // validate transactions
                     let t_l = $('tbody tr').length;
-                    if(t_l < 0){
+                    if(t_l > 0){
                         kasa.success("lets go")
                     } else {
                         kasa.error("Invalid Transactions")

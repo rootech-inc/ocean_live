@@ -3392,14 +3392,14 @@ LEFT JOIN
     SoldData sd ON sd.prod_id = pm.item_code
 WHERE 
     (pm.item_code LIKE '%{item_code}%' OR pm.barcode LIKE '%{item_code}%') 
-    AND pm.is_gp_chg = 0 
-    AND pm.item_type != 0
 ORDER BY 
     pm.item_des;
+    
 
             
                 """
 
+                print(query)
                 conn = ret_cursor()
                 cursor = conn.cursor()
                 cursor.execute(query)

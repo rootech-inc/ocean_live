@@ -269,6 +269,7 @@ class Products(models.Model):
             'moves':self.moves(date),
             'cardex':[],
             'wholesale_price':self.wholesale_price,
+            'item_code':self.code,
         }
 
     def is_on_bolt(self):

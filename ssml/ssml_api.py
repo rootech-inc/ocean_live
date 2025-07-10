@@ -1280,7 +1280,7 @@ def interface(request):
                     for st in ServiceType.objects.all():
                         
                         today_jobs = st.today_jobs(day_date)
-                        total_jobs = st.total_installations()
+                        total_jobs = st.total_installations(day_date)
                         
                         pdf.set_font("Arial","", size=10)
                         pdf.cell(100, 5, txt=f"{st.name}", ln=False, align="L",border=1)

@@ -1091,6 +1091,10 @@ class Retail {
         let gp_opt = []
         let groups = this.getProdGroup('*')
         let pd = this.getProduct(item_code).message[0];
+
+        console.log("products")
+
+        console.log("products")
         if(anton.IsRequest(groups)){
             let gps = groups.message
             for (let g = 0; g < gps.length; g++){
@@ -1847,17 +1851,17 @@ class Retail {
     async loadCard(s = '*', filter = 'pk', entity = '*') {
 
         let product = this.getCardProduct(s, filter, entity);
-        console.table(product)
+        console.log(`BARCODE IS :${s}`)
+
 
         if (anton.IsRequest(product)) {
-            let message = product['message'][0];
+            const message = product['message'][0];
 
 
             $('#previous').val(message['previous'])
             $('#next').val(message['next'])
             $('#image').attr('src', `${message['image']}`)
-            $('#group_name').val(message['group'])
-            $('#sub_group_name').val(message['subgroup'])
+
 
             if (message['previous'] === 0) {
                 $('#previous').attr('disabled', true)
@@ -1872,7 +1876,7 @@ class Retail {
             }
 
             let stock = message['stock'];
-            console.table(stock)
+
             let str = ""
             for (const trKey in stock) {
                 str += `<tr><td>${trKey}</td><td>${stock[trKey]}</td></tr>`
@@ -1880,7 +1884,13 @@ class Retail {
 
             $('#stock_body').html(str)
 
+
             let live_product = this.getProduct(message['barcode'])['message'][0];
+
+
+            // if(live_product.length < 0){
+            //     kasa.error("Live Product Not Found")
+            // }
 
 
 
@@ -1906,7 +1916,16 @@ class Retail {
             $('#cardex_tr').empty()
             $('#cardex_tr').html(ctr)
             console.table(cardex)
-            anton.setValues(live_product)
+            console.log("LIVE PRODUCT")
+            console.table(live_product)
+            $('#barcode').val(live_product['barcode'])
+            $('#group_name').val(live_product['group_name'])
+            $('#sub_group_name').val(live_product['sub_group_name'])
+            $('#sold').val(live_product['sold'])
+            $('#is_on_bolt').val(live_product['is_on_bolt'])
+            $('#retail1').val(live_product['retail1'])
+            console.log("LIVE PRODUCT")
+            // anton.setValues(live_product)
             anton.setValues(message)
 
 
