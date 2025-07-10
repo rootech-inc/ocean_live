@@ -843,7 +843,11 @@ def interface(request):
                             success_response['message'] = material.obj()
                         else:
                             material = InventoryMaterial.objects.filter(Q(barcode__icontains=id) | Q(name__icontains=id))
-                            success_response['message'] = [m.obj() for m in material]
+                            if len(material) == 1:
+                                success_response['message'] = [m.obj() for m in material]
+                            else:
+                                success_response['status_code'] = 404
+                                success_response['message'] = f"No material with barcode or name matching {id}"
                        
 
                 elif module == 'meter':

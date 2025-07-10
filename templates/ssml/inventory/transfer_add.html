@@ -9,7 +9,7 @@
                     <button class="btn btn-success btn-sm ms-2" id="save">SAVE</button>
                 </div>
                 <div class="w-50 d-flex flex-wrap align-content-center justify-content-end">
-                    <button class="btn btn-info btn-sm"><i class="fa fa-plus"></i> NEW LINE</button>
+                    <button class="btn btn-info btn-sm" id="new_line"><i class="fa fa-plus"></i> NEW LINE</button>
                 </div>
             </div>
         </div>
@@ -117,7 +117,7 @@
                                 <th>TOTAL COST</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="tran_table">
                             <tr>
                                 <td>1</td>
                                 <td>123456</td>
@@ -138,9 +138,9 @@
         $(document).ready(function(){
             $('#save').click(function(){
                 let ids =  ['entry_date','tran_type','loc_from','loc_to','remarks'];
-                if(anton.validateInputs(ids)){
+                if(true){
                     // validate transactions
-                    let t_l = $('tbody tr').length;
+                    let t_l = $('#tran_table tr').length;
                     if(t_l > 0){
                         kasa.success("lets go")
                     } else {
@@ -150,6 +150,84 @@
                 } else {
                     kasa.error("Invalid Form Field")
                 }
+            })
+
+            $('#new_line').click(function(){
+                let html = `
+                    <div class="w-100 table-responsive">
+                        <table class='table table-bordered table-hover'>
+                            <thead>
+                                <tr><td>IMG</td><td>BARCODE</td><td>NAME</td><td>ACTION</td></tr>
+                            </thead>
+                                        <tbody id='mat_bd'></tbody>
+                        </table>
+
+                    </div>
+                `;
+
+                amodal.setBodyHtml(html)
+                amodal.setTitleHtml(`<input type="search" id="search_prod_string" class="form-control form-control-sm rounded-0" placeholder="name or barcode"> `)
+                amodal.show()
+
+                $('#search_prod_string').keypress(async function (e) {
+                    if (e.keyCode === 13) {
+                        let search_string = $(this).val();
+                        if (search_string.length > 0) {
+                            // Handle search here
+                            if(search_string.length > 0){
+                                let payload = {
+                                    module:'material',
+                                    data:{
+                                        find_by:'string',
+                                        id:search_string
+                                    }
+                                }
+
+                                await api.v2('VIEW',payload,'/ssml/api/').then(response => {
+                                    if(anton.IsRequest(response)){
+                                        let message = response['message'];
+
+                                        let tr = ``
+                                        message.map(item =>{
+                                            console.table(item)
+                                            tr += `<tr>
+                                                          <td><img style='width:30px' src="${item['image']}" alt="" class="img-fluie"></td>
+                                                          <td>${item['barcode']}</td>
+                                                           <td>${item['name']}</td>
+                                                            <td><a href="javascript:void(0)" class='add_item_to_tran' data-barcode='${item['barcode']}' data-name='${item['name']}'><i class='fa fa-download'></i></a></td>
+                                                    </tr>`
+                                        })
+
+                                        $('#mat_bd').html(tr)
+                                        $('.add_item_to_tran').click(function(){
+                                            let barcode = $(this).data('barcode');
+                                            let name = $(this).data('name');
+                                            let sn = $('#tran_table tr').length + 1
+                                            let row = `
+                                                <tr>
+                                                    <td>${sn}</td>
+                                                    <td>${barcode}</td>
+                                                    <td>${name}</td>
+                                                    <td><input type="text" id="pack_1" style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
+                                                    <td><input type="text" id="pack_qty_1" style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
+                                                    <td><input type="text" id="sent_qty_1" style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
+                                                    <td><input type="text" id="rec_qty_1" style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
+                                                    <td><input type="text" id="total_cost_1" readonly style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
+                                                </tr>
+                                            `
+
+                                            $('#tran_table').append(row)
+
+                                        })
+                                    } else {
+                                        kasa.response(response)
+                                    }
+                                }).catch(error => {kasa.error(error)})
+                            }
+                        }
+                    }
+                })
+
             })
         })
     </script>

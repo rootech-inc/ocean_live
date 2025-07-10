@@ -1131,6 +1131,41 @@ class Retail {
             $('#barcode').val(pd['barcode'])
             $('#name').val(pd['name'])
 
+            $('#new_group').change(function (){
+                let group_id = $('#new_group').val();
+                let sub_groups = retail.getProductSubGroups(group_id)
+
+                if(anton.IsRequest(sub_groups)){
+                    let sg_opt = `<option selected disabled value=0 >Select Sub Group</pption>`;
+                    let msg = sub_groups.message
+                    for (let i = 0; i < msg.length; i++) {
+                        let sg = msg[i];
+                        sg_opt += `<option value="${sg['code']}">${sg['name']}</option>`
+                    }
+
+                    $('#new_sub_group').html(sg_opt)
+                }
+            })
+
+            $('#new_sub_group').change(function(){
+                let sub_group_id = $('#new_sub_group').val();
+                let group_id = $('#new_group').val();
+                let sub_subgroups = retail.getProductSubSubGroups(group_id,sub_group_id)
+
+                if(anton.IsRequest(sub_subgroups)){
+                    let sg_opt = ``;
+                    let st = `<option selected value='' >None</pption>`
+                    let msg = sub_subgroups.message
+                    for (let i = 0; i < msg.length; i++) {
+                        let sg = msg[i];
+                        sg_opt += `<option value="${sg['code']}">${sg['name']}</option>`
+                    }
+                    $('#sg_opt').html('')
+                    $('#new_sub_subgroup').html(sg_opt)
+                    $('#new_sub_subgroup').prepend(st)
+                }
+            })
+
         } else {
             kasa.response(groups)
         }
