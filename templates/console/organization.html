@@ -14,16 +14,49 @@
     <div class="card-body overflow-auto">
         <div class="container p-2">
             <div class="row">
-
+              <!-- entity-->
                 <div class="col-sm-4">
                     <div class="card">
                         <div class="card-header">
                             <div class="w-100 d-flex">
                                 <div class="w-50"><strong class="card-title">Entity Type</strong></div>
                                 <div class="w-50">
-                                    <button id="entity_type" class="btn btn-info btn-sm"><i class="fa fa-plus"></i> Entity Type</button>
+                                    <button id="add_entity" class="btn btn-info btn-sm"><i class="fa fa-plus"></i> Entity Type</button>
                                 </div>
                             </div>
+                            
+                        </div>
+
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for e in e_types %}
+                                            <tr><td>{{ e.entity_type_name }}</td><td></td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <!-- company -->
+                <div class="col-sm-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="w-100 d-flex">
+                                <div class="w-50"><strong class="card-title">Company</strong></div>
+                                <div class="w-50">
+                                    <button id="add_company" class="btn btn-info btn-sm"><i class="fa fa-plus"></i> Add Company</button>
+                                </div>
+                            </div>
+                            
                         </div>
 
                         <div class="card-body">
@@ -337,6 +370,155 @@
                 })
 
             });
+
+            $(document).on('click', '#save_entity_type', function () {
+    let entityTypeName = $("#entityTypeName").val().trim();
+    let description = $("#entityDescription").val().trim();
+
+    if (entityTypeName === "") {
+        kasa.error("Entity Type Name is required.");
+        return;
+    }
+
+    let payload = {
+        module: 'entity_type',
+        data: {
+            entity_type_name: entityTypeName,
+            description: description
+        }
+    };
+
+    let response = api.call('PUT', payload, '/adapi/');
+    if (response && response.message) {
+        kasa.info(response.message);
+    } else {
+        kasa.error('Failed to save entity type.');
+    }
+
+    amodal.hide();
+});
+
+            // add entity button
+           $('#add_entity').click(function() {
+                
+                amodal.setTitleText("NEW ENTITY TYPE")
+                amodal.setBodyHtml(`
+                <div class="container mt-4">
+                            <div class="card">
+                                <div class="card-header">
+                                <h5>Entity Type Information</h5>
+                                </div>
+                                <div class="card-body">
+                                <form>
+                                    <div class="mb-3">
+                                    <label for="entityTypeName" class="form-label">Entity Type Name</label>
+                                    <input type="text" class="form-control" id="entityTypeName" name="entity_type_name" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                    <label for="entityDescription" class="form-label">Description</label>
+                                    <textarea class="form-control" id="entityDescription" name="description" rows="3"></textarea>
+                                    </div>
+                                </form>
+                                </div>
+                                </div>
+                            </div>
+                `)
+                amodal.setFooterHtml(`<button id="save_entity_type" class="btn btn-success w-100">SAVE</button>`)
+                amodal.show()
+                amodel.setSIZE('L')
+
+              
+
+
+            })
+            // add company button
+             $('#add_company').click(function() {
+                
+                amodal.setTitleText("NEW COMPANY")
+                amodal.setBodyHtml(`<div class="container mt-4">
+                                        <div class="card">
+                                            <div class="card-header">
+                                            <h5>Company Information</h5>
+                                            </div>
+                                            <div class="card-body">
+                                            <form>
+                                                <div class="mb-3">
+                                                <label for="companyName" class="form-label">Company Name</label>
+                                                <input type="text" class="form-control" id="companyName" name="company_name" required>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                <label for="companyAddress" class="form-label">Address</label>
+                                                <textarea class="form-control" id="companyAddress" name="address" rows="3" required></textarea>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                <label for="companyEmail" class="form-label">Email</label>
+                                                <input type="email" class="form-control" id="companyEmail" name="email">
+                                                </div>
+
+                                                <div class="mb-3">
+                                                <label for="companyPhone" class="form-label">Phone Number</label>
+                                                <input type="tel" class="form-control" id="companyPhone" name="phone">
+                                                </div>
+
+                                                <div class="mb-3">
+                                                <label for="companyWebsite" class="form-label">Website</label>
+                                                <input type="url" class="form-control" id="companyWebsite" name="website">
+                                                </div>
+                                            </form>
+                                            </div>
+                                        </div>
+                                        </div>
+                `)
+                amodal.setFooterHtml(`<button id="save_company" class="btn btn-success w-100">SAVE</button>`)
+                amodal.show()
+                amodal.setSIZE('L')
+
+                
+
+            })
         })
+
+        // This binds the click handler even if the button is added later
+        $(document).on('click', '#save_company', function () {
+            let companyName = $("#companyName").val().trim();
+            let companyAddress = $("#companyAddress").val().trim();
+            let companyEmail = $("#companyEmail").val().trim();
+            let companyPhone = $("#companyPhone").val().trim();
+            let companyWebsite = $("#companyWebsite").val().trim();
+
+            if (companyName === "" || companyAddress === "") {
+                kasa.error("Company Name and Address are required.");
+                return;
+            }
+
+            let payload = {
+                module: 'company',
+                data: {
+                    name: companyName,
+                    address: companyAddress,
+                    email: companyEmail,
+                    phone: companyPhone,
+                    website: companyWebsite
+                }
+            };
+
+            // Assuming `api.call` is synchronous (if it's async, this will need await or .then)
+            let response = api.call('PUT', payload, '/adapi/');
+
+            if (response && response['message']) {
+                kasa.info(response['message']);
+            } else {
+                kasa.error("Failed to save company information.");
+            }
+
+            amodal.hide();
+        });
+
+        
     </script>
+
+    
 {% endblock %}
