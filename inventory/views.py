@@ -88,7 +88,7 @@ def new_grn(request):
 # assets
 @login_required(login_url='/login/')
 def assets(request):
-    page['title'] = 'Assets'
+    page['title'] = 'AssetsX'
     context = {
         'page': page,
         'nav': True,

@@ -20,7 +20,7 @@
         retail.loadProducts()
 
 
-        $(document).on('change', '#new_group', function() {
+        $(document).on('change', '#new_groupx', function() {
 
             let group_id = $('#new_group').val();
             let sub_groups = retail.getProductSubGroups(group_id)
@@ -37,7 +37,7 @@
             }
         });
 
-        $(document).on('change', '#new_sub_group', function() {
+        $(document).on('change', '#new_sub_groupx', function() {
 
             let sub_group_id = $('#new_sub_group').val();
             let group_id = $('#new_group').val();

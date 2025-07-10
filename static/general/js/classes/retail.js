@@ -701,10 +701,11 @@ class Retail {
                             let tr = '';
                             let res = result.message;
                             let dt = []
-                            dt.push(['BARCODE','NAME','GRN','EXPIRY DATE','WAREHOUSE',"SPINTEX",'NIA',"OSU",'KITCHEN'])
+                            dt.push(['BARCODE','NAME','GRN','EXPIRY DATE','DAYS TO EXPIRY','WAREHOUSE',"SPINTEX",'NIA',"OSU",'KITCHEN'])
 
                             for(let m = 0; m < res.length; m++){
                                 let row = res[m];
+                                console.table(row)
                                 tr += `<tr>
                                             <td>${row.barcode}</td>
                                             <td>${row.item_des}</td>
@@ -716,7 +717,7 @@ class Retail {
                                             <td>${row.osu_stock}</td>
                                             <td>${row.kitchen_stock}</td>
                                       </tr>`
-                                dt.push([row.barcode,row.item_des,row.entry_no,row.expiry_date,row.warehouse,row.spintex_stock,row.nia_stock,row.osu_stock,row.kitchen_stock])
+                                dt.push([row.barcode,row.item_des,row.entry_no,row.expiry_date,row.days_to_expire,row.warehouse,row.spintex_stock,row.nia_stock,row.osu_stock,row.kitchen_stock])
                             }
                             header = ['BARCODE','NAME','GRN','EXPIRY DATE','WAREHOUSE',"SPINTEX",'NIA',"OSU",'KITCHEN']
                             reports.render(header,tr,`EXPIRY REPORT <button id="dnlod">EXPORT</button>`)
@@ -755,7 +756,7 @@ class Retail {
                     if(anton.IsRequest(result)){
                         let doc = $('#document').val();
                         if(doc === 'json'){
-                            let header = ['EXPIRY DATE','GRN','BARCODE','ITEM CODE','ITEM NAME','WAREHOUSE',"SPINTEX",'NIA',"OSU",'STOCK']
+                            let header = ['EXPIRY DATE','GRN','BARCODE','ITEM CODE','DAYS RO EXPIRY','ITEM NAME','WAREHOUSE',"SPINTEX",'NIA',"OSU",'STOCK']
                             let tr = '';
                             let res = result.message;
                             for(let m = 0; m < res.length; m++){
@@ -1090,6 +1091,10 @@ class Retail {
         let gp_opt = []
         let groups = this.getProdGroup('*')
         let pd = this.getProduct(item_code).message[0];
+
+        console.log("products")
+
+        console.log("products")
         if(anton.IsRequest(groups)){
             let gps = groups.message
             for (let g = 0; g < gps.length; g++){
@@ -1125,6 +1130,41 @@ class Retail {
             $('#item_code').val(pd['item_code'])
             $('#barcode').val(pd['barcode'])
             $('#name').val(pd['name'])
+
+            $('#new_group').change(function (){
+                let group_id = $('#new_group').val();
+                let sub_groups = retail.getProductSubGroups(group_id)
+
+                if(anton.IsRequest(sub_groups)){
+                    let sg_opt = `<option selected disabled value=0 >Select Sub Group</pption>`;
+                    let msg = sub_groups.message
+                    for (let i = 0; i < msg.length; i++) {
+                        let sg = msg[i];
+                        sg_opt += `<option value="${sg['code']}">${sg['name']}</option>`
+                    }
+
+                    $('#new_sub_group').html(sg_opt)
+                }
+            })
+
+            $('#new_sub_group').change(function(){
+                let sub_group_id = $('#new_sub_group').val();
+                let group_id = $('#new_group').val();
+                let sub_subgroups = retail.getProductSubSubGroups(group_id,sub_group_id)
+
+                if(anton.IsRequest(sub_subgroups)){
+                    let sg_opt = ``;
+                    let st = `<option selected value='' >None</pption>`
+                    let msg = sub_subgroups.message
+                    for (let i = 0; i < msg.length; i++) {
+                        let sg = msg[i];
+                        sg_opt += `<option value="${sg['code']}">${sg['name']}</option>`
+                    }
+                    $('#sg_opt').html('')
+                    $('#new_sub_subgroup').html(sg_opt)
+                    $('#new_sub_subgroup').prepend(st)
+                }
+            })
 
         } else {
             kasa.response(groups)
@@ -1846,17 +1886,17 @@ class Retail {
     async loadCard(s = '*', filter = 'pk', entity = '*') {
 
         let product = this.getCardProduct(s, filter, entity);
-        console.table(product)
+        console.log(`BARCODE IS :${s}`)
+
 
         if (anton.IsRequest(product)) {
-            let message = product['message'][0];
+            const message = product['message'][0];
 
 
             $('#previous').val(message['previous'])
             $('#next').val(message['next'])
             $('#image').attr('src', `${message['image']}`)
-            $('#group_name').val(message['group'])
-            $('#sub_group_name').val(message['subgroup'])
+
 
             if (message['previous'] === 0) {
                 $('#previous').attr('disabled', true)
@@ -1871,7 +1911,7 @@ class Retail {
             }
 
             let stock = message['stock'];
-            console.table(stock)
+
             let str = ""
             for (const trKey in stock) {
                 str += `<tr><td>${trKey}</td><td>${stock[trKey]}</td></tr>`
@@ -1879,7 +1919,13 @@ class Retail {
 
             $('#stock_body').html(str)
 
+
             let live_product = this.getProduct(message['barcode'])['message'][0];
+
+
+            // if(live_product.length < 0){
+            //     kasa.error("Live Product Not Found")
+            // }
 
 
 
@@ -1905,7 +1951,16 @@ class Retail {
             $('#cardex_tr').empty()
             $('#cardex_tr').html(ctr)
             console.table(cardex)
-            anton.setValues(live_product)
+            console.log("LIVE PRODUCT")
+            console.table(live_product)
+            $('#barcode').val(live_product['barcode'])
+            $('#group_name').val(live_product['group_name'])
+            $('#sub_group_name').val(live_product['sub_group_name'])
+            $('#sold').val(live_product['sold'])
+            $('#is_on_bolt').val(live_product['is_on_bolt'])
+            $('#retail1').val(live_product['retail1'])
+            console.log("LIVE PRODUCT")
+            // anton.setValues(live_product)
             anton.setValues(message)
 
 

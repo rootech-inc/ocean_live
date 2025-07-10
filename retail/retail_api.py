@@ -971,7 +971,7 @@ def interface(request):
                 conn = ret_cursor()
                 cursor = conn.cursor()
                 query = ("SELECT item_code, barcode, item_des, (SELECT group_des FROM group_mast WHERE group_mast.group_code = prod_mast.group_code) AS 'group', (SELECT sub_group_des FROM sub_group WHERE sub_group.group_code = prod_mast.group_code AND sub_group.sub_group = prod_mast.sub_group) "
-                         "AS 'sub_group', (SELECT supp_name FROM supplier WHERE supplier.supp_code = prod_mast.supp_code) AS 'supplier', retail1 FROM prod_mast WHERE item_type != 0 order by item_code desc")
+                         "AS 'sub_group', (SELECT supp_name FROM supplier WHERE supplier.supp_code = prod_mast.supp_code) AS 'supplier', retail1 FROM prod_mast where item_type = 0 order by item_code desc")
                 cursor.execute(query)
                 saved = 0
                 not_synced = 0
@@ -1009,7 +1009,7 @@ def interface(request):
                         prod.entity_id = entity
 
                         prod.save()
-                        print("Okay")
+                        print("Okay",product[2])
 
                     else:
                         # save new
@@ -1530,34 +1530,47 @@ def interface(request):
                 ar = []
                 for row in cursor.fetchall():
                     exp_date,entry_no,barcode,item_code,item_des,days_to_expire,rn = row
+                    # get lastest expiry date
+                    latest_expiry_query = f"""
+                        select top(1) tr.exp_date from grn_tran tr join grn_hd hd on hd.entry_no = tr.entry_no where tr.item_code = '{item_code}' order by hd.grn_date desc
+
+                    """
+                    cursor.execute(latest_expiry_query)
+                    result = cursor.fetchone()
+                    is_exp = True
+                    if result:
+                        new_exp_date = result[0]
+                        if new_exp_date and new_exp_date > exp_date:
+                            is_exp = False
 
                     # get stock
-                    stock = get_stock(item_code)
-                    sp = stock.get('001')
-                    wh = stock.get('999')
-                    osu = stock.get('205')
-                    nia = stock.get('202')
-                    kitchen = stock.get('201')
+                    if is_exp:
+                        stock = get_stock(item_code)
+                        sp = stock.get('001')
+                        wh = stock.get('999')
+                        osu = stock.get('205')
+                        nia = stock.get('202')
+                        kitchen = stock.get('201')
 
-                    exp_date = str(exp_date).split('T')[0]
+                        exp_date = str(exp_date).split('T')[0]
 
-                    obj = {
-                        'expiry_date': str(exp_date),
-                        'entry_no':entry_no,
-                        'barcode':barcode,
-                        'item_code':item_code,
-                        'item_des':item_des,
-                        'days_to_expire':days_to_expire,
-                        'spintex_stock':sp,
-                        'nia_stock':nia,
-                        'osu_stock':osu,
-                        'kitchen_stock':kitchen,
-                        'warehouse':wh
-                    }
-                    arr.append(obj)
-                    li = [exp_date, entry_no, barcode, item_code, item_des, days_to_expire,wh,sp,nia,osu,kitchen]
+                        obj = {
+                            'expiry_date': str(exp_date),
+                            'entry_no':entry_no,
+                            'barcode':barcode,
+                            'item_code':item_code,
+                            'item_des':item_des,
+                            'days_to_expire':days_to_expire,
+                            'spintex_stock':sp,
+                            'nia_stock':nia,
+                            'osu_stock':osu,
+                            'kitchen_stock':kitchen,
+                            'warehouse':wh
+                        }
+                        arr.append(obj)
+                        li = [exp_date, entry_no, barcode, item_code, item_des, days_to_expire,wh,sp,nia,osu,kitchen]
 
-                    print(li)
+                        print(li)
                 conn.close()
 
                 success_response['message'] = arr
@@ -3379,14 +3392,14 @@ LEFT JOIN
     SoldData sd ON sd.prod_id = pm.item_code
 WHERE 
     (pm.item_code LIKE '%{item_code}%' OR pm.barcode LIKE '%{item_code}%') 
-    AND pm.is_gp_chg = 0 
-    AND pm.item_type != 0
 ORDER BY 
     pm.item_des;
+    
 
             
                 """
 
+                print(query)
                 conn = ret_cursor()
                 cursor = conn.cursor()
                 cursor.execute(query)
