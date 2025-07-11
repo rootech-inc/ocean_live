@@ -907,6 +907,9 @@ def api_function(request):
 
                     response['message'] = ti
 
+                elif module == "inventory":
+                    pass
+
             except KeyError as e:
                 response["status_code"] = 400
                 response["status"] = "Bad Request"

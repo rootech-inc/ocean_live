@@ -14,39 +14,7 @@
     <div class="card-body overflow-auto">
         <div class="container p-2">
             <div class="row">
-              <!-- entity-->
-                <div class="col-sm-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="w-100 d-flex">
-                                <div class="w-50"><strong class="card-title">Entity Type</strong></div>
-                                <div class="w-50">
-                                    <button id="add_entity" class="btn btn-info btn-sm"><i class="fa fa-plus"></i> Entity Type</button>
-                                </div>
-                            </div>
-                            
-                        </div>
-
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-sm mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Name</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for e in e_types %}
-                                            <tr><td>{{ e.entity_type_name }}</td><td></td></tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            <!-- company -->
+                 <!-- company -->
                 <div class="col-sm-4">
                     <div class="card">
                         <div class="card-header">
@@ -69,8 +37,11 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for e in e_types %}
-                                            <tr><td>{{ e.entity_type_name }}</td><td></td></tr>
+                                        {% for company in companies %}
+                                            <tr data-pk="{{ company.pk }}">
+                                                <td>{{ company.name }}</td>
+                                                <td><button class="btn btn-danger btn-sm " id="delete_company" >delete</button></td>
+                                            </tr>
                                         {% endfor %}
                                     </tbody>
                                 </table>
@@ -78,6 +49,42 @@
                         </div>
                     </div>
                 </div>
+              <!-- entity-->
+                <div class="col-sm-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="w-100 d-flex">
+                                <div class="w-50"><strong class="card-title">Entity Type</strong></div>
+                                <div class="w-50">
+                                    <button id="add_entity" class="btn btn-info btn-sm"><i class="fa fa-plus"></i> Add Entity</button>
+                                </div>
+                            </div>
+                            
+                        </div>
+
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for e in e_types %}
+                                            <tr>
+                                                <td>{{ e.entity_type_name }}></td>
+                                                <td><button class="btn btn-danger btn-sm">delete</button></td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+           
 
                 <div class="col-sm-12">
                     <div class="card">
@@ -309,23 +316,51 @@
             }
 
         }
+       
         $(document).ready(function (){
+
+            // delete company button
+            $('#delete_company').click(function () {
+                let companyPk = $(this).data('pk');
+                console.log(companyPk);
+            });
+
             $('#new_location_button').click(function (){
                 newLocation()
             });
 
-            $('#entity_type').click(function() {
+            $('#add_entity').click(function() {
                 let form = "";
                 form += fom.text('entity_type_name', 'Entity Type Name', true)
                 form += fom.textarea('entity_type_descr', 3, true)
-
+                // fetch comany entity types from the API
+                let response = api.call('VIEW', {'module': 'company', 'data': {}}, '/adapi/')
+                if (anton.IsRequest(response)) {
+                    let entityTypes = response.message;
+                    if (entityTypes.length > 0) {
+                        let entityTypeOptions = entityTypes.map(et => ({
+                            val: et.pk,
+                            desc: et.name
+                        }));
+                        form += fom.selectv2(
+                            'company',
+                            entityTypeOptions,
+                            'Choose an company',
+                            true
+                        );
+                    }
+                } else {
+                kasa.error("Failed to load entity types");
+                }
                 amodal.setTitleText("NEW ENTITY TYPE")
                 amodal.setBodyHtml(form)
                 amodal.setFooterHtml(`<button id="save_entity_type" class="btn btn-success w-100">SAVE</button>`)
                 amodal.show()
 
                 $('#save_entity_type').click(function () {
-                    let ids = ['entity_type_name', 'entity_type_descr']
+                    
+
+                    let ids = ['entity_type_name', 'entity_type_descr', 'company'];
                     if(anton.validateInputs(ids)){
                         let payload = {
                             'module': 'entity_type',
@@ -399,41 +434,56 @@
 });
 
             // add entity button
-           $('#add_entity').click(function() {
+        //    $('#').click(function() {
                 
-                amodal.setTitleText("NEW ENTITY TYPE")
-                amodal.setBodyHtml(`
-                <div class="container mt-4">
-                            <div class="card">
-                                <div class="card-header">
-                                <h5>Entity Type Information</h5>
-                                </div>
-                                <div class="card-body">
-                                <form>
-                                    <div class="mb-3">
-                                    <label for="entityTypeName" class="form-label">Entity Type Name</label>
-                                    <input type="text" class="form-control" id="entityTypeName" name="entity_type_name" required>
-                                    </div>
+        //         amodal.setTitleText("NEW ENTITY TYPE")
+        //         amodal.setBodyHtml(`
+        //         <div class="container mt-4">
+        //                     <div class="card">
+        //                         <div class="card-header">
+        //                         <h5>Entity Type Information</h5>
+        //                         </div>
+        //                         <div class="card-body">
+        //                         <form>
+        //                             <div class="mb-3">
+        //                             <label for="entityTypeName" class="form-label">Entity Type Name</label>
+        //                             <input type="text" class="form-control" id="entityTypeName" name="entity_type_name" required>
+        //                             </div>
 
-                                    <div class="mb-3">
-                                    <label for="entityDescription" class="form-label">Description</label>
-                                    <textarea class="form-control" id="entityDescription" name="description" rows="3"></textarea>
-                                    </div>
-                                </form>
-                                </div>
-                                </div>
-                            </div>
-                `)
-                amodal.setFooterHtml(`<button id="save_entity_type" class="btn btn-success w-100">SAVE</button>`)
-                amodal.show()
-                amodel.setSIZE('L')
+        //                             <div class="mb-3">
+        //                             <label for="entityDescription" class="form-label">Description</label>
+        //                             <textarea class="form-control" id="entityDescription" name="description" rows="3"></textarea>
+        //                             </div>
+        //                         </form>
+        //                         </div>
+        //                         </div>
+        //                     </div>
+        //         `)
+        //         amodal.setFooterHtml(`<button id="save_entity_type" class="btn btn-success w-100">SAVE</button>`)
+        //         amodal.show()
+        //         amodal.setSIZE('L')
 
               
 
 
-            })
-            // add company button
-             $('#add_company').click(function() {
+        //     })
+        //     // add company button
+             $('#add_company').click(async function() {
+                
+                let entities = null;
+                // Fetch entity types from the API
+                //  to populate a entity type select dropdown
+                let response  = await api.v2('VIEW', {'module': 'entity_type', 'data': {}}, '/adapi/').then(
+                    response => {entities = response.message}
+                ).catch(error => {
+                    kasa.error(`Error fetching entity types: ${error}`);
+                });
+                // map api response with form select options
+                // let entityOptions = entities.map(e => ({
+                //         val: e.pk,
+                //         desc: e.name || e.entity_type_name // use the correct field from your backend
+                // }));
+                // let enitity_select = fom.selectv2('entity', entityOptions, 'Select Entity Type', 'form-select form-select-sm', true);
                 
                 amodal.setTitleText("NEW COMPANY")
                 amodal.setBodyHtml(`<div class="container mt-4">
@@ -444,29 +494,25 @@
                                             <div class="card-body">
                                             <form>
                                                 <div class="mb-3">
-                                                <label for="companyName" class="form-label">Company Name</label>
-                                                <input type="text" class="form-control" id="companyName" name="company_name" required>
+                                                    ${fom.text("companyName",'',  true)}
+                                                </div>
+
+                                                <div>
+                                                    
                                                 </div>
 
                                                 <div class="mb-3">
-                                                <label for="companyAddress" class="form-label">Address</label>
-                                                <textarea class="form-control" id="companyAddress" name="address" rows="3" required></textarea>
+                                                   ${fom.text("companyAddress", '', true)}
                                                 </div>
 
                                                 <div class="mb-3">
-                                                <label for="companyEmail" class="form-label">Email</label>
-                                                <input type="email" class="form-control" id="companyEmail" name="email">
+                                                     ${fom.email("companyEmail", '', true)}
                                                 </div>
 
                                                 <div class="mb-3">
-                                                <label for="companyPhone" class="form-label">Phone Number</label>
-                                                <input type="tel" class="form-control" id="companyPhone" name="phone">
+                                                    ${fom.phone("companyPhone", '', true)}
                                                 </div>
 
-                                                <div class="mb-3">
-                                                <label for="companyWebsite" class="form-label">Website</label>
-                                                <input type="url" class="form-control" id="companyWebsite" name="website">
-                                                </div>
                                             </form>
                                             </div>
                                         </div>
@@ -482,37 +528,35 @@
         })
 
         // This binds the click handler even if the button is added later
-        $(document).on('click', '#save_company', function () {
-            let companyName = $("#companyName").val().trim();
-            let companyAddress = $("#companyAddress").val().trim();
-            let companyEmail = $("#companyEmail").val().trim();
-            let companyPhone = $("#companyPhone").val().trim();
-            let companyWebsite = $("#companyWebsite").val().trim();
+        $(document).on('click', '#save_company', async function () {
+            input = anton.Inputs(['companyName', 'companyAddress', 'companyEmail', 'companyPhone']);
+           
+            // check if inpu is valid
+            if (anton.validateInputs(input)) {
+                loader.show();
+                let payload = {
+                    module: 'company',
+                    data: input
+                };
 
-            if (companyName === "" || companyAddress === "") {
-                kasa.error("Company Name and Address are required.");
-                return;
+                let response = await api.v2('PUT', payload, '/adapi/').then(resp => {
+                    if (anton.IsRequest(resp)) {
+                        console.log("correct");
+                        kasa.success(resp.message);
+                    } else {
+                        console.log("eroor");
+                        kasa.error(resp.message);
+                    }
+                    }).catch(error => {
+                            kasa.error(`Error: ${error}`);
+                    }).finally(() => {
+                        loader.hide();
+                    });
+
+        
             }
 
-            let payload = {
-                module: 'company',
-                data: {
-                    name: companyName,
-                    address: companyAddress,
-                    email: companyEmail,
-                    phone: companyPhone,
-                    website: companyWebsite
-                }
-            };
 
-            // Assuming `api.call` is synchronous (if it's async, this will need await or .then)
-            let response = api.call('PUT', payload, '/adapi/');
-
-            if (response && response['message']) {
-                kasa.info(response['message']);
-            } else {
-                kasa.error("Failed to save company information.");
-            }
 
             amodal.hide();
         });

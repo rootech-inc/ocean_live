@@ -197,8 +197,17 @@
             })
         })
         // new vehicle asset
-        $('.new').click(function(){
+        $('.new').click(async function(){
             let asset_no = $(this).data('asset_no');
+
+            let response = await api.v2('VIEW', {'module': 'company', 'data': {}}, '/adapi/');
+            let companies = response.message.map(c => ({
+                val: c.pk, 
+                desc: c.name 
+            }));
+            
+            let company_select = fom.selectv2('company', companies, 'Select company', 'form-select form-select-sm', true);
+            
             // after api fetch of data
             let xhtml = `
                 <div class="container">
@@ -206,17 +215,10 @@
                         <input type="hidden" id="asset_no" value="${asset_no}">
                         <div class="row g-2">
                             <div class="col-12 col-md-6">
-                                <label for="company" class="form-label mb-1">Company</label>
-                                <select class="form-select form-select-sm" id="company" name="company" required>
-                                    <option selected value=''>Select company</option>
-                                    <option value="Acme Corp">Acme Corp</option>
-                                    <option value="Globex Inc">Globex Inc</option>
-                                    <option value="Umbrella Ltd">Umbrella Ltd</option>
-                                </select>
+                                ${company_select}
                             </div>
                             <div class="col-12 col-md-6">
-                                <label for="owner" class="form-label mb-1">Owner</label>
-                                <input type="text" class="form-control form-control-sm" id="owner" name="owner" required>
+                                ${fom.text('owner', 'incharge if asset', true,)}
                             </div>
                             <div class="col-12 col-md-6">
                                 <label for="name" class="form-label mb-1">Vehicle Name</label>
@@ -262,20 +264,37 @@
             amodal.show()
 
             // save button
-            $('#save').click(function(){    
+            $('#save').click( async function(){    
                 
 
                 let ids =['company', 'owner', 'name', 'manufacturer', 'year', 'color', 'number', 'descr','mypk'];
                 // pass ids to anton class for validation
                 if(anton.validateInputs(ids)){
                     // set payloads
+                    loader.show()
                     let payload = {
-                        module:'asset',
-                        data:anton.Input(ids)
+                        module:'inventory',
+                        data:anton.Inputs(ids)
                     }
 
-                    console.table(payload)
+                    await api.v2('PUT',payload,'/inventory/api/').then(response => {
+                        if(anton.IsRequest(response)){
+                            // show success message
+                            kasa.success("Vehicle asset saved successfully!");
+                            amodal.hide();
+                            loader.hide()
+                        } else {
+                            // show error message
+                            loader.hide()
+                            kasa.error("Failed to save vehicle asset. Please try again.");
+
+                        }
+
+                        console.table(payload)
+                    }).catch(error => {loader.hide();kasa.error(error)})
+                    
                 } else {
+                    loader.hide()
                     kasa.error("Please fill all required fields.");
                 }
                 

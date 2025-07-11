@@ -36,6 +36,11 @@ class Form {
         return this.input('time',ini,comment,required)
     }
 
+    color(ini,comment='',required=false){
+        return this.input('color',ini,comment,required);
+
+    }
+
     select(ini,options,comment='',required=false){
         let req = ''
         if(required){

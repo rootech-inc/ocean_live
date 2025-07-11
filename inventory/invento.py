@@ -43,6 +43,22 @@ def interface(request):
             if module == 'product':
                 pass
 
+            elif module == 'inventory':
+                # save inventory asset
+                header = data.get("header")
+                mypk = header.get('mypk')
+                owner = User.objects.get(pk=mypk)
+
+                company = header.get('company')
+                owner = User.objects.get(pk=header.get('owner'))
+                name = header.get('name')
+                manufacturer = header.get('manufacturer')
+                year = header.get('year')
+                color = header.get('color')
+                number = header.get('number')
+                descr = header.get('descr')
+
+
             elif module == 'transfer':
                 header = data.get("header")
                 transactions = data.get("transactions")
@@ -130,7 +146,7 @@ def interface(request):
                 success_response['message'] = arr
                 response = success_response
                 print(responses)
-
+            
             elif module == 'product':
                 key = data.get('key')
                 

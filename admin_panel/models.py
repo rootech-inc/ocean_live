@@ -433,6 +433,7 @@ class AdjTran(models.Model):
 class BusinessEntityTypes(models.Model):
     entity_type_name = models.CharField(max_length=255, unique=True)
     entity_type_descr = models.TextField()
+    company = models.ForeignKey('Company', on_delete=models.CASCADE, null=True, blank=True, related_name="entites")
 
     def revenue(self,target_date=timezone.now().date()):
         from retail.models import BillHeader as bh
@@ -458,6 +459,9 @@ class BusinessEntityTypes(models.Model):
             'descr':self.entity_type_descr,
             'revenue':self.revenue(),
         }
+    
+    def __str__(self):
+        return self.entity_type_name
 
 class Locations(models.Model):
     code = models.CharField(max_length=3, unique=True)
@@ -988,3 +992,19 @@ class DocApprovals(models.Model):
 
     class Meta:
         unique_together = (('user', 'doc_type'),)
+
+# company model
+class Company(models.Model):
+    name = models.CharField(max_length=255, unique=True)  # Company name should be unique
+    address = models.TextField(blank=True, null=True)
+    email = models.EmailField(max_length=255, unique=True, blank=True, null=True)  # Email should be unique if provided
+    phone = models.CharField(max_length=50, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['email'], name='unique_company_email'),
+            models.UniqueConstraint(fields=['name'], name='unique_company_name'),
+        ]

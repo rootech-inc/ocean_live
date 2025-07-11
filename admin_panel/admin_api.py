@@ -21,6 +21,7 @@ from retail.db import ret_cursor
 from retail.models import ProductSupplier, ProductGroup, ProductSubGroup, Products
 from servicing.models import ServiceCard
 from taskmanager.models import Tasks, TaskTransactions
+from .models import Company
 
 
 @csrf_exempt
@@ -61,6 +62,15 @@ def index(request):
 
                     GeoCitySub(name=name, owner=User.objects.get(pk=us_pk), city=GeoCity.objects.get(pk=city)).save()
                     response = success_response
+            
+            elif module == 'company':
+                company = Company.objects.create(
+                    name= data.get('companyName', ''),
+                    address= data.get('companyAddress', ''),
+                    email=data.get('companyEmail', ''),
+                    phone= data.get('companyPhone', ''),
+                )
+                response = success_response.copy()
 
             elif module == 'sync_inventory':
 
@@ -485,9 +495,12 @@ def index(request):
             elif module == 'entity_type':
                 entity_type_name = data.get('entity_type_name')
                 entity_type_descr = data.get('entity_type_descr')
+                company_pk = data.get('company')
+                print(f"Creating Entity Type {entity_type_name} for company {company_pk}")
                 BusinessEntityTypes.objects.create(
                     entity_type_name = entity_type_name,
-                    entity_type_descr = entity_type_descr
+                    entity_type_descr = entity_type_descr,
+                    company = Company.objects.get(pk=company_pk) 
                 )
 
                 success_response['message'] = "Entity Type Created"
@@ -541,6 +554,25 @@ def index(request):
                         'bolt_menu':et.bolt_menu()
                     })
 
+                success_response['message'] = arr
+                response = success_response
+
+            elif module == "company":
+                companies = Company.objects.all()
+                arr = []
+                for company in companies:
+                    arr.append({
+                        'pk': company.pk,
+                        'name': company.name,
+                        'address': company.address,
+                        'email': company.email,
+                        'phone': company.phone,
+                        # 'timestamp': company.timestamp(),
+                        # 'entity_type': {
+                        #     'pk': company.entity_type.pk if company.entity_type else None,
+                        #     'name': company.entity_type.entity_type_name if company.entity_type else None
+                        # }
+                    })
                 success_response['message'] = arr
                 response = success_response
 
@@ -837,7 +869,7 @@ def index(request):
                     response['message'] = [acct.obj() for acct in BankAccounts.objects.get(pk=pk)]
                 
                 response['status_code'] = 200
-
+            
             else:
                 response['status_code'] = 503
                 response['message'] = f"UNKNOWN MODULE ( METHOD : {method}, MODULE : {module} )"
