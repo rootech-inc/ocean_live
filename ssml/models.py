@@ -1256,4 +1256,16 @@ class PaySlipTransactions(models.Model):
     debit = models.DecimalField(default=0.00,decimal_places=2,max_digits=10)
     credit = models.DecimalField(default=0.00,decimal_places=2,max_digits=10)
 
+
+class TransferHd(models.Model):
+    loc_fr = models.ForeignKey(Location,on_delete=models.CASCADE,related_name='loc_fr')
+    loc_to = models.ForeignKey(Location,on_delete=models.CASCADE,related_name='loc_to')
+    entry_date = models.DateField(null=False)
+    is_posted = models.BooleanField(default=False)
+    is_valid = models.BooleanField(default=True)
+
+    remarks = models.TextField()
+    created_by = models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
+    date_created = models.DateField(auto_now_add=True)
+    time_created = models.TimeField(auto_now_add=True)
     

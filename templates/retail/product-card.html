@@ -23,6 +23,7 @@
                     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                         <h5 class="dropdown-header" style="text-align: left">STOCK</h5>
                         <a class="dropdown-item" onclick="retail.resetStockScreen()" href="javascript:void(0)"><i class="bx bx-box"></i> Reset Stock</a>
+                        <a class="dropdown-item" id="change_group" href="javascript:void(0)"><i class="bx bx-repeat"></i> Change Group</a>
 {#                        <a class="dropdown-item" onclick="retail.boldUploadScreen()" href="javascript:void(0)"><i class="bx bx-upload"></i> UPLOAD BATCH</a>#}
 {#                        <a class="dropdown-item" onclick="retail.markProducts()" href="javascript:void(0)"><i class="bx bx-checkbox-checked"></i> MARK UPDATE</a>#}
 {#                        <a class="dropdown-item" onclick="retail.checkPrices()" href="javascript:void(0)">PRICE CHANG</a>#}
@@ -72,16 +73,18 @@
 
                                 <div class="input-group input-group-sm mb-2">
                                     <div class="input-group-prepend">
+                                        <span class="input-group-text rounded-0">ITEM CODE</span>
+                                    </div>
+                                    <input type="text" id="item_code" class="form-control form-control-sm rounded-0" readonly placeholder="Product Name">
+                                </div>
+
+                                <div class="input-group input-group-sm mb-2">
+                                    <div class="input-group-prepend">
                                         <span class="input-group-text rounded-0">NAME</span>
                                     </div>
                                     <input type="text" id="name" class="form-control form-control-sm rounded-0" readonly placeholder="Product Name">
                                 </div>
-                                <div class="input-group mb-2">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text rounded-0">PRICE</span>
-                                    </div>
-                                    <input type="text" id="retail1" class="form-control rounded-0" readonly placeholder="Prod">
-                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -92,6 +95,12 @@
                                 <strong class="card-title">Services</strong>
                             </div>
                             <div class="card-body text-center p-2">
+                                <div class="input-group mb-2">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text rounded-0">PRICE</span>
+                                    </div>
+                                    <input type="text" id="retail1" class="form-control rounded-0" readonly placeholder="Prod">
+                                </div>
                                 <div class="input-group mb-2">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text rounded-0">BOLT</span>
@@ -242,9 +251,7 @@
                 })
             }
 
-            $(document).ready(function() {
-
-                $(document).on('keypress', '#searchQuery', function(event) {
+            $(document).on('keypress', '#searchQuery', function(event) {
                     if (event.which === 13) {
                         let string = $('#searchQuery').val();
                         retail.loadCard(string,'barcode',$('#entity').val())
@@ -252,16 +259,12 @@
                     }
                 });
 
-                loadEnties();
+            loadEnties();
 
-                $('#entity').change(function(){
+            $('#entity').change(function(){
                     let entity = $(this).val();
                     retail.loadCard('*','pk',entity)
                 })
-
-
-
-            });
 
             $('#cd_a').click(async function () {
                 let card_load = {
@@ -305,6 +308,12 @@
                     kasa.error(err)
                 })
             })
+
+            $('#change_group').click(function () {
+                let barcode = $('#item_code').val();
+                retail.changeProductCategory(barcode)
+            })
+
         });
 
     </script>

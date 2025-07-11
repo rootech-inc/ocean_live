@@ -843,7 +843,11 @@ def interface(request):
                             success_response['message'] = material.obj()
                         else:
                             material = InventoryMaterial.objects.filter(Q(barcode__icontains=id) | Q(name__icontains=id))
-                            success_response['message'] = [m.obj() for m in material]
+                            if len(material) == 1:
+                                success_response['message'] = [m.obj() for m in material]
+                            else:
+                                success_response['status_code'] = 404
+                                success_response['message'] = f"No material with barcode or name matching {id}"
                        
 
                 elif module == 'meter':
@@ -1280,7 +1284,7 @@ def interface(request):
                     for st in ServiceType.objects.all():
                         
                         today_jobs = st.today_jobs(day_date)
-                        total_jobs = st.total_installations()
+                        total_jobs = st.total_installations(day_date)
                         
                         pdf.set_font("Arial","", size=10)
                         pdf.cell(100, 5, txt=f"{st.name}", ln=False, align="L",border=1)

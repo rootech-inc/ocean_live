@@ -53,6 +53,8 @@ urlpatterns = [
     path('material/add-rate/',views.add_material_rate,name='add_material_rate'),
     path('delete-service-rate/<id>/',views.delete_service_rate,name='delete-service-rate'),
     path('delete-service-type-rate/<id>/',views.delete_type_service_rate,name='delete_type_service_rate'),
-    path('master/location_master/',views.location_master,name='ssml_location_master')
+    path('master/location_master/',views.location_master,name='ssml_location_master'),
+    path('inventory/trenasfer/',views.transfer,name='ssml_transfer'),
+    path('inventory/transfer/add/',views.add_transfer,name='ssml_add_transfer'),
 
 ]
