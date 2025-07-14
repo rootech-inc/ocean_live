@@ -70,9 +70,6 @@
                         </div>
                     </div>
                 </div>
-           
-
-
 
                 <div class="col-sm-12">
                     <div class="card">
@@ -421,6 +418,7 @@
                         let entityResp = await api.v2('VIEW', {'module': 'entity_type', 'data': {"pk": assetNo}}, '/adapi/');
                         if (anton.IsRequest(entityResp) && entityResp.message && entityResp.message.length > 0) {
                             const entity = entityResp.message[0];
+                           
 
                             // Fetch all companies
                             let companyResp = await api.call('VIEW', {'module': 'company', 'data': {}}, '/adapi/');
@@ -444,7 +442,9 @@
                                         if (companies.length > 0) {
                                             companyOptions = companies.map(c => ({
                                                 val: c.pk,
-                                                desc: c.name
+                                                desc: c.name,
+                                                // mark the current object as selected
+                                                select : (String(c.pk) === String(entity.company_pk)) ? "selected" : "" 
                                             }));
                                         }
                                         formHtml += fom.selectv2('company', companyOptions, 'Choose a company', true);
@@ -527,7 +527,8 @@
                     if (entityTypes.length > 0) {
                         let entityTypeOptions = entityTypes.map(et => ({
                             val: et.pk,
-                            desc: et.name
+                            desc: et.name,
+                            
                         }));
                         form += fom.selectv2(
                             'company',
@@ -840,7 +841,6 @@
         }
     });
 }
-
     </script>
     
 {% endblock %}

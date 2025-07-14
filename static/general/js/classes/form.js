@@ -52,12 +52,12 @@ class Form {
                 `
     }
 
-    selectv2(ini,options=[],comment='',required=false){
-        let opxt = `<option disabled selected>Select ${ini.toUpperCase().replace('_',' ')}</option>`;
+    selectv2(ini,options=[],comment='',required=false, ){
+        let opxt = `<option disabled selected >Select ${ini.toUpperCase().replace('_',' ')}</option>`;
         for (let i = 0; i < options.length; i++) {
             let option = options[i];
             console.table(option)
-            opxt += `<option value="${option['val']}">${option.desc}</option>`
+            opxt += `<option value="${option['val']}" ${option['select'] || null}>${option.desc}</option>`
         }
 
         let req = ''
