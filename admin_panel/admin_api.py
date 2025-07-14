@@ -545,23 +545,61 @@ def index(request):
                     response = success_response
 
             elif module == 'entity_type':
-                arr = []
-                for et in BusinessEntityTypes.objects.all():
-                    arr.append({
-                        'pk': et.pk,
-                        'name': et.entity_type_name,
-                        'descr': et.entity_type_descr,
-                        'bolt_menu':et.bolt_menu()
-                    })
+                # get all if data is empty
+                if not data:
+                    arr = []
+                    for et in BusinessEntityTypes.objects.all():
+                        arr.append({
+                            'pk': et.pk,
+                            'name': et.entity_type_name,
+                            'descr': et.entity_type_descr,
+                            'bolt_menu':et.bolt_menu(),
+                            'company_name' : entity.company.name ,
+                            'company_pk' : entity.company.pk 
+                        })
 
-                success_response['message'] = arr
-                response = success_response
+                    success_response['message'] = arr
+                    response = success_response
+                    # get specific entity type
+                else:
+                    pk = data.get('pk')
+                    entity = BusinessEntityTypes.objects.get(id=pk)
+                    arr = []
+                    arr.append({
+                            'pk': entity.pk,
+                            'name': entity.entity_type_name,
+                            'descr': entity.entity_type_descr,
+                            'bolt_menu':entity.bolt_menu(),
+                            'company_name' : entity.company.name ,
+                            'company_pk' : entity.company.pk 
+                    })
+                    success_response['message'] = arr
+                    response = success_response
+                    
 
             elif module == "company":
-                companies = Company.objects.all()
-                arr = []
-                for company in companies:
-                    arr.append({
+                if not data:
+                    companies = Company.objects.all()
+                    arr = []
+                    for company in companies:
+                        arr.append({
+                            'pk': company.pk,
+                            'name': company.name,
+                            'address': company.address,
+                            'email': company.email,
+                            'phone': company.phone,
+                            # 'timestamp': company.timestamp(),
+                            # 'entity_type': {
+                            #     'pk': company.entity_type.pk if company.entity_type else None,
+                            #     'name': company.entity_type.entity_type_name if company.entity_type else None
+                            # }
+                        })
+                    success_response['message'] = arr
+                    response = success_response
+                else:
+                    pk = data.get("pk")
+                    company = Company.objects.get(id=pk)
+                    success_response['message'] = {
                         'pk': company.pk,
                         'name': company.name,
                         'address': company.address,
@@ -572,9 +610,8 @@ def index(request):
                         #     'pk': company.entity_type.pk if company.entity_type else None,
                         #     'name': company.entity_type.entity_type_name if company.entity_type else None
                         # }
-                    })
-                success_response['message'] = arr
-                response = success_response
+                    }
+                    response = success_response
 
             elif module == 'doc_app_auth':
                 pin = data.get('pin')
@@ -1044,6 +1081,67 @@ def index(request):
                 success_response['message'] = "ENTITY TYPE CHANGED"
                 response = success_response
 
+            elif module == "entity_type":
+                entity_pk = data.get("entity_pk")
+                entity_name = data.get("entity_name")
+                entity_descr = data.get("entity_descr")
+                company_pk = data.get("company")
+
+                try:
+                    entity = BusinessEntityTypes.objects.get(id=entity_pk)
+                except BusinessEntityTypes.DoesNotExist:
+                    response['message'] = "Object not found"
+                    response['status_code'] = 404
+                    return JsonResponse(response)
+                
+                entity.entity_type_name = entity_name
+                entity.entity_type_descr = entity_descr
+                if company_pk:
+                    entity.company_id = company_pk
+
+                entity.save()
+
+                response = success_response
+
+            elif module == "company":
+                pk = data.get("pk")
+                name = data.get("companyName")
+                address = data.get("companyAddress")
+                email = data.get("companyEmail")
+                phone = data.get("companyPhone")
+
+                print(data)
+
+                try:
+                    company = Company.objects.get(pk=pk)
+                except Company.DoesNotExist:
+                    response['status_code'] = 404
+                    response['message'] = f"Company with ID {pk} not found"
+                    return JsonResponse(response)
+
+                # Check for duplicate name or email (if changed)
+                if Company.objects.exclude(pk=pk).filter(name=name).exists():
+                    response['status_code'] = 400
+                    response['message'] = f"Company name '{name}' already exists"
+                    return JsonResponse(response)
+
+                if email and Company.objects.exclude(pk=pk).filter(email=email).exists():
+                    response['status_code'] = 400
+                    response['message'] = f"Company email '{email}' already exists"
+                    return JsonResponse(response)
+
+                # Update fields
+                company.name = name
+                company.address = address
+                company.email = email
+                company.phone = phone
+
+                company.save()
+
+                response = success_response
+                response['message'] = f"Company '{company.name}' updated successfully"
+
+
 
             else:
                 response['status_code'] = 503
@@ -1056,6 +1154,40 @@ def index(request):
 
                 success_response['message'] = "LOCATION DELETED"
                 response = success_response
+
+            if module == 'entity_type':
+                pk = data.get('pk')
+                print(f"Deleting Entity Type with pk {pk}")
+                if BusinessEntityTypes.objects.filter(pk=pk).count() == 0:
+                    response['status_code'] = 404
+                    response['message'] = "ENTITY TYPE NOT FOUND"
+                else:
+                    # check if entity type is used by any company
+                    
+                    if Company.objects.filter(entites__id=pk).count() > 0:
+                        company_name = Company.objects.filter(entites__id=pk).values_list('name', flat=True).first()
+                        response['status_code'] = 503
+                        response['message'] = f"ENTITY TYPE IN USE BY COMPANY ({company_name})"
+                        return JsonResponse(response)
+                    
+                BusinessEntityTypes.objects.get(pk=pk).delete()
+
+                success_response['message'] = "ENTITY TYPE DELETED"
+                response = success_response
+
+            if module == 'company':
+                pk = data.get('pk')
+                print(f"Deleting company Type with pk {pk}")
+
+                if Company.objects.filter(pk=pk).count() == 0:
+                    response['status_code'] = 404
+                    response['message'] = "COMPANY NOT FOUND"
+                else:
+                    Company.objects.get(pk=pk).delete()
+
+                success_response['message'] = "COMPANY DELETED"
+                response = success_response
+
 
 
         else:

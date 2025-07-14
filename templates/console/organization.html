@@ -15,7 +15,7 @@
         <div class="container p-2">
             <div class="row">
                  <!-- company -->
-                <div class="col-sm-4">
+                <div class="col-sm-4 col-md-6">
                     <div class="card">
                         <div class="card-header">
                             <div class="w-100 d-flex">
@@ -39,9 +39,28 @@
                                     <tbody>
                                         {% for company in companies %}
                                             <tr data-pk="{{ company.pk }}">
-                                                <td>{{ company.name }}</td>
-                                                <td><button class="btn btn-danger btn-sm " id="delete_company" >delete</button></td>
-                                            </tr>
+                                                    <td>{{ company.name }}</td>
+                                                    <td>
+                                                        <div class="dropdown d-inline">
+                                                            <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1-{{ company.pk }}"
+                                                                data-toggle="dropdown" aria-expanded="false">
+                                                                <i class="fa fa-bars">M</i>
+                                                            </button>
+                                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1-{{ company.pk }}">
+                                                                <li>
+                                                                    <button class="dropdown-item delete-company" type="button" data-asset-no="{{ company.pk }}" data-bs-toggle="modal">
+                                                                        Delete
+                                                                    </button>
+                                                                </li>
+                                                                <li>
+                                                                    <button class="dropdown-item update-company" type="button" data-asset-no="{{ company.pk }}" data-bs-toggle="modal">
+                                                                        Update
+                                                                    </button>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </td>
+                                                </tr>
                                         {% endfor %}
                                     </tbody>
                                 </table>
@@ -50,7 +69,7 @@
                     </div>
                 </div>
               <!-- entity-->
-                <div class="col-sm-4">
+                <div class="col-sm-4 col-md-6">
                     <div class="card">
                         <div class="card-header">
                             <div class="w-100 d-flex">
@@ -74,8 +93,28 @@
                                     <tbody>
                                         {% for e in e_types %}
                                             <tr>
-                                                <td>{{ e.entity_type_name }}></td>
-                                                <td><button class="btn btn-danger btn-sm">delete</button></td>
+                                                <td>{{ e.entity_type_name }}</td>
+                                                <td><span class="badge bg-success">{{ e.company.name }}</span></td>
+                                                <td>
+                                                    <div class="dropdown d-inline">
+                                                        <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1-entity-{{ e.pk }}"
+                                                            data-toggle="dropdown" aria-expanded="false">
+                                                            <i class="fa fa-bars">M</i>
+                                                        </button>
+                                                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1-entity-{{ e.pk }}">
+                                                            <li>
+                                                                <button class="dropdown-item delete-entity" type="button" data-asset-no="{{ e.pk }}" data-bs-toggle="modal">
+                                                                    Delete
+                                                                </button>
+                                                            </li>
+                                                            <li>
+                                                                <button class="dropdown-item update-entity" type="button" data-asset-no="{{ e.pk }}" data-bs-toggle="modal">
+                                                                    Update
+                                                                </button>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </td>
                                             </tr>
                                         {% endfor %}
                                     </tbody>
@@ -321,6 +360,212 @@
        
         $(document).ready(function (){
 
+            // Dropdown menu handlers for company actions
+            $(document).on('click', '.delete-company', function () {
+                const assetNo = $(this).data('asset-no');
+                let payload = {
+                    'module': 'company',
+                    data: {
+                        'pk': assetNo
+                    }
+                };
+                api.v2('DELETE', payload, '/adapi/').then(response => {
+                    if (anton.IsRequest(response)) {
+                        kasa.info(response.message);
+                    } else {
+                        kasa.error(response.message);
+                    }
+                }).catch(error => {
+                    kasa.error(`Error: ${error}`);
+                })
+
+            });
+
+            // update company form 
+           $(document).on('click', '.update-company', async function () {
+    const assetNo = $(this).data('asset-no');
+    // Fetch the company data by pk
+    let response = await api.v2('VIEW', {module: 'company', data: {pk: assetNo}}, '/adapi/');
+    console.log("response ", response)
+    if (anton.IsRequest(response) && response.message) {
+        const company = response.message;
+
+        let formHtml = `
+            <form id="update-company-form" >
+                <input type="hidden" name="pk" id="pk" value="${company.pk}">
+                <div class="mb-3">
+                    <label for="companyName" class="form-label">Company Name</label>
+                    <input type="text" class="form-control" id="companyName" name="companyName" value="${company.name || ''}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="companyAddress" class="form-label">Company Address</label>
+                    <input type="text" class="form-control" id="companyAddress" name="companyAddress" value="${company.address || ''}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="companyEmail" class="form-label">Company Email</label>
+                    <input type="email" class="form-control" id="companyEmail" name="companyEmail" value="${company.email || ''}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="companyPhone" class="form-label">Company Phone</label>
+                    <input type="tel" class="form-control" id="companyPhone" name="companyPhone" value="${company.phone || ''}" required>
+                </div>
+            </form>
+        `;
+
+        amodal.setTitleText("UPDATE COMPANY");
+        amodal.setBodyHtml(formHtml);
+        amodal.setFooterHtml(`<button id="save_company_update" class="btn btn-success w-100">SAVE</button>`);
+        amodal.show();
+        amodal.setSIZE('L');
+
+        
+    } else {
+        kasa.error("Failed to load company data.");
+    }
+});
+      
+
+// update company button
+// Save handler (optional, for completeness)
+             $(document).on('click', '#save_company_update', async function () {
+            let ids = ['companyName', 'companyAddress', 'companyEmail', 'companyPhone', 'pk'];
+            if (anton.validateInputs(ids)) {
+                let data = {};
+                ids.forEach(id => {
+                    data[id] = $(`#${id}`).val();
+                });
+                
+                let payload = {
+                    module: 'company',
+                    data: data
+                };
+                try {
+                    let updateResp = await api.v2('PATCH', payload, '/adapi/');
+                    if (anton.IsRequest(updateResp)) {
+                        kasa.info(updateResp.message);
+                        amodal.hide();
+                    } else {
+                        kasa.error(updateResp.message);
+                    }
+                } catch (error) {
+                    kasa.error(`Error: ${error}`);
+                }
+            } else {
+                kasa.error("Invalid inputs");
+            }
+        });
+
+             // Dropdown menu handlers for entity actions
+            $(document).on('click', '.delete-entity', async function () {
+                const assetNo = $(this).data('asset-no');
+                let payload = {
+                    'module': 'entity_type',
+                    data: {
+                        'pk': assetNo
+                    }
+                };
+                console.log(payload);
+                await api.v2('DELETE', payload, '/adapi/').then(response => {
+                    if (anton.IsRequest(response)) {
+                        kasa.info(response.message);
+                        console.log("response ", response);
+                    } else {
+                        kasa.error(response.message); 
+                        console.error("error ", response);
+                    }
+                }).catch(error => {
+                    kasa.error(`Error: ${error}`);
+                })
+                 
+                    
+            });
+            $(document).on('click', '.update-entity', async function () {
+                        const assetNo = $(this).data('asset-no');
+                        // Fetch the entity data by pk
+                        let entityResp = await api.v2('VIEW', {'module': 'entity_type', 'data': {"pk": assetNo}}, '/adapi/');
+                        if (anton.IsRequest(entityResp) && entityResp.message && entityResp.message.length > 0) {
+                            const entity = entityResp.message[0];
+
+                            // Fetch all companies
+                            let companyResp = await api.call('VIEW', {'module': 'company', 'data': {}}, '/adapi/');
+                            let formHtml = `
+                                        <form id="update-entity-form">
+                                            <input type="hidden" name="pk" value="${entity.pk}">
+                                            <div class="mb-3">
+                                                <label for="entity_name" class="form-label">Name</label>
+                                                <input type="text" class="form-control" id="entity_name" name="name" value="${entity.name}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="entity_descr" class="form-label">Description</label>
+                                                <textarea class="form-control" id="entity_descr" name="descr" rows="3" required>${entity.descr}</textarea>
+                                            </div>
+                                    `;
+
+                                    // Add the selectv2-generated select
+                                    if (anton.IsRequest(companyResp)) {
+                                        let companies = companyResp.message;
+                                        let companyOptions = [];
+                                        if (companies.length > 0) {
+                                            companyOptions = companies.map(c => ({
+                                                val: c.pk,
+                                                desc: c.name
+                                            }));
+                                        }
+                                        formHtml += fom.selectv2('company', companyOptions, 'Choose a company', true);
+                                    } else {
+                                        kasa.error("Failed to load companies");
+                                    }
+
+                                    formHtml += `</form>`;
+
+                                    amodal.setTitleText("UPDATE ENTITY TYPE");
+                                    amodal.setBodyHtml(formHtml);
+                                    amodal.setFooterHtml(`<button id="update_entity_type" data-asset-no=${assetNo} class="btn btn-success w-100">Update</button>`);
+                                    amodal.show();
+                                    amodal.setSIZE('L');
+
+                                    // Set the selected value after rendering
+                                    setTimeout(() => {
+                                        $('#company').val(entity.company_pk);
+                                    }, 100);
+                        } else {
+                            kasa.error("Failed to load entity data.");
+                        }       
+            }); 
+            // click handler for the update entity type button
+            // This is the click handler for the update entity type button
+             $(document).on("click", '#update_entity_type', async function () {
+                            const assetNo = $(this).data('asset-no');
+                            console.log(assetNo, "in save ")
+                            let ids = ["entity_descr", "entity_name", "company"];
+                                try {
+                                    if (anton.validateInputs(ids)) {
+                                        let data = {};
+                                        data["entity_pk"] = assetNo
+                                        ids.forEach(id => {
+                                            data[id] = $(`#${id}`).val();
+                                        });
+                                      
+                                        let payload = {
+                                            module: "entity_type",
+                                            data: data
+                                        };
+                                        await api.v2("PATCH", payload, "/adapi/").then(
+                                            response => {
+                                                kasa.info(response.message)
+                                            }
+                                        ).catch(error => {kasa.info(error)}).finally(() => amodal.hide())
+                                        
+                                    }
+                                } catch (error) {
+                                    console.error(error)
+                                    kasa.error("invalid inputs");
+                                }
+                            
+                        });
+            
+            
+            
             // delete company button
             $('#delete_company').click(function () {
                 let companyPk = $(this).data('pk');
@@ -335,10 +580,12 @@
                 let form = "";
                 form += fom.text('entity_type_name', 'Entity Type Name', true)
                 form += fom.textarea('entity_type_descr', 3, true)
+
                 // fetch comany entity types from the API
                 let response = api.call('VIEW', {'module': 'company', 'data': {}}, '/adapi/')
                 if (anton.IsRequest(response)) {
                     let entityTypes = response.message;
+                    // does not show if no entity types are available
                     if (entityTypes.length > 0) {
                         let entityTypeOptions = entityTypes.map(et => ({
                             val: et.pk,
@@ -347,7 +594,7 @@
                         form += fom.selectv2(
                             'company',
                             entityTypeOptions,
-                            'Choose an company',
+                            'Choose a company',
                             true
                         );
                     }
@@ -359,24 +606,30 @@
                 amodal.setFooterHtml(`<button id="save_entity_type" class="btn btn-success w-100">SAVE</button>`)
                 amodal.show()
 
-                $('#save_entity_type').click(function () {
-                    
+                $('#save_entity_type').click(async function () {
+                        let ids = ['entity_type_name', 'entity_type_descr', 'company'];
 
-                    let ids = ['entity_type_name', 'entity_type_descr', 'company'];
-                    if(anton.validateInputs(ids)){
-                        let payload = {
-                            'module': 'entity_type',
-                            data: anton.Inputs(ids)
-                        }
-                        console.table(payload)
-                        let response = api.call('PUT', payload, '/adapi/')
-                        kasa.info(response['message'])
-                    } else {
-                        kasa.error("Invalid Form")
-                    }
+                        if (anton.validateInputs(ids)) {
+                            let payload = {
+                                'module': 'entity_type',
+                                data: anton.Inputs(ids)
+                            };
+                            console.table(payload);
 
+                            try {
+                                let response = await api.call('PUT', payload, '/adapi/');
+                                kasa.info(response['message']);
+                            } catch (error) {
+                                console.error(error);
+                                kasa.error("Failed to save entity type.");
+                            }
 
-                });
+                            amodal.hide();
+                        } else {
+                            kasa.error("Invalid Form");
+                }
+        });
+
             })
 
             $('.sync_inventory').on('click', async function (event) {
@@ -408,32 +661,36 @@
 
             });
 
-            $(document).on('click', '#save_entity_type', function () {
-    let entityTypeName = $("#entityTypeName").val().trim();
-    let description = $("#entityDescription").val().trim();
+            $(document).on('click', '#save_entity_type', async function () {
+                let entityTypeName = $("#entityTypeName").val().trim();
+                let description = $("#entityDescription").val().trim();
 
-    if (entityTypeName === "") {
-        kasa.error("Entity Type Name is required.");
-        return;
-    }
+                if (entityTypeName === "") {
+                    kasa.error("Entity Type Name is required.");
+                    return;
+                }
 
-    let payload = {
-        module: 'entity_type',
-        data: {
-            entity_type_name: entityTypeName,
-            description: description
-        }
-    };
+                let payload = {
+                    module: 'entity_type',
+                    data: {
+                        entity_type_name: entityTypeName,
+                        description: description
+                    }
+                };
 
-    let response = api.call('PUT', payload, '/adapi/');
-    if (response && response.message) {
-        kasa.info(response.message);
-    } else {
-        kasa.error('Failed to save entity type.');
-    }
+                try {
+                    let response = await api.call('PUT', payload, '/adapi/');
+                    if (response && response.message) {
+                        kasa.info(response.message);
+                    } else {
+                        kasa.error('Failed to save entity type.');
+                    }
+                } catch (error) {
+                    kasa.error(`Error: ${error}`);
+                }
 
-    amodal.hide();
-});
+            amodal.hide();
+        });
 
             // add entity button
         //    $('#').click(function() {
@@ -530,6 +787,8 @@
         })
 
         // This binds the click handler even if the button is added later
+        //  save company button
+        // This is the click handler for the save company button
         $(document).on('click', '#save_company', async function () {
             input = anton.Inputs(['companyName', 'companyAddress', 'companyEmail', 'companyPhone']);
            

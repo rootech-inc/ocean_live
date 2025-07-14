@@ -431,7 +431,7 @@ class AdjTran(models.Model):
 
 
 class BusinessEntityTypes(models.Model):
-    entity_type_name = models.CharField(max_length=255, unique=True)
+    entity_type_name = models.CharField(max_length=255)
     entity_type_descr = models.TextField()
     company = models.ForeignKey('Company', on_delete=models.CASCADE, null=True, blank=True, related_name="entites")
 
