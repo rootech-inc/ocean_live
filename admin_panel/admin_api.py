@@ -496,7 +496,14 @@ def index(request):
                 entity_type_name = data.get('entity_type_name')
                 entity_type_descr = data.get('entity_type_descr')
                 company_pk = data.get('company')
-                print(f"Creating Entity Type {entity_type_name} for company {company_pk}")
+
+                company = Company.objects.get(pk=company_pk)
+                exists = company.entites.filter(entity_type_name__iexact=entity_type_name).exists()
+            
+                if exists:
+                    response['message'] = "Entity already exists for this company"
+                    return JsonResponse(response)
+                
                 BusinessEntityTypes.objects.create(
                     entity_type_name = entity_type_name,
                     entity_type_descr = entity_type_descr,
@@ -554,8 +561,8 @@ def index(request):
                             'name': et.entity_type_name,
                             'descr': et.entity_type_descr,
                             'bolt_menu':et.bolt_menu(),
-                            'company_name' : entity.company.name ,
-                            'company_pk' : entity.company.pk 
+                            'company_name' : et.company.name ,
+                            'company_pk' : et.company.pk 
                         })
 
                     success_response['message'] = arr
@@ -911,8 +918,6 @@ def index(request):
                 response['status_code'] = 503
                 response['message'] = f"UNKNOWN MODULE ( METHOD : {method}, MODULE : {module} )"
 
-
-
         elif method == 'PATCH':  # update
             if module == 'user_permission':
                 key = data.get('user')
@@ -1110,8 +1115,6 @@ def index(request):
                 email = data.get("companyEmail")
                 phone = data.get("companyPhone")
 
-                print(data)
-
                 try:
                     company = Company.objects.get(pk=pk)
                 except Company.DoesNotExist:
@@ -1146,6 +1149,9 @@ def index(request):
             else:
                 response['status_code'] = 503
                 response['message'] = f"UNKNOWN MODULE ( METHOD : {method}, MODULE : {module} )"
+       
+       
+       
         elif method == 'DELETE':  # delete
 
             if module == 'location':
@@ -1161,15 +1167,8 @@ def index(request):
                 if BusinessEntityTypes.objects.filter(pk=pk).count() == 0:
                     response['status_code'] = 404
                     response['message'] = "ENTITY TYPE NOT FOUND"
-                else:
-                    # check if entity type is used by any company
-                    
-                    if Company.objects.filter(entites__id=pk).count() > 0:
-                        company_name = Company.objects.filter(entites__id=pk).values_list('name', flat=True).first()
-                        response['status_code'] = 503
-                        response['message'] = f"ENTITY TYPE IN USE BY COMPANY ({company_name})"
-                        return JsonResponse(response)
-                    
+                    return JsonResponse(response)
+                
                 BusinessEntityTypes.objects.get(pk=pk).delete()
 
                 success_response['message'] = "ENTITY TYPE DELETED"
@@ -1183,7 +1182,12 @@ def index(request):
                     response['status_code'] = 404
                     response['message'] = "COMPANY NOT FOUND"
                 else:
-                    Company.objects.get(pk=pk).delete()
+                    company = Company.objects.get(pk=pk)
+                    if company.entites.exists():
+                        response["message"] = "Company has entities try deleting them first"
+                        return JsonResponse(response)
+                    else:
+                        company.delete()
 
                 success_response['message'] = "COMPANY DELETED"
                 response = success_response

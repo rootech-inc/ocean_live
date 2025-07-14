@@ -34,32 +34,8 @@
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        {% for company in companies %}
-                                            <tr data-pk="{{ company.pk }}">
-                                                    <td>{{ company.name }}</td>
-                                                    <td>
-                                                        <div class="dropdown d-inline">
-                                                            <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1-{{ company.pk }}"
-                                                                data-toggle="dropdown" aria-expanded="false">
-                                                                <i class="fa fa-bars">M</i>
-                                                            </button>
-                                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1-{{ company.pk }}">
-                                                                <li>
-                                                                    <button class="dropdown-item delete-company" type="button" data-asset-no="{{ company.pk }}" data-bs-toggle="modal">
-                                                                        Delete
-                                                                    </button>
-                                                                </li>
-                                                                <li>
-                                                                    <button class="dropdown-item update-company" type="button" data-asset-no="{{ company.pk }}" data-bs-toggle="modal">
-                                                                        Update
-                                                                    </button>
-                                                                </li>
-                                                            </ul>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                        {% endfor %}
+                                    <tbody id="companies-table-body">
+                                        <!-- comapanies will be rendered here -->
                                     </tbody>
                                 </table>
                             </div>
@@ -86,33 +62,8 @@
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        {% for e in e_types %}
-                                            <tr>
-                                                <td>{{ e.entity_type_name }}</td>
-                                                <td><span class="badge bg-success">{{ e.company.name }}</span></td>
-                                                <td>
-                                                    <div class="dropdown d-inline">
-                                                        <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1-entity-{{ e.pk }}"
-                                                            data-toggle="dropdown" aria-expanded="false">
-                                                            <i class="fa fa-bars">M</i>
-                                                        </button>
-                                                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1-entity-{{ e.pk }}">
-                                                            <li>
-                                                                <button class="dropdown-item delete-entity" type="button" data-asset-no="{{ e.pk }}" data-bs-toggle="modal">
-                                                                    Delete
-                                                                </button>
-                                                            </li>
-                                                            <li>
-                                                                <button class="dropdown-item update-entity" type="button" data-asset-no="{{ e.pk }}" data-bs-toggle="modal">
-                                                                    Update
-                                                                </button>
-                                                            </li>
-                                                        </ul>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        {% endfor %}
+                                    <tbody id="entities-table-body">
+                                        <!-- entities -->
                                     </tbody>
                                 </table>
                             </div>
@@ -133,26 +84,7 @@
                                         <tr><th>NAME</th><th>ADDRESS</th><th>Entity</th><th>EVAT</th><th>ACTION</th></tr>
                                     </thead>
                                     <tbody>
-                                        {% for location in locations %}
-                                            <tr>
-                                                <td>{{ location.descr }}</td>
-                                                <td>{{ location.server_location }}</td>
-                                                <td>{{ location.ent }}</td>
-                                                <td>{{ location.evat }}</td>
-                                                <td>
-                                                    <div class="dropdown">
-                                                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-
-                                                        </button>
-                                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                                            <a class="dropdown-item" onclick="setEvat(`{{ location.pk }}`)" href="javascript:void(0)">Evat Endpoint</a>
-                                                            <a class="dropdown-item" onclick="setBusinessUnit(`{{ location.pk }}`)" href="javascript:void(0)">Set Entity Type</a>
-                                                            <a class="dropdown-item sync_inventory" entity-pk="{{ location.entity.pk }}" href="javascript:void(0)">Sync Inventory</a>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        {% endfor %}
+                                        
                                     </tbody>
                                 </table>
                             </div>
@@ -355,9 +287,10 @@
         }
        
         $(document).ready(function (){
-
+            loadCompanies();
+            loadEntities();
             // Dropdown menu handlers for company actions
-            $(document).on('click', '.delete-company', function () {
+            $(document).on('click', '.delete-company', async function () {
                 const assetNo = $(this).data('asset-no');
                 let payload = {
                     'module': 'company',
@@ -365,7 +298,7 @@
                         'pk': assetNo
                     }
                 };
-                api.v2('DELETE', payload, '/adapi/').then(response => {
+                await api.v2('DELETE', payload, '/adapi/').then(response => {
                     if (anton.IsRequest(response)) {
                         kasa.info(response.message);
                     } else {
@@ -373,56 +306,58 @@
                     }
                 }).catch(error => {
                     kasa.error(`Error: ${error}`);
-                })
+                }).finally(
+                    () => loadCompanies()
+                )
 
             });
 
             // update company form 
            $(document).on('click', '.update-company', async function () {
-    const assetNo = $(this).data('asset-no');
-    // Fetch the company data by pk
-    let response = await api.v2('VIEW', {module: 'company', data: {pk: assetNo}}, '/adapi/');
-    console.log("response ", response)
-    if (anton.IsRequest(response) && response.message) {
-        const company = response.message;
+                    const assetNo = $(this).data('asset-no');
+                    // Fetch the company data by pk
+                    let response = await api.v2('VIEW', {module: 'company', data: {pk: assetNo}}, '/adapi/');
+                    console.log("response ", response)
+                    if (anton.IsRequest(response) && response.message) {
+                        const company = response.message;
 
-        let formHtml = `
-            <form id="update-company-form" >
-                <input type="hidden" name="pk" id="pk" value="${company.pk}">
-                <div class="mb-3">
-                    <label for="companyName" class="form-label">Company Name</label>
-                    <input type="text" class="form-control" id="companyName" name="companyName" value="${company.name || ''}" required>
-                </div>
-                <div class="mb-3">
-                    <label for="companyAddress" class="form-label">Company Address</label>
-                    <input type="text" class="form-control" id="companyAddress" name="companyAddress" value="${company.address || ''}" required>
-                </div>
-                <div class="mb-3">
-                    <label for="companyEmail" class="form-label">Company Email</label>
-                    <input type="email" class="form-control" id="companyEmail" name="companyEmail" value="${company.email || ''}" required>
-                </div>
-                <div class="mb-3">
-                    <label for="companyPhone" class="form-label">Company Phone</label>
-                    <input type="tel" class="form-control" id="companyPhone" name="companyPhone" value="${company.phone || ''}" required>
-                </div>
-            </form>
-        `;
+                        let formHtml = `
+                            <form id="update-company-form" >
+                                <input type="hidden" name="pk" id="pk" value="${company.pk}">
+                                <div class="mb-3">
+                                    <label for="companyName" class="form-label">Company Name</label>
+                                    <input type="text" class="form-control" id="companyName" name="companyName" value="${company.name || ''}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="companyAddress" class="form-label">Company Address</label>
+                                    <input type="text" class="form-control" id="companyAddress" name="companyAddress" value="${company.address || ''}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="companyEmail" class="form-label">Company Email</label>
+                                    <input type="email" class="form-control" id="companyEmail" name="companyEmail" value="${company.email || ''}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="companyPhone" class="form-label">Company Phone</label>
+                                    <input type="tel" class="form-control" id="companyPhone" name="companyPhone" value="${company.phone || ''}" required>
+                                </div>
+                            </form>
+                        `;
 
-        amodal.setTitleText("UPDATE COMPANY");
-        amodal.setBodyHtml(formHtml);
-        amodal.setFooterHtml(`<button id="save_company_update" class="btn btn-success w-100">SAVE</button>`);
-        amodal.show();
-        amodal.setSIZE('L');
+                        amodal.setTitleText("UPDATE COMPANY");
+                        amodal.setBodyHtml(formHtml);
+                        amodal.setFooterHtml(`<button id="save_company_update" class="btn btn-success w-100">SAVE</button>`);
+                        amodal.show();
+                        amodal.setSIZE('L');
 
-        
-    } else {
-        kasa.error("Failed to load company data.");
-    }
-});
+                        
+                    } else {
+                        kasa.error("Failed to load company data.");
+                    }
+            });
       
 
-// update company button
-// Save handler (optional, for completeness)
+            // update company button
+            // Save handler (optional, for completeness)
              $(document).on('click', '#save_company_update', async function () {
             let ids = ['companyName', 'companyAddress', 'companyEmail', 'companyPhone', 'pk'];
             if (anton.validateInputs(ids)) {
@@ -446,6 +381,9 @@
                 } catch (error) {
                     kasa.error(`Error: ${error}`);
                 }
+                finally {
+                    loadCompanies();
+                }
             } else {
                 kasa.error("Invalid inputs");
             }
@@ -461,7 +399,7 @@
                     }
                 };
                 console.log(payload);
-                await api.v2('DELETE', payload, '/adapi/').then(response => {
+                api.v2('DELETE', payload, '/adapi/').then(response => {
                     if (anton.IsRequest(response)) {
                         kasa.info(response.message);
                         console.log("response ", response);
@@ -471,7 +409,9 @@
                     }
                 }).catch(error => {
                     kasa.error(`Error: ${error}`);
-                })
+                }).finally(
+                    () => loadEntities()
+                )
                  
                     
             });
@@ -550,8 +490,10 @@
                                             response => {
                                                 kasa.info(response.message)
                                             }
-                                        ).catch(error => {kasa.info(error)}).finally(() => amodal.hide())
-                                        
+                                        ).catch(error => {kasa.info(error)}).finally(
+                                            () => { amodal.hide(); loadEntities()}
+                                            
+                                        )
                                     }
                                 } catch (error) {
                                     console.error(error)
@@ -615,6 +557,7 @@
                             try {
                                 let response = await api.call('PUT', payload, '/adapi/');
                                 kasa.info(response['message']);
+                                loadEntities()
                             } catch (error) {
                                 console.error(error);
                                 kasa.error("Failed to save entity type.");
@@ -683,6 +626,8 @@
                     }
                 } catch (error) {
                     kasa.error(`Error: ${error}`);
+                }finally {
+                    loadEntities()
                 }
 
             amodal.hide();
@@ -808,6 +753,7 @@
                             kasa.error(`Error: ${error}`);
                     }).finally(() => {
                         loader.hide();
+                        loadCompanies();
                     });
 
         
@@ -820,6 +766,81 @@
 
         
     </script>
+<!-- dynamically display enitites and company -->
+    <script>
+        function loadCompanies() {
+            api.v2('VIEW', {module: 'company', data: {}}, '/adapi/').then(response => {
+            if (anton.IsRequest(response) && response.message && response.message.length > 0) {
+                console.log(response)
+                let companies = response.message;
+                let rows = companies.map(company => `
+                    <tr data-pk="${company.pk}">
+                        <td>${company.name}</td>
+                        <td>
+                            <div class="dropdown d-inline">
+                                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1-${company.pk}"
+                                    data-toggle="dropdown" aria-expanded="false">
+                                    <i class="fa fa-bars">M</i>
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1-${company.pk}">
+                                    <li>
+                                        <button class="dropdown-item delete-company" type="button" data-asset-no="${company.pk}" data-bs-toggle="modal">
+                                            Delete
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item update-company" type="button" data-asset-no="${company.pk}" data-bs-toggle="modal">
+                                            Update
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+                $('#companies-table-body').html(rows);
+            } else {
+                $('#companies-table-body').html('<tr><td colspan="2">No companies found.</td></tr>');
+            }
+        });
+    }
+        function loadEntities() {
+    api.v2('VIEW', {module: 'entity_type', data: {}}, '/adapi/').then(response => {
+        if (anton.IsRequest(response) && response.message && response.message.length > 0) {
+            let entities = response.message;
+            let rows = entities.map(e => `
+                <tr>
+                    <td>${e.name}</td>
+                    <td><span class="badge bg-success">${e.company_name}</span></td>
+                    <td>
+                        <div class="dropdown d-inline">
+                            <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1-entity-${e.pk}"
+                                data-toggle="dropdown" aria-expanded="false">
+                                <i class="fa fa-bars">M</i>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1-entity-${e.pk}">
+                                <li>
+                                    <button class="dropdown-item delete-entity" type="button" data-asset-no="${e.pk}" data-bs-toggle="modal">
+                                        Delete
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item update-entity" type="button" data-asset-no="${e.pk}" data-bs-toggle="modal">
+                                        Update
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            $('#entities-table-body').html(rows);
+        } else {
+            $('#entities-table-body').html('<tr><td colspan="3">No entities found.</td></tr>');
+        }
+    });
+}
 
+    </script>
     
 {% endblock %}
