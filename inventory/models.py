@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 
 from admin_panel.models import SuppMaster, Locations, ProductMaster, UserAddOns
 import appscenter
-
+from admin_panel.models import Company
 
 
 # price master
@@ -399,25 +399,28 @@ class Evidence(models.Model):
 
 # models for car info
 class VehicleAsset(models.Model):
-    COMPANY_CHOICES = [
-        ('Acme Corp', 'Acme Corp'),
-        ('Globex Inc', 'Globex Inc'),
-        ('Umbrella Ltd', 'Umbrella Ltd'),
-    ]
+    # COMPANY_CHOICES = [
+    #     ('Acme Corp', 'Acme Corp'),
+    #     ('Globex Inc', 'Globex Inc'),
+    #     ('Umbrella Ltd', 'Umbrella Ltd'),
+    # ]
 
-    asset_no = models.CharField(max_length=50, unique=True)
-    company = models.CharField(max_length=50, choices=COMPANY_CHOICES)
-    owner = models.CharField(max_length=100)
-    name = models.CharField(max_length=100)
-    manufacturer = models.CharField(max_length=100)
-    year = models.PositiveIntegerField()
-    color = models.CharField(max_length=7, help_text="Hex color code, e.g. #ffffff")
-    number = models.CharField(max_length=50)
+    asset_no = models.CharField(max_length=50, unique=True, null=True, blank=True)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    owner = models.CharField(max_length=200,  null=True, blank=True)
+    vehicle_name = models.CharField(max_length=200,  null=True, blank=True)
+    manufacturer = models.CharField(max_length=200,  null=True, blank=True)
+    year = models.PositiveIntegerField( null=True, blank=True)
+    color = models.CharField(max_length=7, help_text="Hex color code, e.g. #ffffff",  null=True, blank=True)
+    number = models.CharField(unique=True, max_length=50, null=True, blank=True)
     image = models.ImageField(upload_to='static/uploads/vehicle_assets/', blank=True, null=True)
-    descr = models.TextField(blank=True)
+    descr = models.TextField(blank=True,null=True)
 
-    created_on = models.DateTimeField(auto_now_add=True)
+    created_on = models.DateTimeField(auto_now_add=True,  null=True, blank=True)
     updated_on = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.name} ({self.number})"
+        return f"{self.vehicle_name} ({self.number})"
+    
+
+

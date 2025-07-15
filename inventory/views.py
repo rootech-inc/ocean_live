@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 
@@ -13,6 +13,9 @@ from appscenter.models import App
 from inventory.form import NewAssetGroup, NewAsset, NewWorkstation, EvidenceForm
 from inventory.models import PoHd, GrnHd, AssetGroup, Assets, WorkStation, Computer
 
+# test
+from django.views.generic.edit import CreateView
+from .models import VehicleAsset
 
 # Create your views here.
 
@@ -96,7 +99,8 @@ def assets(request):
         'locs': Locations.objects.all(),
         'po': PoHd.objects.filter(status=1),
         'assgrp': AssetGroup.objects.all(),
-        'assets': Assets.objects.all()
+        'assets': Assets.objects.all(),
+        'vehicles': VehicleAsset.objects.all(),
     }
 
     return render(request, 'inventory/assets/index.html', context=context)
@@ -272,3 +276,17 @@ def adjustment(request):
         'locs': Locations.objects.all()
     }
     return render(request, 'inventory/adjustment/indx.html', context=context)
+
+@csrf_exempt  
+def upload_vehicle_asset_image(request):
+    if request.method == 'POST':
+        pk = request.POST.get('pk') # get the primary of asset to update
+        image = request.FILES.get('image') # get the image 
+        try:
+            asset = VehicleAsset.objects.get(pk=pk)
+            asset.image = image
+            asset.save()
+            return redirect ('assets')
+        except VehicleAsset.DoesNotExist:
+            return redirect ('assets')
+    return redirect ('assets')

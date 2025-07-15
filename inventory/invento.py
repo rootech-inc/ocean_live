@@ -11,6 +11,8 @@ from admin_panel.views import bank_posts
 from inventory.models import Evidence
 from retail.models import Products
 from django.db.models import Q
+from admin_panel.models import Company
+from .models import VehicleAsset
 
 
 @csrf_exempt
@@ -45,18 +47,34 @@ def interface(request):
 
             elif module == 'inventory':
                 # save inventory asset
-                header = data.get("header")
-                mypk = header.get('mypk')
-                owner = User.objects.get(pk=mypk)
+                try:
+                    company_id = int(data.get('company'))
+                    company = Company.objects.get(pk=company_id)
+                except (Company.DoesNotExist, ValueError, TypeError):
+                    # Handle error: invalid or missing company
+                    company = None
+                    response = error_response
+                    return JsonResponse(response)
 
-                company = header.get('company')
-                owner = User.objects.get(pk=header.get('owner'))
-                name = header.get('name')
-                manufacturer = header.get('manufacturer')
-                year = header.get('year')
-                color = header.get('color')
-                number = header.get('number')
-                descr = header.get('descr')
+                try:
+                    year = int(data.get('year'))
+                except (ValueError, TypeError):
+                    year = None
+
+                asset = VehicleAsset.objects.create(
+                    company=company,
+                    owner=data.get('owner'),
+                    vehicle_name=data.get('vehicle_name'),
+                    manufacturer=data.get('manufacturer'),
+                    year=year,
+                    color=data.get('color'),
+                    number=data.get('number'),
+                    descr=data.get('descr'),
+                    # image is not handle
+                    # check views for upload_image 
+                )
+                
+                response['message'] = {"detail":"Procedure Completed Successfully", "pk":asset.pk}
 
 
             elif module == 'transfer':
@@ -99,6 +117,8 @@ def interface(request):
                     TransferHD.objects.filter(entry_no=entry_no).delete()
                     error_response['message'] = f"Transfer Failed: {e}"
                     response = error_response
+
+           
 
         elif method == 'VIEW':
             print(data)

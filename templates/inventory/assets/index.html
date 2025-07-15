@@ -16,6 +16,7 @@
                 <thead class="table-white">
                     <tr>
                         <th>Company</th>
+                        <th>Asset Number</th>
                         <th>Image</th>
                         <th>Name</th>
                         <th>Manufacturer</th>
@@ -26,38 +27,43 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {% for vehicle in vehicles %}
                     <tr>
-                        <td>Acme Corp</td>
-                        <td>
-                            <img src="{% static 'assets/img/slides-1.jpg' %}" alt="Asset Image" style="max-width: 60px; max-height: 60px;">
-                        </td>
-                        <td>Office Desk</td>
-                        <td>FurniCo</td>
-                        <td>2022</td>
-                        <td>15</td>
-                        <td>Walnut</td>
-                        <td>
-                            <div class="dropdown d-inline"></div>
-                                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fa fa-bars">M</i>
-                                </button>
-                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                                    <li>
-                                        <button class="dropdown-item view-documents" type="button" data-asset_no="2" data-bs-toggle="modal" >
-                                            Document
-                                        </button>
-                                    </li>
-                                    <li>
-                                        <button class="dropdown-item view_asset" type="button" data-asset_no="1" data-bs-toggle="modal" >
-                                            View
-                                        </button>
-                                    </li>
-                                </ul>
-                            </div>
-                            
-                            
-                        </td>
+                        
+                        
+                            <td>{{vehicle.company.name}}</td>
+                            <td>{{vehicle.asset_no}}</td>
+                            <td>
+                                <img src="{{ vehicle.image.url }}" alt="Asset Image" style="max-width: 60px; max-height: 60px;">
+                            </td>
+                            <td>{{vehicle.vehicle_name}}</td>
+                            <td>{{vehicle.manufacturer}}</td>
+                            <td>{{vehicle.year}}</td>
+                            <td>{{vehicle.number}}</td>
+                            <td>{{vehicle.color}}</td>
+                            <td>
+                                <div class="dropdown d-inline"></div>
+                                    <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fa fa-bars">M</i>
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                        <li>
+                                            <button class="dropdown-item view-documents" type="button" data-asset_no="2" data-bs-toggle="modal" >
+                                                Document
+                                            </button>
+                                        </li>
+                                        <li>
+                                            <button class="dropdown-item view_asset" type="button" data-asset_no="1" data-bs-toggle="modal" >
+                                                View
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                                
+                                
+                            </td>
                     </tr>
+                     {% endfor %}
                 </tbody>
             </table>
             </div>
@@ -212,50 +218,72 @@
             // after api fetch of data
             let xhtml = `
                 <div class="container">
-                    <div id="vehicle-asset-form">
-                        <input type="hidden" id="asset_no" value="${asset_no}">
-                        <div class="row g-2">
-                            <div class="col-12 col-md-6">
-                                ${company_select}
-                            </div>
-                            <div class="col-12 col-md-6">
-                                ${fom.text('owner', 'incharge if asset', true,)}
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <label for="name" class="form-label mb-1">Vehicle Name</label>
-                                <input type="text" class="form-control form-control-sm" id="name" name="name" required>
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <label for="manufacturer" class="form-label mb-1">Manufacturer</label>
-                                <input type="text" class="form-control form-control-sm" id="manufacturer" name="manufacturer" required>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <label for="year" class="form-label mb-1">Year</label>
-                                <input type="number" class="form-control form-control-sm" id="year" name="year" required>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <label for="color" class="form-label mb-1">Color</label>
-                                <input type="color" class="form-control form-control-sm" id="color" name="color" required style="height: 38px;">
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <label for="number" class="form-label mb-1">Vehicle Number</label>
-                                <input type="text" class="form-control form-control-sm" id="number" name="number" required>
-                            </div>
-                            <div class="col-12 ">
-                                <label for="image" class="form-label mb-1">Image</label>
-                                <input type="file" class="form-control form-control-sm" id="image" name="image" accept="image/*">
-                            </div>
-                            <div class="col-12">
-                                <label for="descr" class="form-label mb-1 ">Description</label>
-                                <textarea class="form-control form-control-sm" id="descr" name="descr" rows="10"></textarea>
-                            </div>
-                            <div class="col-12 text-end mt-2">
-                                <button type="button" id='save' class="btn btn-primary btn-sm">Save</button>
-                                <button type="button" class="btn btn-danger btn-sm" id="cancel">Cancel</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  <div id="vehicle-asset-form">
+    <input type="hidden" id="asset_no" value="${asset_no}">
+    <div class="row g-3">
+      <!-- Company & Owner -->
+      <div class="col-12 col-md-6">
+        ${company_select}
+      </div>
+      <div class="col-12 col-md-6">
+        ${fom.text('owner', 'In‑charge of Asset', true)}
+      </div>
+
+      <!-- Vehicle Name & Manufacturer -->
+      <div class="col-12 col-md-6">
+        <label for="vehicle_name" class="form-label mb-1">Vehicle Name</label>
+        <input type="text" class="form-control form-control-sm" id="vehicle_name" name="name" required>
+      </div>
+      <div class="col-12 col-md-6">
+        <label for="manufacturer" class="form-label mb-1">Manufacturer</label>
+        <input type="text" class="form-control form-control-sm" id="manufacturer" name="manufacturer" required>
+      </div>
+
+      <!-- Year & Vehicle Number -->
+      <div class="col-6 col-md-3">
+        <label for="year" class="form-label mb-1">Year</label>
+        <input type="number" class="form-control form-control-sm" id="year" name="year" required>
+      </div>
+      <div class="col-6 col-md-3">
+        <label for="number" class="form-label mb-1">Vehicle Number</label>
+        <input type="text" class="form-control form-control-sm" id="number" name="number" required>
+      </div>
+
+      <!-- Color & Asset -->
+      <div class="col-6 col-md-3">
+        <label for="color" class="form-label mb-1">Color</label>
+        <input type="color" class="form-control form-control-sm" id="color" name="color" required style="height: 38px;">
+      </div>
+      <div class="col-6 col-md-3">
+        <label for="asset" class="form-label mb-1">Asset</label>
+        <input type="text" class="form-control form-control-sm" id="asset" name="asset" required>
+      </div>
+
+      <!-- Image Upload -->
+      <div class="col-12">
+        <form enctype="multipart/form-data" method="post" action="/inventory/vehicle/upload/" id="image-upload-form">
+          {% csrf_token %}
+          <label for="image" class="form-label mb-1">Image</label>
+          <input type="file" class="form-control form-control-sm" id="image" name="image" accept="image/*">
+          <input type="hidden" name="pk" id="assetpk">
+        </form>
+      </div>
+
+      <!-- Description -->
+      <div class="col-12">
+        <label for="descr" class="form-label mb-1">Description</label>
+        <textarea class="form-control form-control-sm" id="descr" name="descr" rows="5"></textarea>
+      </div>
+
+      <!-- Buttons -->
+      <div class="col-12 text-end mt-3">
+        <button type="button" id="save" class="btn btn-primary btn-sm">Save</button>
+        <button type="button" class="btn btn-danger btn-sm" id="cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
             `;
             amodal.setBodyHtml(
                 xhtml
@@ -266,46 +294,51 @@
 
             // save button
             $('#save').click( async function(){    
-                
+                    let ids = ['company', 'owner', 'vehicle_name', 'manufacturer', 'year', 'color', 'number', 'descr', 'mypk', 'asset'];
 
-                let ids =['company', 'owner', 'name', 'manufacturer', 'year', 'color', 'number', 'descr','mypk'];
-                // pass ids to anton class for validation
-                if(anton.validateInputs(ids)){
-                    // set payloads
-                    loader.show()
-                    let payload = {
-                        module:'inventory',
-                        data:anton.Inputs(ids)
-                    }
+                        if (anton.validateInputs(ids)) {
+                            let data = {};
+                            ids.forEach(id => {
+                                data[id] = $('#' + id).val();
+                            });
 
-                    await api.v2('PUT',payload,'/inventory/api/').then(response => {
-                        if(anton.IsRequest(response)){
-                            // show success message
-                            kasa.success("Vehicle asset saved successfully!");
-                            amodal.hide();
-                            loader.hide()
-                        } else {
-                            // show error message
-                            loader.hide()
-                            kasa.error("Failed to save vehicle asset. Please try again.");
+                            const payload = {
+                                module:"inventory",
+                                data: data
+                            }
 
+                            if ($("#image").val() === "") {
+                                        kasa.error("Please Upload Image")
+                                        return
+                            }
+                            // prevent creation of asset if image is not provided
+                                    
+                            api.v2('PUT', payload, '/inventory/api/' ).then(
+                                (response) => {
+                                    // returns a successful message and the pk for the newly created vehicle asset
+                                    const data = response.message
+                                    let assetPk = data.pk
+                                    console.log(assetPk)
+                                    let fileInput = document.getElementById('image')
+                                    $("#assetpk").val(data.pk)
+                                    $("#image-upload-form").submit();
+                                    
+                                
+                                }
+                            ).catch((error => {
+                                kasa.error(error);
+                            }))
                         }
+                });
 
-                        console.table(payload)
-                    }).catch(error => {loader.hide();kasa.error(error)})
                     
-                } else {
-                    loader.hide()
-                    kasa.error("Please fill all required fields.");
-                }
-                
-            });
-            // hide modal on cancel click
-            $('#cancel').click(function(){
-                amodal.hide();
-            });
+                    // hide modal on cancel click
+                    $('#cancel').click(function(){
+                        amodal.hide();
+                    });
 
-        })
+            })
     })
+</script>
 
 {% endblock %}
