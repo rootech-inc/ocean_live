@@ -289,10 +289,12 @@
             // Dropdown menu handlers for company actions
             $(document).on('click', '.delete-company', async function () {
                 const assetNo = $(this).data('asset-no');
+                mypk = $("#mypk").val()
                 let payload = {
                     'module': 'company',
                     data: {
-                        'pk': assetNo
+                        'pk': assetNo,
+                        "mypk" : mypk // the users pk
                     }
                 };
                 await api.v2('DELETE', payload, '/adapi/').then(response => {
@@ -356,12 +358,14 @@
             // update company button
             // Save handler (optional, for completeness)
              $(document).on('click', '#save_company_update', async function () {
-            let ids = ['companyName', 'companyAddress', 'companyEmail', 'companyPhone', 'pk'];
+            let ids = ['companyName', 'companyAddress', 'companyEmail', 'companyPhone', 'pk', 'mypk'];
             if (anton.validateInputs(ids)) {
                 let data = {};
                 ids.forEach(id => {
                     data[id] = $(`#${id}`).val();
                 });
+
+                // console.log("company update data : ", data)
                 
                 let payload = {
                     module: 'company',
@@ -386,13 +390,15 @@
             }
         });
 
-             // Dropdown menu handlers for entity actions
+             // delete entity button
             $(document).on('click', '.delete-entity', async function () {
                 const assetNo = $(this).data('asset-no');
+                mypk = $("#mypk").val();
                 let payload = {
                     'module': 'entity_type',
                     data: {
-                        'pk': assetNo
+                        'pk': assetNo,
+                        "mypk" : mypk // the users pk
                     }
                 };
                 console.log(payload);
@@ -460,10 +466,7 @@
                                     amodal.show();
                                     amodal.setSIZE('L');
 
-                                    // Set the selected value after rendering
-                                    setTimeout(() => {
-                                        $('#company').val(entity.company_pk);
-                                    }, 100);
+                                    
                         } else {
                             kasa.error("Failed to load entity data.");
                         }       
@@ -472,7 +475,8 @@
             // This is the click handler for the update entity type button
              $(document).on("click", '#update_entity_type', async function () {
                             const assetNo = $(this).data('asset-no');
-                            console.log(assetNo, "in save ")
+                            const mypk = $("#mypk").val()
+                           
                             let ids = ["entity_descr", "entity_name", "company"];
                                 try {
                                     if (anton.validateInputs(ids)) {
@@ -481,11 +485,14 @@
                                         ids.forEach(id => {
                                             data[id] = $(`#${id}`).val();
                                         });
+
+                                        data['mypk'] = mypk
                                       
                                         let payload = {
                                             module: "entity_type",
                                             data: data
                                         };
+                                        console.log(payload)
                                         await api.v2("PATCH", payload, "/adapi/").then(
                                             response => {
                                                 kasa.info(response.message)
@@ -505,6 +512,7 @@
             
             
             // delete company button
+            // not working
             $('#delete_company').click(function () {
                 let companyPk = $(this).data('pk');
                 console.log(companyPk);
@@ -514,6 +522,7 @@
                 newLocation()
             });
 
+            // add entity form
             $('#add_entity').click(function() {
                 let form = "";
                 form += fom.text('entity_type_name', 'Entity Type Name', true)
@@ -545,8 +554,9 @@
                 amodal.setFooterHtml(`<button id="save_entity_type" class="btn btn-success w-100">SAVE</button>`)
                 amodal.show()
 
+                // save enitity button
                 $('#save_entity_type').click(async function () {
-                        let ids = ['entity_type_name', 'entity_type_descr', 'company'];
+                        let ids = ['entity_type_name', 'entity_type_descr', 'company', 'mypk'];
 
                         if (anton.validateInputs(ids)) {
                             let payload = {
@@ -601,38 +611,7 @@
 
             });
 
-            $(document).on('click', '#save_entity_type', async function () {
-                let entityTypeName = $("#entityTypeName").val().trim();
-                let description = $("#entityDescription").val().trim();
-
-                if (entityTypeName === "") {
-                    kasa.error("Entity Type Name is required.");
-                    return;
-                }
-
-                let payload = {
-                    module: 'entity_type',
-                    data: {
-                        entity_type_name: entityTypeName,
-                        description: description
-                    }
-                };
-
-                try {
-                    let response = await api.call('PUT', payload, '/adapi/');
-                    if (response && response.message) {
-                        kasa.info(response.message);
-                    } else {
-                        kasa.error('Failed to save entity type.');
-                    }
-                } catch (error) {
-                    kasa.error(`Error: ${error}`);
-                }finally {
-                    loadEntities()
-                }
-
-            amodal.hide();
-        });
+            
 
             // add entity button
         //    $('#').click(function() {
@@ -732,7 +711,7 @@
         //  save company button
         // This is the click handler for the save company button
         $(document).on('click', '#save_company', async function () {
-            input = anton.Inputs(['companyName', 'companyAddress', 'companyEmail', 'companyPhone']);
+            input = anton.Inputs(['companyName', 'companyAddress', 'companyEmail', 'companyPhone', 'mypk']);
            
             // check if inpu is valid
             if (anton.validateInputs(input)) {
@@ -741,6 +720,8 @@
                     module: 'company',
                     data: input
                 };
+
+                console.table(payload)
 
                 let response = await api.v2('PUT', payload, '/adapi/').then(resp => {
                     if (anton.IsRequest(resp)) {
