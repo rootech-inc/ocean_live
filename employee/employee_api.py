@@ -398,7 +398,7 @@ def interface(request):
                     res = [att.obj() for att in Attendance.objects.filter(
                         emp_code=emp_code,
                         date__range=[start_date, end_date]
-                    )]
+                    ).order_by('date')]
                     
                 
                 if rg == 'month':
@@ -412,7 +412,7 @@ def interface(request):
                     res = [att.obj() for att in Attendance.objects.filter(
                         emp_code=emp_code,
                         date__range=[start_date, end_date]
-                    )]
+                    ).order_by('date')]
 
                 success_response['message'] = res
 

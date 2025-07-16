@@ -20,7 +20,7 @@ from . import views, servicing_api
 urlpatterns = [
     path('', views.base, name='service_master'),
     path('api/', servicing_api.interface, name='servicing_api'),
-    path('services/', views.services, name='services'),
+    path('services/', views.services, name='serv_services'),
     path('service/<service_id>/', views.service, name='service'),
     path('newjob/', views.newjob, name='newjob'),
     path('jobcard/', views.jobcard, name='jobcard'),

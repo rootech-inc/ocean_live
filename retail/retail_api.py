@@ -5,6 +5,7 @@ from decimal import Decimal
 
 import pyodbc
 import requests
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.db.models import Q, Sum
 from django.http import JsonResponse
@@ -17,8 +18,8 @@ from openpyxl.styles.builtins import total
 from scipy.ndimage import sobel
 from sympy import Product
 
-from admin_panel.anton import format_currency
-from admin_panel.models import Emails, Locations, BusinessEntityTypes
+from admin_panel.anton import format_currency, generate_random_password
+from admin_panel.models import Emails, Locations, BusinessEntityTypes, Sms, SmsApi
 from inventory.views import transfer
 from ocean.settings import RET_DB_HOST, RET_DB_USER, RET_DB_PASS, RET_DB_NAME, BOLT_PROVIDER_ID, BOLT_MARGIN
 from retail.db import ret_cursor, get_stock, updateStock, percentage_difference, stock_by_moved, stock_by_prod
@@ -100,6 +101,45 @@ def interface(request):
                 else:
                     raise Exception(f"Product Exist with barcode {pd.barcode}")
 
+            elif module == 'mycom_users':
+                # create mycom user
+                user_id = data.get('user_id')
+                username = data.get('username')
+                group_id = data.get('group_id')
+                location_id = data.get('location_id')
+                phone = data.get('phone')
+
+                if len(user_id) > 0 and len(username) > 0 and len(location_id) > 0 and len(phone) > 0:
+                    #todo validate user exist or not
+                    # generate password
+                    password = generate_random_password()
+                    # create user
+                    query = (f"INSERT INTO user_file (user_id,pword,USER_GROUP,user_name,active,phone,supervisor) values "
+                             f"('{user_id}','{password}','{group_id}','{username}','1','{phone}',1s)")
+                    conn = ret_cursor()
+                    cursor = conn.cursor()
+                    cursor.execute(query)
+                    cursor.commit()
+                    conn.close()
+
+                    Sms(
+                        api=SmsApi.objects.get(is_default=True),
+                        to=phone,
+                        message=f"Dear {username}, an account has been created in mycom for you with credentials below\nUser Id:{user_id}\nPassword:{password}. \nTry to login and contact IT for any issue"
+                    ).save()
+
+                    Sms(
+                        api=SmsApi.objects.get(is_default=True),
+                        to='0546310011',
+                        message=f"Dear {username}, an account has been created in mycom for you with credentials below\nUser Id:{user_id}\nPassword:{password}. \nTry to login and contact IT for any issue"
+                    ).save()
+
+                    success_response['message'] = "user created"
+                else:
+                    raise Exception(f"Invalid Data")
+
+
+
             elif module == 'moves':
                 move_type = data.get('type','')
                 # print(data)
@@ -178,19 +218,19 @@ def interface(request):
                     for bill in BillTrans.objects.filter(bill__pay_mode='BOLT',bolt_sync=False):
                         try:
                             # check if product is in bbolt
-                            if not BoltItems.objects.filter(product=bill.product).exists():
-                                BoltItems.objects.create(
-                                    menu=BusinessEntityTypes.objects.get(entity_type_name='retail'),
-                                    product=bill.product,
-                                    price=bill.price,
-                                    group=BoltGroups.objects.all().first(),
-                                    subgroup=BoltSubGroups.objects.filter(group=BoltGroups.objects.all().first()).first(),
-                                    stock_nia=0,
-                                    stock_spintex=0,
-                                    stock_osu=0,
-                                    is_sync=True,
-                                    is_hidden=False
-                                )
+                            # if not BoltItems.objects.filter(product=bill.product).exists():
+                            #     BoltItems.objects.create(
+                            #         menu=BusinessEntityTypes.objects.get(entity_type_name='retail'),
+                            #         product=bill.product,
+                            #         price=bill.price,
+                            #         group=BoltGroups.objects.all().first(),
+                            #         subgroup=BoltSubGroups.objects.filter(group=BoltGroups.objects.all().first()).first(),
+                            #         stock_nia=0,
+                            #         stock_spintex=0,
+                            #         stock_osu=0,
+                            #         is_sync=True,
+                            #         is_hidden=False
+                            #     )
 
                             bp = BoltItems.objects.get(product=bill.product)
                             BoltSales.objects.create(
@@ -970,8 +1010,15 @@ def interface(request):
                 entity = data.get('entity',BusinessEntityTypes.objects.get(entity_type_name='retail').pk)
                 conn = ret_cursor()
                 cursor = conn.cursor()
-                query = ("SELECT item_code, barcode, item_des, (SELECT group_des FROM group_mast WHERE group_mast.group_code = prod_mast.group_code) AS 'group', (SELECT sub_group_des FROM sub_group WHERE sub_group.group_code = prod_mast.group_code AND sub_group.sub_group = prod_mast.sub_group) "
-                         "AS 'sub_group', (SELECT supp_name FROM supplier WHERE supplier.supp_code = prod_mast.supp_code) AS 'supplier', retail1 FROM prod_mast where item_type = 0 order by item_code desc")
+                barcode = data.get('barcode','*')
+                if barcode == '*':
+                    query = ("SELECT item_code, barcode, item_des, (SELECT group_des FROM group_mast WHERE group_mast.group_code = prod_mast.group_code) AS 'group', (SELECT sub_group_des FROM sub_group WHERE sub_group.group_code = prod_mast.group_code AND sub_group.sub_group = prod_mast.sub_group) "
+                             "AS 'sub_group', (SELECT supp_name FROM supplier WHERE supplier.supp_code = prod_mast.supp_code) AS 'supplier', retail1 FROM prod_mast where item_type != 0 order by item_code desc")
+                else:
+                    query = (
+                        f"SELECT item_code, barcode, item_des, (SELECT group_des FROM group_mast WHERE group_mast.group_code = prod_mast.group_code) AS 'group', (SELECT sub_group_des FROM sub_group WHERE sub_group.group_code = prod_mast.group_code AND sub_group.sub_group = prod_mast.sub_group) AS 'sub_group', (SELECT supp_name FROM supplier WHERE supplier.supp_code = prod_mast.supp_code) AS 'supplier', retail1 FROM prod_mast where barcode = '{barcode}'")
+
+
                 cursor.execute(query)
                 saved = 0
                 not_synced = 0
@@ -981,6 +1028,8 @@ def interface(request):
                     barcode = str(product[1]).strip()
                     item_des = product[2].strip()
                     group = product[3]
+
+                    print(code,barcode,item_des,group)
 
 
                     try:
@@ -1024,7 +1073,8 @@ def interface(request):
                 conn.close()
                 success_response['message'] = {
                     "message":f"{saved} / {saved + not_synced} products synced",
-                    "errors":error
+                    "errors":error,
+                    "query":query
                 }
                 response = success_response
 
@@ -1245,6 +1295,47 @@ def interface(request):
 
                 success_response['message'] = arr
                 response = success_response
+
+            elif module == 'mycom_user_group':
+                query = "select * from user_group order by group_name"
+                conn = ret_cursor()
+                cursor = conn.cursor()
+                x = []
+                cursor.execute(query)
+                for group in cursor.fetchall():
+                    code,name,is_super = group
+                    li = {
+                        'code':code.strip(),
+                        'name':name.strip(),
+                        'is_super':is_super,
+                    }
+                    x.append(li)
+
+                success_response['message'] = x
+
+            elif module == 'mycom_users':
+                query = f"""
+                    select RTRIM(user_id) as 'user_id',RTRIM(us.[user_name]) as 'name',RTRIM(ug.group_name) as 'group',phone from user_file us join user_group ug on ug.user_group = us.USER_GROUP order by us.user_id
+
+                    """
+
+                conn = ret_cursor()
+                cursor = conn.cursor()
+                cursor.execute(query)
+                x = []
+
+                for ux in cursor.fetchall():
+
+                    user_id,username,group,phone = ux
+                    x.append({
+                        'user_id':user_id,
+                        'username':username,
+                        'group':group,
+                        'phone':phone
+                    })
+
+                conn.close()
+                success_response['message'] = x
 
             elif module == 'wholesale_prices':
                 success_response['message'] = [pd.ws() for pd in Products.objects.filter(is_wholesales=True)]
@@ -1595,6 +1686,7 @@ def interface(request):
                 loc = Locations.objects.get(code=loc_id)
                 ripe = data.get('ripe')
                 out = data.get('view','json')
+                from datetime import date
 
                 if out == 'excel':
                     import openpyxl
@@ -3453,6 +3545,8 @@ ORDER BY
                 if len(arr) > 0:
                     success_response['message'] = arr
                 else:
+                    # sync itm again
+
                     raise Exception("Item Not Synced")
 
 

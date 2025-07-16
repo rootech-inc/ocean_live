@@ -1,5 +1,7 @@
 
 from datetime import datetime
+from decimal import Decimal
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import Sum, F
@@ -113,6 +115,7 @@ class InventoryMaterial(models.Model):
     def stock(self):
         return Cardex.objects.filter(material=self).aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
 
+
     def loc_stock(self,loc_id='*'):
         locations = Location.objects.all() if loc_id == '*' else Location.objects.filter(loc_id=loc_id)
         arr = []
@@ -133,6 +136,8 @@ class InventoryMaterial(models.Model):
         for item in cardex:
             obj.append(item.obj())
         return obj
+    def is_low_stock(self):
+        return True if Decimal(self.reorder_qty) > Decimal(self.stock()) else False
 
     def stock_in(self):
         grn = Cardex.objects.filter(material=self,doc_type='GR').aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0

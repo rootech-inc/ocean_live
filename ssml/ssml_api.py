@@ -778,9 +778,11 @@ def interface(request):
                     print(data)
                     if service_type == '*':
                         installations = ServiceOrder.objects.all()
+                        st = "all"
                     else:
                         st = ServiceType.objects.get(id=service_type)
                         installations = ServiceOrder.objects.filter(service_type=st)
+
                     
                     doc = data.get('doc','JSON')
                     if doc == 'JSON':
@@ -843,7 +845,7 @@ def interface(request):
                             success_response['message'] = material.obj()
                         else:
                             material = InventoryMaterial.objects.filter(Q(barcode__icontains=id) | Q(name__icontains=id))
-                            if len(material) == 1:
+                            if len(material) > 0:
                                 success_response['message'] = [m.obj() for m in material]
                             else:
                                 success_response['status_code'] = 404
@@ -1500,10 +1502,10 @@ def interface(request):
                     pdf.ln(10)
 
                     pdf.set_font("Arial","B", size=10)
-                    pdf.cell(100, 5, txt="Material", ln=False, align="L",border=1)
-                    pdf.cell(25, 5, txt="Stock Qty", ln=False, align="L",border=1)
-                    pdf.cell(30, 5, txt="Estmated Value", ln=False, align="L",border=1)
-                    pdf.cell(30, 5, txt="Total Amount", ln=True, align="L",border=1)
+                    pdf.cell(100, 7, txt="Material", ln=False, align="L",border=1)
+                    pdf.cell(25, 7, txt="Stock In", ln=False, align="L",border=1)
+                    pdf.cell(30, 7, txt="Stock Out", ln=False, align="L",border=1)
+                    pdf.cell(30, 7, txt="Balance", ln=True, align="L",border=1)
 
                     pdf.set_font("Arial","", size=10)
 
@@ -1515,10 +1517,10 @@ def interface(request):
                     for material in materials:
                         total_qty = material.stock()
                         total_amount = total_qty * material.value
-                        pdf.cell(100, 5, txt=f"{material.name[:30]}", ln=False, align="L",border=1)
-                        pdf.cell(25, 5, txt=f"{total_qty}", ln=False, align="L",border=1)
-                        pdf.cell(30, 5, txt=f"{'{:,.2f}'.format(material.value)}", ln=False, align="L",border=1)
-                        pdf.cell(30, 5, txt=f"{'{:,.2f}'.format(total_amount)}", ln=True, align="L",border=1)
+                        pdf.cell(100, 7, txt=f"{material.name[:30]}", ln=False, align="L",border=1)
+                        pdf.cell(25, 7, txt=f"{material.stock_in()}", ln=False, align="L",border=1)
+                        pdf.cell(30, 7, txt=f"{'{:,.2f}'.format(material.stock_out())}", ln=False, align="L",border=1)
+                        pdf.cell(30, 7, txt=f"{'{:,.2f}'.format(total_qty)}", ln=True, align="L",border=1)
 
                         total += total_amount
                         tq += total_qty
@@ -1526,6 +1528,8 @@ def interface(request):
 
                         arr.append({
                             'name':material.name,
+                            'total_in':material.stock_in(),
+                            'total_out':material.stock_out(),
                             'stock_qty':total_qty,
                             'value':material.value,
                             'total_amount':total_amount

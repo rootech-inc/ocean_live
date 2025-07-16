@@ -2628,13 +2628,13 @@ class SSML {
                     let item = json[x];
                     html += `<tr>
                         <td>${item.name}</td>
+                        <td>${item.total_in}</td>
+                        <td>${item.total_out}</td>
                         <td>${item.stock_qty}</td>
-                        <td>${item.value}</td>
-                        <td>${item.total_amount}</td>
                     </tr>`
 
                 }
-                amodal.setBodyHtml(`<table class='table table-bordered table-stripped table-hover'><thead><tr><th>Name</th><th>Stock Qty</th><th>Value</th><th>Total Amount</th></tr></thead><tbody>${html}</tbody></table>`)
+                amodal.setBodyHtml(`<table class='table table-bordered table-stripped table-hover'><thead><tr><th>Name</th><th>Stock In</th><th>Stock Out</th><th>Balance</th></tr></thead><tbody>${html}</tbody></table>`)
                 amodal.setTitleText('Item Availability')
                 amodal.setSize('L')
                 amodal.show()
