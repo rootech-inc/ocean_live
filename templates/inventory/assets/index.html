@@ -48,12 +48,12 @@
                                     </button>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
                                         <li>
-                                            <button class="dropdown-item view-documents" type="button" data-asset_no="2" data-bs-toggle="modal" >
+                                            <button class="dropdown-item view-documents" type="button" data-asset_no="{{vehicle.pk}}" data-bs-toggle="modal" >
                                                 Document
                                             </button>
                                         </li>
                                         <li>
-                                            <button class="dropdown-item view_asset" type="button" data-asset_no="1" data-bs-toggle="modal" >
+                                            <button class="dropdown-item view_asset" type="button" data-asset_no="{{vehicle.pk}}" data-bs-toggle="modal" >
                                                 View
                                             </button>
                                         </li>
@@ -80,23 +80,51 @@
         // view button
         $('.view_asset').click(function(){
             let asset_no = $(this).data('asset_no');
-            // after api fetch of data
-            let xhtml = `
+
+            payload = {
+                module: 'vehicleAssetDocument',
+                data: {pk: asset_no}
+            }
+
+            let docs = null
+
+            api.v2('VIEW', payload, '/inventory/api/' ).then(
+                (response) => {
+                    docs = response.message
+
+                    docs = response.message;
+
+                    let listItems = (!docs || docs.length === 0)
+                        ? '<h1>No document, upload a document</h1>'
+                        : docs.map(doc => {
+                            // Calculate days left
+                            let daysLeft = '';
+                            if (doc.expiry_date) {
+                                const today = new Date();
+                                const expiry = new Date(doc.expiry_date);
+                                // Calculate the difference in milliseconds, then convert to days
+                                const diffTime = expiry - today;
+                                daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            }
+                            return `
+                            <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap shadow-sm p-3 mb-2 bg-white rounded border-0 hover-shadow">
+                                <div class="d-flex align-items-center flex-wrap text-truncate" style="max-width: 100%;">
+                                    <i class="fa fa-file-alt text-primary me-2 fs-5"></i>
+                                    
+                                    <strong class="text-dark text-truncate me-3 file" style="max-width: 180px;">${doc.file_name}</strong>
+
+                                    <button data-file-name="${doc.file_name}"  class="btn btn-sm btn-outline-primary ms-auto mt-2 mt-md-0">Read</button>
+                                </div>
+                            </li>
+
+                            `;
+                        }).join('');
+
+                    let xhtml = `
                 <div class="container">
                     <div class="col-12 mb-2" id="content">
                         <ul class="list-group">
-                            <li class="list-group-item p-0">
-                                <button type="button" class="btn btn-link w-100 text-start py-3" id="reg_cert_btn">Registration Certificate (RC)</button>
-                            </li>
-                            <li class="list-group-item p-0">
-                                <button type="button" class="btn btn-link w-100 text-start py-3" id="insurance_policy_btn">Insurance Policy</button>
-                            </li>
-                            <li class="list-group-item p-0">
-                                <button type="button" class="btn btn-link w-100 text-start py-3" id="pollution_cert_btn">Pollution Certificate</button>
-                            </li>
-                            <li class="list-group-item p-0">
-                                <button type="button" class="btn btn-link w-100 text-start py-3" id="fitness_cert_btn">Fitness Certificate</button>
-                            </li>
+                            ${listItems}
                         </ul>
                     </div>
                 </div>
@@ -108,87 +136,117 @@
             amodal.setSize('L')
             amodal.show()
 
-        
-            // Select all buttons inside the modal
-           $('#content').find('button').each(function () {
-                let btn = $(this)
-                btn.click(function () {
-                    anton.viewFile({
-                        file: `/media/documents/${btn.attr('id').replace('_btn', '')}_${asset_no}.pdf`,
-                        title: btn.text(),
-                        size: 'L'
-                    });
-                }); 
-            });
+                }
+            ).catch((error) => {
+                console.log(error)
+            })
+            
+           
+          // Use event delegation for dynamically created buttons with class 'read'
+                $(document).on('click', 'button', function () {
+                    let btn = $(this);
+                    let fileName = btn.data('file-name')
+                    let fileUrl = `${window.location.origin}/static/uploads/vehicle_assets_docs/${fileName}`
+                 
+                    //  read the file
+                });
 
         })
         // view docs
         $('.view-documents').click(function(){
             let asset_no = $(this).data('asset_no');
-            // after api fetch of data
-            let xhtml = `
-                <div class="container">
-                    <button id="uploadDoc" class="btn btn-sm btn-primary ms-2 mb-2">Upload</button>
-                    <ul class="list-group mb-3">
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center">
-                                <strong>Registration Certificate (RC)</strong>
-                                <span class="ms-3 small text-muted">Expiry: 2025-05-20</span>
-                                <span class="badge bg-success ms-2">days left: 120</span>
-                            </div>
-                            <a href="/media/documents/rc_${asset_no}.pdf" download class="btn btn-sm btn-outline-primary ms-2">
-                                <i class="fa fa-download" aria-hidden="true"></i>
-                            </a>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center ">
-                                <strong>Insurance Policy</strong>
-                                <span class="ms-3 small text-muted">Expiry: 2024-12-31</span>
-                                <span class="badge bg-success ms-2">days left: 120</span>
-                            </div>
-                            <a href="/media/documents/insurance_${asset_no}.pdf" download class="btn btn-sm btn-outline-primary ms-2">
-                                <i class="fa fa-download" aria-hidden="true"></i>
-                            </a>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center">
-                                <strong>Pollution Certificate</strong>
-                                <span class="ms-3 small text-muted">Expiry: 2024-09-15</span>
-                                <span class="badge bg-success ms-2">days left: 120</span>
-                            </div>
-                            <a href="/media/documents/pollution_${asset_no}.pdf" download class="btn btn-sm btn-outline-primary ms-2">
-                                <i class="fa fa-download" aria-hidden="true"></i>
-                            </a>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center">
-                                <strong>Fitness Certificate</strong>
-                                <span class="ms-3 small text-muted">Expiry: 2026-03-10</span>
-                                <span class="badge bg-success ms-2">days left: 120</span>
-                            </div>
-                            <a href="/media/documents/fitness_${asset_no}.pdf" download class="btn btn-sm btn-outline-primary ms-2">
-                                <i class="fa fa-download" aria-hidden="true"></i>
-                            </a>
-                        </li>
-                    </ul>
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            `;
-            amodal.setBodyHtml(
-                xhtml
-            );
-            amodal.setTitleText("Dowload Vehicle Documents")
-            amodal.setSize('L')
-            amodal.show()
 
-            $('#uploadDoc').click(function() {
-                amodal.setBodyHtml(`<input type="file" class="form-control form-control-sm" id="docUpload" name="docUpload" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">`);
+            payload = {
+                module: 'vehicleAssetDocument',
+                data: {pk: asset_no}
+            }
+
+            let docs = null
+
+            api.v2('VIEW', payload, '/inventory/api/' ).then(
+                (response ) => {
+                       let docs = response.message;
+                        console.log(response.message);
+
+                    let listItems = (!docs || docs.length === 0)
+                        ? '<h1>No document, upload a document</h1>'
+                        : docs.map(doc => {
+                            // Calculate days left
+                            let daysLeft = '';
+                            if (doc.expiry_date) {
+                                const today = new Date();
+                                const expiry = new Date(doc.expiry_date);
+                                // Calculate the difference in milliseconds, then convert to days
+                                const diffTime = expiry - today;
+                                daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            }
+                            return `
+                            <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap shadow-sm p-3 mb-2 bg-white rounded border-0 hover-shadow">
+                                <div class="d-flex align-items-center flex-wrap text-truncate" style="max-width: 75%;">
+                                    <i class="fa fa-file-alt text-primary me-2 fs-5"></i>
+                                    <strong class="text-dark text-truncate" style="max-width: 200px;">${doc.file_name}</strong>
+                                    <span class="ms-3 small text-muted text-nowrap">Expiry: ${doc.expiry_date ? doc.expiry_date : 'N/A'}</span>
+                                    ${doc.expiry_date ? `<span class="badge bg-success ms-2 text-nowrap">days left: ${daysLeft}</span>` : ''}
+                                </div>
+                                <a href="/media/${doc.file_name}" download class="btn btn-sm btn-outline-primary ms-2 mt-2 mt-md-0 d-flex align-items-center">
+                                    <i class="fa fa-download me-1" aria-hidden="true"></i> Download
+                                </a>
+                            </li>
+                            `;
+                        }).join('');
+                        
+                    
+                        // after api fetch of data
+                        let xhtml = `
+                            <div class="container">
+                                <button id="uploadDoc" class="btn btn-sm btn-primary ms-2 mb-2">Upload</button>
+                                <ul class="list-group">
+                                    ${listItems}
+                                </ul>
+                                <button class="btn btn-secondary mt-3" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        `;
+
+                       
+
+                        amodal.setBodyHtml(
+                            xhtml
+                        );
+                        amodal.setTitleText("Dowload Vehicle Documents")
+                        amodal.setSize('L')
+                        amodal.show()
+                }
+            ).catch (
+                (error) => {
+                    console.log(error)
+                }
+            )
+
+        // upload document button click
+            $(document).on("click", "#uploadDoc", function() {
+                amodal.setBodyHtml(`
+                <form method="post" action="{% url 'upload_vhicle_assset_doc' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="pk" value=${asset_no}>
+                    <input type="file"
+                        class="form-control form-control-sm"
+                        id="docUpload"
+                        name="doc"
+                        accept=".pdf,.doc,.docx,.txt"
+                        required
+                        >   
+                    <label for="date">Choose Expiry</label>
+                    <input type="date" id="date" name="expiry_date" class="form-control" />
+                    <button type="submit" class="btn btn-primary btn-sm mt-2">Upload Document</button>
+                </form>
+                
+                `);
                 amodal.setTitleText("Upload Vehicle Documents")
                 amodal.setSize('L');
                 amodal.show();
 
                 // Handle file upload
-                $('#docUpload').change(function() {
+                $('#docUpload').click(function() {
                     // get the file
                     let file = this.files[0];
                     console.log(file);
@@ -203,6 +261,7 @@
                 });
             })
         })
+        
         // new vehicle asset
         $('.new').click(async function(){
             let asset_no = $(this).data('asset_no');

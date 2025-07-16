@@ -15,7 +15,7 @@ from inventory.models import PoHd, GrnHd, AssetGroup, Assets, WorkStation, Compu
 
 # test
 from django.views.generic.edit import CreateView
-from .models import VehicleAsset
+from .models import VehicleAsset, VehicleAssetDocument
 
 # Create your views here.
 
@@ -290,3 +290,23 @@ def upload_vehicle_asset_image(request):
         except VehicleAsset.DoesNotExist:
             return redirect ('assets')
     return redirect ('assets')
+
+
+@csrf_exempt
+def upload_vehicle_asset_document(request):
+    if request.method == 'POST':
+        pk = request.POST.get('pk')  # get the primary key of asset to update
+        document = request.FILES.get('doc')  # get the document file
+        expiry_date = request.POST.get("expiry_date")
+    try:
+        asset = VehicleAsset.objects.get(pk=pk)
+        doc = VehicleAssetDocument(vehicle_asset=asset, doc=document, expiry_date=expiry_date)
+        doc.full_clean()  # run validators (optional but recommended)
+        doc.save()
+        return redirect('assets')
+    except VehicleAsset.DoesNotExist:
+        return redirect('assets')
+    except Exception as e:
+        return HttpResponse(f"Error: {e}")
+    
+    return redirect('assets')

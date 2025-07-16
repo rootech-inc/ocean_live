@@ -1,5 +1,6 @@
 from decimal import Decimal
 from jsonfield import JSONField
+from django.core.validators import FileExtensionValidator
 from django.conf import settings
 from django.db import models
 from django.db.models import Sum
@@ -8,7 +9,7 @@ from django.contrib.auth.models import User
 from admin_panel.models import SuppMaster, Locations, ProductMaster, UserAddOns
 import appscenter
 from admin_panel.models import Company
-
+import os
 
 # price master
 class PriceCenter(models.Model):
@@ -423,4 +424,13 @@ class VehicleAsset(models.Model):
         return f"{self.vehicle_name} ({self.number})"
     
 
+class VehicleAssetDocument(models.Model):
+    vehicle_asset = models.ForeignKey(VehicleAsset, on_delete=models.CASCADE, related_name="documents")
+    doc = models.FileField(
+        upload_to='static/uploads/vehicle_assets_docs/',
+        validators=[FileExtensionValidator(allowed_extensions=['txt', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv'])]
+    )
+    expiry_date = models.DateField(null=True, blank=True)
 
+    def __str__(self):
+        print(os.path.basename(self.doc.name))

@@ -13,6 +13,7 @@ from retail.models import Products
 from django.db.models import Q
 from admin_panel.models import Company
 from .models import VehicleAsset
+import os
 
 
 @csrf_exempt
@@ -61,8 +62,11 @@ def interface(request):
                 except (ValueError, TypeError):
                     year = None
 
+                print(data)
+
                 asset = VehicleAsset.objects.create(
                     company=company,
+                    asset_no=data.get('asset'),
                     owner=data.get('owner'),
                     vehicle_name=data.get('vehicle_name'),
                     manufacturer=data.get('manufacturer'),
@@ -70,7 +74,7 @@ def interface(request):
                     color=data.get('color'),
                     number=data.get('number'),
                     descr=data.get('descr'),
-                    # image is not handle
+                    # image is not handled here
                     # check views for upload_image 
                 )
                 
@@ -121,7 +125,7 @@ def interface(request):
            
 
         elif method == 'VIEW':
-            print(data)
+            # print("data is ", data)
             # view transfer in window
             arr = []
             if module == 'transfer':
@@ -177,6 +181,24 @@ def interface(request):
                 except Exception as e:
                     error_response['message'] = f"Product Not Found: {e}"
                     response = error_response
+
+            if module == "vehicleAssetDocument":
+                vehicle_pk = data.get('pk')
+                try:
+                    vehicle = VehicleAsset.objects.get(pk=vehicle_pk)
+                except VehicleAsset.DoesNotExist:
+                    response = error_response
+                else:
+                    docs = vehicle.documents.all()
+                    if docs:
+                        response['message'] = [
+                                {
+                                    'file_name': os.path.basename(d.doc.name),
+                                    'expiry_date': d.expiry_date
+                                }
+                                for d in docs
+                            ]
+                    
 
         elif method == 'PATCH':
             if module == 'transfer':

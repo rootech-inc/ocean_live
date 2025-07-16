@@ -41,7 +41,9 @@ urlpatterns = [
     path('adjustment/',views.adjustment,name='inventory-adjustment'),
 
     #  upload vehicle asset image
-    path('vehicle/upload/', views.upload_vehicle_asset_image, name="upload_vehicle_asset")
+    path('vehicle/upload/', views.upload_vehicle_asset_image, name="upload_vehicle_asset"),
+    # upload vehicle docuemnt
+    path('vehicle/document/upload/', views.upload_vehicle_asset_document, name='upload_vhicle_assset_doc')
 ]
 
 
