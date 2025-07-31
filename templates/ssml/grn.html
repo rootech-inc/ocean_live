@@ -14,6 +14,7 @@
             <button id="edit" class="btn btn-warning ms-2">Edit</button>
             <button id="post" class="btn btn-success ms-2" {% if last_grn_status == 'Posted' %}disabled{% endif %}>Post</button>
             <button id="unpost" class="btn btn-danger ms-2" {% if last_grn_status == 'Posted' %} {%else%}disabled{% endif %}>Unpost</button>
+            <button id="delete" class="btn btn-warning ms-2" {% if last_grn_status == 'Posted' %} {%else%}disabled{% endif %}>Delete</button>
             <button id="print" class="btn btn-info ms-2"><i class="bi bi-printer"></i></button>
             
         </div>
@@ -159,9 +160,13 @@
                 if(grn.is_posted){
                     $('#post').attr('disabled',true);
                     $('#edit').attr('disabled',true);
+                    $('#unpost').attr('disabled',false)
+                    $('#delete').attr('disabled',true)
                 } else {
                     $('#post').attr('disabled',false);
                     $('#edit').attr('disabled',false);
+                    $('#unpost').attr('disabled',true)
+                    $('#delete').attr('disabled',false)
                 }
 
                 next_row = grn.next_row;
@@ -293,6 +298,28 @@
                 kasa.info("Operation Canceled")
             }
         });
+
+        $('#delete').click(async function(){
+            let payload = {
+                module:'grn',
+                data:{
+                    id:`${$('#grn_id').val()}`
+                }
+            }
+            if(confirm("Are you sure?")){
+                await api.v2('DELETE',payload,'/ssml/api/').then(response => {
+                    kasa.response(response);
+                    if(anton.IsRequest(response)){
+                        load_grn(`${$('#grn_id').val()}`);
+                    }
+                }).catch(error => {
+                    kasa.info(error);
+                });
+            } else {
+                kasa.info("Operation Canceled")
+            }
+        });
+        
     });
 </script>
 
