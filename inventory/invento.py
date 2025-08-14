@@ -12,7 +12,7 @@ from inventory.models import Evidence
 from retail.models import Products
 from django.db.models import Q
 from admin_panel.models import Company
-from .models import VehicleAsset
+from .models import VehicleAsset, VehicleAssetDocument
 import os
 
 
@@ -193,6 +193,7 @@ def interface(request):
                     if docs:
                         response['message'] = [
                                 {
+                                    'pk': d.pk,
                                     'file_name': os.path.basename(d.doc.name),
                                     'expiry_date': d.expiry_date
                                 }
@@ -303,6 +304,17 @@ def interface(request):
                     response = success_response
                 except Exception as e:
                     raise Exception(e)
+
+        elif method == 'DELETE':
+            if module == "vehicleAssetDocument":
+                asset_pk = data.get('pk', None)
+                try:
+                    asset = VehicleAssetDocument.objects.get(pk=asset_pk)
+                    asset.delete()
+                    response = success_response
+                except:
+                    response = error_response
+
 
         else:
             error_response['message'] = f"Method Not Allowed: {method}"

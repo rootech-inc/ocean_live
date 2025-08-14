@@ -107,13 +107,13 @@
                                 daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                             }
                             return `
-                            <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap shadow-sm p-3 mb-2 bg-white rounded border-0 hover-shadow">
-                                <div class="d-flex align-items-center flex-wrap text-truncate" style="max-width: 100%;">
+                            <li class="list-group-item shadow-sm p-3 mb-2 bg-white rounded border-0 hover-shadow">
+                                <div class="d-flex align-items-center text-truncate" style="max-width: 100%;">
                                     <i class="fa fa-file-alt text-primary me-2 fs-5"></i>
                                     
                                     <strong class="text-dark text-truncate me-3 file" style="max-width: 180px;">${doc.file_name}</strong>
 
-                                    <button data-file-name="${doc.file_name}"  class="btn btn-sm btn-outline-primary ms-auto mt-2 mt-md-0">Read</button>
+                                    <button data-file-name="${doc.file_name}"  class="read-btn btn btn-sm btn-outline-primary ms-auto mt-2 mt-md-0">Read</button>
                                 </div>
                             </li>
 
@@ -132,7 +132,7 @@
             amodal.setBodyHtml(
                 xhtml
             );
-            amodal.setTitleText("View Vehicle Documents")
+            amodal.setTitleText("Vehicle Documents")
             amodal.setSize('L')
             amodal.show()
 
@@ -143,16 +143,66 @@
             
            
           // Use event delegation for dynamically created buttons with class 'read'
-                $(document).on('click', 'button', function () {
+                $(document).on('click', '.read-btn', function () {
+                    event.stopPropagation(); // prevent parent click handlers
+                    event.preventDefault();  // optional: prevents any default form/button behavior
+                    
                     let btn = $(this);
                     let fileName = btn.data('file-name')
-                    let fileUrl = `${window.location.origin}/static/uploads/vehicle_assets_docs/${fileName}`
-                 
+                    let  fileUrl = `${window.location.origin}/static/uploads/vehicle_assets_docs/${fileName}`
+                    
+                    fileExt = fileName.split(".").pop().toLowerCase()
+                    
+                    // iframe to view PDF
+                    if(fileExt === 'pdf') {
+                        amodal.setBodyHtml(
+                            `
+                              <iframe 
+                                    src="${fileUrl}" 
+                                    style="width: 100%; height: 600px; border: none;"
+                                    title="PDF Viewer">
+                                    <p>Your browser doesn't support iframes. <a href="${fileUrl}" target="_blank">Download the PDF</a></p>
+                               </iframe>
+                            `
+                        )
+                    }
+                    // supports public file urls
+                    else if(fileExt == 'docx'){
+                        const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`;
+                        amodal.setBodyHtml(
+                            `
+                             <div style="height: 100%; width: 100%;">
+                                <iframe 
+                                    src="${officeViewerUrl}" 
+                                    style="width: 100%; height: 600px; border: none;"
+                                    title="Word Document Viewer">
+                                    <p>Cannot display Word document. <a href="${fileUrl}" target="_blank">Download ${fileName}</a></p>
+                                </iframe>
+                            </div>
+                            `
+                        )
+                    }   
+
+                    amodal.setTitleText(fileName)
+                    
+                    amodal.setSize('L')
+                    amodal.show()
+                   
+                    // amodal.setTitleText("a text")
+                    //  amodal.show()
+                    //  amodal
+                    // amodal.setTitleText(fileName)
+                    // amodal.setBodyHtml(
+                    //     <iframe src={`https://docs.google.com/viewer?url=${fileUrl}&embedded=true`} width="100%" height="600"></iframe>
+                    // )
+                    // amodal.show()
+                    // amodal.setSize('L')
+                
                     //  read the file
                 });
 
-        })
-        // view docs
+                })
+        // vehicle documents
         $('.view-documents').click(function(){
             let asset_no = $(this).data('asset_no');
 
@@ -188,12 +238,35 @@
                                     <span class="ms-3 small text-muted text-nowrap">Expiry: ${doc.expiry_date ? doc.expiry_date : 'N/A'}</span>
                                     ${doc.expiry_date ? `<span class="badge bg-success ms-2 text-nowrap">days left: ${daysLeft}</span>` : ''}
                                 </div>
-                                <a href="/media/${doc.file_name}" download class="btn btn-sm btn-outline-primary ms-2 mt-2 mt-md-0 d-flex align-items-center">
-                                    <i class="fa fa-download me-1" aria-hidden="true"></i> Download
-                                </a>
+                                <div>
+                                    <a href="${window.location.origin}/static/uploads/vehicle_assets_docs/${doc.file_name}" download class="btn btn-sm btn-outline-primary ms-2 mt-2 mt-md-0 d-flex align-items-center">
+                                        <i class="fa fa-download me-1" aria-hidden="true"></i> Download
+                                    </a>
+                                    <a  data-docid="${doc.pk}" class="btn btn-delete-doc btn-sm btn-danger ms-2 mt-2 mt-md-0 d-flex align-items-center">
+                                      delete
+                                    </a>
+                                </div>
+                               
                             </li>
                             `;
                         }).join('');
+
+                        $(document).on('click', '.btn-delete-doc', function(){ 
+                            let doc_id = $(this).data('docid');
+                             payload = {
+                                module: 'vehicleAssetDocument',
+                                data: {pk: doc_id}
+                            }  
+                            
+                            api.v2('DELETE', payload, '/inventory/api/').then(
+                                (response) => {
+                                    console.log("API MESSAGE ", response.message);
+                                }
+                            ).catch((error) => {
+                                console.log(error)
+                            })
+
+                        })
                         
                     
                         // after api fetch of data
@@ -207,8 +280,7 @@
                             </div>
                         `;
 
-                       
-
+                
                         amodal.setBodyHtml(
                             xhtml
                         );
@@ -230,14 +302,14 @@
                     <input type="hidden" name="pk" value=${asset_no}>
                     <input type="file"
                         class="form-control form-control-sm"
-                        id="docUpload"
+                        
                         name="doc"
                         accept=".pdf,.doc,.docx,.txt"
                         required
                         >   
                     <label for="date">Choose Expiry</label>
                     <input type="date" id="date" name="expiry_date" class="form-control" />
-                    <button type="submit" class="btn btn-primary btn-sm mt-2">Upload Document</button>
+                    <button type="submit" id="docUpload" class="btn btn-primary btn-sm mt-2">Upload Document</button>
                 </form>
                 
                 `);

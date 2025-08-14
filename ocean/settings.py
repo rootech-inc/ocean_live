@@ -105,7 +105,7 @@ DATABASE_ENGINE = os.environ.get('DB_ENGINE', 'django.db.backends.mysql')
 
 DATABASE_NAME = os.environ.get('DB_NAME', 'ocean')
 DATABASE_USER = os.environ.get('DB_USER', 'root')
-DATABASE_PASSWORD = os.environ.get('DB_PASSWORD', 'Pa$$w0rd')
+DATABASE_PASSWORD = os.environ.get('DB_PASSWORD', '0verhaul32')
 DATABASE_HOST = os.environ.get('DB_HOST', '127.0.0.1')
 #DATABASE_HOST = os.environ.get('DB_HOST', '192.168.2.60')
 DATABASE_PORT = os.environ.get('DB_PORT', '3306')
@@ -210,6 +210,10 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # email config
 
+
+#for iframe allow iframe on same origin
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+# X_FRAME_OPTIONS = 'ALLOWALL'
 
 # session setting
 SESSION_COOKIE_AGE = 1800  # 3 minutes. "1209600(2 weeks)" by default

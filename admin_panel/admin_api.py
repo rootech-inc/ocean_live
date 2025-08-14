@@ -583,7 +583,6 @@ def index(request):
                     success_response['message'] = arr
                     response = success_response
                     
-
             elif module == "company":
                 if not data:
                     companies = Company.objects.all()
@@ -790,6 +789,7 @@ def index(request):
                         ##DepartmentReportMailQue(department=department, files=files).save()
 
                 response = success_response
+   
             elif module == 'auth':
                 username = data.get('username')
                 password = data.get('key')
