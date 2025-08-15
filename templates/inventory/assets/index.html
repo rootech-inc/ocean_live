@@ -7,8 +7,82 @@
     <div  class="w-100 h-100 card">
 
         <div class="card-header">
-            <button class="btn btn-primary new" data-asset_no="3" data-bs-toggle="modal" >New</button>
-        </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <button class="btn btn-primary new" data-asset_no="3" data-bs-toggle="modal" >New</button>
+                 <!-- pagination -->
+            <nav aria-label="Vehicle pagination">
+                <ul class="pagination justify-content-center">
+                    {% if vehicle_page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1" aria-label="First">
+                                <span aria-hidden="true">&laquo;</span>
+                                <span class="sr-only">First</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ vehicle_page_obj.previous_page_number }}" aria-label="Previous">
+                                <span aria-hidden="true">&#8249;</span>
+                                <span class="sr-only">Previous</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link" aria-label="First">
+                                <span aria-hidden="true">&laquo;</span>
+                                <span class="sr-only">First</span>
+                            </span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link" aria-label="Previous">
+                                <span aria-hidden="true">&#8249;</span>
+                                <span class="sr-only">Previous</span>
+                            </span>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">
+                            {{ vehicle_page_obj.number }}
+                            <span class="sr-only">(current)</span>
+                        </span>
+                    </li>
+
+                    {% if vehicle_page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ vehicle_page_obj.next_page_number }}" aria-label="Next">
+                                <span aria-hidden="true">&#8250;</span>
+                                <span class="sr-only">Next</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ vehicle_page_obj.paginator.num_pages }}" aria-label="Last">
+                                <span aria-hidden="true">&raquo;</span>
+                                <span class="sr-only">Last</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link" aria-label="Next">
+                                <span aria-hidden="true">&#8250;</span>
+                                <span class="sr-only">Next</span>
+                            </span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link" aria-label="Last">
+                                <span aria-hidden="true">&raquo;</span>
+                                <span class="sr-only">Last</span>
+                            </span>
+                        </li>
+                    {% endif %}
+                </ul>
+
+                <!-- Page info below pagination -->
+                <!-- <div class="text-center text-muted mt-2">
+                    <small>Page {{ vehicle_page_obj.number }} of {{ vehicle_page_obj.paginator.num_pages }}</small>
+                </div> -->
+            </nav>
+            </div>
+         </div>
 
         <div class="card-body">
             <div class="table-responsive">
@@ -27,7 +101,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for vehicle in vehicles %}
+                    {% for vehicle in vehicle_page_obj %}
                     <tr>
                         
                         
@@ -66,6 +140,7 @@
                      {% endfor %}
                 </tbody>
             </table>
+           
             </div>
             
         </div>
@@ -121,17 +196,15 @@
                         }).join('');
 
                     let xhtml = `
-                <div class="container">
-                    <div class="col-12 mb-2" id="content">
-                        <ul class="list-group">
-                            ${listItems}
-                        </ul>
+                    <div class="container">
+                        <div class="col-12 mb-2" id="content">
+                            <ul class="list-group">
+                                ${listItems}
+                            </ul>
+                        </div>
                     </div>
-                </div>
-            `;
-            amodal.setBodyHtml(
-                xhtml
-            );
+                    `;
+            amodal.setBodyHtml(xhtml);
             amodal.setTitleText("Vehicle Documents")
             amodal.setSize('L')
             amodal.show()
@@ -203,137 +276,124 @@
 
                 })
         // vehicle documents
-        $('.view-documents').click(function(){
+        $('.view-documents').click(function () {
             let asset_no = $(this).data('asset_no');
 
-            payload = {
+            let payload = {
                 module: 'vehicleAssetDocument',
-                data: {pk: asset_no}
-            }
+                data: { pk: asset_no }
+            };
 
-            let docs = null
+            const getdocs = async () => {
+                try {
+                    let response = await api.v2('VIEW', payload, '/inventory/api/');
+                    let docs = response.message || [];
+                    console.log(docs);
 
-            api.v2('VIEW', payload, '/inventory/api/' ).then(
-                (response ) => {
-                       let docs = response.message;
-                        console.log(response.message);
-
-                    let listItems = (!docs || docs.length === 0)
-                        ? '<h1>No document, upload a document</h1>'
+                    let listItems = (docs.length === 0)
+                        ? '<h5>No document, upload a document</h5>'
                         : docs.map(doc => {
-                            // Calculate days left
                             let daysLeft = '';
                             if (doc.expiry_date) {
                                 const today = new Date();
                                 const expiry = new Date(doc.expiry_date);
-                                // Calculate the difference in milliseconds, then convert to days
-                                const diffTime = expiry - today;
-                                daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                daysLeft = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
                             }
                             return `
-                            <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap shadow-sm p-3 mb-2 bg-white rounded border-0 hover-shadow">
-                                <div class="d-flex align-items-center flex-wrap text-truncate" style="max-width: 75%;">
-                                    <i class="fa fa-file-alt text-primary me-2 fs-5"></i>
-                                    <strong class="text-dark text-truncate" style="max-width: 200px;">${doc.file_name}</strong>
-                                    <span class="ms-3 small text-muted text-nowrap">Expiry: ${doc.expiry_date ? doc.expiry_date : 'N/A'}</span>
-                                    ${doc.expiry_date ? `<span class="badge bg-success ms-2 text-nowrap">days left: ${daysLeft}</span>` : ''}
-                                </div>
-                                <div>
-                                    <a href="${window.location.origin}/static/uploads/vehicle_assets_docs/${doc.file_name}" download class="btn btn-sm btn-outline-primary ms-2 mt-2 mt-md-0 d-flex align-items-center">
-                                        <i class="fa fa-download me-1" aria-hidden="true"></i> Download
-                                    </a>
-                                    <a  data-docid="${doc.pk}" class="btn btn-delete-doc btn-sm btn-danger ms-2 mt-2 mt-md-0 d-flex align-items-center">
-                                      delete
-                                    </a>
-                                </div>
-                               
-                            </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap shadow-sm p-3 mb-2 bg-white rounded border-0 hover-shadow">
+                                    <div class="d-flex align-items-center flex-wrap text-truncate" style="max-width: 75%;">
+                                        <i class="fa fa-file-alt text-primary me-2 fs-5"></i>
+                                        <strong class="text-dark text-truncate" style="max-width: 200px;">${doc.file_name}</strong>
+                                        <span class="ms-3 small text-muted text-nowrap">Expiry: ${doc.expiry_date || 'N/A'}</span>
+                                        ${doc.expiry_date ? `<span class="badge bg-success ms-2 text-nowrap">days left: ${daysLeft}</span>` : ''}
+                                    </div>
+                                    <div>
+                                        <a href="${window.location.origin}/static/uploads/vehicle_assets_docs/${doc.file_name}" download class="btn btn-sm btn-outline-primary ms-2 mt-2 mt-md-0 d-flex align-items-center">
+                                            <i class="fa fa-download me-1"></i> Download
+                                        </a>
+                                        <a data-docid="${doc.pk}" class="btn btn-delete-doc btn-sm btn-danger ms-2 mt-2 mt-md-0 d-flex align-items-center">
+                                            delete
+                                        </a>
+                                    </div>
+                                </li>
                             `;
                         }).join('');
 
-                        $(document).on('click', '.btn-delete-doc', function(){ 
-                            let doc_id = $(this).data('docid');
-                             payload = {
-                                module: 'vehicleAssetDocument',
-                                data: {pk: doc_id}
-                            }  
-                            
-                            api.v2('DELETE', payload, '/inventory/api/').then(
-                                (response) => {
-                                    console.log("API MESSAGE ", response.message);
-                                }
-                            ).catch((error) => {
-                                console.log(error)
-                            })
+                    let xhtml = `
+                        <div class="container">
+                            <button id="uploadDoc" class="btn btn-sm btn-primary ms-2 mb-2">Upload</button>
+                            <ul class="list-group">${listItems}</ul>
+                            <button class="btn btn-secondary mt-3" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    `;
 
-                        })
-                        
-                    
-                        // after api fetch of data
-                        let xhtml = `
-                            <div class="container">
-                                <button id="uploadDoc" class="btn btn-sm btn-primary ms-2 mb-2">Upload</button>
-                                <ul class="list-group">
-                                    ${listItems}
-                                </ul>
-                                <button class="btn btn-secondary mt-3" data-bs-dismiss="modal">Close</button>
-                            </div>
-                        `;
-
-                
-                        amodal.setBodyHtml(
-                            xhtml
-                        );
-                        amodal.setTitleText("Dowload Vehicle Documents")
-                        amodal.setSize('L')
-                        amodal.show()
+                    amodal.setBodyHtml(xhtml);
+                    amodal.setTitleText("Download Vehicle Documents");
+                    amodal.setSize('L');
+                    amodal.show();
+                } catch (error) {
+                    kasa.error("Failed loading documents");
                 }
-            ).catch (
-                (error) => {
-                    console.log(error)
-                }
-            )
+            };
 
-        // upload document button click
-            $(document).on("click", "#uploadDoc", function() {
-                amodal.setBodyHtml(`
-                <form method="post" action="{% url 'upload_vhicle_assset_doc' %}" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <input type="hidden" name="pk" value=${asset_no}>
-                    <input type="file"
-                        class="form-control form-control-sm"
-                        
-                        name="doc"
-                        accept=".pdf,.doc,.docx,.txt"
-                        required
-                        >   
-                    <label for="date">Choose Expiry</label>
-                    <input type="date" id="date" name="expiry_date" class="form-control" />
-                    <button type="submit" id="docUpload" class="btn btn-primary btn-sm mt-2">Upload Document</button>
-                </form>
-                
-                `);
-                amodal.setTitleText("Upload Vehicle Documents")
-                amodal.setSize('L');
-                amodal.show();
+            getdocs();
 
-                // Handle file upload
-                $('#docUpload').click(function() {
-                    // get the file
-                    let file = this.files[0];
-                    console.log(file);
-                    // pass id to anton class for validation
-                    if (anton.validateInputs(['docUpload'])) {
-                        // Simulate upload success
-                        kasa.success("Document uploaded successfully!");
-                        amodal.hide();
-                    } else {
-                        kasa.error("Please select a file to upload.");
-                    }
-                });
-            })
-        })
-        
+    // delete doc
+    $(document).off('click', '.btn-delete-doc').on('click', '.btn-delete-doc', async function () {
+        let doc_id = $(this).data('docid');
+        let delPayload = { module: 'vehicleAssetDocument', data: { pk: doc_id } };
+
+        try {
+            let res = await api.v2('DELETE', delPayload, '/inventory/api/');
+            kasa.success("Document deleted successfully");
+            getdocs(); // refresh list
+        } catch (err) {
+            console.error(err);
+        }
+    });
+
+    // upload document button click
+    $(document).off('click', '#uploadDoc').on('click', '#uploadDoc', function () {
+        amodal.setBodyHtml(`
+            <form id="uploadForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="pk" value="${asset_no}">
+                <input type="file" class="form-control form-control-sm" name="doc" accept=".pdf,.doc,.docx,.txt" required>
+                <label for="date">Choose Expiry</label>
+                <input type="date" id="date" name="expiry_date" class="form-control" />
+                <button type="submit" class="btn btn-primary btn-sm mt-2">Upload Document</button>
+            </form>
+        `);
+        amodal.setTitleText("Upload Vehicle Documents");
+        amodal.setSize('L');
+        amodal.show();
+    });
+
+    // handle form submission without reload
+    $(document).off('submit', '#uploadForm').on('submit', '#uploadForm', async function (e) {
+        e.preventDefault();
+
+        let formData = new FormData(this);
+
+        try {
+            let res = await fetch("{% url 'upload_vhicle_assset_doc' %}", {
+                method: 'POST',
+                body: formData
+            });
+            if (res.ok) {
+                kasa.success("Document uploaded successfully!");
+                amodal.hide();
+                getdocs(); // refresh list
+            } else {
+                kasa.error("Upload failed.");
+            }
+        } catch (err) {
+            console.error(err);
+            kasa.error("Error uploading document.");
+        }
+    });
+});
+
         // new vehicle asset
         $('.new').click(async function(){
             let asset_no = $(this).data('asset_no');

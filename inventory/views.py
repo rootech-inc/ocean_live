@@ -17,6 +17,9 @@ from inventory.models import PoHd, GrnHd, AssetGroup, Assets, WorkStation, Compu
 from django.views.generic.edit import CreateView
 from .models import VehicleAsset, VehicleAssetDocument
 
+# for pagination
+from django.core.paginator import Paginator
+
 # Create your views here.
 
 @login_required(login_url='/login/')
@@ -92,6 +95,11 @@ def new_grn(request):
 @login_required(login_url='/login/')
 def assets(request):
     page['title'] = 'AssetsX'
+
+    vehiclePaginator = Paginator(VehicleAsset.objects.all(), 10)
+    page_number = request.GET.get("page")
+    vehicle_page_obj = vehiclePaginator.get_page(page_number)
+
     context = {
         'page': page,
         'nav': True,
@@ -100,7 +108,7 @@ def assets(request):
         'po': PoHd.objects.filter(status=1),
         'assgrp': AssetGroup.objects.all(),
         'assets': Assets.objects.all(),
-        'vehicles': VehicleAsset.objects.all(),
+        'vehicle_page_obj':  vehicle_page_obj,
     }
 
     return render(request, 'inventory/assets/index.html', context=context)
