@@ -22,6 +22,7 @@
                 <div class="dropdown-menu" aria-labelledby="exportDropdown">
                     <a class="dropdown-item" href="javascript:void(0)"><i class="fas fa-file-pdf text-danger"></i> PDF</a>
                     <a class="dropdown-item export_excel" href="javascript:void(0)"><i class="fas fa-file-excel text-success"></i> Excel</a>
+                    <a class="dropdown-item job_material_details" href="javascript:void(0)"><i class="fas fa-file-excel text-success"></i> Job Materials</a>
                 </div>
             </div>
         </div>
@@ -32,6 +33,15 @@
     <div class="container-fluid p-2 h-75 overflow-hidden">
         <div class="row py-4" style="background-color: #d0d0d0;">
             <div class="col-sm-4">
+                <div class="row mb-2">
+                    <div class="col-sm-4">
+                        <label for="code">Code</label>
+                    </div>
+                    <div class="col-sm-8">
+                        <input type="text" readonly class="form-control rounded-0" id="code" placeholder="">
+                        <input type="hidden" id="code">
+                    </div>
+                </div>
                 <div class="row mb-2">
                     <div class="col-sm-4">
                         <label for="name">Name</label>
@@ -228,6 +238,19 @@
             ssml.exportContractorService('excel',id)
         })
         
+        $('.job_material_details').click(async function(){
+            loader.show()
+            await api.v2('VIEW',{module:'job_material_details',data:{code:$('#code').val()}},'/ssml/api/').then(response => {
+
+                if(anton.IsRequest(response)){
+                    anton.viewFile(`/${response.message}`)
+                    loader.hide()
+                } else {
+                    kasa.error("There is an error")
+                    loader.hide()
+                }
+            }).catch(error => {kasa.error("There is an error");loader.hide()})
+        })
 
 
     });

@@ -1,12 +1,12 @@
 
 from datetime import datetime
 from decimal import Decimal
-
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import Sum, F
 
 from admin_panel.models import BankAccounts
+from django.utils import timezone
 
 
 # locations class
@@ -107,14 +107,43 @@ class InventoryMaterial(models.Model):
             'prev':InventoryMaterial.objects.filter(id__lt=self.id).last().id if InventoryMaterial.objects.filter(id__lt=self.id).count() > 0 else 0,
             'auto_issue':self.auto_issue,
             'service_rates':self.service_rates(),
-            'loc_stock':self.loc_stock()
+            'loc_stock':self.loc_stock(),
+            'services':self.services()
         }
     
     def service_rates(self):
         return [rt.obj() for rt in ServiceMaterialRates.objects.filter(material=self)]
-    def stock(self):
-        return Cardex.objects.filter(material=self).aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
+    
+    def services(self):
+        return [x.obj() for x in ServiceMaterials.objects.filter(material=self)]
 
+    def stock(self, as_of='*'):
+        
+        if as_of == '*':
+
+            total_ISS = Cardex.objects.filter(material=self,doc_type='ISS').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
+            total_GR = Cardex.objects.filter(material=self,doc_type='GR').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
+            total_RET = Cardex.objects.filter(material=self,doc_type='RET').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
+
+            # issue is out - retuen
+            print(self.name)
+            print("GRN",total_GR)
+            print('ISS',total_ISS)
+            print("RETURN",total_RET)
+            total_issue = Decimal(total_ISS) + Decimal(total_RET)
+            print("TOT ISS",total_issue)
+            
+            
+            total = Decimal(total_GR) + Decimal(total_issue)
+            print("TOT",total)
+            print()
+            
+            return total
+        else:
+            return Cardex.objects.filter(
+                material=self,
+                created_at__lte=as_of
+            ).aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
 
     def loc_stock(self,loc_id='*'):
         locations = Location.objects.all() if loc_id == '*' else Location.objects.filter(loc_id=loc_id)
@@ -132,12 +161,10 @@ class InventoryMaterial(models.Model):
         return Cardex.objects.filter(material=self).aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
     def cardex(self):
         obj = []
-        cardex = Cardex.objects.filter(material=self)
+        cardex = Cardex.objects.filter(material=self).order_by('created_at')
         for item in cardex:
             obj.append(item.obj())
         return obj
-    def is_low_stock(self):
-        return True if Decimal(self.reorder_qty) > Decimal(self.stock()) else False
 
     def stock_in(self):
         grn = Cardex.objects.filter(material=self,doc_type='GR').aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
@@ -333,6 +360,19 @@ class Contractor(models.Model):
         iss = Issue.objects.filter(contractor=self)
         return [x.obj() for x in iss]
 
+    def my_jobs(self):
+        obj = {}
+        for st in ServiceType.objects.all():
+            total = 0
+            jobs = ServiceOrder.objects.filter(contractor=self,service_type=st).order_by('service_date')
+            total = jobs.count()
+            this_arr = [j.obj() for j in jobs]
+            obj[st.name] = {
+                'total':total,'transactions':this_arr
+            }
+        
+        return obj
+
     def obj(self):
         return {
             'id':self.id,
@@ -358,7 +398,7 @@ class Contractor(models.Model):
             'paid':self.paid,
             'balance':self.balance,
             # 'matched':self.matched(),
-            'ledger':self.ledger_sum(),
+            'ledger':0, #self.ledger_sum(),
             'code':self.code,
             
         }
@@ -409,6 +449,7 @@ class Grn(models.Model):
     is_posted = models.BooleanField(default=False)
     posted_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='posted_grns')
     location = models.ForeignKey(Location,on_delete=models.CASCADE,null=False)
+    
     
 
     def __str__(self):
@@ -521,6 +562,7 @@ class Cardex(models.Model):
     created_at = models.DateField(null=False)
     updated_at = models.DateTimeField(auto_now=True)
     location = models.ForeignKey(Location,on_delete=models.CASCADE,null=False)
+    balance = models.DecimalField(max_digits=10, decimal_places=2,default=0.00)
     
     def obj(self):
         return {
@@ -531,7 +573,8 @@ class Cardex(models.Model):
             'material':self.material.obj(),
             'qty':self.qty,
             'created_at':self.created_at,
-            'updated_at':self.updated_at
+            'updated_at':self.updated_at,
+            'balance':self.balance
         }
     
 
@@ -762,6 +805,24 @@ class ServiceMaterialRates(models.Model):
             'rate':self.service.rate,
             'description':self.service.description,
             'break_point':self.break_point
+
+        }
+
+class ServiceMaterials(models.Model):
+    service = models.ForeignKey(ServiceType,on_delete=models.CASCADE,null=False,blank=False,related_name='material_service_x')
+    material = models.ForeignKey(InventoryMaterial,on_delete=models.CASCADE,null=False,blank=False,related_name='rate_material_x',verbose_name='rate_material')
+    qty = models.DecimalField(decimal_places=2,default=0.00,max_digits=10)
+
+
+    class Meta:
+        unique_together = (('service','material'),)
+
+
+    def obj(self):
+        return {
+            'id':self.id,
+            'service':self.service.name,
+            'qty':self.qty,
 
         }
 
@@ -1273,4 +1334,14 @@ class TransferHd(models.Model):
     created_by = models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
     date_created = models.DateField(auto_now_add=True)
     time_created = models.TimeField(auto_now_add=True)
+    
+
+class RequiredReturn(models.Model):
+    service_type = models.ForeignKey(ServiceType,on_delete=models.CASCADE)
+    material = models.ForeignKey(InventoryMaterial,on_delete=models.CASCADE)
+    as_of = models.DateField(null=False)
+    quantity = models.DecimalField(max_digits=20,decimal_places=2,default=0.00)
+
+    class Meta:
+        unique_together = (('service_type','material','as_of'),)
     

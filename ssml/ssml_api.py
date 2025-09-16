@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.contrib.auth.models import User
 
 
-from ssml.models import Cardex,Location, InvoiceHD,InvoiceTransactions, Contractor, Expense, InventoryGroup, InventoryMaterial, Issue, IssueTransaction, Ledger, MaterialOrderItem, Meter, PaySlipHD, Plot, RedeemTransactions, Reedem, Service, ServiceOrder, ServiceOrderItem, ServiceOrderReturns, ServiceType, Supplier, Grn, GrnTransaction, ContractorError
+from ssml.models import Cardex,Location,RequiredReturn, InvoiceHD,InvoiceTransactions, Contractor, Expense, InventoryGroup, InventoryMaterial, Issue, IssueTransaction, Ledger, MaterialOrderItem, Meter, PaySlipHD, Plot, RedeemTransactions, Reedem, Service, ServiceMaterials, ServiceOrder, ServiceOrderItem, ServiceOrderReturns, ServiceType, Supplier, Grn, GrnTransaction, ContractorError
 
 
 @csrf_exempt
@@ -52,6 +52,43 @@ def interface(request):
                                           city=city,postal_code=postal_code,gh_card_no=gh_card_no,gh_post_code=gh_post_code,created_by=created_by)
 
                 success_response['message'] = "Contractor Created Successfully"
+
+            elif module == 'return_qty':
+                service_id = data.get('service_id')
+                transactions = data.get('transactions')
+                st = ServiceType.objects.get(id=service_id)
+                qty_as_of = data.get('qty_as_of')
+
+                for tran in transactions:
+                    idd = tran.get('id')
+                    qty = tran.get('qty')
+
+                    print(tran)
+
+                    RequiredReturn.objects.create(
+                        service_type=st,
+                        material_id=idd,
+                        as_of=qty_as_of,
+                        quantity=qty
+                    )
+
+                success_response['message'] = "Operated"
+                response = success_response
+
+            elif module == 'service_materials':
+                barcode = data.get('barcode')
+                material = InventoryMaterial.objects.get(barcode=barcode)
+                ser_id = data.get('service')
+                qty = data.get('qty')
+
+                ServiceMaterials.objects.create(
+                    service_id=ser_id,
+                    material=material,
+                    qty=qty
+                )
+
+                success_response['message'] = "Created"
+                response = success_response
 
             elif module == 'location':
                 loc_id = data.get('loc_id')
@@ -630,6 +667,41 @@ def interface(request):
                         contractor = Contractor.objects.get(id=id)
                         success_response['message'] = contractor.obj()
 
+                elif module == 'job_material_details':
+                    contractor_code = data.get('code','*')
+                    contractor = Contractor.objects.get(code=contractor_code)
+
+                    import openpyxl
+                    book = openpyxl.Workbook()
+                    sheet = book.active
+
+                    for job in ServiceOrder.objects.filter(contractor=contractor):
+                        jb = job.obj()
+                        meter = job.new_meter
+                        customer = job.customer
+                        customer_no = job.customer_no
+                        sheet.append(['#############################'])
+                        sheet.append(["METER","CUSTOMER"])
+                        sheet.append([meter,f"[{customer} - {customer_no}]"])
+
+                        sheet.append(['MATERIAL',"QUANTITY"])
+                        mats = MaterialOrderItem.objects.filter(service_order=job,material_type='is')
+                        print(mats)
+                        for material in mats:
+                            
+                            sheet.append([material.material.name,material.quantity])
+                        sheet.append(['#############################'])
+                        sheet.append([''])
+
+                    file_name = f'static/general/tmp/{contractor.company}.xlsx'
+                    book.save(file_name)
+
+                        
+
+                    success_response['message'] = file_name
+
+                    response = success_response
+
                 elif module == 'location':
                     id = data.get('id','*')
                     if id == '*':
@@ -778,11 +850,9 @@ def interface(request):
                     print(data)
                     if service_type == '*':
                         installations = ServiceOrder.objects.all()
-                        st = "all"
                     else:
                         st = ServiceType.objects.get(id=service_type)
                         installations = ServiceOrder.objects.filter(service_type=st)
-
                     
                     doc = data.get('doc','JSON')
                     if doc == 'JSON':
@@ -809,9 +879,9 @@ def interface(request):
                     book = openpyxl.Workbook()
                     sheet = book.active
                     sheet.title = "Cardex"
-                    sheet.append(['Doc No', 'Doc Type', 'Qty', 'Created At'])
+                    sheet.append(['Doc No', 'Doc Type', 'Qty',"Balance", 'Created At'])
                     for row in cd:
-                        sheet.append([row.get('doc_no'),row.get('doc_type'),row.get('qty'),row.get('created_at')])
+                        sheet.append([row.get('doc_no'),row.get('doc_type'),row.get('qty'),row.get('balance'),row.get('created_at')])
 
                     import hashlib
                     name = hashlib.md5(item.name.encode()).hexdigest()
@@ -840,16 +910,21 @@ def interface(request):
                         materials = InventoryMaterial.objects.all().order_by('name')
                         success_response['message'] = [material.obj() for material in materials]
                     else:
-                        if id.isdigit():
+                        if str(id).isdigit():
                             material = InventoryMaterial.objects.get(id=id)
                             success_response['message'] = material.obj()
                         else:
                             material = InventoryMaterial.objects.filter(Q(barcode__icontains=id) | Q(name__icontains=id))
-                            if len(material) > 0:
+                            filta = data.get('filter', None)
+                            if filta is not None:
+                                    if filta == 'is_return':
+                                        material = material.filter(is_return=True)
+                            if material.exists():
+                                
                                 success_response['message'] = [m.obj() for m in material]
                             else:
                                 success_response['status_code'] = 404
-                                success_response['message'] = f"No material with barcode or name matching {id}"
+                                success_response['message'] = f"No material with barcode or name matching {id} with filter {filta}"
                        
 
                 elif module == 'meter':
@@ -1492,20 +1567,23 @@ def interface(request):
                 elif module == 'item_availability':
                     from django.utils import timezone
                     
+                    as_of = data.get('as_of',timezone.now().date())
+                    print(data)
+                    print(as_of)
                     arr = []
 
                     from fpdf import FPDF
                     pdf = FPDF('P','mm','A4')
                     pdf.add_page()
                     pdf.set_font("Arial","B", size=12)
-                    pdf.cell(190, 5, txt=f"Item Availability {timezone.now().date()}", ln=True, border=0, align="C")
+                    pdf.cell(190, 5, txt=f"Item Availability {as_of}", ln=True, border=0, align="C")
                     pdf.ln(10)
 
                     pdf.set_font("Arial","B", size=10)
-                    pdf.cell(100, 7, txt="Material", ln=False, align="L",border=1)
-                    pdf.cell(25, 7, txt="Stock In", ln=False, align="L",border=1)
-                    pdf.cell(30, 7, txt="Stock Out", ln=False, align="L",border=1)
-                    pdf.cell(30, 7, txt="Balance", ln=True, align="L",border=1)
+                    pdf.cell(100, 5, txt="Material", ln=False, align="L",border=1)
+                    pdf.cell(25, 5, txt="Stock Qty", ln=False, align="L",border=1)
+                    pdf.cell(30, 5, txt="Estmated Value", ln=False, align="L",border=1)
+                    pdf.cell(30, 5, txt="Total Amount", ln=True, align="L",border=1)
 
                     pdf.set_font("Arial","", size=10)
 
@@ -1515,12 +1593,12 @@ def interface(request):
 
                     materials = InventoryMaterial.objects.all().order_by('name')
                     for material in materials:
-                        total_qty = material.stock()
+                        total_qty = material.stock(as_of)
                         total_amount = total_qty * material.value
-                        pdf.cell(100, 7, txt=f"{material.name[:30]}", ln=False, align="L",border=1)
-                        pdf.cell(25, 7, txt=f"{material.stock_in()}", ln=False, align="L",border=1)
-                        pdf.cell(30, 7, txt=f"{'{:,.2f}'.format(material.stock_out())}", ln=False, align="L",border=1)
-                        pdf.cell(30, 7, txt=f"{'{:,.2f}'.format(total_qty)}", ln=True, align="L",border=1)
+                        pdf.cell(100, 5, txt=f"{material.name[:30]}", ln=False, align="L",border=1)
+                        pdf.cell(25, 5, txt=f"{total_qty}", ln=False, align="L",border=1)
+                        pdf.cell(30, 5, txt=f"{'{:,.2f}'.format(material.value)}", ln=False, align="L",border=1)
+                        pdf.cell(30, 5, txt=f"{'{:,.2f}'.format(total_amount)}", ln=True, align="L",border=1)
 
                         total += total_amount
                         tq += total_qty
@@ -1528,15 +1606,13 @@ def interface(request):
 
                         arr.append({
                             'name':material.name,
-                            'total_in':material.stock_in(),
-                            'total_out':material.stock_out(),
                             'stock_qty':total_qty,
                             'value':material.value,
                             'total_amount':total_amount
                         })
                         
 
-                    file_name = f"Item Availability {timezone.now().date()}.pdf"
+                    file_name = f"Item Availability As Of {as_of}.pdf"
                     file = f"static/general/tmp/{file_name}"
                     pdf.output(file)
                     success_response['message'] = {
@@ -1601,6 +1677,16 @@ def interface(request):
                 issue.save()
                 success_response['message'] = "Issue Deleted Successfully"
 
+            elif module == 'grn':
+                id = data.get('id')
+                grn = Grn.objects.get(id=id)
+                # delete transactions
+                GrnTransaction.objects.filter(grn=grn).delete()
+                Cardex.objects.filter(doc_no=grn.grn_no,doc_type='GR').delete()
+                grn.is_deleted = True
+                grn.save()
+                success_response['message'] = "GRN Deleted Successfully"
+
             elif module == 'service_material':
                 id = data.get('id')
                 MaterialOrderItem.objects.get(id=id).delete()
@@ -1664,6 +1750,50 @@ def interface(request):
                 material.save()
                 success_response['message'] = "Material Updated Successfully"
 
+            elif module == 'update_cardex_tally':
+                from django.db.models import Sum
+                for material in InventoryMaterial.objects.all():
+                    cardex_items = Cardex.objects.filter(material=material)
+                    for ci in cardex_items:
+                        created_at = ci.created_at
+                        # get sum of material including this
+                        # Get sum of material in cardex before this transaction including this
+                        sum_qty = Cardex.objects.filter(
+                            material=material,
+                            created_at__lte=created_at
+                        ).order_by('created_at').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
+                        ci.balance = sum_qty
+
+                        print(material.name,"SET TO",sum_qty)
+                        ci.save()
+
+                response = success_response
+
+            elif module == 'update_return_as_of':
+                tot = 0
+                for service in ServiceOrder.objects.all():
+                    
+                    if RequiredReturn.objects.filter(service_type=service.service_type).exists():
+                        
+                        for record in RequiredReturn.objects.filter(service_type=service.service_type):
+                            print(service.new_meter,record.service_type.name,"QUALIFIED")
+                            try:
+                                ServiceOrderReturns.objects.create(
+                                    service_order=service,
+                                    material=record.material,
+                                    quantity=record.quantity,
+                                    created_at=service.created_at,
+                                    created_by=service.created_by
+
+                                )
+                                tot += 1
+                            except Exception as e:
+                                pass
+                    else:
+                        print(service.new_meter,service.service_type.name,"NOT QUALIFIED")
+
+                success_response['message'] = f"{tot} jobs updated"
+
             elif module == 'patch_locations':
                 raise Exception("Disabled")
                 #  Add field location to cardex
@@ -1720,32 +1850,41 @@ def interface(request):
             elif module == 'issue_def_qty':
                 updated = 0
                 created = 0
-                for meterial in InventoryMaterial.objects.filter(is_issue=True,auto_issue=True):
+
+                # for meterial in InventoryMaterial.objects.filter(is_issue=True,auto_issue=True):
                     
-                    issue_qty = meterial.issue_qty
-                    MaterialOrderItem.objects.filter(material=meterial).update(
-                        quantity=issue_qty,
-                        rate=meterial.value,
-                        amount=issue_qty*meterial.value
-                    )
-                    updated += 1
+                #     issue_qty = meterial.issue_qty
+                #     MaterialOrderItem.objects.filter(material=meterial).update(
+                #         quantity=issue_qty,
+                #         rate=meterial.value,
+                #         amount=issue_qty*meterial.value
+                #     )
+                #     updated += 1
 
-                    mt = meterial
+                #     mt = meterial
 
-                    print (mt.name, mt.issue_qty, '\n')
+                #     print (mt.name, mt.issue_qty, '\n')
 
+                if True:
                     for service in ServiceOrder.objects.all():
-                        if MaterialOrderItem.objects.filter(material=mt,service_order=service).count() == 0:
+                        service_type = service.service_type
+                        # get linked materials
+                        
+                        for mt in ServiceMaterials.objects.filter(service=service_type):
+                            try:
                             # create
-                            MaterialOrderItem.objects.create(
-                                material_type='is',
-                                material=mt,
-                                quantity=issue_qty,
-                                rate=mt.value,
-                                amount = issue_qty * mt.value ,
-                                service_order=service
-                            )
-                            created += 1
+                                MaterialOrderItem.objects.create(
+                                    material_type='is',
+                                    material=mt.material,
+                                    quantity=mt.qty,
+                                    rate=mt.material.value,
+                                    amount = mt.qty * mt.material.value ,
+                                    service_order=service
+                                )
+                                print(mt.qty,'of',mt.material.name,'added to',service.new_meter)
+                                created += 1
+                            except Exception as e:
+                                print(e)
 
                 success_response['message'] = f"UPDATED {updated}, CREATED:{created}"
 
@@ -1968,7 +2107,7 @@ def interface(request):
                     ct += 1
                     issue.is_posted = False
                     issue.posted_by = None
-                    Cardex.objects.filter(doc_no=issue.issue_no,doc_type='ISS').delete() 
+                    Cardex.objects.filter(doc_no=issue.issue_no, doc_type__in=['ISS', 'RET']).delete()
                     issue.save()
                 success_response['message'] = f"Issue Unposted Successfully {ct}"
 

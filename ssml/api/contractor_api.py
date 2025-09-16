@@ -65,7 +65,10 @@ def contractor_api(request):
                         material = InventoryMaterial.objects.get(barcode=barcode)
                         print(barcode)
                         this_obj = material.obj()
-                        this_obj['issued'] = IssueTransaction.objects.filter(material=material,issue__contractor=contractor,issue__issue_type='ISS').aggregate(total_qty=Sum('total_qty'))['total_qty'] or 0
+                        total_issued = IssueTransaction.objects.filter(material=material,issue__contractor=contractor,issue__issue_type='ISS').aggregate(total_qty=Sum('total_qty'))['total_qty'] or 0
+                        total_return = IssueTransaction.objects.filter(material=material,issue__contractor=contractor,issue__issue_type='RET').aggregate(total_qty=Sum('total_qty'))['total_qty'] or 0
+
+                        this_obj['issued'] = Decimal(total_issued) - Decimal(total_return)
                         this_obj['consumed'] = MaterialOrderItem.objects.filter(material=material,service_order__contractor=contractor,material_type='is').aggregate(total_qty=Sum('quantity'))['total_qty'] or 0
                         this_obj['redeemed'] = RedeemTransactions.objects.filter(material=material,redeem__contractor=contractor,redeem__transaction_type='ISS').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
                         this_obj['balance'] = this_obj['issued'] - this_obj['consumed'] + this_obj['redeemed']
@@ -163,10 +166,9 @@ def contractor_api(request):
             elif module == 'jobs':
                 contractor_id = data.get('contractor_id')
                 contractor = Contractor.objects.get(id=contractor_id)
-                jobs = ServiceOrder.objects.filter(contractor=contractor)
                 
-                for job in jobs:
-                    arr.append(job.obj())
+                
+                arr = contractor.my_jobs()
 
             elif module == 'issued_recievable_balance':
                 contractor_id = data.get('contractor_id')
@@ -374,6 +376,7 @@ def contractor_api(request):
     
     except Exception as e:
         response['message'] = str(e)
+        print(e)
         return JsonResponse(response, status=400)
     
     return JsonResponse(success_response, status=200)

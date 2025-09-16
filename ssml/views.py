@@ -1,7 +1,7 @@
 
 from datetime import datetime
 from decimal import Decimal
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from ssml.form import ContractorErrorForm
 from ssml.models import Contractor, ContractorError, Grn, GrnTransaction, InventoryMaterial, InvoiceHD, Issue, \
-    IssueTransaction, Location, MaterialOrderItem, Meter, Plot, Reedem, Service, ServiceMaterialRates, ServiceOrder, \
+    IssueTransaction, Location, MaterialOrderItem, Meter, Plot, Reedem, RequiredReturn, Service, ServiceMaterialRates, ServiceMaterials, ServiceOrder, \
     ServiceOrderItem, ServiceType, ServiceTypeServices, Supplier, TransferHd
 
 
@@ -54,7 +54,8 @@ def materials(request):
     context = {
         'page': page,
         'next_barcode': f"MT0{InventoryMaterial.objects.filter(is_issue=False).last().id if InventoryMaterial.objects.filter(is_issue=False).exists() else 0 + 1}",
-        'service_rates':sr_opt
+        'service_rates':sr_opt,
+        'services':ServiceType.objects.all().order_by('name')
         
     }
     return render(request, 'ssml/materials.html', context)
@@ -424,7 +425,9 @@ def servive_type(request,id):
         'page': page,
         'service':service,
         'service_rates':Service.objects.all().order_by('name'),
-        'my_rates':ServiceTypeServices.objects.filter(service_type=service)
+        'my_rates':ServiceTypeServices.objects.filter(service_type=service),
+        'id':id,
+        'required_returns':RequiredReturn.objects.filter(service_type=service)
     }
 
     return render(request,'ssml/service-type.html',context=context)
@@ -502,6 +505,7 @@ def upload_service_order(request):
                 hd = [service_name,customer,customer_phone,contractor.company,resolved_on,meter_no,ip_address]
 
                 # check if meter job created
+                ServiceOrder.objects.filter(new_meter=meter_no).delete()
                                   
                     # create
                 try:
@@ -583,11 +587,13 @@ def upload_service_order(request):
                         
                         # print(meter_no, material.name,qty)
 
-                # default issues        
-                for mat in InventoryMaterial.objects.filter(auto_issue=True):
+                # default issues    
+                MaterialOrderItem.objects.filter(service_order=met_service)    
+                for mat in ServiceMaterials.objects.filter(service=service):
+                    print(mat.material.name,mat.qty)
                     try:
                         MaterialOrderItem(
-                                    service_order=met_service,material=mat,quantity=mat.issue_qty,rate=0,amount=0
+                                    service_order=met_service,material=mat.material,quantity=mat.qty,rate=0,amount=0
                                 ).save()
                     except Exception as e:
                         print(e)
@@ -614,6 +620,112 @@ def upload_service_order(request):
 
     else:
         return HttpResponse("Invalid Method")
+
+@csrf_exempt
+@login_required
+def sync_retired_meter(request):
+    if request.method == 'POST':
+        if 'excel_file' not in request.FILES:
+            return HttpResponseBadRequest("No file uploaded.")
+        
+        import openpyxl
+        excel_file = request.FILES['excel_file']
+        wb = openpyxl.load_workbook(excel_file)
+        no_service_file_name = "sync_ret_meter"
+        book = openpyxl.Workbook()
+        sheet = book.active
+        
+        foc_list = {}
+        # Loop through each sheet in the workbook
+        for sheet_name in wb.sheetnames:
+            sheet = wb[sheet_name]
+            # print(f"Sheet: {sheet_name}")
+            # Loop through each row in the sheet
+            for row in sheet.iter_rows(values_only=True):
+                box_no = row[2]
+                box_litral = box_no.split('-')[0] if box_no else 'not a valid row'
+                
+                if box_litral== 'SNE':
+                    old_meter_no = str(row[4]).split('.')[0]
+                    
+                    foc_name = row[21] or None
+                    is_service = False
+                    if old_meter_no:
+                        # check if old meter exisit in done job
+                        if ServiceOrder.objects.filter(old_meter_no=old_meter_no).exists():
+                            is_service = True
+                        else:
+                            # If old_meter_no starts with '0', remove the leading '0'
+                            if old_meter_no and str(old_meter_no).startswith('0'):
+                                old_meter_no = str(old_meter_no)[1:]
+                                if ServiceOrder.objects.filter(old_meter_no=old_meter_no).count() == 0:
+                                    old_meter_no = f"0{old_meter_no}"
+                                    if ServiceOrder.objects.filter(old_meter_no=old_meter_no).count() == 0:
+                                        # try adding 0 if no 0
+                                        
+                                        print(old_meter_no,"HAS NO SERVICE")
+                                        pass
+                                    else:
+                                        
+                                        is_service = True
+                                else:
+                                    # print(old_meter_no)
+                                    is_service = True
+                                    # update return
+                    
+                    
+
+
+                    if is_service:
+                        phase = row[13]
+                        service = ServiceOrder.objects.get(old_meter_no=old_meter_no)
+                        if '3' in str(service.service_type.name):
+                            return_barcode = "MT067"
+                        else:
+                            return_barcode = 'MT026'
+                        
+                        
+                        product = InventoryMaterial.objects.get(barcode=return_barcode)
+                        
+                        foc_name = service.contractor.company
+
+                        if foc_name not in foc_list:
+                            foc_list[foc_name] = {
+                                "MT067":0,
+                                "MT026":0
+                            }
+                            
+                        
+                        foc_list[foc_name][return_barcode] = foc_list[foc_name][return_barcode] + 1
+                            
+                        
+                        # if foc_name == 'KOSMEN ELECTRICAL WORKS':
+                        if True:
+                            print(foc_name,box_no,old_meter_no,service.new_meter,phase,service.service_type.name,product.name)
+                            sheet.append([foc_name,box_no,old_meter_no,service.new_meter,phase,service.service_type.name,product.name])
+                        # add to return
+                        try:
+                            MaterialOrderItem.objects.create(
+                                material=product,
+                                quantity=1,
+                                service_order=service,
+                                material_type='rt',
+                                rate=0,
+                                amount=0
+                            )
+                            # print(product.name,'ADDED')
+                        except Exception as e:
+                            pass
+                            # print(e)
+                        # print(old_meter_no,service.new_meter,phase,service.service_type.name,product.name)
+                        
+
+        print(foc_list)
+
+        book.save(f'static/general/tmp/{no_service_file_name}.xlsx')
+                
+
+    return JsonResponse({"status_code":200,"message":no_service_file_name})
 
 @csrf_exempt
 @login_required

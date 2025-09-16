@@ -3,6 +3,32 @@
 
 {% block body %}
 
+<div class="modal fade" id="link_model_model">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>NAME</th><th>ACTIOn</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for srv in services%}
+                            <tr>
+                                <td>{{srv.name}}</td>
+                                <td><button class="btn btn-sm btn-info add_service" data-id="{{srv.id}}">Add</button></td>
+                            </tr>
+                        {%endfor%}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
 <div class="card-header">
     <div class="d-flex justify-content-between">
         <div class="w-50 d-flex justify-content-start">
@@ -10,8 +36,10 @@
             <button class="btn btn-sm btn-primary ms-2" id="rates">Rates</button>
             <button class="btn btn-sm btn-primary ms-2" id="prev-material"><i class="fas fa-arrow-left"></i> Previous</button>
             <button class="btn btn-sm btn-primary ms-2" id="next-material">Next <i class="fas fa-arrow-right"></i></button>
+            <button class="btn btn-sm ms-2 btn-info link_model" data-bs-toggle="modal" data-bs-target="#link_model_model">Link Model</button>
         </div>
         <div class="w-50 d-flex justify-content-end">
+            <button id="search-material" class="btn btn-primary">Search</button>
             <button id="add-material" class="btn btn-primary">Add Material</button>
             <button id="groups" class="btn btn-info">Groups</button>
         </div>
@@ -79,59 +107,75 @@
                       <li class="nav-item">
                         <a class="nav-link" id="profile-tab" data-toggle="tab" href="#stockx" role="tab">Stock</a>
                       </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="profile-tab" data-toggle="tab" href="#services" role="tab">Services</a>
+                      </li>
                     </ul>
                   
                     <!-- Tab content -->
                     <div class="tab-content" id="myTabContent">
-                      <div class="tab-pane fade show active p-3" id="cardex" role="tabpanel">
-                        <div class="card">
-                            <div class="card-header"><strong class="card-title">Cardex</strong></div>
-                            <div style="height: 50vh; overflow-y: auto;" class="card-body">
-                                <table class="table table-bordered table-striped">
-                                    <thead class="table-dark">
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Doc Type</th>
-                                            <th>Doc No</th>
-                                            <th>Qty</th>
-                                        </tr>
-                                    </thead>
+                        <div class="tab-pane fade show active p-3" id="cardex" role="tabpanel">
+                            <div class="card">
+                                <div class="card-header"><strong class="card-title">Cardex</strong></div>
+                                <div style="height: 50vh; overflow-y: auto;" class="card-body">
+                                    <table class="table table-bordered table-striped">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Doc Type</th>
+                                                <th>Doc No</th>
+                                                <th>Qty</th>
+                                            </tr>
+                                        </thead>
 
-                                    <tbody id="cardex_table">
+                                        <tbody id="cardex_table">
 
-                                    </tbody>
-                                    
-                                </table>
-                            </div>
-                            <div class="card-footer">
-                                <a href="" id="download-cardex" class="btn btn-primary">Download</a>
+                                        </tbody>
+                                        
+                                    </table>
+                                </div>
+                                <div class="card-footer">
+                                    <a href="" id="download-cardex" class="btn btn-primary">Download</a>
+                                </div>
                             </div>
                         </div>
-                      </div>
-                      <div class="tab-pane fade p-3" id="ratesx" role="tabpanel">
-                            <table class="table table-sm table-bordered">
+                        <div class="tab-pane fade p-3" id="ratesx" role="tabpanel">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Description</th>
+                                            <th>Rate</th>
+                                            <th>Breakpoint</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rates_table"></tbody>
+                                </table>
+                        </div>
+                        <div class="tab-pane fade p-3" id="stockx" role="tabpanel">
+                            <table class="table table-sm w-50 table-bordered">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th>Description</th>
-                                        <th>Rate</th>
-                                        <th>Breakpoint</th>
-                                        <th>Action</th>
+                                        <th>Location</th>
+                                        <th>Stock</th>
                                     </tr>
                                 </thead>
-                                <tbody id="rates_table"></tbody>
+                                <tbody id="stock_table"></tbody>
                             </table>
-                      </div>
-                      <div class="tab-pane fade p-3" id="stockx" role="tabpanel">
-                        <table class="table table-sm w-50 table-bordered">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Location</th>
-                                    <th>Stock</th>
-                                </tr>
-                            </thead>
-                            <tbody id="stock_table"></tbody>
-                        </table>
-                  </div>
+                        </div>
+
+                        <div class="tab-pane fade p-3" id="services" role="tabpanel">
+                            <table class="table table-sm w-50 table-bordered">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Service</th>
+                                        <th>Qty</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="service_linked"></tbody>
+                            </table>
+                        </div>
+
                     </div>
                   </div>
                   
@@ -735,6 +779,105 @@
         $('#prev-material').click(function(){
             let pk = $('#prev-material').val();
             ssml.loadMaterial(pk);
+        })
+
+        $('#search-material').click(function(){
+        amodal.setTitleText('Search Material');
+        amodal.setBodyHtml(`
+            <div class="mb-2">
+                <input type="text" id="search-material-input" class="form-control" placeholder="Enter material name or barcode">
+            </div>
+            <div id="search-material-results"></div>
+        `);
+        amodal.show();
+
+        // Handler for search input
+        $('#search-material-input').off('input').on('input', function() {
+            let query = $(this).val().trim();
+            if (query.length < 2) {
+                $('#search-material-results').html('');
+                return;
+            }
+            let payload = {
+                module: 'material',
+                data:{
+                    'id':query
+                },
+                method: 'SEARCH',
+                query: query
+            };
+            api.v2('VIEW', payload, '/ssml/api/').then(response => {
+                if (anton.IsRequest(response)) {
+                    let materials = response.message || [];
+                    if (materials.length === 0) {
+                        $('#search-material-results').html('<div class="text-muted">No materials found.</div>');
+                        return;
+                    }
+                    let rows = materials.map(item => `
+                        <tr>
+                            <td>${item['barcode'] || ''}</td>
+                            <td>${item['name'] || ''}</td>
+                            <td>${item['group']['name'] || ''}</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary view-material-btn" data-pk="${item['id']}">View</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                    let table = `
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Barcode</th>
+                                    <th>Name</th>
+                                    <th>Group</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows}
+                            </tbody>
+                        </table>
+                    `;
+                    $('#search-material-results').html(table);
+                    // Delegate click for view button
+                    $('.view-material-btn').click( function() {
+                        let pk = parseInt($(this).data('pk'));
+                        amodal.hide();
+                        console.log(pk)
+                        ssml.loadMaterial(pk);
+                    });
+                } else {
+                    $('#search-material-results').html('<div class="text-danger">Error: ' + (response.message || 'Unknown error') + '</div>');
+                }
+            }).catch(error => {
+                $('#search-material-results').html('<div class="text-danger">Error: ' + error + '</div>');
+            });
+        });
+
+        
+        })
+
+        $('.add_service').click(function(){
+            let id = $(this).data('id');
+            $('#link_model_model').modal('hide')
+            amodal.setBodyHtml(`<input id='x_qty' class='form-control rounded-0' type='text' value=1>`)
+            amodal.setFooterHtml(`<button id='link_srv_mat'>SAVE</button>`)
+            amodal.show()
+            $('#link_srv_mat').click(function(){
+                let ids = ['x_qty'];
+                if(anton.validateInputs(ids)){
+                    let payload = {
+                        module:'service_materials',
+                        data:{
+                            barcode:$('#barcode').val(),
+                            service:id,
+                            qty:$('#x_qty').val()
+                        }
+                    }
+
+                    kasa.response(api.call('PUT',payload,'/ssml/api/'))
+                }
+            })
         })
 
         ssml.loadMaterial(last_pk);

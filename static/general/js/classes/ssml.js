@@ -943,6 +943,15 @@ class SSML {
                                 </tbody>
                             </table>
                         </div>
+
+                        <h4 class="mt-4"><span> JObs <span class="text-primary" id="total_returns"></span></h4>
+                        <div id='contractor_jobs' class='col-sm-12' style="background-color:rgba(248, 249, 250, 0.57); padding: 20px; border-radius: 10px; border: 2px dotted #808080;">
+                        <div class="text-center my-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        </div>
                     </div>
                 `
 
@@ -1082,6 +1091,61 @@ class SSML {
                     `;
                     $('#ret_rows').html(ret_rows);
                 });
+
+                // load jobs
+                console.log("Getting")
+                api.v2('VIEW',{module:'jobs',data:{contractor_id:id}},'/ssml/api/contractor/').then(response => {
+                    if(anton.IsRequest(response)){
+                        let ht = "";
+                    // loop through {}
+                    if (response.message) {
+                        let jobs = response.message;
+                        for (let jobType in jobs) {
+                            if (jobs.hasOwnProperty(jobType)) {
+                                let jobData = jobs[jobType];
+                                ht += `
+                                    <div class="job-section">
+                                        <h5>${jobType} (${jobData.total})</h5>
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Customer</th>
+                                                    <th>Meter</th>
+                                                    <th>Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                `;
+                                if (Array.isArray(jobData.transactions) && jobData.transactions.length > 0) {
+                                    jobData.transactions.forEach(tran => {
+                                        ht += `
+                                            <tr>
+                                                <td>${tran.service_date || tran.date || ''}</td>
+                                                <td>${tran.customer || ''}</td>
+                                                <td>${tran.new_meter_no || ''}</td>
+                                                <td>${tran.amount || '0.000'}</td>
+                                            </tr>
+                                        `;
+                                    });
+                                } else {
+                                    ht += `
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted">No jobs found</td>
+                                        </tr>
+                                    `;
+                                }
+                                ht += `
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                `;
+                            }
+                        }
+                        $('#contractor_jobs').html(ht);
+                    }
+                    }
+                }).catch(error => {kasa.error(error)})
 
 
                 
@@ -1408,6 +1472,7 @@ class SSML {
                 $('#credit').val(contractor.ledger.total_credit);
                 // $('#balance').val(contractor.balance);
                 $('#contractor_id').val(contractor_id);
+                $('#code').val(contractor.code)
 
                 if(contractor.prev_row) {
                     
@@ -2615,39 +2680,59 @@ class SSML {
     }
 
 
-    async itemAvailability(){
-        loader.show()
-        await api.v2('VIEW',{module:'item_availability',data:{}},'/ssml/api/').then(response => {
-            
-            if(anton.IsRequest(response)){
-                let data = response.message
-                console.table(data)
-                let json = data.data
-                let html = ``;
-                for(let x = 0; x < json.length; x++){
-                    let item = json[x];
-                    html += `<tr>
-                        <td>${item.name}</td>
-                        <td>${item.total_in}</td>
-                        <td>${item.total_out}</td>
-                        <td>${item.stock_qty}</td>
-                    </tr>`
+    itemAvailability(){
+        let form = "<input type='date' class='form-control rounded-0' id='as_of_field' >"
+        amodal.setBodyHtml(form)
+        amodal.setFooterHtml(`<button  id='ret_avai' class='btn btn-success rounded-0'>RETRIEVE</button>`)
+        amodal.show()
 
+        $('#ret_avai').click(async function(){
+            if(anton.validateInputs(['as_of_field'])){
+                let as_of = $('#as_of_field').val()
+                loader.show()
+                let payload = {
+                    module:'item_availability',
+                    data:{'as_of':as_of}
                 }
-                amodal.setBodyHtml(`<table class='table table-bordered table-stripped table-hover'><thead><tr><th>Name</th><th>Stock In</th><th>Stock Out</th><th>Balance</th></tr></thead><tbody>${html}</tbody></table>`)
-                amodal.setTitleText('Item Availability')
-                amodal.setSize('L')
-                amodal.show()
-                amodal.setFooterHtml(`<a href='/${data.file}' class='btn btn-primary' target='_blank' id='export_pdf'>Export PDF</a>`)
-                loader.hide()
+                console.table(payload)
+                await api.v2('VIEW',payload,
+                    '/ssml/api/').then(response => {
+                
+                    if(anton.IsRequest(response)){
+                        let data = response.message
+                        console.table(data)
+                        let json = data.data
+                        let html = ``;
+                        for(let x = 0; x < json.length; x++){
+                            let item = json[x];
+                            html += `<tr>
+                                <td>${item.name}</td>
+                                <td>${item.stock_qty}</td>
+                                <td>${item.value}</td>
+                                <td>${item.total_amount}</td>
+                            </tr>`
+        
+                        }
+                        amodal.setBodyHtml(`<table class='table table-bordered table-stripped table-hover'><thead><tr><th>Name</th><th>Stock Qty</th><th>Value</th><th>Total Amount</th></tr></thead><tbody>${html}</tbody></table>`)
+                        amodal.setTitleText('Item Availability')
+                        amodal.setSize('L')
+                        amodal.show()
+                        amodal.setFooterHtml(`<a href='/${data.file}' class='btn btn-primary' target='_blank' id='export_pdf'>Export PDF</a>`)
+                        loader.hide()
+                    } else {
+                        kasa.response(response)
+                        loader.hide()
+                    }
+                }).catch(error => {
+                    kasa.error(error)
+                    loader.hide()
+                })
             } else {
-                kasa.response(response)
-                loader.hide()
+                kasa.error("Please Fill Form")
             }
-        }).catch(error => {
-            kasa.error(error)
-            loader.hide()
+            
         })
+        
     }
 
     async contractorWise(){
@@ -2698,7 +2783,7 @@ class SSML {
         loader.show()
         await api.v2('VIEW',{module:'material',data:{id:pk}},'/ssml/api/').then(async response => {
             if(anton.IsRequest(response)){
-                console.table(response)
+                // console.table(response)
                 let data = response.message
                 $('#barcode').val(data.barcode)
                 $('#name').val(data.name)
@@ -2710,6 +2795,20 @@ class SSML {
                 $('#stock').val(data.stock)
                 $('#next-material').val(data.next)
                 $('#prev-material').val(data.prev)
+                let services = data.services;
+                console.table(services)
+
+                let srv_tr = ``;
+                services.map(srv => {
+                    srv_tr += `
+                        <tr>
+                                        <td>${srv.service}</td>
+                                        <td>${srv.qty}</td>
+                                    </tr>
+                    `
+                })
+
+                $('#service_linked').html(srv_tr)
 
                 let services_rate = data.service_rates
                 let services_tr = "";
@@ -3222,6 +3321,166 @@ class SSML {
         }).catch(error => {kasa.error(error)})
 
     }
+
+    addServiceReturns(service_id){
+        //make body
+        let body = `
+            <input type='search' placeholder="Name or barcode" class='form-control rounded-0' id='find_item' ><hr>
+            <div style='height:50vh !important'>
+            <table class="table table-bordered" id="service_returns_table">
+                <thead>
+                    <tr>
+                    <th><i class="fa fa-checkbox"></i></th>
+                                    <th>QTY</th>
+                        <th>Barcode</th>
+                        <th>Name</th>
+                    </tr>
+                </thead>
+                <tbody id="rets">
+                    
+                </tbody>
+            </table>
+
+            </div>
+        `
+
+        amodal.setTitleText("Add Return")
+        amodal.setBodyHtml(body)
+        amodal.setFooterHtml(`<input type='date' class='form-control w-50 rounded-0 ms-2' id='qty_as_of' ><button class='btn btn-success' id='add_service'>Add</button>`)
+        amodal.show()
+
+        $('#find_item').change(function(){
+        $(this).on('keypress', async function(e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                // Your logic here when Enter is pressed
+                let search_string = $(this).val();
+                
+                await api.v2('VIEW',{module:'material',data:{
+                    id:search_string,
+                    filter:'is_return',
+                }},'/ssml/api/').then(async response => {
+                    if(anton.IsRequest(response)){
+                        let tr = ""
+                        response.message.map(item => {
+                            console.table(item)
+                            tr += `<tr>
+                                    <td><input class='check_ret' type='checkbox' value='${item.id}' ></td>
+                                    <td><input style='width:100px' class='form-control check_qty' type='number' value='1' ></td>
+                                    <td>${item.barcode}</td>
+                                    <td>${item.name}</td>
+                                </tr>`
+                        })
+                        $('#rets').html(tr)
+
+                        $('#add_service').click(function(){
+                        // INSERT_YOUR_CODE
+                        let ids = ['qty_as_of','mypk']
+                        if(anton.validateInputs(ids)){
+                            let selectedItems = [];
+                            $('#rets tr').each(function() {
+                                let $row = $(this);
+                                let $checkbox = $row.find('.check_ret');
+                                if ($checkbox.is(':checked')) {
+                                    let id = $checkbox.val();
+                                    let qty = $row.find('.check_qty').val();
+                                    selectedItems.push({
+                                        id: id,
+                                        qty: qty
+                                    });
+                                }
+                            });
+
+                            let payload = {
+                                module:'return_qty',
+                                data:{
+                                    service_id:service_id,
+                                    transactions:selectedItems,
+                                    qty_as_of:$('#qty_as_of').val(),
+
+                                }
+                            }
+                            
+                            console.log(payload);
+                            kasa.confirm(api.call('PUT',payload,'/ssml/api/')['message'],1,'here')
+                        } else {
+                            kasa.error("Invalid Fields")
+                        }
+                        
+                        })
+                    } else {
+                        kasa.response(response)
+                    }
+                }).catch(error => {kasa.error(error)})
+            }
+        });
+        })
+
+        
+    }
+
+    async update_returns_as_of(){
+            
+        let payload = {
+            module:'update_return_as_of',data:{}
+        }
+
+        loader.show()
+
+        await api.v2('PATCH',payload,'/ssml/api/').then(response => {
+            kasa.response(response)
+            loader.hide()
+        }).catch(error => {kasa.error(error);loader.hide()})
+
+    }
+
+    
+    // Show a modal with a form to upload an Excel file and POST it to /ssml/sync_retired_meter/
+    syncRetiredMeter() {
+        // Create the HTML for the modal
+        let modalHtml = `
+            <form id="syncRetiredMeterForm" enctype="multipart/form-data" method="post" autocomplete="off">
+                <div class="mb-3">
+                    <label for="excelFileInput" class="form-label">Select Excel File</label>
+                    <input type="file" class="form-control" id="excelFileInput" name="excel_file" accept=".xlsx,.xls" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Sync</button>
+            </form>
+        `;
+
+        amodal.setBodyHtml(modalHtml)
+        amodal.setTitleText("Syync Retirement")
+        amodal.show();
+
+        // Attach submit handler after modal is shown
+        setTimeout(() => {
+            $('#syncRetiredMeterForm').on('submit', function(e) {
+                e.preventDefault();
+                let form = document.getElementById('syncRetiredMeterForm');
+                let formData = new FormData(form);
+
+                loader.show();
+
+                fetch('/ssml/sync_retired_meter/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': (typeof csrftoken !== 'undefined') ? csrftoken : ($('input[name=csrfmiddlewaretoken]').val() || '')
+                    }
+                })
+                .then(response => response.text())
+                .then(data => {
+                    loader.hide();
+                    amodal.hide();
+                    kasa.response(data);
+                })
+                .catch(error => {
+                    loader.hide();
+                    kasa.error("Upload failed: " + error);
+                });
+            });
+        }, 200);
+    }
+    
     
 
 }
