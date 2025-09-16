@@ -397,3 +397,27 @@ class Evidence(models.Model):
 
 
 
+# models for car info
+class VehicleAsset(models.Model):
+    COMPANY_CHOICES = [
+        ('Acme Corp', 'Acme Corp'),
+        ('Globex Inc', 'Globex Inc'),
+        ('Umbrella Ltd', 'Umbrella Ltd'),
+    ]
+
+    asset_no = models.CharField(max_length=50, unique=True)
+    company = models.CharField(max_length=50, choices=COMPANY_CHOICES)
+    owner = models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
+    manufacturer = models.CharField(max_length=100)
+    year = models.PositiveIntegerField()
+    color = models.CharField(max_length=7, help_text="Hex color code, e.g. #ffffff")
+    number = models.CharField(max_length=50)
+    image = models.ImageField(upload_to='static/uploads/vehicle_assets/', blank=True, null=True)
+    descr = models.TextField(blank=True)
+
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.number})"
