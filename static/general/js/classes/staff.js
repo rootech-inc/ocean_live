@@ -437,6 +437,7 @@ class Staff {
         await this.getMyAttendance(rg).then(response => {
             if(anton.IsRequest(response)){
                 console.table(response)
+                let xr = [["DATE","DAY","TIME IN","IS LATE"]]
                 let recs = response.message;
                 let tr = ""
                 if(recs.length > 0){
@@ -468,9 +469,11 @@ class Staff {
                     } else {
                         text = 'text-success'
                     }
+                    xr.push([record['date'],record['day'],record['time_in'],record['is_late']])
                     tr += `
                         <tr class="${text}">
                             <td>${record['date']}</td>
+                            <td>${record['day']}</td>
                             <td>${record['time_in']}</td>
                             <td>${record['time_in']}</td>
                             <td>${record['is_late']}</td>
@@ -478,6 +481,7 @@ class Staff {
                         
                     `
                 })
+
                 } else {
                     tr = `<tr><td colspan="4"  class="text-danger text-center">NO RECORDS</td></tr>`
                 }
@@ -485,6 +489,9 @@ class Staff {
 
 
                 $('#att_bd').html(tr)
+                $('#exp_attendance').click(async function () {
+                    anton.downloadCSV('attendance.csv',anton.convertToCSV(xr))
+                })
             } else {
                 kasa.response(response)
             }

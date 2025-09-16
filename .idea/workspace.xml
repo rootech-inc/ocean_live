@@ -1,0 +1,520 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="0ee13635-a68a-46f6-958b-538cfd49f7cb" name="Changes" comment="Refactor inventory and retail management logic across templates, models, and JavaScript&#10;&#10;Simplified and corrected stock validation logic, improved `cardex` display handling, added item code assignment in `models.py`, and updated retail template to include change group functionality. Enhanced inventory transfer UI and optimized stock-related JavaScript functions by ensuring consistency and reducing redundant calls.">
+      <change afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/data_source_mapping.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/ocean_live.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/ocean_live.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Dockerfile - Copy" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DockerfileXXX" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0001_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0003_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0005_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0006_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0013_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0015_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0016_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0017_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0018_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0019_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0020_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0021_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0022_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0023_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0024_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0025_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0026_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0027_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0028_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0029_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0030_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0031_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0032_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0033_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0034_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0035_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0036_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0037_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0038_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0039_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0040_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0041_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0042_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0043_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0044_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0047_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0048_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0049_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0050_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0051_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0052_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0053_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0054_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0055_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0056_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0057_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0058_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0059_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0060_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0061_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/0062_alter_bulksms_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/migrations/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/migrations/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apiv2/migrations/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appconfig/migrations/0001_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appconfig/migrations/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0001_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0002_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0003_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0004_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0005_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0006_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0007_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0008_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0009_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0010_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0011_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0012_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0013_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0014_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0015_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0016_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0017_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0018_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0019_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0020_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0021_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0022_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0023_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0024_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0025_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0026_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0027_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0028_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0029_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0030_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0031_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0032_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0033_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0034_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0035_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0036_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0037_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0038_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0039_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0040_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0041_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0042_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0043_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0044_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0045_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0046_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0047_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0048_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0049_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0050_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0051_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0052_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0053_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0054_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0055_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0056_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0057_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0058_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0059_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0060_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/0061_alter_app_file.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/appscenter/migrations/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/blog/migrations/0001_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/blog/migrations/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmms/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmms/migrations/0001_initial.py" beforeDir="false" afterPath="$PROJECT_DIR$/cmms/migrations/0001_initial.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/community/migrations/0001_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/community/migrations/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crm/migrations/0001_initial.py" beforeDir="false" afterPath="$PROJECT_DIR$/crm/migrations/0001_initial.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dolphine/migrations/0001_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/dolphine/migrations/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/employee/migrations/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/inventory/migrations/0001_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/inventory/migrations/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/meeting/migrations/0001_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/meeting/migrations/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/migrations/0001_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/reports/migrations/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/retail/migrations/0001_initial.py" beforeDir="false" afterPath="$PROJECT_DIR$/retail/migrations/0001_initial.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/servicing/migrations/0001_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/servicing/migrations/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ssml/ssml_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/ssml/ssml_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/general/js/classes/retail.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/general/js/classes/retail.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stream/migrations/0001_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/stream/migrations/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/taskmanager/migrations/0001_initial.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/taskmanager/migrations/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/console/organization.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/console/organization.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/retail/products.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/retail/products.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/ssml/inventory/transfer_add.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/ssml/inventory/transfer_add.html" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="JavaScript File" />
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;rootleet&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/rootech-inc/ocean_live.git&quot;,
+    &quot;accountId&quot;: &quot;d26d768d-d160-40c2-b146-9cb3da94dd6d&quot;
+  }
+}</component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="ProjectErrors" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 1
+}</component>
+  <component name="ProjectId" id="2wjGfoAQY4u6ALBkM9fMPFiXKjN" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.OpenDjangoStructureViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.pycharm.django.structure.promotion.once.per.project&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Development/WORKSPACE/ocean_live/templates/employee&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Program Files\\JetBrains\\PyCharm 252.23309.36\\plugins\\javascript-plugin\\jsLanguageServicesImpl\\external&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  },
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;mysql&quot;
+    ]
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Development\WORKSPACE\ocean_live\templates\employee" />
+      <recent name="D:\Development\WORKSPACE\ocean_live\employee" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="ocean_live" type="Python.DjangoServer" factoryName="Django server">
+      <module name="ocean_live" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="launchJavascriptDebuger" value="false" />
+      <option name="port" value="8000" />
+      <option name="host" value="" />
+      <option name="additionalOptions" value="" />
+      <option name="browserUrl" value="" />
+      <option name="runTestServer" value="false" />
+      <option name="runNoReload" value="false" />
+      <option name="useCustomRunCommand" value="false" />
+      <option name="customRunCommand" value="" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-6be00b7b0f42-JavaScript-PY-252.23309.36" />
+        <option value="bundled-python-sdk-1eec2b582c1f-32658010c498-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.23309.36" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="0ee13635-a68a-46f6-958b-538cfd49f7cb" name="Changes" comment="" />
+      <created>1746547677285</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1746547677285</updated>
+      <workItem from="1746547681082" duration="4000" />
+      <workItem from="1746549025712" duration="3502000" />
+      <workItem from="1746612552446" duration="313000" />
+      <workItem from="1746612937701" duration="17830000" />
+      <workItem from="1747224702744" duration="13721000" />
+      <workItem from="1747400727097" duration="10749000" />
+      <workItem from="1747661964433" duration="8703000" />
+      <workItem from="1747733396379" duration="17647000" />
+      <workItem from="1747819798342" duration="12539000" />
+      <workItem from="1748003989500" duration="2144000" />
+      <workItem from="1748013650877" duration="3501000" />
+      <workItem from="1748020327144" duration="2650000" />
+      <workItem from="1748087995048" duration="7893000" />
+      <workItem from="1748250051673" duration="12930000" />
+      <workItem from="1748420669841" duration="18944000" />
+      <workItem from="1748512178665" duration="13431000" />
+      <workItem from="1748875852703" duration="2380000" />
+      <workItem from="1748944703600" duration="10000" />
+      <workItem from="1749628523145" duration="675000" />
+      <workItem from="1749629556398" duration="4783000" />
+      <workItem from="1749636809611" duration="8971000" />
+      <workItem from="1750085292276" duration="6837000" />
+      <workItem from="1750153167736" duration="1416000" />
+      <workItem from="1750160386476" duration="937000" />
+      <workItem from="1750329977742" duration="6732000" />
+      <workItem from="1750406778932" duration="2231000" />
+      <workItem from="1750423796969" duration="1762000" />
+      <workItem from="1750503825565" duration="5916000" />
+      <workItem from="1750671307488" duration="1465000" />
+      <workItem from="1750756682823" duration="10360000" />
+      <workItem from="1750955847784" duration="2469000" />
+      <workItem from="1751018862303" duration="10155000" />
+      <workItem from="1751287670349" duration="14000" />
+      <workItem from="1751368967123" duration="224000" />
+      <workItem from="1751875542697" duration="6639000" />
+      <workItem from="1751889525871" duration="21000" />
+      <workItem from="1751900069053" duration="9000" />
+      <workItem from="1751900526994" duration="9492000" />
+      <workItem from="1751991946874" duration="1768000" />
+      <workItem from="1752050173831" duration="12438000" />
+      <workItem from="1752141284743" duration="12655000" />
+    </task>
+    <task id="LOCAL-00001" summary="Add employee module with views, URLs, and API integration&#10;&#10;Introduced a new employee module, including URL configurations, views, and templates for employee management. Implemented an API token-based authentication mechanism and added navigation to the new module in the base template. This update improves functionality by enabling interaction with external employee-related APIs and providing a dedicated interface for employee operations.">
+      <option name="closed" value="true" />
+      <created>1746552454033</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1746552454033</updated>
+    </task>
+    <task id="LOCAL-00002" summary="final">
+      <option name="closed" value="true" />
+      <created>1746699446964</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1746699446964</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Refactor attendance model and implement attendance syncing.&#10;&#10;Replaced `employee` FK with `emp_code` and added fields like `name` and `time_diff` in the Attendance model. Introduced attendance syncing functionality in `employee_api.py`, integrating with external APIs to fetch employee and attendance data. Updated front-end logic and templates for calendar navigation and attendance data handling.">
+      <option name="closed" value="true" />
+      <created>1747224787791</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1747224787791</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Remove Attendance model from employee app&#10;&#10;The Attendance model was commented out in the codebase, likely for deprecation or replacement purposes. This change helps streamline the application by removing unused or redundant code.">
+      <option name="closed" value="true" />
+      <created>1747224884311</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1747224884311</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Remove unused Attendance import from employee_api.py&#10;&#10;The Attendance model was imported but never used in the file. Removing it helps clean up unused imports and improves code readability.">
+      <option name="closed" value="true" />
+      <created>1747224935510</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1747224935510</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Comment out unused models and imports in employee app.&#10;&#10;Removed active code for models and imports that are currently not in use. This cleanup improves maintainability and minimizes unused code clutter in the application.">
+      <option name="closed" value="true" />
+      <created>1747225175615</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1747225175615</updated>
+    </task>
+    <task id="LOCAL-00007" summary="Refactor models by removing unused classes.&#10;&#10;Removed `Company`, `Department`, `Position`, and `Employee` models to streamline the codebase. Retained only the `Attendance` model, as this is now the only required functionality. Updated imports in `employee_api.py` accordingly.">
+      <option name="closed" value="true" />
+      <created>1747225424543</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1747225424543</updated>
+    </task>
+    <task id="LOCAL-00008" summary="Add attendance management system for staff&#10;&#10;Introduced functionality to manage and track employee attendance. Includes API integration, database updates, front-end rendering for attendance data, and new navigation/menu options. Enabled attendance filtering by date and range (week/month).">
+      <option name="closed" value="true" />
+      <created>1747238963971</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1747238963971</updated>
+    </task>
+    <task id="LOCAL-00009" summary="Add leave management and enhance employee attendance features&#10;&#10;Introduced the `Leave` model and API functionality to support leave requests, including validation and SMS notifications. Enhanced attendance tracking by adding &quot;Is Late&quot; to the employee attendance view and fixed minor bugs in frontend leave forms and queries.">
+      <option name="closed" value="true" />
+      <created>1747405397368</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1747405397368</updated>
+    </task>
+    <task id="LOCAL-00010" summary="Add reliever field and improve leave request process&#10;&#10;Introduced a new 'reliever' field to the leave model to capture reliever information. Updated the leave API to handle this field properly and fixed a bug with the date field. Additionally, enhanced the JavaScript logic for form validation and submission, ensuring better error handling and API responses.">
+      <option name="closed" value="true" />
+      <created>1747405971129</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1747405971129</updated>
+    </task>
+    <task id="LOCAL-00011" summary="Add master leave feature with frontend and backend updates&#10;&#10;Implemented a new &quot;master leave&quot; feature, including backend views, frontend templates, and API integrations. Updated navigation and leave table functionality, and removed unused or redundant SMS notifications. Adjusted project configuration files and improved leave approval workflows.">
+      <option name="closed" value="true" />
+      <created>1747414231666</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1747414231666</updated>
+    </task>
+    <task id="LOCAL-00012" summary="Add &quot;requested&quot; status and obj method to Leave model&#10;&#10;Added a new &quot;requested&quot; status to the Leave model's status choices. Also introduced the `obj` method to serialize leave details, including employee information, leave dates, and status.">
+      <option name="closed" value="true" />
+      <created>1747414248598</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1747414248598</updated>
+    </task>
+    <task id="LOCAL-00013" summary="Add job request management and servicing enhancements&#10;&#10;Introduced a `JobRequest` model to handle service jobs with fuel type, service type, car details, and status tracking. Updated templates to add job request functionality, including a new servicing dropdown for better navigation and UI improvements. Additionally, enhanced backend form handling and modal submission logic.">
+      <option name="closed" value="true" />
+      <created>1747761888021</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1747761888021</updated>
+    </task>
+    <task id="LOCAL-00014" summary="Add job tracking, deletion, UI updates, and middleware support&#10;&#10;Introduced job tracking functionality with views and templates to monitor job progress. Added deletion functionality for job requests and extended UI with dynamic adjustments and additional fields like 'Time' in tables. Implemented a new middleware for Ngrok header bypass and updated APIs for enhanced product stock handling. Minor formatting and consistency improvements across files.">
+      <option name="closed" value="true" />
+      <created>1748023314240</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1748023314240</updated>
+    </task>
+    <task id="LOCAL-00015" summary="Add service due follow-up functionality and UI improvements&#10;&#10;Implemented service due follow-up features including database models, API endpoints, and frontend components for tracking and notifying customers about upcoming service dates. Added related views, routes, and HTML templates for displaying and managing service due data. Updated settings and configurations to support the new functionality.">
+      <option name="closed" value="true" />
+      <created>1748097602366</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1748097602366</updated>
+    </task>
+    <task id="LOCAL-00016" summary="Add service due follow-up functionality and UI improvements&#10;&#10;Implemented service due follow-up features including database models, API endpoints, and frontend components for tracking and notifying customers about upcoming service dates. Added related views, routes, and HTML templates for displaying and managing service due data. Updated settings and configurations to support the new functionality.">
+      <option name="closed" value="true" />
+      <created>1751909219098</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1751909219098</updated>
+    </task>
+    <task id="LOCAL-00017" summary="Refactor database settings, enhance expiry report logic, and improve Docker build process&#10;&#10;Commented out sensitive database credentials, switched default database name to 'ocean', and adjusted settings for better environment variable usage. Updated expiry report logic to include &quot;days to expiry&quot; and verify latest expiry dates, ensuring accurate stock tracking. Enhanced Docker build script by refining echo messages and adding structured formatting for better output readability.">
+      <option name="closed" value="true" />
+      <created>1751993628434</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1751993628434</updated>
+    </task>
+    <task id="LOCAL-00018" summary="Add Transfer functionality with models, views, routes, and templates&#10;&#10;Introduced `TransferHd` model to manage inventory transfers along with views `transfer` and `add_transfer`. Added corresponding routes and new templates (`transfer.html` and `transfer_add.html`) to support the transfer feature. Refactored related imports and implemented UI enhancements in the inventory section.">
+      <option name="closed" value="true" />
+      <created>1752080424725</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1752080424725</updated>
+    </task>
+    <task id="LOCAL-00019" summary="Refactor inventory and retail management logic across templates, models, and JavaScript&#10;&#10;Simplified and corrected stock validation logic, improved `cardex` display handling, added item code assignment in `models.py`, and updated retail template to include change group functionality. Enhanced inventory transfer UI and optimized stock-related JavaScript functions by ensuring consistency and reducing redundant calls.">
+      <option name="closed" value="true" />
+      <created>1752155199368</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1752155199368</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Add employee module with views, URLs, and API integration&#10;&#10;Introduced a new employee module, including URL configurations, views, and templates for employee management. Implemented an API token-based authentication mechanism and added navigation to the new module in the base template. This update improves functionality by enabling interaction with external employee-related APIs and providing a dedicated interface for employee operations." />
+    <MESSAGE value="final" />
+    <MESSAGE value="Refactor attendance model and implement attendance syncing.&#10;&#10;Replaced `employee` FK with `emp_code` and added fields like `name` and `time_diff` in the Attendance model. Introduced attendance syncing functionality in `employee_api.py`, integrating with external APIs to fetch employee and attendance data. Updated front-end logic and templates for calendar navigation and attendance data handling." />
+    <MESSAGE value="Remove Attendance model from employee app&#10;&#10;The Attendance model was commented out in the codebase, likely for deprecation or replacement purposes. This change helps streamline the application by removing unused or redundant code." />
+    <MESSAGE value="Remove unused Attendance import from employee_api.py&#10;&#10;The Attendance model was imported but never used in the file. Removing it helps clean up unused imports and improves code readability." />
+    <MESSAGE value="Comment out unused models and imports in employee app.&#10;&#10;Removed active code for models and imports that are currently not in use. This cleanup improves maintainability and minimizes unused code clutter in the application." />
+    <MESSAGE value="Refactor models by removing unused classes.&#10;&#10;Removed `Company`, `Department`, `Position`, and `Employee` models to streamline the codebase. Retained only the `Attendance` model, as this is now the only required functionality. Updated imports in `employee_api.py` accordingly." />
+    <MESSAGE value="Add attendance management system for staff&#10;&#10;Introduced functionality to manage and track employee attendance. Includes API integration, database updates, front-end rendering for attendance data, and new navigation/menu options. Enabled attendance filtering by date and range (week/month)." />
+    <MESSAGE value="Add leave management and enhance employee attendance features&#10;&#10;Introduced the `Leave` model and API functionality to support leave requests, including validation and SMS notifications. Enhanced attendance tracking by adding &quot;Is Late&quot; to the employee attendance view and fixed minor bugs in frontend leave forms and queries." />
+    <MESSAGE value="Add reliever field and improve leave request process&#10;&#10;Introduced a new 'reliever' field to the leave model to capture reliever information. Updated the leave API to handle this field properly and fixed a bug with the date field. Additionally, enhanced the JavaScript logic for form validation and submission, ensuring better error handling and API responses." />
+    <MESSAGE value="Add master leave feature with frontend and backend updates&#10;&#10;Implemented a new &quot;master leave&quot; feature, including backend views, frontend templates, and API integrations. Updated navigation and leave table functionality, and removed unused or redundant SMS notifications. Adjusted project configuration files and improved leave approval workflows." />
+    <MESSAGE value="Add &quot;requested&quot; status and obj method to Leave model&#10;&#10;Added a new &quot;requested&quot; status to the Leave model's status choices. Also introduced the `obj` method to serialize leave details, including employee information, leave dates, and status." />
+    <MESSAGE value="Add job request management and servicing enhancements&#10;&#10;Introduced a `JobRequest` model to handle service jobs with fuel type, service type, car details, and status tracking. Updated templates to add job request functionality, including a new servicing dropdown for better navigation and UI improvements. Additionally, enhanced backend form handling and modal submission logic." />
+    <MESSAGE value="Add job tracking, deletion, UI updates, and middleware support&#10;&#10;Introduced job tracking functionality with views and templates to monitor job progress. Added deletion functionality for job requests and extended UI with dynamic adjustments and additional fields like 'Time' in tables. Implemented a new middleware for Ngrok header bypass and updated APIs for enhanced product stock handling. Minor formatting and consistency improvements across files." />
+    <MESSAGE value="Add service due follow-up functionality and UI improvements&#10;&#10;Implemented service due follow-up features including database models, API endpoints, and frontend components for tracking and notifying customers about upcoming service dates. Added related views, routes, and HTML templates for displaying and managing service due data. Updated settings and configurations to support the new functionality." />
+    <MESSAGE value="Refactor database settings, enhance expiry report logic, and improve Docker build process&#10;&#10;Commented out sensitive database credentials, switched default database name to 'ocean', and adjusted settings for better environment variable usage. Updated expiry report logic to include &quot;days to expiry&quot; and verify latest expiry dates, ensuring accurate stock tracking. Enhanced Docker build script by refining echo messages and adding structured formatting for better output readability." />
+    <MESSAGE value="Add Transfer functionality with models, views, routes, and templates&#10;&#10;Introduced `TransferHd` model to manage inventory transfers along with views `transfer` and `add_transfer`. Added corresponding routes and new templates (`transfer.html` and `transfer_add.html`) to support the transfer feature. Refactored related imports and implemented UI enhancements in the inventory section." />
+    <MESSAGE value="Refactor inventory and retail management logic across templates, models, and JavaScript&#10;&#10;Simplified and corrected stock validation logic, improved `cardex` display handling, added item code assignment in `models.py`, and updated retail template to include change group functionality. Enhanced inventory transfer UI and optimized stock-related JavaScript functions by ensuring consistency and reducing redundant calls." />
+    <option name="LAST_COMMIT_MESSAGE" value="Refactor inventory and retail management logic across templates, models, and JavaScript&#10;&#10;Simplified and corrected stock validation logic, improved `cardex` display handling, added item code assignment in `models.py`, and updated retail template to include change group functionality. Enhanced inventory transfer UI and optimized stock-related JavaScript functions by ensuring consistency and reducing redundant calls." />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/templates/ssml/grn_add.html</url>
+          <line>239</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

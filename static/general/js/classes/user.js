@@ -1,18 +1,27 @@
 class User {
 
-    Delete(pk) {
-        if(confirm("ARE YOU SURE"))
+    Delete(pk,is_info=false) {
+        if(true)
         {
             let apireturn = api_call('user','delete',{'user':pk})
-            let r = JSON.parse(apireturn)
+            try {
+                let r = JSON.parse(apireturn)
 
-            if(r['status'] === 200)
-            {
-                swal_reload("User Deleted")
-            } else
-            {
-                error_handler(r['message'])
+                if(r['status'] === 200)
+                {
+                    console.table("Deleted")
+                    if(is_info){
+                        kasa.info("Deleted")
+                    }
+
+                } else
+                {
+                    error_handler(r['message'])
+                }
+            } catch (e) {
+                console.error(e)
             }
+
         }
 
     }

@@ -33,6 +33,7 @@
                         <div class="card-header">
                             <button data-bs-target="#newUser" data-bs-toggle="modal" class="btn btn-sm btn-info" style="height: fit-content">NEW USER</button>
                             <button onclick="user.resetAllPasswords()" class="btn btn-danger">RESET ALL PASSWORD</button>
+                            <button class="btn btn-danger ms-2" id="select_deleted">Delete</button>
                             <div id="newUser" class="modal fade">
                                 <div class="modal-dialog modal-lg">
                                     <div class="modal-content">
@@ -118,6 +119,7 @@
                                 <tbody>
                                     {% for this_user in users %}
                                         <tr style="cursor: pointer;">
+                                            <td><input type="checkbox" id="selected_user" value="{{ this_user.pk }}"></td>
                                             <td>{{ this_user.first_name }}</td>
                                             <td>{{ this_user.last_name }}</td>
                                             <td>{{ this_user.username}}</td>
@@ -294,5 +296,18 @@
 
 
     </div>
+
+    <script>
+        $('#select_deleted').click(function(){
+            const selectedUsers = [];
+            $('input[id="selected_user"]:checked').each(function () {
+                selectedUsers.push($(this).val());
+                console.log($(this).val());
+                user.Delete($(this).val());
+            });
+            kasa.confirm("Done",1,'here')
+            {#console.log(selectedUsers);#}
+        })
+    </script>
 
 {% endblock %}

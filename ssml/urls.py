@@ -56,5 +56,6 @@ urlpatterns = [
     path('master/location_master/',views.location_master,name='ssml_location_master'),
     path('inventory/trenasfer/',views.transfer,name='ssml_transfer'),
     path('inventory/transfer/add/',views.add_transfer,name='ssml_add_transfer'),
+    path('sync_retired_meter/',views.sync_retired_meter,name='sync_retired_meter')
 
 ]

@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from datetime import timedelta, datetime
 from time import strftime
+import calendar
 
 
 class Attendance(models.Model):
@@ -37,6 +38,7 @@ class Attendance(models.Model):
 
 
     def obj(self):
+        import calendar
         return {
             'id': self.id,
             'employee': self.emp_code,
@@ -50,7 +52,8 @@ class Attendance(models.Model):
             'is_late':self.is_late,
             'dept':self.dep_text,
             'name':self.name,
-            'dep_text':self.dep_text
+            'dep_text':self.dep_text,
+            'day': calendar.day_name[self.date.weekday()]
         }
 
 
