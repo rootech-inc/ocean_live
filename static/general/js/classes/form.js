@@ -36,6 +36,11 @@ class Form {
         return this.input('time',ini,comment,required)
     }
 
+    color(ini,comment='',required=false){
+        return this.input('color',ini,comment,required);
+
+    }
+
     select(ini,options,comment='',required=false){
         let req = ''
         if(required){
@@ -47,12 +52,12 @@ class Form {
                 `
     }
 
-    selectv2(ini,options=[],comment='',required=false){
-        let opxt = `<option disabled selected>Select ${ini.toUpperCase().replace('_',' ')}</option>`;
+    selectv2(ini,options=[],comment='',required=false, ){
+        let opxt = `<option disabled selected >Select ${ini.toUpperCase().replace('_',' ')}</option>`;
         for (let i = 0; i < options.length; i++) {
             let option = options[i];
             console.table(option)
-            opxt += `<option value="${option['val']}">${option.desc}</option>`
+            opxt += `<option value="${option['val']}" ${option['select'] || null}>${option.desc}</option>`
         }
 
         let req = ''

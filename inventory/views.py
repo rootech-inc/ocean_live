@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 
@@ -13,6 +13,12 @@ from appscenter.models import App
 from inventory.form import NewAssetGroup, NewAsset, NewWorkstation, EvidenceForm
 from inventory.models import PoHd, GrnHd, AssetGroup, Assets, WorkStation, Computer
 
+# test
+from django.views.generic.edit import CreateView
+from .models import VehicleAsset, VehicleAssetDocument
+
+# for pagination
+from django.core.paginator import Paginator
 
 # Create your views here.
 
@@ -89,6 +95,11 @@ def new_grn(request):
 @login_required(login_url='/login/')
 def assets(request):
     page['title'] = 'AssetsX'
+
+    vehiclePaginator = Paginator(VehicleAsset.objects.all(), 10)
+    page_number = request.GET.get("page")
+    vehicle_page_obj = vehiclePaginator.get_page(page_number)
+
     context = {
         'page': page,
         'nav': True,
@@ -96,7 +107,8 @@ def assets(request):
         'locs': Locations.objects.all(),
         'po': PoHd.objects.filter(status=1),
         'assgrp': AssetGroup.objects.all(),
-        'assets': Assets.objects.all()
+        'assets': Assets.objects.all(),
+        'vehicle_page_obj':  vehicle_page_obj,
     }
 
     return render(request, 'inventory/assets/index.html', context=context)
@@ -272,3 +284,37 @@ def adjustment(request):
         'locs': Locations.objects.all()
     }
     return render(request, 'inventory/adjustment/indx.html', context=context)
+
+@csrf_exempt  
+def upload_vehicle_asset_image(request):
+    if request.method == 'POST':
+        pk = request.POST.get('pk') # get the primary of asset to update
+        image = request.FILES.get('image') # get the image 
+        try:
+            asset = VehicleAsset.objects.get(pk=pk)
+            asset.image = image
+            asset.save()
+            return redirect ('assets')
+        except VehicleAsset.DoesNotExist:
+            return redirect ('assets')
+    return redirect ('assets')
+
+
+@csrf_exempt
+def upload_vehicle_asset_document(request):
+    if request.method == 'POST':
+        pk = request.POST.get('pk')  # get the primary key of asset to update
+        document = request.FILES.get('doc')  # get the document file
+        expiry_date = request.POST.get("expiry_date")
+    try:
+        asset = VehicleAsset.objects.get(pk=pk)
+        doc = VehicleAssetDocument(vehicle_asset=asset, doc=document, expiry_date=expiry_date)
+        doc.full_clean()  # run validators (optional but recommended)
+        doc.save()
+        return redirect('assets')
+    except VehicleAsset.DoesNotExist:
+        return redirect('assets')
+    except Exception as e:
+        return HttpResponse(f"Error: {e}")
+    
+    return redirect('assets')

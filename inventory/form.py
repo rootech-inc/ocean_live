@@ -1,6 +1,6 @@
 from django import forms
 
-from inventory.models import AssetGroup, Assets, WorkStation, Evidence
+from inventory.models import AssetGroup, Assets, WorkStation, Evidence, VehicleAsset
 
 
 class NewAssetGroup(forms.ModelForm):
@@ -24,3 +24,8 @@ class EvidenceForm(forms.ModelForm):
         model = Evidence
         exclude = ['created_date','created_time','updated_date','updated_time']
 
+class VehicleAssetForm(forms.ModelForm):
+
+    class Meta:
+        model = VehicleAsset
+        fields = "__all__"

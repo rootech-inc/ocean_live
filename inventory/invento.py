@@ -11,6 +11,9 @@ from admin_panel.views import bank_posts
 from inventory.models import Evidence
 from retail.models import Products
 from django.db.models import Q
+from admin_panel.models import Company
+from .models import VehicleAsset, VehicleAssetDocument
+import os
 
 
 @csrf_exempt
@@ -42,6 +45,41 @@ def interface(request):
         if method == 'PUT':
             if module == 'product':
                 pass
+
+            elif module == 'inventory':
+                # save inventory asset
+                try:
+                    company_id = int(data.get('company'))
+                    company = Company.objects.get(pk=company_id)
+                except (Company.DoesNotExist, ValueError, TypeError):
+                    # Handle error: invalid or missing company
+                    company = None
+                    response = error_response
+                    return JsonResponse(response)
+
+                try:
+                    year = int(data.get('year'))
+                except (ValueError, TypeError):
+                    year = None
+
+                print(data)
+
+                asset = VehicleAsset.objects.create(
+                    company=company,
+                    asset_no=data.get('asset'),
+                    owner=data.get('owner'),
+                    vehicle_name=data.get('vehicle_name'),
+                    manufacturer=data.get('manufacturer'),
+                    year=year,
+                    color=data.get('color'),
+                    number=data.get('number'),
+                    descr=data.get('descr'),
+                    # image is not handled here
+                    # check views for upload_image 
+                )
+                
+                response['message'] = {"detail":"Procedure Completed Successfully", "pk":asset.pk}
+
 
             elif module == 'transfer':
                 header = data.get("header")
@@ -84,8 +122,10 @@ def interface(request):
                     error_response['message'] = f"Transfer Failed: {e}"
                     response = error_response
 
+           
+
         elif method == 'VIEW':
-            print(data)
+            # print("data is ", data)
             # view transfer in window
             arr = []
             if module == 'transfer':
@@ -130,7 +170,7 @@ def interface(request):
                 success_response['message'] = arr
                 response = success_response
                 print(responses)
-
+            
             elif module == 'product':
                 key = data.get('key')
                 
@@ -141,6 +181,25 @@ def interface(request):
                 except Exception as e:
                     error_response['message'] = f"Product Not Found: {e}"
                     response = error_response
+
+            if module == "vehicleAssetDocument":
+                vehicle_pk = data.get('pk')
+                try:
+                    vehicle = VehicleAsset.objects.get(pk=vehicle_pk)
+                except VehicleAsset.DoesNotExist:
+                    response = error_response
+                else:
+                    docs = vehicle.documents.all()
+                    if docs:
+                        response['message'] = [
+                                {
+                                    'pk': d.pk,
+                                    'file_name': os.path.basename(d.doc.name),
+                                    'expiry_date': d.expiry_date
+                                }
+                                for d in docs
+                            ]
+                    
 
         elif method == 'PATCH':
             if module == 'transfer':
@@ -245,6 +304,17 @@ def interface(request):
                     response = success_response
                 except Exception as e:
                     raise Exception(e)
+
+        elif method == 'DELETE':
+            if module == "vehicleAssetDocument":
+                asset_pk = data.get('pk', None)
+                try:
+                    asset = VehicleAssetDocument.objects.get(pk=asset_pk)
+                    asset.delete()
+                    response = success_response
+                except:
+                    response = error_response
+
 
         else:
             error_response['message'] = f"Method Not Allowed: {method}"
