@@ -1,0 +1,64 @@
+{% extends 'logistics/base.html' %}
+{% load static %}
+
+
+{% block body %}
+
+    <div class="container p-2">
+        <div class="row justify-content-center">
+            <div class="col-sm-12">
+                <div class="form-group mb-2">
+                    <label for="delivery_type">Type</label>
+                    <select id="delivery_type" class="form-control rounded-0">
+                        <option selected="selected" value="" disabled="disabled" >--Select--</option>
+                        {% for value, label in type_choices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                          {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-sm-12">
+                <div class="form-group mb-2">
+                    <label for="source">Source</label>
+                    <input type="text" id="source" class="form-control rounded-0">
+                </div>
+            </div>
+            <div class="col-sm-12">
+                <div class="form-group mb-2">
+                    <label for="destination">Destination</label>
+                    <input type="text" id="destination" class="form-control rounded-0">
+                </div>
+            </div>
+            <div class="col-sm-12">
+                <div class="form-group mb-2">
+                    <label for="description">Description</label>
+                    <textarea id="description" class="form-control rounded-0" cols="30" rows="5"></textarea>
+                </div>
+
+                <button id="save_request" class="btn btn-success mx-auto w-100">REQUEST</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        $('#save_request').click(async function () {
+            let ids = ['delivery_type','source','destination','description','mypk'];
+            if(anton.validateInputs(ids)){
+                let payload = {
+                    module:'delivery_request',
+                    data:anton.Inputs(ids)
+                }
+                payload['data']['requested_by'] = payload['data']['mypk']
+
+                await api.v2('PUT',payload,'/logistic/api/').then((response)=>{
+                    kasa.response(response)
+                    window.close()
+                }).catch((error)=>{
+                    kasa.error(error)
+                })
+            }
+        })
+    </script>
+
+{% endblock %}

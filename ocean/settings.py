@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'maintenance.apps.MaintenanceConfig',
     'ssml.apps.SsmlConfig',
     'employee.apps.EmployeeConfig',
+    'logistics.apps.LogisticsConfig'
 ]
 
 MIDDLEWARE = [
@@ -279,5 +280,11 @@ BOLT_PROVIDER_ID = {
         "name":"OSU",
         "address":"SNEDA Shopping Centre Limited - Osu - 522 - 75550"
     }
+}
+
+# logistics settings
+LOGISTIC_CONTACT = {
+    "email":"solomon@snedaghana.com",
+    'phone':'0546310011'
 }
 

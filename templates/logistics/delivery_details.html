@@ -1,0 +1,60 @@
+{% extends 'logistics/base.html' %}
+{% load static %}
+
+{% block body %}
+
+    <div class="h-100 overflow-auto">
+        <div class="card">
+        <div class="card-header">
+            <span class="card-title requested_by"><div class="spinner-border" role="status">
+                  <span class="sr-only">Loading...</span>
+                </div></span>
+        </div>
+        <div class="card-body p-2">
+            <div class="d-flex flex-wrap align-items-center justify-content-between">
+                <small class="text-danger float-left source">
+                    <div class="spinner-border" role="status">
+                  <span class="sr-only">Loading...</span>
+                </div>
+
+                </small>
+
+                <small class="text-warning">>>>>>>>>>>></small>
+
+                <small class="text-info destination float-right">
+                <div class="spinner-border" role="status">
+                  <span class="sr-only">Loading...</span>
+                </div>
+            </small>
+            </div>
+            <p class="text-justify description mt-2">
+
+            </p>
+
+
+            <hr>
+            <div class="container my-4">
+                  <div class="d-flex flex-column position-relative logs" style="border-left: 3px solid #28a745; margin-left: 20px; padding-left: 20px;">
+
+                  </div>
+            </div>
+        </div>
+    </div>
+
+        <div class="card mt-2">
+            <div class="card-body">
+
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            let enc = `{{ enc }}`
+
+            logistics.LoadDeliveryDetails(enc)
+        })
+    </script>
+
+{% endblock %}

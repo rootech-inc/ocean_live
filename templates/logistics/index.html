@@ -1,0 +1,64 @@
+{% extends 'logistics/base.html' %}
+{% load static %}
+
+{% block body %}
+    <div class="card h-100">
+        <div class="card-header">
+            <div class="w-100 d-flex justify-content-between">
+                <div style="width: fit-content">
+                    <select name="" id="status" class="form-control form-control-sm rounded-0">
+                        <option value="pending">Pending</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="in_transit">In Transit</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Canceled</option>
+                    </select>
+                </div>
+
+                <div class="dropdown">
+                  <a class="btn btn-secondary btn-sm rounded-0" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fa fa-bars"></i>
+                  </a>
+
+                  <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuLink">
+                    <a class="dropdown-item" id="new_delivery_request" href="javascript:void(0)">New Request</a>
+
+                  </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="del">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>REQUEST BY</th>
+                            <th>DESTINATION</th>
+                            <th>REQUEST DATE</th>
+                            <th>STATUS</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function(){
+            logistics.LoadDeliveries()
+
+            $('#status').change(function(){
+                logistics.LoadDeliveries(`${$(this).val()}`)
+            })
+
+            $('#new_delivery_request').click(function(){
+
+                windowPopUp('/logistic/new-delivery/',"NEW DELIVERY",600,600)
+            })
+
+
+        })
+    </script>
+{% endblock %}

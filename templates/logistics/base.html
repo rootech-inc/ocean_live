@@ -78,7 +78,11 @@
     <script src="{% static 'general/js/classes/modal.js' %}"></script>
     <script src="{% static 'general/js/classes/form.js' %}"></script>
     <script src="{% static 'general/js/classes/maintenance.js' %}"></script>
-     <script src="{% static 'general/js/classes/staff.js' %}"></script>
+     <script src="{% static 'general/js/classes/logistics.js' %}"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.4/css/dataTables.bootstrap4.min.css">
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.bootstrap4.min.js"></script>
+
 
 
 
@@ -391,273 +395,13 @@
 
     <ul class="sidebar-nav" id="sidebar-nav">
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'admin_panel' %}">
-          <i class="bi bi-grid"></i>
-          <span>Dashboard</span>
-        </a>
-      </li><!-- End Dashboard Nav -->
+
     <li class="nav-item">
             <a class="nav-link collapsed" href="{% url 'logistics-home' %}">
               <i class="bi bi-shop"></i>
               <span>LOGISTICS</span>
             </a>
           </li>
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'my_tasks' %}">
-          <i class="bi bi-list-task"></i>
-          <span>TASK MANAGER</span>
-        </a>
-      </li>
-
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'crm' %}">
-          <i class="bi bi-list-task"></i>
-          <span>CRM</span>
-        </a>
-      </li>
-
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'company' %}">
-          <i class="bi bi-list-task"></i>
-          <span>Employee</span>
-        </a>
-      </li>
-
-
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#Community-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-megaphone"></i><span>Community</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="Community-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="{% url 'open-ticket' %}">
-              <i class="bi bi-circle"></i><span>Tickets</span>
-            </a>
-          </li>
-            {% if user.is_superuser  %}
-            <li>
-            <a href="{% url 'reminder' %}">
-              <i class="bi bi-alarm-fill"></i><span>Reminder</span>
-            </a>
-          </li>
-            {% endif %}
-
-        </ul>
-      </li><!-- End Community Nav -->
-
-
-
-    {% if perms.cmms.view_followup %}
-
-    <!-- CMMS -->
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'car-jobs' %}">
-          <i class="bi bi-tools"></i>
-          <span>CMMS</span>
-        </a>
-      </li>
-        {% endif %}
-
-    <!-- CMMS -->
-
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#Meetings-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-megaphone"></i><span>Meetings</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="Meetings-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="{% url 'meeting' %}">
-              <i class="bi bi-circle"></i><span>My Meetings</span>
-            </a>
-          </li>
-            {% if perms.meeting.view_meetinghd %}
-          <li>
-            <a href="{% url 'new_meeting' %}">
-              <i class="bi bi-circle"></i><span>Create Meeting</span>
-            </a>
-          </li>
-                {% endif %}
-        </ul>
-      </li>
-
-
-
-      {% if user.is_superuser  %}
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#components-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-archive"></i><span>Inventory</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="components-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="{% url 'assets' %}">
-              <i class="bi bi-circle"></i><span>Assets</span>
-            </a>
-          </li>
-            <li>
-            <a href="{% url 'workstation' %}">
-              <i class="bi bi-circle"></i><span>Workstations</span>
-            </a>
-          </li>
-          <li>
-            <a href="{% url 'inventory_tools' %}">
-              <i class="bi bi-circle"></i><span>Tools</span>
-            </a>
-          </li>
-          <li>
-            <a href="{% url 'inventory' %}">
-              <i class="bi bi-circle"></i><span>Products Master</span>
-            </a>
-          </li>
-          <li>
-            <a href="{% url 'purchasing' %}">
-              <i class="bi bi-circle"></i><span>PO Entries</span>
-            </a>
-          </li>
-          <li>
-            <a href="{% url 'inventory-grn' %}">
-              <i class="bi bi-circle"></i><span>GRN Entries</span>
-            </a>
-          </li>
-          <li>
-            <a href="{% url 'transfer' %}">
-              <i class="bi bi-circle"></i><span>Transfer</span>
-            </a>
-          </li>
-          <li>
-            <a href="{% url 'adjustment' %}">
-              <i class="bi bi-circle"></i><span>Adjustment</span>
-            </a>
-          </li>
-
-
-
-        </ul>
-      </li><!-- End Inventory Nav -->
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#task-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-calendar-check"></i><span>Task Manager</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="task-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="{% url 'new_task' %}">
-              <i class="bi bi-circle"></i><span>Create</span>
-            </a>
-          </li>
-          <li>
-            <a href="{% url 'all-ticket' %}">
-              <i class="bi bi-circle"></i><span>Tickets</span>
-            </a>
-          </li>
-          <li>
-            <a href="{% url 'all_task' %}">
-              <i class="bi bi-circle"></i><span>All Task</span>
-            </a>
-          </li>
-
-
-        </ul>
-      </li><!-- End Task Manage Nav -->
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#csetup-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-gear"></i><span>Company Setup</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="csetup-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="{% url 'organization' %}">
-              <i class="bi bi-circle"></i><span>Organization</span>
-            </a>
-          </li>
-            <li>
-            <a href="{% url 'bank_accounts' %}">
-              <i class="bi bi-circle"></i><span>Accounts</span>
-            </a>
-          </li>
-          <li>
-            <a href="{% url 'accessories' %}">
-              <i class="bi bi-circle"></i><span>Add-Ons</span>
-            </a>
-          </li>
-          <li>
-            <a href="{% url 'emails' %}">
-              <i class="bi bi-circle"></i><span>Emails</span>
-            </a>
-          </li>
-            <li>
-            <a href="{% url 'sms' %}">
-              <i class="bi bi-circle"></i><span>SMS</span>
-            </a>
-          </li>
-          <li>
-            <a href="{% url 'all-users' %}">
-              <i class="bi bi-circle"></i><span>Users</span>
-            </a>
-          </li>
-            <li>
-            <a href="{% url 'evat_keys' %}">
-              <i class="bi bi-circle"></i><span>EVAT Credentials</span>
-            </a>
-          </li>
-
-
-        </ul>
-      </li><!-- End Company Setup Nav -->
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'apps-center' %}">
-          <i class="bi bi-app"></i>
-          <span>Apps Center</span>
-        </a>
-      </li> <!-- END OF APPS -->
-      <!-- SERVICING-->
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'service_jobcard' %}">
-          <i class="bi bi-app"></i>
-          <span>Service Master</span>
-        </a>
-      </li> 
-      <!-- END OF SERVICING -->
-      {% endif %}
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'ssml' %}">
-          <i class="bi bi-app"></i>
-          <span>SSML</span>
-        </a>
-      </li> 
-
-      <!-- SERVICING-->
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'maintenance' %}">
-          <i class="bi bi-app"></i>
-          <span>Maintenance</span>
-        </a>
-      </li>
-
-
-
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'dolphine' %}">
-          <i class="bi bi-cloud"></i>
-          <span>Dolphine</span>
-        </a>
-      </li>
-
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'blog-home' %}">
-          <i class="bi bi-cloud"></i>
-          <span>Blog</span>
-        </a>
-      </li>
-
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'reports' %}">
-          <i class="bx bx-analyse"></i>
-          <span>REPORTS</span>
-        </a>
-      </li>
 
 
 
@@ -680,7 +424,7 @@
     </div><!-- End Page Title -->
 
     <section class="section h-100" style="height: 85vh !important">
-      <div class="w-100 h-100 card overflow-hidden">
+      <div class="w-100 h-100 overflow-hidden">
           <button id="install-button" class="install-button">Install App</button>
 
           {% block body %}

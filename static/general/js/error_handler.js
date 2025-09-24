@@ -100,11 +100,55 @@ function clog(str) {
     console.table(str)
 }
 
-function windowPopUp(url, title, w, h)
-{
-    let left = (screen.width/2)-(w/2);
-    let top = (screen.height/2)-(h/2);
-    let reAssignWindow = open(url, title, 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width='+w+', height='+h+', top='+top+', left='+left);
-    parent.document.body.disabled = true;
-    reAssignWindow.focus();
+function windowPopUp(url, title, w, h) {
+    let left = (screen.width / 2) - (w / 2);
+    let top = (screen.height / 2) - (h / 2);
+
+    // Create overlay
+    let overlay = document.createElement('div');
+    overlay.id = "popup-overlay";
+    overlay.className = "d-flex align-items-center justify-content-center";
+    overlay.style.position = "fixed";
+    overlay.style.top = 0;
+    overlay.style.left = 0;
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.background = "rgba(0,0,0,0.4)";
+    overlay.style.backdropFilter = "blur(5px)"; // <-- blur effect
+    overlay.style.zIndex = 9999;
+    overlay.style.pointerEvents = "auto";
+
+    // Create centered message card using Bootstrap classes
+    overlay.innerHTML = `
+        <div class="card shadow-lg text-center" style="max-width: 300px;">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Popup Open</h5>
+                <p class="card-text">Please complete the action in the popup window to continue.</p>
+                <div class="spinner-border text-primary mt-3" role="status">
+                  <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Open popup window
+    let popupWindow = window.open(
+        url,
+        title,
+        'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=' +
+        w + ', height=' + h + ', top=' + top + ', left=' + left
+    );
+
+    popupWindow.focus();
+
+    // Check when popup closes, then remove overlay
+    let interval = setInterval(function () {
+        if (popupWindow.closed) {
+            clearInterval(interval);
+            let overlay = document.getElementById("popup-overlay");
+            if (overlay) overlay.remove();
+        }
+    }, 500);
 }
