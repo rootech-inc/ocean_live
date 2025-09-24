@@ -1,3 +1,5 @@
+Copyright (c) 2025 Rootech IT Solutions
+
 # ocean
 ![alt text](ocean.png)
 _A tool to enhance enterprise productivity_
