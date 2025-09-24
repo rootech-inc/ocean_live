@@ -45,7 +45,7 @@ def interface(request):
             if module == 'area':
                 import requests
 
-                url = "http://192.168.2.15/personnel/api/areas/"  # Replace with actual domain
+                url = f"{ATTENDANCE_URL}personnel/api/areas/"  # Replace with actual domain
 
                 headers = {
                     "Content-Type": "application/json",
@@ -148,7 +148,7 @@ def interface(request):
                 start = f"{str(current_datetime)} 00:00:00"
                 end = f"{str(current_datetime)} 23:59:59"
                 import requests
-                url = "http://192.168.2.15/personnel/api/employees/?page_size=10000"
+                url = f"{ATTENDANCE_URL}personnel/api/employees/?page_size=10000"
 
                 payload = json.dumps({
                     "start_time": "2024-01-01",
@@ -273,18 +273,16 @@ def interface(request):
                             if check_in > dept:
                                 is_late = True
                             else:
-                                is_late = False
+                                if(check_in == '00:00:00'):
+                                    is_late = True
+                                else:
+                                    is_late = False
 
-                            # check late
-                            print("Check In",check_in)
-                            print("Required Time", dept)
-                            print()
 
 
                         ali = [f"{first_name} {last_name}", dep_name, position_name, str(check_in), str(check_out), st,
                               minutes_diff,is_late]
                         js.append(ali)
-                        print(ali)
                         dt = start.split(' ')[0]
                         if Attendance.objects.filter(date=dt,emp_code=emp_code).exists():
                             # update

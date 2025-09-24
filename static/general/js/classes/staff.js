@@ -363,6 +363,7 @@ class Staff {
             loader.show()
             if(anton.IsRequest(response)){
                 let attds = response.message.array;
+                let file = response.message.file;
                 let tr = "";
                 let st = "";
                 let attd_data = [
@@ -436,13 +437,12 @@ class Staff {
     async loadMyAttendance(rg = 'week') {
         await this.getMyAttendance(rg).then(response => {
             if(anton.IsRequest(response)){
-                console.table(response)
+              
                 let xr = [["DATE","DAY","TIME IN","IS LATE"]]
                 let recs = response.message;
                 let tr = ""
                 if(recs.length > 0){
                     recs.map(record => {
-                    console.table(record)
 
                     // Add click handler for send button
                     $(document).on('click', '.send-leave-request', function () {

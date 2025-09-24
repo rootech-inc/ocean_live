@@ -15,26 +15,33 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-sm-12">
-                <div class="card">
-{#                    <div class="card-header">#}
-{#                        <strong class="card-title">Present</strong>#}
-{#                    </div>#}
-                    <div class="card-body">
-                        <div class="d-flex justify-content-around">
-                            <div class="text-center">
-                                <i class="fas fa-clock text-success fa-2x mb-2"></i>
-                                <h4 class="text-success">On Time</h4>
-                                <h3 class="text-success" id="ontime-count">0</h3>
+                <div class="container">
+                    <div class="row d-flex justify-content-around">
+                        <div class="text-center col-sm-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <i class="fas fa-clock text-success fa-2x mb-2"></i>
+                                    <h4 class="text-success">On Time</h4>
+                                    <h3 class="text-success" id="ontime-count">0</h3>
+                                </div>
                             </div>
-                            <div class="text-center">
-                                <i class="fas fa-running text-warning fa-2x mb-2"></i>
-                                <h4 class="text-warning">Late</h4>
-                                <h3 class="text-warning" id="late-count">0</h3>
+                        </div>
+                        <div class="text-center col-sm-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <i class="fas fa-running text-warning fa-2x mb-2"></i>
+                                    <h4 class="text-warning">Late</h4>
+                                    <h3 class="text-warning" id="late-count">0</h3>
+                                </div>
                             </div>
-                            <div class="text-center">
-                                <i class="fas fa-user-times text-danger fa-2x mb-2"></i>
-                                <h4 class="text-danger">Absent</h4>
-                                <h3 class="text-danger" id="absent-count">0</h3>
+                        </div>
+                        <div class="text-center col-sm-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <i class="fas fa-user-times text-danger fa-2x mb-2"></i>
+                                    <h4 class="text-danger">Absent</h4>
+                                    <h3 class="text-danger" id="absent-count">0</h3>
+                                </div>
                             </div>
                         </div>
                     </div>

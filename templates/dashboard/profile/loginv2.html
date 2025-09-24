@@ -81,7 +81,7 @@
       {% csrf_token %}
 
       <div class="col-12">
-        <label for="email" class="form-label"><small>Email Address</small></label>
+        <label for="email" class="form-label"><small>Username</small></label>
         <input autocomplete="off" type="email" name="email" class="form-control form-control-md" id="email" required>
         <div class="invalid-feedback">Please enter a valid email address!</div>
       </div>
@@ -93,6 +93,10 @@
       </div>
 
       <input type="hidden" name="next" value="{{ next }}">
+
+      <div class="col-12">
+        <button class="btn btn-primary w-100" type="submit">Login</button>
+      </div>
 
       {% if messages %}
         {% for message in messages %}

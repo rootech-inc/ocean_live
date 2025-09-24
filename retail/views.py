@@ -16,6 +16,7 @@ from retail.models import Clerk, BoltItems, BoltGroups, Products, RecipeProduct,
 
 @login_required()
 def base(request):
+    return HttpResponse("Module Discontinued")
     context = {
         'nav': True
     }

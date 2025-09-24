@@ -23,7 +23,7 @@ class Attendance(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_late = models.BooleanField(default=True)
-    dep_text = models.CharField(null=True,max_length=20)
+    dep_text = models.CharField(null=True,max_length=255)
     
     def is_off(self):
         import calendar
