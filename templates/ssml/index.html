@@ -10,14 +10,14 @@
             </div>
             <div class="modal-body">
                 <form method='post' enctype="multipart/form-data" action='/ssml/service-order/upload/' id="import_service_order_form">
-                        
-                        
+
+
                     <div class="form-group mb-3">
                         <label for="service">Service</label>
                         <select class='form-control' name='service' id='service'>
                             {% for installation in installations %}
-                            <option value='{{installation.pk}}'>{{installation.name}}</option>  
-                            {%endfor%}  
+                            <option value='{{installation.pk}}'>{{installation.name}}</option>
+                            {%endfor%}
                         </select>
                     </div>
 
@@ -37,7 +37,7 @@
 <div class="card-header">
     <div class="d-flex justify-content-between">
         <div class="w-50">
-            
+
         </div>
         <div class="w-50 d-flex justify-content-end">
             <button data-bs-toggle="modal" data-bs-target="#import_jobs" class="btn btn-info ms-2 btn-sm">Import Jobs</button>
@@ -52,10 +52,13 @@
         </div>
     </div>
 </div>
-<div class="card-body overflow-auto p-3">
+<div class="card-body p-3 overflow-auto">
     <div class="container-fluid p-0">
         <h3>Installation Dashboard</h3>
         <div class="row">
+        <div class="col-xxl-12 col-md-12">
+                <div style="width: 100%;" id="curve_chart"></div>
+            </div>
             <div class="col-xxl-4 col-md-4">
                 <div class="card info-card sales-card">
                     <div class="card-body">
@@ -100,44 +103,25 @@
             {% endfor %}
 
 
-            <div class="col-xxl-12 col-md-12">
-                <div id="chart_div"></div>
-            </div>
 
-            
+
+
         </div>
-
-        <h3>Stock Alert</h3>
-
-        <table class="table table-bordered table-sm">
-            <thead>
-                <tr>
-                    <th>ITEM</th>
-                    <th>RE-ORDER QTY</th>
-                    <th>STOCK</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for material in materials %}
-
-                    {% if material.is_low_stock %}
-                        <tr class="text-danger">
-                            <td>{{ material.name }}</td>
-                            <td>{{ material.reorder_qty }}</td>
-                            <td>{{ material.stock }}</td>
-                        </tr>
-                    {% endif %}
-                {% endfor %}
-            </tbody>
-        </table>
-
     </div>
 </div>
 
 
 <script>
     $(document).ready(function(){
-        ssml.contractorWise()
+        let ff = "";
+        ssml.walkWise($('#sidebar-location-select').val())
+
+        $('#sidebar-location-select').change(function(){
+            let location = $(this).val();
+            ssml.walkWise(location)
+        })
+
+        
     })
 </script>
 

@@ -84,6 +84,7 @@
 
 
 
+
   <script>
     var pClass = new Products()
 
@@ -390,8 +391,18 @@
 
   <aside {% if page.nav != True %} style="display: none" {% endif %} id="sidebar" class="sidebar">
 
+    <div class="form-group mb-3 px-3 pt-3">
+      <label for="sidebar-location-select" class="form-label">Location</label>
+      <select class="form-select" id="sidebar-location-select" name="location">
+        <option value="">Select Location</option>
+        {% for location in locations %}
+          <option value="{{ location.id }}">{{ location.loc_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <hr>
     <ul class="sidebar-nav" id="sidebar-nav">
-
+      
       <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'admin_panel' %}">
           <i class="bi bi-grid"></i>
@@ -595,6 +606,11 @@
         <a href="javascript:void(0)" onclick="ssml.materialUsage()">
           <i class="bi bi-circle"></i><span>Consumption</span>
         </a>
+        <li>
+          <a href="javascript:void(0)" onclick="ssml.ContractorsExport()">
+            <i class="bi bi-circle"></i><span>Contractors</span>
+          </a>
+        </li>
       </li>
       
 
@@ -664,6 +680,32 @@
     <script>
 
         $('#loader').delay(5000).modal('hide')
+
+        async function locadLocations(){
+          await ssml.getLocations().then(response => {
+            if(anton.IsRequest(response)){
+              let messages = response['message'];
+              let options = ``
+              messages.map(location => {
+                console.table(location)
+                if(location.is_default){
+                  options += `<option value='${location.pk}'>${location.name}</option>`
+                } else {
+                  options += `<option value='${location.pk}'>${location.name}</option>`
+                }
+                
+              })
+
+              $('#sidebar-location-select').html(options)
+            }
+          }).catch(error => {
+            
+          })
+        }
+
+        $(document).ready(function(){
+          locadLocations()
+        })
 
     </script>
 

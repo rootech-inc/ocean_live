@@ -24,8 +24,10 @@ from django.contrib import messages
 from cmms.extra import db
 
 
+
 # Create your views here.
 def base(request):
+    return HttpResponse("Module Discontinued.......")
     page = {
         'nav': True,
         'title': "CMMS"
@@ -41,6 +43,7 @@ def base(request):
 
 @login_required(login_url='/login/')
 def carjobs(request):
+    # return HttpResponse("Module Discontinued..")
     page = {
         'nav': True,
         'title': "Car Jobs"

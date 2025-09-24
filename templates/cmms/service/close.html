@@ -177,7 +177,7 @@
         })
 
 
-        $('#close').click(function() {
+        $('#close').click(async function() {
             console.log('CLOCKED')
             let rows = [];
             let err = 0;
@@ -226,6 +226,26 @@
             if(err === 0){
 
                 let end = api.call('PATCH',payload,'/cmms/api/');
+                if(anton.IsRequest(end)){
+                    
+
+                    let print_payload = {
+                        "module":"job_card_report",
+                        "data":`{{job.pk}}`
+                    }
+
+                    await api.v2('VIEW',print_payload,'/cmms/api/').then(response => {
+                        if(anton.IsRequest(response)){
+                            anton.viewFile(`/${rep.message}`,'Job Card','')
+                        } else {
+                            kasa.response(rep)
+                        }
+                    }).catch(error => {kasa.error(error)})
+                    
+
+                }
+                
+
                 console.table(end);
 
             } else {

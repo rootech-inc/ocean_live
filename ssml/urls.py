@@ -27,6 +27,10 @@ urlpatterns = [
     path('accounts/finlog/',views.accounts,name='accounts'),
     path('accounts/invoice/',views.invoice,name='cont-invoice'),
     path('account/new-cont-inv/',views.invoice_new,name='new-cont-inv'),
+    path('accounts/upload-evidence/',views.financial_evidence,name='financial_evidence'),
+    path('accounts/request/',views.request_expense,name='request_expense'),
+   
+    path('accounts/request/save/', views.save_expense_request, name='save_expense_request'),
 
 
     path('inventory/grn/', views.grn, name='grn'),
@@ -56,6 +60,7 @@ urlpatterns = [
     path('master/location_master/',views.location_master,name='ssml_location_master'),
     path('inventory/trenasfer/',views.transfer,name='ssml_transfer'),
     path('inventory/transfer/add/',views.add_transfer,name='ssml_add_transfer'),
-    path('sync_retired_meter/',views.sync_retired_meter,name='sync_retired_meter')
-
+    path('sync_retired_meter/',views.sync_retired_meter,name='sync_retired_meter'),
+    path('approve_document/',views.approve_document, name='ssml_approve_document')
+    
 ]

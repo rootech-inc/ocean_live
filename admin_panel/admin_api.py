@@ -441,6 +441,7 @@ def index(request):
                 response = success_response
 
             elif module == 'que_mail':
+                print(data)
                 sender_pk = data.get('sender') or 'default'
                 if sender_pk != 'default':
                     sender = MailSenders.objects.get(pk=data.get('sender'))
@@ -449,7 +450,8 @@ def index(request):
                 recipient = data.get('recipient')
                 subject = data.get('subject')
                 body = data.get('body')
-                cc = data.get('cc')
+                cc = data.get('cc','')
+                queu_by = User.objects.get(pk=data.get('mypk'))
                 mail_key = make_md5(f"{timezone.now()}{subject}{recipient}{body}{sender.pk}{sender.address}")
                 MailQueues(sender=sender, recipient=recipient, subject=subject, body=body, cc=cc,mail_key=mail_key).save()
                 just_q = MailQueues.objects.get(mail_key=mail_key)
@@ -471,7 +473,7 @@ def index(request):
                         ticket_id=service.ticket_id,
                         title="Issue Escalated",
                         tran="Email has been sent to service provider",
-                        sender=User.objects.get(username='reza'),
+                        user=queu_by,
 
                     ).save()
 

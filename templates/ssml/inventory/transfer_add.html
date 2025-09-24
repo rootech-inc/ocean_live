@@ -118,16 +118,7 @@
                             </tr>
                         </thead>
                         <tbody id="tran_table">
-                            <tr>
-                                <td>1</td>
-                                <td>123456</td>
-                                <td>MANGO MANGO MANGO</td>
-                                <td><input type="text" id="pack_1" style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
-                                <td><input type="text" id="pack_qty_1" style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
-                                <td><input type="text" id="sent_qty_1" style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
-                                <td><input type="text" id="rec_qty_1" style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
-                                <td><input type="text" id="total_cost_1" readonly style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
-                            </tr>
+                           
                         </tbody>
                     </table>
                 </div>
@@ -136,19 +127,79 @@
 
     <script>
         $(document).ready(function(){
-            $('#save').click(function(){
-                let ids =  ['entry_date','tran_type','loc_from','loc_to','remarks'];
-                if(true){
+            $('#save').click(async function(){
+                let ids =  ['entry_date','tran_type','loc_from','loc_to','remarks','mypk'];
+                if(anton.validateInputs(ids)){
+                    let hd = anton.Inputs(ids)
                     // validate transactions
                     let t_l = $('#tran_table tr').length;
                     if(t_l > 0){
-                        kasa.success("lets go")
+                        // Loop through each row in tran_table and check if required fields have values
+                        let valid = true;
+                        let errorMsg = "";
+                        let transactions = []
+                        $('#tran_table tr').each(function(index, tr){
+                            // Get all td elements in the row
+                            let tds = $(tr).find('td');
+                            let tr_id = $(tr).attr('id');
+                            let sn = '';
+                            if (tr_id) {
+                                let parts = tr_id.split('_');
+                                sn = parts[parts.length - 1];
+                            }
+
+                            console.log('LINE NUMBER',sn)
+                            let this_ids = [
+                                `pack_${sn}`,`pack_qty_${sn}`,`sent_qty_${sn}`,`total_cost_${sn}`
+                            ]
+
+                            if(anton.validateInputs(this_ids)){
+                                transactions.push({
+                                    barcode:$(`#barcode_${sn}`).text(),
+                                    pack_qty:$(`#pack_qty_${sn}`).val(),
+                                    oum:$(`#pack_${sn}`).val(),
+                                    sent_qty:$(`#sent_qty_${sn}`).val()
+                                })
+                            } else {
+                                valid = false;
+                                errorMsg = `Row ${index+1} is missing required fields.`;
+                                return false; // break out of .each
+                            }
+                            
+                        });
+
+
+
+                        if(!valid){
+                            kasa.error(errorMsg);
+                            return;
+                        } else {
+                            let payload = {
+                                module:'transfer',
+                                data:{
+                                    transactions:transactions,
+                                    header:hd
+                                }
+                            }
+                            console.log('PAYLOAD')
+                            console.table(payload)
+                            console.log('PAYLOAD END')
+                            await api.v2('PUT',payload,'/ssml/api/').then(response => {
+                                if(anton.IsRequest(response)){
+                                    kasa.confirm(response.message,1,'/ssml/inventory/trenasfer/')
+                                } else {
+                                    kasa.response(response)
+                                }
+                            }).catch(error => {kasa.error(error)})
+                        }
                     } else {
+                        
                         kasa.error("Invalid Transactions")
+
                     }
 
                 } else {
-                    kasa.error("Invalid Form Field")
+                    kasa.error("Invalid Header")
                 }
             })
 
@@ -204,15 +255,15 @@
                                             let name = $(this).data('name');
                                             let sn = $('#tran_table tr').length + 1
                                             let row = `
-                                                <tr>
+                                                <tr id='row_${sn}'>
                                                     <td>${sn}</td>
-                                                    <td>${barcode}</td>
+                                                    <td id='barcode_${sn}'>${barcode}</td>
                                                     <td>${name}</td>
-                                                    <td><input type="text" id="pack_1" style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
-                                                    <td><input type="text" id="pack_qty_1" style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
-                                                    <td><input type="text" id="sent_qty_1" style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
-                                                    <td><input type="text" id="rec_qty_1" style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
-                                                    <td><input type="text" id="total_cost_1" readonly style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
+                                                    <td><input type="text" id="pack_${sn}" style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
+                                                    <td><input type="text" id="pack_qty_${sn}" style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
+                                                    <td><input type="text" id="sent_qty_${sn}" style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
+                                                    <td><input type="text" id="rec_qty_${sn}" style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
+                                                    <td><input type="text" id="total_cost_${sn}" style="width: 100px !important" class="form-control form-control-sm rounded-0"></td>
                                                 </tr>
                                             `
 

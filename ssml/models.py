@@ -27,6 +27,8 @@ class Location(models.Model):
     is_active = models.BooleanField(default=True)
     created_by = models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
 
+    is_default =models.BooleanField(default=False)
+
     def obj(self):
         return {
             'pk':self.id,
@@ -37,7 +39,8 @@ class Location(models.Model):
             'street':self.street,
             'address':self.address,
             'phone':self.phone,
-            'email':self.email
+            'email':self.email,
+            'default':self.is_default
         }
 
 
@@ -78,7 +81,12 @@ class InventoryMaterial(models.Model):
     is_issue = models.BooleanField(default=False)
     issue_qty = models.DecimalField(max_digits=10,default=0.00, decimal_places=2)
     auto_issue = models.BooleanField(default=False)
-    
+
+    item_type_choices = [
+        ('pri',"Primary"),
+        ('gen',"General")
+    ]
+    item_type = models.CharField(max_length=255, choices=item_type_choices, default='gen')
     def __str__(self):
         return self.name
     
@@ -126,17 +134,17 @@ class InventoryMaterial(models.Model):
             total_RET = Cardex.objects.filter(material=self,doc_type='RET').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
 
             # issue is out - retuen
-            print(self.name)
-            print("GRN",total_GR)
-            print('ISS',total_ISS)
-            print("RETURN",total_RET)
+            # print(self.name)
+            # print("GRN",total_GR)
+            # print('ISS',total_ISS)
+            # print("RETURN",total_RET)
             total_issue = Decimal(total_ISS) + Decimal(total_RET)
-            print("TOT ISS",total_issue)
+            # print("TOT ISS",total_issue)
             
             
             total = Decimal(total_GR) + Decimal(total_issue)
-            print("TOT",total)
-            print()
+            # print("TOT",total)
+            # print()
             
             return total
         else:
@@ -150,8 +158,17 @@ class InventoryMaterial(models.Model):
         arr = []
         for loc in locations:
             arr.append({
-                'location':loc.loc_name,
-                'stock': Cardex.objects.filter(material=self,location=loc).aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
+                'location': loc.loc_name,
+                'loc_id':loc.id,
+                'general_in': Cardex.objects.filter(material=self, location=loc, qty__gt=0).aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0,
+                'total_in': Cardex.objects.filter(material=self, location=loc, qty__gt=0,doc_type__in=['GR','TRF']).aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0,
+                'total_out': Cardex.objects.filter(material=self, location=loc, qty__lt=0,doc_type__in=['ISS','TRF']).aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0,
+                'total_consumed': MaterialOrderItem.objects.filter(
+                    material=self,
+                    material_type='is',
+                    service_order__location=loc)
+                    .aggregate(total_qty=Sum('quantity'))['total_qty'] or 0,
+                'stock': Cardex.objects.filter(material=self, location=loc).aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
             })
         return arr
 
@@ -159,20 +176,26 @@ class InventoryMaterial(models.Model):
         return Cardex.objects.filter(material=self).aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
     def out(self):
         return Cardex.objects.filter(material=self).aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
-    def cardex(self):
+    def cardex(self,loc='*'):
         obj = []
-        cardex = Cardex.objects.filter(material=self).order_by('created_at')
+        if loc == '*':
+            cardex = Cardex.objects.filter(material=self).order_by('created_at')
+        else:
+            location = Location.objects.get(id=loc)
+            cardex = Cardex.objects.filter(material=self,location=location).order_by('created_at')
         for item in cardex:
             obj.append(item.obj())
+            
         return obj
 
     def stock_in(self):
         grn = Cardex.objects.filter(material=self,doc_type='GR').aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
+        tr = Cardex.objects.filter(material=self, doc_type='TRF', qty__gt=0).aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
         #returns = Cardex.objects.filter(material=self,doc_type='RET').aggregate(total_qty=models.Sum('qty'))['total_qty']  or 0
         #xr = returns * -1
         #return grn + xr
         
-        return grn
+        return grn + tr
     def stock_out(self):
         issue = Cardex.objects.filter(material=self,doc_type='ISS').aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
         return issue
@@ -373,6 +396,21 @@ class Contractor(models.Model):
         
         return obj
 
+    def minimal_obj(self):
+        return {
+            'id':self.id,
+            'company':self.company,
+            'owner':self.owner,
+            'phone':self.phone,
+            'email':self.email,
+            'country':self.country,
+            'city':self.city,
+            'postal_code':self.postal_code,
+            'gh_post_code':self.gh_post_code,
+            'gh_card_no':self.gh_card_no,
+            'code':self.code,
+        }
+
     def obj(self):
         return {
             'id':self.id,
@@ -549,10 +587,11 @@ class GrnTransaction(models.Model):
 
 class Cardex(models.Model):
     doc_type_choices = [
-        ('GR', 'GRN'),
-        ('ISS', 'ISSUE'),
-        ('CIS', 'Contractor Issue Return'),
-        ('RET', 'RETURN'),
+        ('GR', 'GRN'), # IN
+        ('ISS', 'ISSUE'), # OUT
+        ('CIS', 'Contractor Issue Return'), # IN
+        ('RET', 'RETURN'), # IN
+        ('TRF',"Transfer")# IN OUT
     ]
     doc_type = models.CharField(max_length=3, choices=doc_type_choices)
     doc_no = models.CharField(max_length=255)
@@ -563,6 +602,8 @@ class Cardex(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     location = models.ForeignKey(Location,on_delete=models.CASCADE,null=False)
     balance = models.DecimalField(max_digits=10, decimal_places=2,default=0.00)
+
+   
     
     def obj(self):
         return {
@@ -576,6 +617,8 @@ class Cardex(models.Model):
             'updated_at':self.updated_at,
             'balance':self.balance
         }
+    
+
     
 
 
@@ -732,7 +775,7 @@ class ServiceType(models.Model):
     
 
     def today_jobs(self,date=datetime.now().date()):
-        print(date)
+        #print(date)
         return ServiceOrder.objects.filter(service_type=self,service_date=date).count()
     
     def obj(self):
@@ -827,6 +870,7 @@ class ServiceMaterials(models.Model):
         }
 
 class ServiceOrder(models.Model):
+    
     service_type = models.ForeignKey(ServiceType, on_delete=models.CASCADE)
     service_date = models.DateField()
     contractor = models.ForeignKey(Contractor, on_delete=models.CASCADE)
@@ -1190,6 +1234,32 @@ class Expense(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    is_approved = models.BooleanField(default=False)
+    is_posted = models.BooleanField(default=False)
+    is_rejected = models.BooleanField(default=False)
+
+    def evidence(self):
+        # INSERT_YOUR_CODE
+        evidences = self.evidences.all()
+        items = [f"{e.title}|{e.file.url}" for e in evidences if e.file]
+        return ','.join(items)
+
+    def status(self):
+        if self.is_rejected:
+            return False
+        else:
+            return True
+
+    def approved(self):
+        if not self.status():
+            if self.is_approved:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+
     def obj(self):
         return {
             'id':self.id,
@@ -1202,9 +1272,30 @@ class Expense(models.Model):
             'description':self.description,
             'created_at':self.created_at,
             'updated_at':self.updated_at,
-            'created_by':self.created_by.get_full_name()
+            'created_by':self.created_by.get_full_name(),
+            'evidence':self.evidence(),
+            'status':self.status(),
+            'approval':self.approved()
         }
     
+class FinancialEvidence(models.Model):
+# INSERT_YOUR_CODE
+    transaction = models.ForeignKey('Expense', on_delete=models.CASCADE, related_name='evidences')
+    title = models.CharField(max_length=255)
+    file = models.FileField(upload_to='static/general/financial_evidence/')
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def obj(self):
+        return {
+            'id': self.id,
+            'transaction_id': self.transaction.id if self.transaction else None,
+            'title': self.title,
+            'file_url': self.file.url if self.file else None,
+            'uploaded_by': self.uploaded_by.get_full_name() if self.uploaded_by else None,
+            'uploaded_at': self.uploaded_at,
+            
+        }
     
 class InvoiceHD(models.Model):
     entry_no = models.CharField(max_length=255,null=False, blank=False,unique=True)
@@ -1327,13 +1418,146 @@ class TransferHd(models.Model):
     loc_fr = models.ForeignKey(Location,on_delete=models.CASCADE,related_name='loc_fr')
     loc_to = models.ForeignKey(Location,on_delete=models.CASCADE,related_name='loc_to')
     entry_date = models.DateField(null=False)
+    entry_no = models.CharField(max_length=255,null=False, blank=False,unique=True)
     is_posted = models.BooleanField(default=False)
     is_valid = models.BooleanField(default=True)
+
+    transfer_type_choices = [('int','Internal'),
+        ('ext','External')]
+
+    tran_type = models.CharField(max_length=255,null=False, blank=False,choices=transfer_type_choices,default='int')
 
     remarks = models.TextField()
     created_by = models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
     date_created = models.DateField(auto_now_add=True)
     time_created = models.TimeField(auto_now_add=True)
+    approved_by = models.ForeignKey(User,on_delete=models.SET_NULL,null=True,related_name='approved_transfers')
+    approved_date = models.DateField(null=True,blank=True)
+    approved_time = models.TimeField(null=True,blank=True)
+
+    is_sent = models.BooleanField(default=False)
+    sent_by = models.ForeignKey(User,on_delete=models.SET_NULL,null=True,related_name="sender")
+    sent_date = models.DateField(null=True,blank=True)
+    transporter = models.CharField(max_length=200,null=True,blank=True)
+    car_no  = models.CharField(max_length=200,unique=False,blank=True)
+
+
+    def post(self):
+        for tran in self.transactions():
+            tr = self      
+            material_id = tran.get('material_id')
+            material = InventoryMaterial.objects.get(id=material_id)
+            total = Decimal(tran.get('sent_qty') ) * Decimal(tran.get('pack_qty'))
+
+            Cardex.objects.create(
+                            doc_type='TRF',
+                            doc_no = tr.entry_no,
+                            ref_no = tr.entry_no,
+                            material=material,
+                            qty=total,
+                            created_at=tr.date_created,
+                            location=tr.loc_to,
+                        )
+
+            Cardex.objects.create(
+                            doc_type='TRF',
+                            doc_no = tr.entry_no,
+                            ref_no = tr.entry_no,
+                            material=material,
+                            qty=total * Decimal(-1),
+                            created_at=tr.date_created,
+                            location=tr.loc_fr,
+                        )
+            tr.is_posted = True
+            tr.save()
+
+    def status(self):
+
+        if not self.is_valid:
+            return 'Deleted'
+        elif not self.is_posted:
+            return 'Pending'
+        else:
+            return 'Posted' 
+        
+    def docs(self):
+        docs = []
+        for doc in Documents.objects.filter(doc_type='ssml_tr',ref=self.entry_no):
+            docs.append({
+                'title': doc.title,
+                'description': doc.description,
+                'file_url': doc.file.url if doc.file else None
+            })
+        return docs
+
+    def next_row(self):
+        return TransferHd.objects.filter(id__gt=self.id).first().id if TransferHd.objects.filter(id__gt=self.id).count() > 0 else 0
+    def prev_row(self):
+        return TransferHd.objects.filter(id__lt=self.id).last().id if TransferHd.objects.filter(id__lt=self.id).count() > 0 else 0
+
+    def transactions(self):
+        return [tran.obj() for tran in TransferTr.objects.filter(entry=self)]
+    
+    def tran_tp(self):
+        return dict(self.transfer_type_choices).get(self.tran_type, self.tran_type)
+
+    def obj(self):
+        return {
+            'id':self.id,
+            'entry_no':self.entry_no,
+            'entry_date':self.entry_date,
+            'remarks':self.remarks,
+            'created_by':self.created_by.get_full_name(),
+            'date_created':self.date_created,
+            'time_created':self.time_created,
+            'is_posted':self.is_posted,
+            'is_valid':self.is_valid,
+            'tran_type':self.tran_tp(),
+            'loc_fr':self.loc_fr.loc_name,
+            'loc_to':self.loc_to.loc_name,
+            'transactions':self.transactions(),
+            'next':self.next_row(),
+            'previous':self.prev_row(),
+            'status':self.status(),
+            'approved_by':self.approved_by.get_full_name() if self.approved_by else 'Pending',
+            'is_sent':self.is_sent,
+            'sent_by':self.sent_by.get_full_name() if self.sent_by else 'Pending',
+            'transporter':self.transporter,
+            'docs':self.docs()
+        }
+
+class TransferTr(models.Model):
+    entry = models.ForeignKey(TransferHd,on_delete=models.CASCADE)
+    material = models.ForeignKey(InventoryMaterial,on_delete=models.CASCADE)
+    name = models.CharField(max_length=255,null=False, blank=False)
+    barcode = models.CharField(max_length=255,null=False, blank=False)
+
+    oum = models.CharField(max_length=255,null=False, blank=False)
+    pack_qty = models.DecimalField(max_digits=20,decimal_places=2,default=0.00)
+    
+    sent_qty = models.DecimalField(max_digits=20,decimal_places=2,default=0.00)
+    received_qty = models.DecimalField(max_digits=20,decimal_places=2,default=0.00)
+
+    total_qty = models.DecimalField(max_digits=20,decimal_places=2,default=0.00)
+    diff_qty = models.DecimalField(max_digits=20,decimal_places=2,default=0.00)
+
+    class Meta:
+        unique_together = (('entry','material'),)
+
+    def obj(self):
+        return {
+            'id':self.id,
+            'name':self.name,
+            'barcode':self.barcode,
+            'oum':self.oum,
+            'pack_qty':self.pack_qty,
+            'sent_qty':self.sent_qty,
+            'received_qty':self.received_qty,
+            'total_qty':Decimal(self.sent_qty) * Decimal(self.pack_qty),
+            'diff_qty':self.diff_qty,
+            'material_id':self.material.id
+        }
+
     
 
 class RequiredReturn(models.Model):
@@ -1345,3 +1569,30 @@ class RequiredReturn(models.Model):
     class Meta:
         unique_together = (('service_type','material','as_of'),)
     
+
+class Documents(models.Model):
+    title = models.CharField(max_length=200)
+    file = models.ImageField(upload_to='static/uploads/files/ssml_docs', null=True, blank=True)
+    description = models.TextField()
+    doc_choices = [
+        ('ssml_grn', 'GRN'),
+        ('ssml_tr', 'Transfer'),
+        ('ssml_iss', 'Material Issue'),
+    ]
+    doc_type = models.CharField(max_length=15,null=False,blank=False,choices=doc_choices)
+    ref = models.CharField(max_length=200)
+
+    def obj(self):
+    # INSERT_YOUR_CODE
+        data = {
+            'id': self.id,
+            'tital': self.tital,
+            'description': self.description,
+            'doc_type': self.doc_type,
+            'ref': self.ref,
+        }
+        if self.file and hasattr(self.file, 'url'):
+            data['file'] = self.file.url
+        else:
+            data['file'] = None
+        return data

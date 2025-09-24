@@ -45,6 +45,10 @@
     </div>
 
     <script>
+        let recipientNumber = `{{card.app.provider.email.phone}}`
+        recipientNumber = "+233546310011"
+        recipientNumber = recipientNumber.replace(/\+/g, '').replace(/\s+/g, '');
+
         function sendEmail(){
             let ids = ['sender','subject','recipient','cc'];
             let body = tinymce.get('email_message').getContent();
@@ -57,11 +61,34 @@
                 payload['data']['body'] = body
                 payload['data']['trigger'] = 'servicing'
                 payload['data']['ref'] = '{{ card.pk }}'
+                payload['data']['mypk'] = $('#mypk').val()
 
                 // send
                 let que = api.call('PUT',payload,'/adapi/');
                 if(anton.IsRequest(que)){
-                    kasa.confirm(que['message'],1,'/servicing/jobcard/')
+                    // send whatsapp message
+                    // WhatsApp send message URL
+                    let subject = ""
+                    let message = `A new issue has been logged and sent to your mailbox.\n\n*App*: {{card.app.name}}\n*Title*: {{card.ticket.title}}`;
+                    let whatsappMessage = encodeURIComponent(`${message}`);
+                    
+                    let whatsappUrl = "https://wa.me/" + recipientNumber + "?text=" + whatsappMessage;
+                    let ht = `
+                    <div class="form-group mt-3">
+                        <label for="whatsapp_message">WhatsApp Message Preview</label>
+                        <textarea id="whatsapp_message" class="form-control rounded-0" rows="5">{{ card.ticket.descr }}&#10;&#10;{{ card.analysis }}</textarea>
+                    </div>
+                    `
+
+                amodal.setTitleText("Send WhatsApp Message");
+                amodal.setBodyHtml(ht);
+                amodal.setFooterHtml(`<button id='send_whatsapp' class='btn btn-success rounded-0'>SEND</button>`)
+                amodal.show();
+
+                document.getElementById('send_whatsapp').addEventListener('click', function() {
+                    window.open(whatsappUrl, '_blank');
+                });
+
                 } else {
                     kasa.response(que)
                 }

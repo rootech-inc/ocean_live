@@ -5,9 +5,53 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 from django.contrib.auth.models import User
+from ocean.settings import BASE_URL
 
 
-from ssml.models import Cardex,Location,RequiredReturn, InvoiceHD,InvoiceTransactions, Contractor, Expense, InventoryGroup, InventoryMaterial, Issue, IssueTransaction, Ledger, MaterialOrderItem, Meter, PaySlipHD, Plot, RedeemTransactions, Reedem, Service, ServiceMaterials, ServiceOrder, ServiceOrderItem, ServiceOrderReturns, ServiceType, Supplier, Grn, GrnTransaction, ContractorError
+from ssml.models import Cardex,Location,RequiredReturn, InvoiceHD,InvoiceTransactions, Contractor, Expense, InventoryGroup, InventoryMaterial, Issue, IssueTransaction, Ledger, MaterialOrderItem, Meter, PaySlipHD, Plot, RedeemTransactions, Reedem, Service, ServiceMaterials, ServiceOrder, ServiceOrderItem, ServiceOrderReturns, ServiceType, Supplier, Grn, GrnTransaction, ContractorError, TransferHd, TransferTr
+from admin_panel.models import Emails, Locations, BusinessEntityTypes,MailSenders, MailQueues,MailAttachments,Sms,SmsApi
+from admin_panel.anton import make_md5_hash
+
+def safe_add_image_to_pdf(pdf, image_path, x, y, w, h=None):
+    """
+    Safely add an image to PDF with fallback options
+    """
+    import os
+    
+    # Try the original image path first
+    if os.path.exists(image_path):
+        try:
+            if h:
+                pdf.image(image_path, x=x, y=y, w=w, h=h)
+            else:
+                pdf.image(image_path, x=x, y=y, w=w)
+            return True
+        except Exception as e:
+            print(f"Warning: Could not load image {image_path}: {e}")
+    
+    # If original fails, try fallback options
+    fallback_paths = [
+        'static/general/img/logo.png',
+        'static/general/img/logo-blue.png',
+        'static/general/img/sneda_motors_logo.png'
+    ]
+    
+    for fallback_path in fallback_paths:
+        if os.path.exists(fallback_path) and fallback_path != image_path:
+            try:
+                if h:
+                    pdf.image(fallback_path, x=x, y=y, w=w, h=h)
+                else:
+                    pdf.image(fallback_path, x=x, y=y, w=w)
+                print(f"Used fallback image: {fallback_path}")
+                return True
+            except Exception as e:
+                print(f"Warning: Could not load fallback image {fallback_path}: {e}")
+                continue
+    
+    # If all images fail, just skip the logo
+    print("Warning: No logo images could be loaded, skipping logo")
+    return False
 
 
 @csrf_exempt
@@ -52,6 +96,64 @@ def interface(request):
                                           city=city,postal_code=postal_code,gh_card_no=gh_card_no,gh_post_code=gh_post_code,created_by=created_by)
 
                 success_response['message'] = "Contractor Created Successfully"
+
+            elif module == 'daily_sms_report':
+                from django.utils import timezone
+                from datetime import datetime
+                print(data)
+                day_date = data.get('date',datetime.now().date())
+                print(day_date)
+
+                import openpyxl
+                
+                for contractor in Contractor.objects.all():
+                    today_jobs = ServiceOrder.objects.filter(contractor=contractor,service_date=day_date)
+                    total_jobs = ServiceOrder.objects.filter(contractor=contractor).count()
+
+                    if today_jobs.count() > 0:
+                        book = openpyxl.Workbook()
+                        sheet = book.active
+                        sheet.title = str(day_date)
+                        sheet.append(['METER NUMBER','SERVICE TYPE'])
+                        for job in today_jobs:
+                            sheet.append([job.new_meter,job.service_type.name])
+                        
+                        
+                        file_name = f"static/general/tmp/daily_report_{contractor.company.replace(' ','_')}_{str(day_date).replace('-','_')}.xlsx"
+                        file_url = f"{BASE_URL}{file_name}"
+
+                        import requests
+
+                        long_url = file_url
+                        api_url = "https://is.gd/create.php"
+
+                        params = {
+                            "format": "simple",  # "simple" returns just the short URL as text
+                            "url": long_url
+                        }
+
+                        response = requests.get(api_url, params=params)
+                        print(response)
+
+                        if response.status_code == 200:
+                            file_url = response.text
+                        else:
+                            print("Error:", response.text)
+
+
+                        book.save(file_name)
+                        sms_message = f"Daily SMS Report for {contractor.company} on {day_date}\nToday Jobs: {today_jobs.count()}\nTotal Jobs: {total_jobs}\n\nDownload the report: \n{file_url}"
+                        print(sms_message)
+                        to = contractor.phone.replace('233','0').replace('+233','0')
+                        if len(to) == 10:
+                            Sms(
+                                api=SmsApi.objects.get(is_default=True),
+                                to=to,
+                                message=sms_message
+                            ).save()
+                    
+                    
+                    
 
             elif module == 'return_qty':
                 service_id = data.get('service_id')
@@ -650,6 +752,73 @@ def interface(request):
                     success_response['status_code'] = 400
                     success_response['message'] = f"Error on line {sys.exc_info()[2].tb_lineno}: {e}"
 
+            elif module == 'transfer':
+                hdd = data.get('header')
+                print(hdd)
+                transactions = data.get('transactions')
+
+                entry_date = hdd.get('entry_date')
+                loc_from = hdd.get('loc_from')
+                loc_to = hdd.get('loc_to')
+                mypk = hdd.get('mypk')
+                remarks = hdd.get('remarks')
+                tran_type = hdd.get('tran_type')
+
+                if loc_from == loc_to:
+                    raise Exception("Location from and to cannot be same")
+
+                owner = User.objects.get(pk=mypk)
+                loc_fr = Location.objects.get(pk=loc_from)
+                loc_t = Location.objects.get(pk=loc_to)
+
+                try:
+                
+                    next_no = TransferHd.objects.all().last().pk + 1 if TransferHd.objects.all().count() > 0 else 1
+                    entry_no = f'TR-{next_no}'
+
+                    TransferHd.objects.create(
+                        loc_fr=loc_fr,
+                        loc_to=loc_t,
+                        entry_date=entry_date,
+                        remarks=remarks,
+                        created_by=owner,
+                        tran_type=tran_type,
+                        entry_no=entry_no
+                    )
+
+                    hd = TransferHd.objects.get(entry_no=entry_no)
+
+                    for transaction in transactions:
+                        print(transaction)
+                        mt = InventoryMaterial.objects.get(barcode=transaction.get('barcode'))
+                        TransferTr.objects.create(
+                            entry=hd,
+                            material=mt,
+                            name=mt.name,
+                            barcode=mt.barcode,
+                            oum=transaction.get('oum'),
+                            pack_qty=transaction.get('pack_qty'),
+                            sent_qty=transaction.get('sent_qty')
+                        )
+
+                    
+                    success_response['message'] = "Transfer Created Successfully"
+                    success_response['status_code'] = 200
+
+                    
+                    # todo: save tran hd
+                
+                except Exception as e:
+                    # If TransferHd was created, delete it to avoid orphaned header
+                    try:
+                        if 'hd' in locals() and isinstance(hd, TransferHd):
+                            hd.delete()
+                    except Exception:
+                        pass
+                    success_response['status_code'] = 400
+                    success_response['message'] = f"Error on line {sys.exc_info()[2].tb_lineno}: {e}"
+
+
             else:
                 success_response['status_code'] = 400
                 success_response['message'] = f"Module Not Found"
@@ -666,6 +835,20 @@ def interface(request):
                     else:
                         contractor = Contractor.objects.get(id=id)
                         success_response['message'] = contractor.obj()
+
+                elif module == 'transfer':
+                    id = data.get('id','*')
+                    if id == '*':
+                        transfers = TransferHd.objects.all().order_by('entry_date')
+                        success_response['message'] = [transfer.obj() for transfer in transfers]
+                    else:
+                        if isinstance(id, int) or (isinstance(id, str) and id.isdigit()):
+                            transfer = TransferHd.objects.filter(id=id)
+                        else:
+                            transfer = TransferHd.objects.filter(entry_no=id)
+
+                        success_response['message'] = [t.obj() for t in transfer]
+                        
 
                 elif module == 'job_material_details':
                     contractor_code = data.get('code','*')
@@ -702,6 +885,76 @@ def interface(request):
 
                     response = success_response
 
+                elif module == 'month_walk':
+                    
+                    from datetime import datetime
+                    location = '*'
+                    if data.get('location'):
+                        location = Location.objects.get(id=data.get('location'))
+                    now = datetime.now()
+                    year = now.year
+                    current_month = now.month
+                    months = [["Month","Stock","Installed"]]
+                    import openpyxl
+                    wb = openpyxl.Workbook()
+                    ws = wb.active
+                    header = ['MONTH',"STOCK",'INSTALLED','%']
+                    ws.append(header)
+                    
+                    for month in range(1, current_month + 1):
+                        import calendar
+                        month_name = calendar.month_name[month]
+                        # Get stock of sum of material in cardex, within this month
+                        from django.db.models import Sum
+                        # Calculate the first and last day of the month
+                        from datetime import datetime
+                        first_day = datetime(year, month, 1)
+                        if month == 12:
+                            last_day = datetime(year + 1, 1, 1)
+                        else:
+                            last_day = datetime(year, month + 1, 1)
+                        # Aggregate sum of material quantity in cardex for this month
+                        
+                        if location == '*':
+                            stock_sum = Cardex.objects.filter(
+                                created_at__lte=last_day,
+                                material__item_type='pri'
+                                ).aggregate(total=Sum('qty'))['total'] or 0
+                        else:
+                            stock_sum = Cardex.objects.filter(
+                                
+                                created_at__lte=last_day,
+                                material__item_type='pri',
+                                location=location
+                                ).aggregate(total=Sum('qty'))['total'] or 0
+
+                        from decimal import Decimal
+                        stock_sum = int(stock_sum)
+                        print(stock_sum, type(stock_sum))
+
+                        from ssml.models import ServiceOrder
+                        if location == '*':
+                            total_service_orders = ServiceOrder.objects.filter(service_date__gte=first_day, service_date__lt=last_day).count()
+                        else:
+                            total_service_orders = ServiceOrder.objects.filter(service_date__gte=first_day, service_date__lt=last_day,location=location).count()
+
+
+                        stock_sum = round(stock_sum, 2)
+                        months.append([month_name,stock_sum,total_service_orders])
+                        # INSERT_YOUR_CODE
+                        percent = 0
+                        if stock_sum > 0:
+                            percent = round((total_service_orders / stock_sum) * 100, 2)
+                        else:
+                            percent = 0
+                        ws.append([month_name,stock_sum,total_service_orders,percent])
+                    
+                    file = fr"static/general/tmp/status.xlsx"
+                    wb.save(file)
+                    success_response['message'] = months
+                    success_response['file'] = file
+                    response = success_response
+
                 elif module == 'location':
                     id = data.get('id','*')
                     if id == '*':
@@ -717,8 +970,22 @@ def interface(request):
                     limit = data.get('limit',10000)
                     as_of = data.get('as_of', f'{datetime.now().year}-01-01')
                     doc = data.get('doc','json')
+                    direction = data.get('direction')
+                    print(data)
                     if id == '*':
-                        expenses = Expense.objects.all().order_by('date')
+                        filt = data.get('filter','pending')
+                        print(filt)
+                        if filt == 'approved':
+                            expenses = Expense.objects.filter(is_approved=True)
+                        elif filt == 'pending':
+                            expenses = Expense.objects.filter(is_approved=False)
+                        else:
+                            expenses = Expense.objects.all()
+                        # if direction == '*':
+                        #     direction = 'all'
+                        #     expenses = expenses.filter(is_approved=False).order_by('date')
+                        # else:
+                        #     expenses = expenses.filter(direction=direction,is_approved=False).order_by('date')
                         # expenses.filter(date=as_of)
                         # expenses.order_by('-date')[:limit]
                         if doc == 'json':
@@ -730,12 +997,13 @@ def interface(request):
                             ws = wb.active
                             header = ['DIRECTION',"TYPE",'AMOUNT','DATE','REF',"DESCRIPTION"]
                             ws.append(header)
+                            
 
                             for expense in expenses:
                                 tr = [expense.direction,expense.category,expense.amount,expense.date,expense.reference,expense.description]
                                 ws.append(tr)
 
-                            file_name = f'static/general/tmp/expensis.xlsx'
+                            file_name = f'static/general/tmp/{direction}_expensis.xlsx'
                             wb.save(file_name)
                             arr = file_name
 
@@ -743,10 +1011,20 @@ def interface(request):
                         expense = Expense.objects.get(id=id)
                         arr = expense.obj()
 
-                    success_response['message'] = {
-                        'total':Expense.objects.all().aggregate(total=Sum('amount'))['total'],
-                        'expenses':arr
-                    }
+                    if filt == 'approved':
+                        success_response['message'] = {
+                            'total': "{:,.2f}".format(Expense.objects.filter(is_approved=True).aggregate(total=Sum('amount'))['total'] or 0),
+                            'total_in': "{:,.2f}".format(Expense.objects.filter(direction='in',is_approved=True).aggregate(total=Sum('amount'))['total'] or 0),
+                            'total_out': "{:,.2f}".format(Expense.objects.filter(direction='out',is_approved=True).aggregate(total=Sum('amount'))['total'] or 0),
+                            'expenses':arr
+                        }
+                    else:
+                        success_response['message'] = {
+                            'total': "{:,.2f}".format(Expense.objects.filter(is_approved=False).aggregate(total=Sum('amount'))['total'] or 0),
+                            'total_in': "{:,.2f}".format(Expense.objects.filter(direction='in',is_approved=False).aggregate(total=Sum('amount'))['total'] or 0),
+                            'total_out': "{:,.2f}".format(Expense.objects.filter(direction='out',is_approved=False).aggregate(total=Sum('amount'))['total'] or 0),
+                            'expenses':arr
+                        }
 
                 elif module == 'invoice':
                     
@@ -827,6 +1105,138 @@ def interface(request):
                     success_response['message'] = f"/{file_name}"
 
 
+                elif module == 'print_tr':
+                    entry_no = data.get('entry_no')
+                    
+                    entry = TransferHd.objects.get(entry_no=entry_no)
+
+                    from fpdf import FPDF
+                    pdf = FPDF()
+                    pdf.add_page() 
+
+                # INSERT_YOUR_CODE
+                    pdf = FPDF(orientation='L', unit='mm', format='A4')
+                    pdf.add_page()
+                    pdf.set_auto_page_break(auto=True, margin=15)
+
+                    # Define a function to draw the header on each page
+                    def draw_waybill_header(pdf):
+                        # Logo
+                        safe_add_image_to_pdf(pdf, 'static/general/logo.png', x=10, y=8, w=35)
+
+                        # Title
+                        pdf.set_font("Arial", 'B', 20)
+                        pdf.set_xy(70, 10)
+                        pdf.cell(0, 10, "SNEDA SMART METERS", ln=1, align="L")
+
+                        # WAYBILL
+                        pdf.set_font("Arial", 'B', 18)
+                        pdf.set_xy(230, 10)
+                        pdf.cell(0, 10, f"WAYBILL: {entry.entry_no}", ln=1, align="L")
+
+                        # TO, ADDRESS, STATION
+                        pdf.set_font("Arial", '', 12)
+                        pdf.set_xy(70, 20)
+                        pdf.cell(0, 8, f"FROM:  {entry.loc_fr.loc_name}", ln=1, align="L")
+                        pdf.set_xy(70, 28)
+                        pdf.cell(0, 8, f"TO:  {entry.loc_to.loc_name}   DISPATCH:  {entry.car_no}", ln=1, align="L")
+
+                        # Table header
+                        pdf.set_xy(10, 40)
+                        pdf.set_font("Arial", 'B', 11)
+                        col_widths = [15, 35, 137, 30, 30, 30]
+                        headers = ["SN", "ITEM CODE", "DESCRIPTION","UOM", "SENT", "RECIEVED"]
+                        for i, header in enumerate(headers):
+                            pdf.cell(col_widths[i], 10, header, border=1, align="C")
+                        pdf.ln()
+                        return col_widths
+
+                    # Custom class to override header
+                    from fpdf import FPDF as _FPDF
+                    class WaybillPDF(_FPDF):
+                        def header(self):
+                            # Save current y to restore after header
+                            y = self.get_y()
+                            draw_waybill_header(self)
+                            # Set y to just below the table header
+                            self.set_y(50)
+                        def footer(self):
+                            # Move 40mm from bottom
+                            
+                            self.set_y(-40)
+                            self.set_font("Arial", 'i', 8)
+                            page_width = self.w - self.l_margin - self.r_margin
+                            col_footer_width = page_width / 3
+                            # Draw signature lines
+                            self.cell(page_width,8,"Acraa, Osu, +233 24 350 0687, bharat@snedaghana.com",ln=1,align='C')
+                            self.set_font("Arial", 'B', 11)
+                            self.cell(col_footer_width, 8, "Sender", border="LTR", align="C")
+                            self.cell(col_footer_width, 8, "Delivered By", border="LTR", align="C")
+                            self.cell(col_footer_width, 8, "Received By", border="LTR", align="C")
+                            self.ln(8)
+                            
+                            self.set_font("Arial", '', 11)
+                            self.cell(col_footer_width, 8, f"{entry.obj().get('sent_by')}", border="LR", align="C")
+                            self.cell(col_footer_width, 8, f"{entry.obj().get('transporter')}", border="LR", align="C")
+                            self.cell(col_footer_width, 8, "", border="LR", align="C")
+                            self.ln(1)
+                            
+                            self.set_font("Arial", '', 11)
+                            self.cell(col_footer_width, 12, "_________________________", border="LRB", align="C")
+                            self.cell(col_footer_width, 12, "_________________________", border="LRB", align="C")
+                            self.cell(col_footer_width, 12, "_________________________", border="LRB", align="C")
+                            self.ln(12)
+
+                    pdf = WaybillPDF(orientation='L', unit='mm', format='A4')
+                    pdf.set_auto_page_break(auto=True, margin=40)
+                    pdf.add_page()
+                    col_widths = [15, 35, 137, 30, 30, 30]  # For use in data rows
+
+                    # Dummy data rows
+                    pdf.set_font("Arial", '', 11)
+                    
+                    dummy_data = [
+                        # [1, "SM-1001", "Single Phase Smart Meter", 10, "10", ""],
+                    ]
+
+                    line = 1
+                    for tran in entry.transactions():
+                        dummy_data.append(
+                            [line,tran.get('barcode'),tran.get('name'),tran.get('oum'),tran.get('total_qty'),'']
+                        )
+                        line += 1
+                    for row in dummy_data:
+                        for i, item in enumerate(row):
+                            align = "C" if i in [0,3,4] else "L"
+                            pdf.cell(col_widths[i], 10, str(item), border=1, align=align)
+                        pdf.ln()
+
+                    # Fill up to 12 rows for visual
+                    for _ in range(12 - len(dummy_data)):
+                        for w in col_widths:
+                            pdf.cell(w, 10, "", border=1)
+                        pdf.ln()
+
+                    # Footer lines
+                    
+
+                    # Footer fields
+                    # Footer with three columns: Sender, Delivered By, Received By, on every page
+                    class WaybillPDF(_FPDF):
+                        def header(self):
+                            y = self.get_y()
+                            draw_waybill_header(self)
+                            self.set_y(50)
+                        
+                    
+
+                    file_name = f"{entry_no}.pdf"
+                    file = f"static/general/tmp/{file_name}"
+                    pdf.output(file)
+
+                    success_response['message'] = file
+
+
                 elif module == 'cont_issued':
                     cont_pk = data.get('contractor','*')
                     if cont_pk == '*':
@@ -872,7 +1282,13 @@ def interface(request):
                 elif module == 'cardex':
                     pk = data.get('pk')
                     item = InventoryMaterial.objects.get(id=pk)
-                    cd = item.cardex()
+                    loc_id = data.get('location','*')
+                    if loc_id == '*':
+                        file_name = 'all_locations'
+                    else:
+                        file_name = Location.objects.get(id=loc_id).loc_name
+                    
+                    cd = item.cardex(loc_id)
 
                     # make excel
                     import openpyxl
@@ -885,7 +1301,7 @@ def interface(request):
 
                     import hashlib
                     name = hashlib.md5(item.name.encode()).hexdigest()
-                    file_name = f"static/general/tmp/Cardex-{name}.xlsx"
+                    file_name = f"static/general/tmp/{file_name}-Cardex-{name}.xlsx"
                     book.save(file_name)
                    
 
@@ -1340,6 +1756,7 @@ def interface(request):
                 elif module == 'daily_report':
                     from django.utils import timezone
                     from datetime import datetime
+                    from .models import ServiceOrder
                     print(data)
                     day_date = data.get('date',datetime.now().date())
                     print(day_date)
@@ -1362,6 +1779,8 @@ def interface(request):
                         
                         today_jobs = st.today_jobs(day_date)
                         total_jobs = st.total_installations(day_date)
+
+                        print("TOTAL JOBS",total_jobs)
                         
                         pdf.set_font("Arial","", size=10)
                         pdf.cell(100, 5, txt=f"{st.name}", ln=False, align="L",border=1)
@@ -1388,7 +1807,7 @@ def interface(request):
 
                     total_today_jobs = 0
                     total_total_jobs = 0
-
+                    print("Cash")
                     for contractor in Contractor.objects.filter(~Q(company="A TRADITION")):
                         today_jobs = ServiceOrder.objects.filter(contractor=contractor,service_date=day_date).count()
                         total_jobs = ServiceOrder.objects.filter(contractor=contractor, service_date__lte=day_date).count()
@@ -1645,6 +2064,33 @@ def interface(request):
                 service.delete()
                 success_response['message'] = "Service Deleted Successfully"
 
+            elif module == 'delete_transfer':
+                entry_no = data.get('entry_no')
+                transfer = TransferHd.objects.get(entry_no=entry_no)
+                actor = User.objects.get(pk=data.get('mypk'))
+
+
+                
+                TransferTr.objects.filter(entry=transfer).delete()
+                Cardex.objects.filter(
+                        doc_type='TRF',
+                        doc_no=entry_no
+                    ).delete()
+                rm = transfer.remarks
+                transfer.remarks = f"Deleted By {actor.username} | {rm}"
+                transfer.is_valid = False
+                transfer.is_sent=False
+                transfer.is_posted=False
+                transfer.sent_by = None
+                transfer.approved_by = None
+                transfer.car_no = ""
+                transfer.transporter = ""
+
+                transfer.save()
+                success_response['message'] = "Transfer Deleted"
+                response = success_response
+
+
             elif module == 'meter':
                 id = data.get('id')
                 meter = Meter.objects.get(id=id)
@@ -1734,6 +2180,7 @@ def interface(request):
                 is_return = data.get('is_return')
                 is_issue = data.get('is_issue')
                 auto_issue = data.get('auto_issue')
+                item_type = data.get('item_type')
                 
                 print(data)
                 material = InventoryMaterial.objects.get(barcode=barcode)
@@ -1741,6 +2188,7 @@ def interface(request):
                 material.group = group
                 material.reorder_qty = reorder_qty
                 material.value = value
+                material.item_type = item_type
                 material.is_return = is_return
                 material.is_issue = is_issue
                 material.issue_qty = data.get('issue_qty')
@@ -1749,6 +2197,124 @@ def interface(request):
 
                 material.save()
                 success_response['message'] = "Material Updated Successfully"
+
+            elif module == 'location_default':
+                print(data)
+                Location.objects.all().update(is_default=False)
+                lc = Location.objects.get(id=data.get('id'))
+                lc.is_default = True
+                lc.save()
+
+                response = success_response
+
+            elif module == 'stock_transfer':
+                print(data)
+                source = data.get('source')
+                desination = data.get('destination')
+
+                sr_prod = InventoryMaterial.objects.get(barcode=source)
+                des_prod = InventoryMaterial.objects.get(barcode=desination)
+
+                # Use try/except for each update to ensure one failure doesn't stop the rest
+                try:
+                    GrnTransaction.objects.filter(material=sr_prod).update(material=des_prod)
+                except Exception as e:
+                    print(f"Error updating GrnTransaction: {e}")
+                try:
+                    IssueTransaction.objects.filter(material=sr_prod).update(material=des_prod)
+                except Exception as e:
+                    print(f"Error updating IssueTransaction: {e}")
+                try:
+                    TransferTr.objects.filter(material=sr_prod).update(material=des_prod)
+                except Exception as e:
+                    print(f"Error updating TransferTr: {e}")
+                try:
+                    RequiredReturn.objects.filter(material=sr_prod).update(material=des_prod)
+                except Exception as e:
+                    print(f"Error updating RequiredReturn: {e}")
+                try:
+                    RedeemTransactions.objects.filter(material=sr_prod).update(material=des_prod)
+                except Exception as e:
+                    print(f"Error updating RedeemTransactions: {e}")
+                try:
+                    ServiceOrderReturns.objects.filter(material=sr_prod).update(material=des_prod)
+                except Exception as e:
+                    print(f"Error updating ServiceOrderReturns: {e}")
+                try:
+                    MaterialOrderItem.objects.filter(material=sr_prod).update(material=des_prod)
+                except Exception as e:
+                    print(f"Error updating MaterialOrderItem: {e}")
+                try:
+                    ServiceMaterials.objects.filter(material=sr_prod).update(material=des_prod)
+                except Exception as e:
+                    print(f"Error updating ServiceMaterials: {e}")
+                try:
+                    IssueTransaction.objects.filter(material=sr_prod).update(material=des_prod)
+                except Exception as e:
+                    print(f"Error updating IssueTransaction (2nd): {e}")
+                try:
+                    Cardex.objects.filter(material=sr_prod).update(material=des_prod)
+                except Exception as e:
+                    print(f"Error updating Cardex: {e}")
+
+                if data.get('delete') == 'YES':
+                    sr_prod.delete()
+                
+
+                # for tr in Cardex.objects.filter(material=sr_prod):
+                #     dis = tr.obj()
+                #     doc_type = dis.get('doc_type')
+
+                #     doc_type_choices = [
+                #         ('GR', 'GRN'), # IN
+                #         ('ISS', 'ISSUE'), # OUT
+                #         ('CIS', 'Contractor Issue Return'), # IN
+                #         ('RET', 'RETURN'), # IN
+                #         ('TRF',"Transfer")# IN OUT
+                #     ]
+                #     if doc_type == 'GR':
+                #         GrnTransaction.objects.filter(entry_no=dis.get('doc_no'),material=sr_prod)
+                #     print(dis)
+
+            elif module == 'approve_expense':
+                pk = data.get('pk','*')
+                print(data)
+                if pk == '*':
+                    expenses = Expense.objects.filter(is_approved=False)
+                else:
+                    expenses = Expense.objects.filter(id=pk)
+                for expense in expenses:
+
+                    
+                    owner = expense.created_by
+                    owner_email = owner.email
+
+                    # Compose email subject and body for approving expense
+                    subject = f"Expense Approved: {expense.category} - {expense.amount}"
+                    body = (
+                        f"Dear {owner.get_full_name()},\n\n"
+                        f"Your expense request has been approved.\n\n"
+                        f"Details:\n"
+                        f"Category: {expense.category}\n"
+                        f"Amount: {expense.amount}\n"
+                        f"Reference: {expense.reference}\n"
+                        f"Description: {expense.description}\n"
+                        f"Date: {expense.date}\n\n"
+                        f"Thank you."
+                    )
+
+                    expense.is_approved = True
+                    expense.save()
+
+                    if MailSenders.objects.filter(address='solomon@snedaghana.com').exists():
+                        sender = MailSenders.objects.get(address='solomon@snedaghana.com')
+                    else:
+                        sender = MailSenders.objects.get(is_default=True)
+
+                    mail = MailQueues(sender=sender, subject=subject, body=body,
+                                                recipient='solomon@snedaghana.com',
+                                                cc='',mail_key=make_md5_hash(f"{subject}{body}"))
+                    mail.save()
 
             elif module == 'update_cardex_tally':
                 from django.db.models import Sum
@@ -1769,6 +2335,26 @@ def interface(request):
 
                 response = success_response
 
+            elif module == 'send_transfer':
+                from django.utils import timezone
+                entry_no = data.get('entry_no')
+                car_no = data.get('car_no')
+                driver = data.get('driver')
+                mypk = data.get('mypk')
+
+                sender = User.objects.get(pk=mypk)
+                entry = TransferHd.objects.get(entry_no=entry_no)
+                entry.is_sent = True
+                entry.sent_by = sender
+                entry.sent_date = timezone.now()
+                entry.transporter = driver
+                entry.car_no = car_no
+                entry.save()
+
+                success_response['message'] = "Transfer Sent"
+                response = success_response
+
+
             elif module == 'update_return_as_of':
                 tot = 0
                 for service in ServiceOrder.objects.all():
@@ -1788,6 +2374,7 @@ def interface(request):
                                 )
                                 tot += 1
                             except Exception as e:
+                                print(e)
                                 pass
                     else:
                         print(service.new_meter,service.service_type.name,"NOT QUALIFIED")
@@ -2018,6 +2605,68 @@ def interface(request):
                         )
                 
                 success_response['message'] = "GRN Updated Successfully"
+
+            elif module == 'post_transfer':
+                entry_no = data.get('entry_no','*')
+                if entry_no == '*':
+                    transfers = TransferHd.objects.filter(is_valid=True,is_posted=False,is_sent=True)
+                else:
+                    transfers = TransferHd.objects.filter(is_valid=True,is_posted=False,is_sent=True,entry_no=entry_no)
+
+                for tr in transfers:
+                    loc_from = tr.loc_fr
+                    loc_to = tr.loc_to
+                    entry_date = tr.entry_date
+
+                    for tran in tr.transactions():
+                        print(tran)
+                        material_id = tran.get('material_id')
+                        print(material_id)
+                        material = InventoryMaterial.objects.get(id=material_id)
+                        total = Decimal(tran.get('sent_qty') ) * Decimal(tran.get('pack_qty'))
+
+                        Cardex.objects.create(
+                            doc_type='TRF',
+                            doc_no = tr.entry_no,
+                            ref_no = tr.entry_no,
+                            material=material,
+                            qty=total,
+                            created_at=entry_date,
+                            location=loc_to,
+                        )
+
+                        Cardex.objects.create(
+                            doc_type='TRF',
+                            doc_no = tr.entry_no,
+                            ref_no = tr.entry_no,
+                            material=material,
+                            qty=total * Decimal(-1),
+                            created_at=entry_date,
+                            location=loc_from,
+                        )
+                    tr.is_posted = True
+                    tr.save()
+
+            elif module == 'unpost_transfer':
+                entry_no = data.get('entry_no','*')
+                if entry_no == '*':
+                    transfers = TransferHd.objects.filter(is_valid=True,is_posted=True,is_sent=True)
+                else:
+                    transfers = TransferHd.objects.filter(is_valid=True,is_posted=True,is_sent=True,entry_no=entry_no)
+
+                for tr in transfers:
+                    entry = tr.entry_no
+
+                    # delete from cardex
+                    Cardex.objects.filter(
+                        doc_type='TRF',
+                        doc_no=entry
+                    ).delete()
+
+                    tr.is_posted = False
+                    tr.save()
+
+                response = success_response
 
             elif module == 'issue':
                 issue_id = data.get('id')

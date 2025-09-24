@@ -8,7 +8,7 @@
         <div class="w-100 h-100 d-flex flex-wrap">
 
             <div class="w-75 h-100 d-flex flex-wrap">
-                <button onclick="location.href='{% url 'newjob' %}'" style="margin-right: .2em" class="btn btn-outline-primary"><i class="fa fa-plus"></i></button>
+                <button onclick="location.href='{% url 'wo_newjob' %}'" style="margin-right: .2em" class="btn btn-outline-primary"><i class="fa fa-plus"></i></button>
                 <button id="change_app" onclick="svc.changeApp(this.value)" style="margin-right: .2em" class="btn btn-outline-primary">CHGAP</button>
                 <button id="find_job" onclick="findJobScreen()" style="margin-right: .2em" class="btn btn-outline-info"><i class="fa fa-search"></i></button>
                 <button onclick="if(confirm('ARE YOU SURE?')){deleteJobCard(this.value)}" id="delete" style="margin-right: .2em" class="btn btn-outline-danger"><i class="fa fa-trash"></i></button>
@@ -556,22 +556,10 @@
 
 
         function mail_provider() {
-            windowPopUp(`/servicing/main-to-provider/${$('#delete').val()}/`,"EMAIL PROVIDER",1024,760)
-            mailer.new_email_screen()
-            {#let client_address = $('#client_email').val();#}
-            {#let provider_email = $('#provider_email').val();#}
-            {#let it_manager = 'bharat@snedaghana.com,ajay@snedaghana.com';#}
-            {#let cc = `${client_address},${it_manager}`#}
-            {#let title = $('#task_title').text()#}
-            {#let taskdesc = $('#taskdesc').text()#}
-            {#let task = $('#task').val()#}
-            {#taskdesc += `<br><br><i>With ocean at beta release that might be unavailable online sometimes, issue transactions for detailed troubleshooting can be found at <a href="http://41.222.234.59/servicing/jobcard/tracking/${task}/">link</a></i>`#}
-            {##}
-            {##}
-            {#$('#recipient').val(provider_email);#}
-            {#$('#cc').val(cc);#}
-            {#$('#subject').val(`Sneda Ghana Issues : ${title}`)#}
-            {#$('#body').val(taskdesc)#}
+            window.open(`/servicing/main-to-provider/${$('#delete').val()}/`, '_blank');
+            //windowPopUp(`/servicing/main-to-provider/${$('#delete').val()}/`,"EMAIL PROVIDER",1024,760)
+            // mailer.new_email_screen()
+            
 
 
         }

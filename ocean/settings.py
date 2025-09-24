@@ -107,6 +107,7 @@ DATABASE_NAME = os.environ.get('DB_NAME', 'ocean')
 DATABASE_USER = os.environ.get('DB_USER', 'root')
 
 DATABASE_PASSWORD = os.environ.get('DB_PASSWORD', 'Sunderland@411')
+BASE_URL = os.environ.get('BASE_URL', 'http://ec2-16-16-212-223.eu-north-1.compute.amazonaws.com/')
 
 DATABASE_HOST = os.environ.get('DB_HOST', '192.168.2.60')
 DATABASE_PORT = os.environ.get('DB_PORT', '3306')
@@ -246,13 +247,13 @@ OLD_DB_NAME = 'PROC_CMMS_V1'
 # DB_PORT = '1433'
 # DB_NAME = 'PROC_CMMS_V1'
 
-RET_DB_HOST = os.environ.get('RET_DB_HOST','192.168.2.4')
+RET_DB_HOST = os.environ.get('RET_DB_HOST','192.168.2.40')
 RET_DB_NAME = os.environ.get('RET_DB_NAME','SMSEXPV17')
 RET_DB_USER = os.environ.get('RET_DB_USER','sa')
 RET_DB_PASS = os.environ.get('RET_DB_PASS','sa@123456')
 RET_DB_PORT = os.environ.get('RET_DB_PORT','1433')
 
-REST_DB_HOST = os.environ.get('REST_DB_HOST','192.168.2.4') 
+REST_DB_HOST = os.environ.get('REST_DB_HOST','192.168.2.40')
 REST_DB_NAME = os.environ.get('REST_DB_NAME','SMSEXP_REST_2022')
 REST_DB_USER = os.environ.get('REST_DB_USER','sa')
 REST_DB_PASS = os.environ.get('REST_DB_PASS','sa@123456')

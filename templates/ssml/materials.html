@@ -36,7 +36,8 @@
             <button class="btn btn-sm btn-primary ms-2" id="rates">Rates</button>
             <button class="btn btn-sm btn-primary ms-2" id="prev-material"><i class="fas fa-arrow-left"></i> Previous</button>
             <button class="btn btn-sm btn-primary ms-2" id="next-material">Next <i class="fas fa-arrow-right"></i></button>
-            <button class="btn btn-sm ms-2 btn-info link_model" data-bs-toggle="modal" data-bs-target="#link_model_model">Link Model</button>
+            <button class="btn btn-sm ms-2 btn-info link_model" data-bs-toggle="modal" data-bs-target="#link_model_model">Link Service</button>
+            <button class="btn btn-sm btn-warning ms-2" id="stock-transfer">Stock Transfer</button>
         </div>
         <div class="w-50 d-flex justify-content-end">
             <button id="search-material" class="btn btn-primary">Search</button>
@@ -80,11 +81,11 @@
                     <div class="col-sm-4 mb-2"><label for="reorder_qty">Reorder Qty</label></div>
                     <div class="col-sm-8 mb-2"><input type="text" readonly class="form-control rounded-0" id="reorder_qty" name="reorder_qty" value=""></div>
 
-                    <div class="col-sm-4 mb-2"><label for="stock_in">Stock In</label></div>
+                    <!-- <div class="col-sm-4 mb-2"><label for="stock_in">Stock In</label></div>
                     <div class="col-sm-8 mb-2"><input type="text" readonly class="form-control rounded-0" id="stock_in" name="stock_in" value=""></div>
 
                     <div class="col-sm-4 mb-2"><label for="stock_out">Stock Out</label></div>
-                    <div class="col-sm-8 mb-2"><input type="text" readonly class="form-control rounded-0" id="stock_out" name="stock_out" value=""></div>
+                    <div class="col-sm-8 mb-2"><input type="text" readonly class="form-control rounded-0" id="stock_out" name="stock_out" value=""></div> -->
 
                     <div class="col-sm-4 mb-2"><label for="stock">Stock</label></div>
                     <div class="col-sm-8 mb-2"><input type="text" readonly class="form-control rounded-0" id="stock" name="stock" value=""></div>
@@ -156,8 +157,16 @@
                             <table class="table table-sm w-50 table-bordered">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th>Location</th>
-                                        <th>Stock</th>
+                                        <th><i class="fas fa-map-marker-alt"></i> LOCATION</th>
+                                        <th><i class="fas fa-arrow-down text-success"></i> IN</th>
+                                        <th colspan="2"><i class="fas fa-arrow-up text-danger"></i> OUT</th>
+                                        <th><i class="fas fa-boxes"></i> STOCK</th>
+                                    </tr>
+                                    <tr>
+                                        <th class="bg-light" colspan="2"></th>
+                                        <th>ISS</th>
+                                        <th>CONN</th>
+                                        <th class="bg-light" ></th>
                                     </tr>
                                 </thead>
                                 <tbody id="stock_table"></tbody>
@@ -662,6 +671,14 @@
                                                     <label for="issue_qty">issue_qty</label>
                                                     <input type="number" class="form-control" id="issue_qty" name="issue_qty" value="${material.issue_qty}">
                                                 </div>
+
+                                                <div class="form-group mb-3">
+                                                    <label for="item_type">Item Type</label>
+                                                    <select class="form-control" id="item_type" name="item_type">
+                                                        <option value='gen'>Genral</option>
+                                                        <option value='pri'>Primary</option>
+                                                    </select>
+                                                </div>
                                             </div>
                                             
                                         </div>    
@@ -676,7 +693,7 @@
                                 amodal.show();
 
                                 $('#save-material').click(async function () {
-                                    let ids = ['barcode', 'name', 'group', 'reorder_qty', 'value','is_return','is_issue','issue_qty','auto_issue'];
+                                    let ids = ['barcode', 'name', 'group', 'reorder_qty', 'value','is_return','is_issue','issue_qty','auto_issue','item_type'];
                                     if (anton.validateInputs(ids)) {
                                         let payload = {
                                             module: 'material',
@@ -690,7 +707,8 @@
                                                 is_return:$('#is_return').val(),
                                                 is_issue:$('#is_issue').val(),
                                                 issue_qty:$('#issue_qty').val(),
-                                                auto_issue:$('#auto_issue').val()
+                                                auto_issue:$('#auto_issue').val(),
+                                                item_type:$('#item_type').val()
                                             }
                                         };
 
@@ -877,6 +895,50 @@
 
                     kasa.response(api.call('PUT',payload,'/ssml/api/'))
                 }
+            })
+        })
+
+        $('#stock-transfer').click(function(){
+            let barcode = $('#barcode').val()
+
+            amodal.setTitleText("STOCK TRANSFER")
+            amodal.setBodyHtml(`
+                <input type='text' class='form-control' id='src_barcode' >
+                <div class="form-group mt-2">
+                    <label for="delete_select">Delete Source Material?</label>
+                    <select id="delete_select" class="form-control">
+                        <option value="NO">No</option>
+                        <option value="YES">Yes</option>
+                    </select>
+                </div>
+            `)
+            amodal.setFooterHtml(`<button class='btn btn-info' id='transfer_stock'>Transfer</button>`)
+            
+            amodal.show()
+
+            $('#transfer_stock').click(async function(){
+                loader.show()
+                let payload = {
+                    module:'stock_transfer',
+                    data:{
+                        source:barcode,
+                        destination:$('#src_barcode').val(),
+                        'delete':$('#delete_select').val()
+                    }
+                }
+
+                console.table(payload)
+
+
+                await api.v2('PATCH',payload,'/ssml/api/').then(response => {
+                    kasa.response(response)
+                    loader.hide()
+                }).catch(error => {
+                    kasa.error(error)
+                    loader.hide()
+                })
+
+
             })
         })
 
