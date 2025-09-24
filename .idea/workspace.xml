@@ -5,64 +5,62 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0a6085f9-92ce-410b-ac8a-bafcccfb80d8" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/logistics/api.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/logistics/urls.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/static/general/js/classes/logistics.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/logistics/base.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/logistics/delivery_details.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/logistics/delivery_request.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/templates/logistics/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/ocean_live.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/ocean_live.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/admin_panel/admin_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/admin_panel/admin_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmms/cmms_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/cmms/cmms_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmms/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/cmms/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/inventory/invento.py" beforeDir="false" afterPath="$PROJECT_DIR$/inventory/invento.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/inventory/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/inventory/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ocean/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/ocean/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/req.txt" beforeDir="false" afterPath="$PROJECT_DIR$/req.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/retail/retail_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/retail/retail_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/retail/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/retail/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/servicing/servicing_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/servicing/servicing_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/servicing/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/servicing/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/servicing/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/servicing/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ssml/api/contractor_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/ssml/api/contractor_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ssml/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/ssml/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ssml/ssml_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/ssml/ssml_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ssml/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/ssml/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ssml/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ssml/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/general/img/logo-blue.png" beforeDir="false" afterPath="$PROJECT_DIR$/static/general/img/logo-blue.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/general/img/logo.png" beforeDir="false" afterPath="$PROJECT_DIR$/static/general/img/logo.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/general/img/sneda_motors_logo.png" beforeDir="false" afterPath="$PROJECT_DIR$/static/general/img/sneda_motors_logo.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/general/js/classes/mailer.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/general/js/classes/mailer.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/general/js/classes/retail.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/general/js/classes/retail.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/general/js/classes/ssml.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/general/js/classes/ssml.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ocean/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/ocean/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/general/js/error_handler.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/general/js/error_handler.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/cmms/service/close.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/cmms/service/close.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/cmms/service/view.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/cmms/service/view.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/dashboard/emails.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/dashboard/emails.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/dashboard/products/prodctMaster.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/dashboard/products/prodctMaster.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/retail/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/retail/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/servicing/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/servicing/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/servicing/jobcard.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/servicing/jobcard.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/servicing/new-job.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/servicing/new-job.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/servicing/send-to-provider.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/servicing/send-to-provider.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/ssml/accounts.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/ssml/accounts.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/ssml/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/ssml/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/ssml/inventory/transfer.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/ssml/inventory/transfer.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/ssml/inventory/transfer_add.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/ssml/inventory/transfer_add.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/ssml/location-master.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/ssml/location-master.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/ssml/materials.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/ssml/materials.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/ssml/ssmlbase.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/ssml/ssmlbase.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/dashboard/profile/loginv2.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/dashboard/profile/loginv2.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="DjangoConsoleOptions" custom-start-script="import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)">
+    <option name="myCustomStartScript" value="import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+        <option value="JavaScript File" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "rootleet"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/rootech-inc/ocean_live.git",
+    "accountId": "d26d768d-d160-40c2-b146-9cb3da94dd6d"
+  }
+}]]></component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 2
 }</component>
   <component name="ProjectId" id="32uaPHJob4DMqm8rxl06uhRhO7f" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -71,18 +69,26 @@
   "keyToString": {
     "RunOnceActivity.OpenDjangoStructureViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "django.template.preview.state": "SHOW_EDITOR",
     "git-widget-placeholder": "main",
+    "last_opened_file_path": "D:/Development/WORKSPACE/ocean_live/logistics",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "ml.llm.AIAssistantPromptsLibrary",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Development\WORKSPACE\ocean_live\logistics" />
+    </key>
+  </component>
   <component name="RunManager">
     <configuration name="ocean_live" type="Python.DjangoServer" factoryName="Django server">
       <module name="ocean_live" />
@@ -112,8 +118,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-bcbf228cf9b6-JavaScript-PY-253.17525.96" />
-        <option value="bundled-python-sdk-d413fb44371e-bfba2533656c-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-253.17525.96" />
+        <option value="bundled-js-predefined-d6986cc7102b-256f9dae541f-JavaScript-PY-253.20558.58" />
+        <option value="bundled-python-sdk-7e710ed067e7-8e468156c80b-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-253.20558.58" />
       </set>
     </attachedChunks>
   </component>
@@ -126,6 +132,7 @@
       <updated>1758272889537</updated>
       <workItem from="1758272896093" duration="37000" />
       <workItem from="1758273172601" duration="4807000" />
+      <workItem from="1758709215715" duration="23817000" />
     </task>
     <servers />
   </component>
