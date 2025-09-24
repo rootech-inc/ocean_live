@@ -5,12 +5,14 @@ from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
+from admin_panel.models import Emails, Locations, BusinessEntityTypes,MailSenders, MailQueues,MailAttachments
+from admin_panel.anton import make_md5_hash
 
 
 from ssml.form import ContractorErrorForm
 from ssml.models import Contractor, ContractorError, Grn, GrnTransaction, InventoryMaterial, InvoiceHD, Issue, \
     IssueTransaction, Location, MaterialOrderItem, Meter, Plot, Reedem, RequiredReturn, Service, ServiceMaterialRates, ServiceMaterials, ServiceOrder, \
-    ServiceOrderItem, ServiceType, ServiceTypeServices, Supplier, TransferHd
+    ServiceOrderItem, ServiceType, ServiceTypeServices, Supplier, TransferHd,Documents
 
 
 # Create your views here.
@@ -810,7 +812,7 @@ def location_master(request):
 
 @login_required()
 def transfer(request):
-
+    # TransferHd.objects.all().delete()
     if TransferHd.objects.all().count() == 0:
         return redirect('ssml_add_transfer')
     page = {
@@ -818,11 +820,12 @@ def transfer(request):
         'page': 'transfer',
         'page_title': 'Transfer',
         'page_description': 'Transfer',
-        'nav':True
+        'nav':True,
+        
     }
     context = {
         'page': page,
-
+        'last_entry':TransferHd.objects.all().last().id,
         'nav':True
     }
 
@@ -841,3 +844,209 @@ def add_transfer(request):
     }
 
     return render(request,'ssml/inventory/transfer_add.html',context=context)
+
+
+    # INSERT_YOUR_CODE
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from .models import FinancialEvidence ,Expense # Assuming these models exist
+
+@login_required()
+@csrf_exempt
+def financial_evidence(request):
+    if request.method == 'POST':
+        transaction_id = request.POST.get('transaction_id')
+        title = request.POST.get('title')
+        file = request.FILES.get('file')
+
+        if not (transaction_id and title and file):
+            return HttpResponse(title)
+            return JsonResponse({'status': False, 'message': 'Missing required fields.'}, status=400)
+
+        try:
+            transaction = Expense.objects.get(id=transaction_id)
+        except Expense.DoesNotExist:
+            return JsonResponse({'status': False, 'message': 'Transaction not found.'}, status=404)
+
+        evidence = FinancialEvidence.objects.create(
+            transaction=transaction,
+            title=title,
+            file=file,
+            uploaded_by=request.user
+        )
+        from django.shortcuts import redirect
+        return redirect(request.META.get('HTTP_REFERER', '/'))
+
+    else:
+        return JsonResponse({'status': True, 'message': 'Invalid Method',"":""})
+    
+
+
+        # INSERT_YOUR_CODE
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+
+@login_required()
+def request_expense(request):
+    page = {
+        'title': 'Request Expense',
+        'nav': False
+    }
+    context = {
+        'page': page,
+    }
+    # INSERT_YOUR_CODE
+    # Pass category_choices in context
+    from .models import Expense  # Assuming Expense model has category choices
+
+    if hasattr(Expense, 'category_choices'):
+        category_choices = Expense.category_choices
+    else:
+        category_choices = []
+
+    context['category_choices'] = category_choices
+    return render(request, 'ssml/accounts-req-expense.html', context=context)
+
+
+
+
+from django.http import JsonResponse, HttpResponseRedirect
+from django.urls import reverse
+from django.utils import timezone
+
+
+@login_required()
+def save_expense_request(request):
+    if request.method == "POST":
+        from decimal import Decimal, InvalidOperation
+
+        # Get data from POST
+        category = request.POST.get('category')
+        amount = request.POST.get('amount')
+        date = request.POST.get('date')
+        reference = request.POST.get('reference', '')
+        description = request.POST.get('description', '')
+        evidence_file = request.FILES.get('evidence')
+
+        # Validate required fields
+        if not (category and amount and date):
+            return JsonResponse({'status': False, 'message': 'Missing required fields.'}, status=400)
+
+        # Validate amount
+        try:
+            amount = Decimal(amount) * -1
+        except (InvalidOperation, TypeError):
+            return JsonResponse({'status': False, 'message': 'Invalid amount.'}, status=400)
+
+        # Save Expense (direction is always 'out' for requests, transaction_type is 'cash' by default)
+        expense = Expense.objects.create(
+            direction='out',
+            date=date,
+            category=category,
+            transaction_type='cash',
+            amount=amount,
+            reference=reference,
+            description=description,
+            created_by=request.user
+        )
+
+        # Save evidence if provided
+        file_name = ""
+        if evidence_file:
+            from .models import FinancialEvidence
+            FinancialEvidence.objects.create(
+                transaction=expense,
+                title="Evidence",
+                file=evidence_file,
+                uploaded_by=request.user
+            )
+        
+            file_name = FinancialEvidence.objects.last().file.url
+        # INSERT_YOUR_CODE
+        # Prepare email subject and body for notification (not sending, just variables)
+        email_subject = f"Expense Request Submitted by {request.user.get_full_name() or request.user.username}"
+        email_body = f"""
+        <div style="padding:0;margin:0;">
+            <div style="max-width:420px;margin:0 auto;background:#fff;border-radius:6px;box-shadow:0 2px 8px #0001;padding:40px 30px 30px 30px;position:relative;top:40px;">
+                <h1 style="text-align:center;font-size:2.2em;letter-spacing:2px;margin-bottom:18px;font-family:sans-serif;">Expense Request</h1>
+                <p style="font-size:1.1em;color:#222;margin-bottom:24px;font-family:sans-serif;">
+                    An expense request has been submitted. Please review the details below.
+                </p>
+                <div style="background:#f4f8fb;border-radius:5px;padding:18px 20px 10px 20px;margin-bottom:24px;alight-text:left">
+                    <p style="margin:0 0 10px 0;font-family:sans-serif;"><b>Submitted by:</b> {request.user.get_full_name() or request.user.username}</p>
+                    <p style="margin:0 0 10px 0;font-family:sans-serif;"><b>Category:</b> {category}</p>
+                    <p style="margin:0 0 10px 0;font-family:sans-serif;"><b>Amount:</b> {amount}</p>
+                    <p style="margin:0 0 10px 0;font-family:sans-serif;"><b>Date:</b> {date}</p>
+                    <p style="margin:0 0 10px 0;font-family:sans-serif;"><b>Reference:</b> {reference}</p>
+                    <p style="margin:0 0 10px 0;font-family:sans-serif;"><b>Description:</b> {description}</p>
+                    <p style="margin:0 0 0 0;font-family:sans-serif;"><b>Submitted at:</b> {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+                </div>
+                
+            </div>
+            
+        </div>
+        """
+
+        # que mail
+        
+        if MailSenders.objects.filter(address='solomon@snedaghana.com').exists():
+            sender = MailSenders.objects.get(address='solomon@snedaghana.com')
+        else:
+            sender = MailSenders.objects.get(is_default=True)
+
+        subject = email_subject
+        mail = MailQueues(sender=sender, subject=subject, body=email_body,
+                                      recipient='solomon@snedaghana.com',
+                                      cc='uyinsolomon2@gmail.com,ajay@snedaghana.com,bharat@snedaghana.com',mail_key=make_md5_hash(f"{subject}{email_body}"))
+        mail.save()
+        
+        if evidence_file:
+            # INSERT_YOUR_CODE
+            
+            MailAttachments(mail=mail, attachment=file_name).save()
+
+        
+        # Redirect to accounts page or show success
+        return HttpResponseRedirect(reverse('accounts'))
+
+    # If not POST, redirect to request page
+    return HttpResponseRedirect(reverse('request_expense'))
+
+@csrf_exempt
+@login_required
+def approve_document(request):
+    if request.method == 'POST':
+        try:
+            form = request.POST
+            entry_no = form.get('entry_no')
+            doc = form.get('doc')
+            title = form.get('title')
+            description = form.get('title')
+            entry_no = form.get('entry_no')
+
+            if doc == 'ssml_tr':
+                document = TransferHd.objects.get(entry_no=entry_no)
+                document.post()
+                
+
+            # upload file
+            Documents.objects.create(
+                title=title,
+                file=request.FILES.get('file') if request.FILES else None,
+                description=description,
+                doc_type=doc,
+                ref=entry_no
+            )
+
+            # INSERT_YOUR_CODE
+            from django.http import JsonResponse
+            return JsonResponse({'status_code': '200','message':"Document Approved"})
+        
+        except Exception as e:
+            # INSERT_YOUR_CODE
+            from django.http import JsonResponse
+            return JsonResponse({'status_code': '500', 'message': str(e)})
+        
+
+
+

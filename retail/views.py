@@ -19,6 +19,7 @@ def base(request):
     context = {
         'nav': True
     }
+
     return render(request, 'retail/index.html', context=context)
 
 

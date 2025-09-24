@@ -596,9 +596,11 @@ class Retail {
             let tr = "";
             for(let m = 0; m < documents.length; m++){
                 let row = documents[m]
+                console.table(row)
                 tr += `
                 <tr>
-                                <td>${row['document']}</td>
+                                <td>
+                                ${row['document']}</td>
                                 <td>
                                     <span title="Total Documents" class="badge bg-info">${row['total_entries']}</span>
                                     <span title="Posted Documents" class="badge bg-success">${row['posted']}</span>
@@ -611,6 +613,10 @@ class Retail {
             }
 
             $('#doc_table').html(tr)
+            $('.export_by_tag').click(function(){
+                let tag = $(this).data('tag');
+                retail.exportPendingDocument(tag)
+            })
         } else {
             kasa.response(documents_response)
         }
@@ -843,71 +849,88 @@ class Retail {
         let form = fom.locations('code')
         form += fom.select('view',`<option value="json">VIEW</option><option value="excel">Download</option>`,'',true)
         form += fom.select('ripe',`<option value="ALL">ALL</option><option value="YES">YES</option><option value="NO">NO</option>`,'show qualified to go only',true)
+        form += fom.number('limit','',true,5000)
         amodal.setBodyHtml(form)
         amodal.setTitleText("Retrieve Stock TO Send")
         amodal.setFooterHtml(`<button onclick="retail.StockToSend()" class="btn btn-info w-100">RETRIEVE</button>`)
         amodal.show();
+        $('#limit').val(500)
     }
 
     async StockToSend() {
-        let id = ['location','ripe','view'];
+        let id = ['location','ripe','view','limit'];
+        let v = $('#view').val()
+        //console.log(v)
+        
         if(anton.validateInputs(id)){
+            
+            loader.show()
             let payload = {
                 module:'analysis_for_transfer',
                 data:anton.Inputs(id)
             }
 
+            amodal.hide()
+
 
 
             console.table(payload)
 
-            let ripe = $('#ripe').val()
+            // let ripe = $('#ripe').val()
             await api.v2('VIEW',payload,'/retail/api/').then(response => {
+                // console.table(response)
                 if(anton.IsRequest(response)){
-                let message = response.message
-                let rows = ``;
-                let v = $('#view').val()
+                    let message = response.message
+                    console.table(message)
+                    
+                    let rows = ``;
+                    
 
-                if(v === 'excel'){
-                    kasa.html(`<a href="/${message}">DOWNLOAD</a>`)
-                } else {
-                    for (let i = 0; i < message.length; i++) {
-                        let row = message[i];
-                        console.table(row)
-                        let text = ''
-                        // if(row['health']){
-                        //     text = 'bg-info'
-                        // }
+                    if(v == 'excel'){
+                        console.table("Hello view")
+                        loader.hide()
+                        kasa.html(`<a href="/${message}">DOWNLOAD</a>`)
+                    } else {
+                        for (let i = 0; i < message.length; i++) {
+                            let row = message[i];
+                            console.table(row)
+                            let text = ''
+                            // if(row['health']){
+                            //     text = 'bg-info'
+                            // }
 
-                        let line = i + 1;
+                            let line = i + 1;
 
 
-                        rows += `
-                            <tr class="${text}">
-                                <td>${line}<input type="hidden" id="sold_${line}" value="${row['sold_qty']}"> </td>
-                                <td><input type="checkbox" id="sel_${line}"></td>
-                                <td>${row['location']}</td>
-                                <td id="barcode_${line}">${row['barcode']}</td>
-                                <td>${row['name']}</td>
-                                <td>${row['last_transfer']} <br>${row['last_transfer_date']}</td>
-                                <td>${row['last_transfer_quantity']}</td>
-                                <td>${row['sold_qty']} (${row['percentage_sold']})</td>
-                                
-                                <td>${row['stock']}</td>
-                            </tr>
-                        `
+                            rows += `
+                                <tr class="${text}">
+                                    <td>${line}<input type="hidden" id="sold_${line}" value="${row['sold_qty']}"> </td>
+                                    <td><input type="checkbox" id="sel_${line}"></td>
+                                    <td>${row['location']}</td>
+                                    <td id="barcode_${line}">${row['barcode']}</td>
+                                    <td>${row['name']}</td>
+                                    <td>${row['last_transfer']} <br>${row['last_transfer_date']}</td>
+                                    <td>${row['last_transfer_quantity']}</td>
+                                    <td>${row['sold_qty']} (${row['percentage_sold']})</td>
+                                    
+                                    <td>${row['stock']}</td>
+                                </tr>
+                            `
 
+                        }
+
+                        $('#items').html(rows)
+                        $('#tabs').DataTable()
+                        loader.hide()
                     }
+                    
 
-                    $('#items').html(rows)
-                    $('#tabs').DataTable()
+                } else {
+                    loader.hide()
+                        kasa.response(response)
                 }
-
-            } else {
-                    kasa.response(response)
-                }
-                console.table(response)
-            }).catch(error => {kasa.info(error)})
+                
+            }).catch(error => {loader.hide();kasa.info(error)})
 
         }
     }
@@ -2654,6 +2677,39 @@ class Retail {
             }
         })
 
+    }
+
+    async exportPendingDocument(tag){
+        
+        let html = fom.selectv2('flag',[{val:'all',desc:'ALL'},{val:'pending',desc:'PENDING'},{val:'posted',desc:'POSTED'}],'',true)
+        amodal.setBodyHtml(html)
+        amodal.setTitleText("Select Document Falg")
+        amodal.setFooterHtml(`<button id='used_to' class='btn btn-success'>Export</button>`)
+        amodal.show()
+        $('#used_to').click(async function(){
+            let ids = ['from','to','flag']
+            if(anton.validateInputs(ids)){
+                let payload = {
+                    module:'export_pending',
+                    data:anton.Inputs(ids)
+                }
+    
+                payload['data']['tag'] = tag;
+                await api.v2('VIEW',payload,'/retail/api/').then(response => {
+                    if(anton.IsRequest(response)){
+                        // console.table(response)
+                        let resp = response['message']
+                        let file = resp['excel'];
+                        let obj = resp['json']
+                        console.table(obj)
+                        anton.viewFile(`/${file}`)
+                    } else {
+                        kasa.response(response)
+                    }
+                }).catch(error => kasa.error(error))
+            }
+        })
+        
     }
 
 }

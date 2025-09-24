@@ -1338,7 +1338,7 @@ def api(request):
                     # Add a page
                     pdf.add_page()
                     # Add an image
-                    pdf.image('static/general/img/sneda_motors_logo.png', x=10, y=6, w=30)
+                    safe_add_image_to_pdf(pdf, 'static/general/img/sneda_motors_logo.png', x=10, y=6, w=30)
                     pdf.set_font('Arial', '', 6)
                     pdf.cell(0, 3, '+233 244 313 960 | +233 205 046 431', 0, 1, 'R')
                     pdf.cell(0, 3, 'P.O Box GP 3471, Accra, Ghana', 0, 1, 'R')
@@ -1374,7 +1374,7 @@ def api(request):
                     pdf.cell(20, 5, "Personal", 1, 0, 'L')
                     pdf.set_font('Arial', '', 8)
 
-                    cn = proforma.customer.name.replace('’', "'")
+                    cn = proforma.customer.name.replace('\u2019', "'")
                     pdf.cell(60, 5, f"{cn}", 1, 0, 'L')
                     pdf.set_font('Arial', 'B', 8)
                     pdf.cell(20, 5, "Payment", 1, 0, 'L')
@@ -1403,11 +1403,11 @@ def api(request):
                     pdf.set_font('Arial', 'B', 8)
                     pdf.cell(20, 5, "Email", 1, 0, 'L')
                     pdf.set_font('Arial', '', 8)
-                    pdf.cell(60, 5, proforma.customer.email.replace('’', "'"), 1, 0, 'L')
+                    pdf.cell(60, 5, proforma.customer.email.replace('\u2019', "'"), 1, 0, 'L')
                     pdf.set_font('Arial', 'B', 8)
                     pdf.cell(20, 5, "Address", 1, 0, 'L')
                     pdf.set_font('Arial', '', 8)
-                    pdf.cell(40, 5, proforma.customer.address.replace('’', "'"), 1, 0, 'C')
+                    pdf.cell(40, 5, proforma.customer.address.replace('\u2019', "'"), 1, 0, 'C')
                     pdf.set_font('Arial', 'B', 8)
                     pdf.cell(20, 5, f"Tax", 1, 0, 'L')
                     pdf.set_font('Arial', '', 8)
@@ -1418,8 +1418,8 @@ def api(request):
                     pdf.set_font('Arial', 'B', 8)
                     pdf.cell(20, 5, "Asset", 1, 0, 'L')
                     pdf.set_font('Arial', '', 8)
-                    cm = proforma.car_model.car.manufacturer.name.replace('’', "'")
-                    cmr = proforma.car_model.model_name.replace('’', "'")
+                    cm = proforma.car_model.car.manufacturer.name.replace('\u2019', "'")
+                    cmr = proforma.car_model.model_name.replace('\u2019', "'")
                     pdf.cell(120, 5,
                              f"{cm} / {cmr} / {proforma.car_model.year} / {proforma.chassis}",
                              1, 0, 'L')
@@ -1437,9 +1437,9 @@ def api(request):
                     pdf.cell(0, 5, "Technical Features", 0, 1)
                     for tech in techs:
                         pdf.set_font('Arial', 'B', 7)
-                        pdf.cell(40, 4, tech.specification_name.replace('’', "'"), 0, 0)
+                        pdf.cell(40, 4, tech.specification_name.replace('\u2019', "'"), 0, 0)
                         pdf.set_font('Arial', "", 7)
-                        pdf.cell(149, 4, tech.specification_value.replace('’', "'"), 0, 1)
+                        pdf.cell(149, 4, tech.specification_value.replace('\u2019', "'"), 0, 1)
 
                     pdf.ln(5)
                     # interir
@@ -1448,9 +1448,9 @@ def api(request):
                     pdf.cell(0, 5, "Interior", 0, 1)
                     for intt in intts:
                         pdf.set_font('Arial', 'B', 7)
-                        pdf.cell(40, 4, intt.specification_name.replace('’', "'"), 0, )
+                        pdf.cell(40, 4, intt.specification_name.replace('\u2019', "'"), 0, 0)
                         pdf.set_font('Arial', "", 7)
-                        pdf.cell(150, 4, intt.specification_value.replace('’', "'"), 0, 1)
+                        pdf.cell(150, 4, intt.specification_value.replace('\u2019', "'"), 0, 1)
 
                     pdf.ln(5)
                     # exteriors
@@ -1459,9 +1459,9 @@ def api(request):
                     pdf.cell(0, 5, "Exterior", 0, 1)
                     for ext in exts:
                         pdf.set_font('Arial', 'B', 7)
-                        pdf.cell(40, 4, ext.specification_name.replace('’', "'"), 0, 0)
+                        pdf.cell(40, 4, ext.specification_name.replace('\u2019', "'"), 0, 0)
                         pdf.set_font('Arial', "", 7)
-                        pdf.cell(140, 4, ext.specification_value.replace('’', "'"), 0, 1)
+                        pdf.cell(140, 4, ext.specification_value.replace('\u2019', "'"), 0, 1)
 
                     pdf.ln(5)
                     pdf.set_font('Arial', "", 8)
@@ -1492,6 +1492,7 @@ def api(request):
                     response['status_code'] = 200
 
                 elif module == 'job_card_report':
+                    import os
                     service_pk = data.get('pk')
                     jobcard = JobCard.objects.get(pk=service_pk)
 
@@ -1588,7 +1589,10 @@ def api(request):
                             # Insert image at calculated position
                             pdf.image(img, x=x_pos, y=y_pos, w=image_width, h=image_height)
 
-                    file_name = f'static/attachments/{jobcard.wr_no}.pdf'
+                    
+                    folder_path = 'static/general/tmp'
+                    os.makedirs(folder_path, exist_ok=True)
+                    file_name = f'{folder_path}/{jobcard.wr_no}.pdf'
                     pdf.output(f"{file_name}")
 
                     response['status_code'] = 200
@@ -1830,8 +1834,8 @@ def api(request):
                     reg_no = data.get('reg_no')
                     problem = data.get('problem')
 
-                    next_entry_no = JobRequest.objects.filter(created_date=timezone.now()).count() + 1
-                    entry_no = f"{timezone.now().strftime('%Y%m%d')}-{next_entry_no}"
+                    next_entry_no = JobRequest.objects.all().last().pk + 1
+                    entry_no = f"WO{next_entry_no}"
                     JobRequest(
                         entry_no = entry_no,
                         fuel_type=fuel_type,
@@ -2812,3 +2816,44 @@ def api(request):
         print(response)
 
     return JsonResponse(response)
+
+def safe_add_image_to_pdf(pdf, image_path, x, y, w, h=None):
+    """
+    Safely add an image to PDF with fallback options
+    """
+    import os
+    
+    # Try the original image path first
+    if os.path.exists(image_path):
+        try:
+            if h:
+                pdf.image(image_path, x=x, y=y, w=w, h=h)
+            else:
+                pdf.image(image_path, x=x, y=y, w=w)
+            return True
+        except Exception as e:
+            print(f"Warning: Could not load image {image_path}: {e}")
+    
+    # If original fails, try fallback options
+    fallback_paths = [
+        'static/general/img/logo.png',
+        'static/general/img/logo-blue.png',
+        'static/general/img/sneda_motors_logo.png'
+    ]
+    
+    for fallback_path in fallback_paths:
+        if os.path.exists(fallback_path) and fallback_path != image_path:
+            try:
+                if h:
+                    pdf.image(fallback_path, x=x, y=y, w=w, h=h)
+                else:
+                    pdf.image(fallback_path, x=x, y=y, w=w)
+                print(f"Used fallback image: {fallback_path}")
+                return True
+            except Exception as e:
+                print(f"Warning: Could not load fallback image {fallback_path}: {e}")
+                continue
+    
+    # If all images fail, just skip the logo
+    print("Warning: No logo images could be loaded, skipping logo")
+    return False

@@ -81,7 +81,11 @@ def interface(request):
 
                 # get header data
 
-                cardno = f"JC{ServiceCard.objects.all().last().pk + 1}"
+                last_service_card = ServiceCard.objects.all().last()
+                if last_service_card:
+                    cardno = f"SO{last_service_card.pk + 1}"
+                else:
+                    cardno = "SO1"
                 client_pk = head.get('client')
                 entry_date = head.get('ticket_date')
                 client = User.objects.get(pk=client_pk)

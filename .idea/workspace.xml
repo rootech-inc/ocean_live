@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="0a6085f9-92ce-410b-ac8a-bafcccfb80d8" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/material_theme_project_new.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/ocean_live.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/ocean_live.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/admin_panel/admin_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/admin_panel/admin_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmms/cmms_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/cmms/cmms_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmms/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/cmms/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inventory/invento.py" beforeDir="false" afterPath="$PROJECT_DIR$/inventory/invento.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/inventory/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/inventory/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ocean/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/ocean/settings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/req.txt" beforeDir="false" afterPath="$PROJECT_DIR$/req.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/retail/retail_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/retail/retail_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/retail/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/retail/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/servicing/servicing_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/servicing/servicing_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/servicing/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/servicing/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/servicing/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/servicing/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ssml/api/contractor_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/ssml/api/contractor_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ssml/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/ssml/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ssml/ssml_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/ssml/ssml_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ssml/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/ssml/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ssml/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/ssml/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/general/img/logo-blue.png" beforeDir="false" afterPath="$PROJECT_DIR$/static/general/img/logo-blue.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/general/img/logo.png" beforeDir="false" afterPath="$PROJECT_DIR$/static/general/img/logo.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/general/img/sneda_motors_logo.png" beforeDir="false" afterPath="$PROJECT_DIR$/static/general/img/sneda_motors_logo.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/general/js/classes/mailer.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/general/js/classes/mailer.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/general/js/classes/retail.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/general/js/classes/retail.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/general/js/classes/ssml.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/general/js/classes/ssml.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/cmms/service/close.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/cmms/service/close.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/cmms/service/view.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/cmms/service/view.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/dashboard/emails.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/dashboard/emails.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/dashboard/products/prodctMaster.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/dashboard/products/prodctMaster.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/retail/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/retail/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/servicing/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/servicing/base.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/servicing/jobcard.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/servicing/jobcard.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/servicing/new-job.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/servicing/new-job.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/servicing/send-to-provider.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/servicing/send-to-provider.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/ssml/accounts.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/ssml/accounts.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/ssml/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/ssml/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/ssml/inventory/transfer.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/ssml/inventory/transfer.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/ssml/inventory/transfer_add.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/ssml/inventory/transfer_add.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/ssml/location-master.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/ssml/location-master.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/ssml/materials.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/ssml/materials.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/ssml/ssmlbase.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/ssml/ssmlbase.html" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 2
+}</component>
+  <component name="ProjectId" id="32uaPHJob4DMqm8rxl06uhRhO7f" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenDjangoStructureViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "django.template.preview.state": "SHOW_EDITOR",
+    "git-widget-placeholder": "main",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RunManager">
+    <configuration name="ocean_live" type="Python.DjangoServer" factoryName="Django server">
+      <module name="ocean_live" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="launchJavascriptDebuger" value="false" />
+      <option name="port" value="8000" />
+      <option name="host" value="" />
+      <option name="additionalOptions" value="" />
+      <option name="browserUrl" value="" />
+      <option name="runTestServer" value="false" />
+      <option name="runNoReload" value="false" />
+      <option name="useCustomRunCommand" value="false" />
+      <option name="customRunCommand" value="" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-bcbf228cf9b6-JavaScript-PY-253.17525.96" />
+        <option value="bundled-python-sdk-d413fb44371e-bfba2533656c-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-253.17525.96" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="0a6085f9-92ce-410b-ac8a-bafcccfb80d8" name="Changes" comment="" />
+      <created>1758272889537</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1758272889537</updated>
+      <workItem from="1758272896093" duration="37000" />
+      <workItem from="1758273172601" duration="4807000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

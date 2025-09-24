@@ -26,7 +26,8 @@ def inventory(request):
     context = {
         'nav': True,
         'page_title': 'Inventory | View',
-        'barcode': product.barcode
+        'barcode': product.barcode,
+        'locs': Locations.objects.all(),
     }
     return render(request, 'dashboard/products/prodctMaster.html', context=context)
     return render(request, 'dashboard/products/view.html', context=context)

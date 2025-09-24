@@ -18,7 +18,7 @@ from scipy.ndimage import sobel
 from sympy import Product
 
 from admin_panel.anton import format_currency
-from admin_panel.models import Emails, Locations, BusinessEntityTypes
+from admin_panel.models import Emails, Locations, BusinessEntityTypes,MailSenders, MailQueues
 from inventory.views import transfer
 from ocean.settings import RET_DB_HOST, RET_DB_USER, RET_DB_PASS, RET_DB_NAME, BOLT_PROVIDER_ID, BOLT_MARGIN
 from retail.db import ret_cursor, get_stock, updateStock, percentage_difference, stock_by_moved, stock_by_prod
@@ -1246,6 +1246,273 @@ def interface(request):
                 success_response['message'] = arr
                 response = success_response
 
+            elif module == 'export_pending':
+                
+
+                print(data)
+                jleg = []
+
+                conn = ret_cursor()
+                cursor = conn.cursor()
+
+                fr_date = data.get('from')
+                to_date = data.get('to')
+
+                flag = data.get('flag','pending')
+                send_mail = data.get('send_mail','no')
+
+                if send_mail == 'yes':
+                    from datetime import datetime, timedelta
+
+                    # Get today's date
+                    today = datetime.today()
+                    # Monday is 0 and Sunday is 6
+                    start_of_week = today - timedelta(days=today.weekday())
+                    end_of_week = start_of_week + timedelta(days=6)
+
+                    # Format as string if needed (e.g., 'YYYY-MM-DD')
+                    fr_date = start_of_week.strftime('%Y-%m-%d')
+                    to_date = end_of_week.strftime('%Y-%m-%d')
+
+                    queries = {
+                            'grn':f"SELECT entry_no,grn_date as 'date',inv_amt as 'value',RTRIM(remark) as 'remarks',loc_id,RTRIM(user_id) as 'user' FROM grn_hd where grn_date between '{fr_date}' and '{to_date}' and valid = 1"
+                        }
+                    queries['ADJUSTMENT'] = f"SELECT entry_no,entry_date as 'date',tot_retail as 'value',reason as 'remarks',loc_id,user_id as 'user' FROM adj_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1"
+                    queries['WHOLESALE INVOICE'] = f"SELECT entry_no,entry_date as 'date',inv_amt as 'value',remark as 'remarks',loc_id,user_id as 'user' FROM inv_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1 "
+                    queries['POS SALES'] = f"SELECT entry_no,entry_date as 'date',inv_amt as 'value','' as 'remarks',location_id,'uploaded' as 'user' FROM pos_tran_hd where entry_date between '{fr_date}' and '{to_date}' and inv_valid = 1"
+                    queries['TRANSFER'] = f"SELECT entry_no,entry_date as 'date',tot_retail as 'value',remark as 'remarks',loc_id,user_id as 'user' FROM tran_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1"
+                    queries['SALES RETURN'] = f"SELECT entry_no,entry_date as 'date',inv_amt as 'value',remark as 'remarks',loc_id,user_id as 'user' FROM return_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1"
+                    queries['PURCHASE RETURN'] = f"SELECT entry_no,entry_date as 'date',inv_amt as 'value',remark as 'remarks',loc_id,user_id as 'user' FROM purch_ret_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1"
+
+                    html_rows = ""
+                    row_index = 0
+                    for tag, query in queries.items():
+                    
+                        total_docs = 0
+                        total_value = 0
+
+                        cursor.execute(query)
+                        for row in cursor.fetchall():
+                            entry,date,value,remarks,loc_id,user_id = row
+                            li = [entry,date,value,remarks,loc_id,user_id]
+                            
+                           
+                            total_value += value
+                            total_docs += 1
+
+                            # alternate row colors
+                            bg_color = "#ffffff" if row_index % 2 == 0 else "#f8f9fa"
+                            
+                        html_rows += f"""
+                            <tr style="background-color:{bg_color};border-bottom:1px solid #dddddd;">
+                                <td style="padding:16px 18px;">{tag}</td>
+                                <td style="padding:16px 18px;">{total_docs}</td>
+                                <td style="padding:16px 18px;">{total_value}</td>
+                            </tr>
+                            """
+
+                        row_index += 1
+
+
+                    from openai import OpenAI
+                    api_key = "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"
+                    client = OpenAI(api_key=api_key)
+
+                    prompt = f"As an AI Agent, Summarize this table into a quick Ghanaian business owner update. Focus on GRN (purchases), Adjustments, Transfers, Sales, and Returns. State the number of documents and their total values in plain language. Highlight the biggest contributor, note any negatives, and mention if there was no activity in some areas. Compare purchases (GRN total) with sales (POS Sales + Wholesale Invoice total). If purchases are higher than sales, warn of potential overstock and advise the owner to focus on boosting sales. If sales are higher, highlight the strong sales and advise monitoring inventory to avoid stockouts. Keep the update short, clear, business-friendly, and forward-looking. Make it simple, three sentences and plain text \n{html_rows}"
+                    chat_response = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[{"role": "user", "content": prompt}],
+                        max_tokens=200
+                    )
+                    resp = chat_response.choices[0].message.content
+                    print()
+                    print(resp)
+                    print()
+                    html_table = f"""
+                    <!doctype html>
+                    <html>
+                    <body style="margin:0;padding:2px;background:#f3f4f6;">
+                    <br><br>
+                        <div style="background:#ffffff;
+                        padding:20px;
+                        border-radius:12px;
+                        box-shadow:0 4px 10px rgba(0,0,0,0.08);
+                        font-family:'Segoe UI', Arial, sans-serif;
+                        max-width:600px;
+                        margin:20px auto;"><h5 style="margin-top:0;margin-bottom:12px;font-size:18px;font-weight:600;">
+    AI Summary
+  </h5><div style='text-align:justified !important'>{resp}</div><br><br><small style="color:#6c757d !important;">powered by VentAI</small></div>
+                        <!-- Wrapper -->
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f3f4f6;">
+                        <tr>
+                            <td align="center" style="padding:24px;">
+                            <!-- Container -->
+                            <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;border-collapse:separate;border-spacing:0;box-shadow:0 2px 8px rgba(0,0,0,0.08);border-radius:8px 8px 0 0;overflow:hidden;background:#ffffff;font-family:'Segoe UI', Arial, sans-serif;font-size:16px;">
+                                <!-- Header -->
+                                <thead>
+                                <tr style="background-color:#16a085;color:#ffffff;text-align:left;font-weight:bold;">
+                                    <th align="left" style="padding:16px 18px;">DOCUMENT</th>
+                                    <th align="left" style="padding:16px 18px;">TOTAL DOCUMENTS</th>
+                                    <th align="left" style="padding:16px 18px;">TOTAL VALUE</th>
+                                </tr>
+                                </thead>
+                                <!-- Body -->
+                                <tbody>
+                                """ + html_rows + """
+                                </tbody>
+                            </table>
+                            </td>
+                        </tr>
+                        </table>
+                    </body>
+                    </html>
+                    """
+
+
+
+
+
+                    html_table.replace('XXX',html_rows)
+                    # que mail
+                    if MailSenders.objects.filter(address='solomon@snedaghana.com').exists():
+                        sender = MailSenders.objects.get(address='solomon@snedaghana.com')
+                    else:
+                        sender = MailSenders.objects.get(is_default=True)
+                    subject = f"PENDING DOCUMENTS  {fr_date} to {to_date}"
+                    from admin_panel.anton import make_md5_hash
+                    mail = MailQueues(sender=sender, subject=f"PENDING DOCUMENTS  {fr_date} to {to_date}", body=html_table,
+                                      recipient='solomon@snedaghana.com',
+                                      cc='uyinsolomon2@gmail.com,ajay@snedaghana.com,bharat@snedaghana.com',mail_key=make_md5_hash(subject))
+                    mail.save()
+                    # MailAttachments(mail=mail, attachment=file_name).save()
+                    success_response['message'] = html_table
+
+                else:
+                
+                    if flag == 'pending':
+                        queries = {
+                            'grn':f"SELECT entry_no,grn_date as 'date',inv_amt as 'value',RTRIM(remark) as 'remarks',loc_id,RTRIM(user_id) as 'user' FROM grn_hd where grn_date between '{fr_date}' and '{to_date}' and valid = 1 and posted = 0"
+                        }
+                        queries['ADJUSTMENT'] = f"SELECT entry_no,entry_date as 'date',tot_retail as 'value',reason as 'remarks',loc_id,user_id as 'user' FROM adj_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1 and posted = 0"
+                        queries['WHOLESALE INVOICE'] = f"SELECT entry_no,entry_date as 'date',inv_amt as 'value',remark as 'remarks',loc_id,user_id as 'user' FROM inv_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1 and posted = 0"
+                        queries['POS SALES'] = f"SELECT entry_no,entry_date as 'date',inv_amt as 'value','' as 'remarks',location_id,'uploaded' as 'user' FROM pos_tran_hd where entry_date between '{fr_date}' and '{to_date}' and inv_valid = 1 and inv_upd = 0"
+                        queries['TRANSFER'] = f"SELECT entry_no,entry_date as 'date',tot_retail as 'value',remark as 'remarks',loc_id,user_id as 'user' FROM tran_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1 and posted = 0"
+                        queries['SALES RETURN'] = f"SELECT entry_no,entry_date as 'date',inv_amt as 'value',remark as 'remarks',loc_id,user_id as 'user' FROM return_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1 and posted = 0"
+                        queries['PURCHASE RETURN'] = f"SELECT entry_no,entry_date as 'date',inv_amt as 'value',remark as 'remarks',loc_id,user_id as 'user' FROM purch_ret_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1 and posted = 0"
+
+                    elif flag == 'posted':
+                        queries = {
+                            'grn':f"SELECT entry_no,grn_date as 'date',inv_amt as 'value',RTRIM(remark) as 'remarks',loc_id,RTRIM(user_id) as 'user' FROM grn_hd where grn_date between '{fr_date}' and '{to_date}' and valid = 1 and posted = 1"
+                        }
+                        queries['ADJUSTMENT'] = f"SELECT entry_no,entry_date as 'date',tot_retail as 'value',reason as 'remarks',loc_id,user_id as 'user' FROM adj_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1 and posted = 1"
+                        queries['WHOLESALE INVOICE'] = f"SELECT entry_no,entry_date as 'date',inv_amt as 'value',remark as 'remarks',loc_id,user_id as 'user' FROM inv_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1 and posted = 1"
+                        queries['POS SALES'] = f"SELECT entry_no,entry_date as 'date',inv_amt as 'value','' as 'remarks',location_id,'uploaded' as 'user' FROM pos_tran_hd where entry_date between '{fr_date}' and '{to_date}' and inv_valid = 1 and inv_upd = 1"
+                        queries['TRANSFER'] = f"SELECT entry_no,entry_date as 'date',tot_retail as 'value',remark as 'remarks',loc_id,user_id as 'user' FROM tran_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1 and posted = 1"
+                        queries['SALES RETURN'] = f"SELECT entry_no,entry_date as 'date',inv_amt as 'value',remark as 'remarks',loc_id,user_id as 'user' FROM return_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1 and posted = 1"
+                        queries['PURCHASE RETURN'] = f"SELECT entry_no,entry_date as 'date',inv_amt as 'value',remark as 'remarks',loc_id,user_id as 'user' FROM purch_ret_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1 and posted = 1"
+
+                    else:
+                        # show all
+                        queries = {
+                            'grn':f"SELECT entry_no,grn_date as 'date',inv_amt as 'value',RTRIM(remark) as 'remarks',loc_id,RTRIM(user_id) as 'user' FROM grn_hd where grn_date between '{fr_date}' and '{to_date}' and valid = 1"
+                        }
+                        queries['ADJUSTMENT'] = f"SELECT entry_no,entry_date as 'date',tot_retail as 'value',reason as 'remarks',loc_id,user_id as 'user' FROM adj_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1"
+                        queries['WHOLESALE INVOICE'] = f"SELECT entry_no,entry_date as 'date',inv_amt as 'value',remark as 'remarks',loc_id,user_id as 'user' FROM inv_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1"
+                        queries['POS SALES'] = f"SELECT entry_no,entry_date as 'date',inv_amt as 'value','' as 'remarks',location_id,'uploaded' as 'user' FROM pos_tran_hd where entry_date between '{fr_date}' and '{to_date}' and inv_valid = 1"
+                        queries['TRANSFER'] = f"SELECT entry_no,entry_date as 'date',tot_retail as 'value',remark as 'remarks',loc_id,user_id as 'user' FROM tran_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1"
+                        queries['SALES RETURN'] = f"SELECT entry_no,entry_date as 'date',inv_amt as 'value',remark as 'remarks',loc_id,user_id as 'user' FROM return_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1"
+                        queries['PURCHASE RETURN'] = f"SELECT entry_no,entry_date as 'date',inv_amt as 'value',remark as 'remarks',loc_id,user_id as 'user' FROM purch_ret_hd where entry_date between '{fr_date}' and '{to_date}' and valid = 1"
+
+
+
+                    import openpyxl
+                    book = openpyxl.Workbook()
+
+                    # Create summary table in the first sheet
+                    summary_sheet = book.active
+                    summary_sheet.title = "Summary"
+                    summary_sheet['A1'] = "DOCUMENT"
+                    summary_sheet['B1'] = "TOTAL DOCUMENTS"
+                    summary_sheet['C1'] = "TOTAL VALUE"
+
+                    
+
+                    for tag, query in queries.items():
+                        print(query)
+                        sheet = book.create_sheet(title=tag)
+                        sheet.merge_cells('A1:E1')
+                        sheet['A1'] = tag
+                        header = ["ENTRY","DATE","VALUE","REMARKS","LOCATION","CREATED BY"]
+                        sheet.append(header)
+
+                        j_nimu = []
+                        total_docs = 0
+                        total_value = 0
+                        cursor.execute(query)
+                        for row in cursor.fetchall():
+                            entry,date,value,remarks,loc_id,user_id = row
+                            li = [entry,date,value,remarks,loc_id,user_id]
+                            sheet.append(li)
+                            ji = {
+                                'entry':entry,
+                                'date':date,
+                                'value':value,
+                                'remarks':remarks,
+                                'user_id':user_id
+
+                            }
+
+                            j_nimu.append(ji)
+                            total_docs += 1
+                            
+                            total_value += value or 0
+
+                            print(li)
+                            print(value)
+                            print(ji)
+                        jleg.append(j_nimu)
+
+                        summary_sheet.append([tag,total_docs,total_value])
+
+                    conn.close()
+                    # INSERT_YOUR_CODE
+
+                    # Add charts to the summary sheet
+                    from openpyxl.chart import PieChart, Reference, BarChart
+
+                    # Pie chart for total documents
+                    pie = PieChart()
+                    pie.title = "Total Documents by Type"
+                    # Data for pie: total documents (col 2), categories (col 1)
+                    data = Reference(summary_sheet, min_col=2, min_row=2, max_row=summary_sheet.max_row)
+                    labels = Reference(summary_sheet, min_col=1, min_row=2, max_row=summary_sheet.max_row)
+                    pie.add_data(data, titles_from_data=False)
+                    pie.set_categories(labels)
+                    pie.height = 7
+                    pie.width = 10
+                    summary_sheet.add_chart(pie, "G2")
+
+                    # Bar chart (histogram) for total value
+                    bar = BarChart()
+                    bar.title = "Total Value by Document Type"
+                    bar.y_axis.title = "Total Value"
+                    bar.x_axis.title = "Document"
+                    data = Reference(summary_sheet, min_col=3, min_row=1, max_row=summary_sheet.max_row)
+                    cats = Reference(summary_sheet, min_col=1, min_row=2, max_row=summary_sheet.max_row)
+                    bar.add_data(data, titles_from_data=True)
+                    bar.set_categories(cats)
+                    bar.height = 7
+                    bar.width = 15
+                    summary_sheet.add_chart(bar, "G20")
+                    
+                    file_name = f'static/general/tmp/{flag}_documents_between_{fr_date}_and_{to_date}.xlsx'
+                    book.save(file_name)
+                    success_response['message'] = {
+                        'excel':file_name,
+                        'json':jleg
+                    }
+                response = success_response
+
             elif module == 'wholesale_prices':
                 success_response['message'] = [pd.ws() for pd in Products.objects.filter(is_wholesales=True)]
                 response = success_response
@@ -1595,6 +1862,7 @@ def interface(request):
                 loc = Locations.objects.get(code=loc_id)
                 ripe = data.get('ripe')
                 out = data.get('view','json')
+                limit = data.get('limit',500)
 
                 if out == 'excel':
                     import openpyxl
@@ -1609,14 +1877,15 @@ def interface(request):
 
                 #print(data)
                 #print("JESUS")
+                from datetime import date
                 if ripe == 'YES':
                     #print("YES RIPE")
-                    to_sends = StockToSend.objects.filter(location=loc,healthy=True,stock__gt = 0,last_transfer_date__gt=date(2024, 1, 1)).order_by('name')
+                    to_sends = StockToSend.objects.filter(location=loc, healthy=True, stock__gt=0, last_transfer_date__gt=date(2024, 1, 1)).order_by('?')[:int(limit)]
                 elif ripe == 'NO':
                     #print("NO RIPE")
-                    to_sends = StockToSend.objects.filter(location=loc,healthy=False,stock__gt = 0,last_transfer_date__gt=date(2024, 1, 1)).order_by('name')
+                    to_sends = StockToSend.objects.filter(location=loc, healthy=False, stock__gt=0, last_transfer_date__gt=date(2024, 1, 1)).order_by('?')[:int(limit)]
                 else:
-                    to_sends = StockToSend.objects.filter(location=loc,stock__gt = 0,last_transfer_date__gt=date(2024, 1, 1)).order_by('name')
+                    to_sends = StockToSend.objects.filter(location=loc, stock__gt=0, last_transfer_date__gt=date(2024, 1, 1)).order_by('?')[:int(limit)]
 
 
 
@@ -1649,9 +1918,11 @@ def interface(request):
                     line+=1
 
                 if out == 'excel':
-                    file_name = f'static/general/tmp/{loc.descr}.xlsx'
+                    file_name = f'static/general/tmp/{loc.descr}_{limit}_records.xlsx'
                     book.save(file_name)
                     arr = file_name
+
+                print(arr)
                 success_response['message'] = arr
                 response = success_response
 
@@ -3048,6 +3319,7 @@ def interface(request):
                     
                     SELECT 'GRN' AS document, (
                         SELECT 
+                        'grn' as 'tag',
                             (SELECT COUNT(*) FROM grn_hd where grn_date between @start_date and @end_date) AS total_entries,
                             (SELECT COUNT(*) FROM grn_hd WHERE grn_date between @start_date and @end_date and valid = 1 AND posted = 1) AS posted,
                             (SELECT COUNT(*) FROM grn_hd WHERE grn_date between @start_date and @end_date and valid = 1 AND posted = 0) AS not_posted,
@@ -3065,6 +3337,7 @@ def interface(request):
                     UNION ALL
                     SELECT 'BACK OFFICE SALES' AS document, (
                         SELECT 
+                        'invoice' as 'tag',
                             (SELECT COUNT(*) FROM inv_hd where entry_date between @start_date and @end_date) AS total_entries,
                             (SELECT COUNT(*) FROM inv_hd where entry_date between @start_date and @end_date and valid = 1 AND posted = 1) AS posted,
                             (SELECT COUNT(*) FROM inv_hd where entry_date between @start_date and @end_date and valid = 1 AND posted = 0) AS not_posted,
@@ -3080,6 +3353,7 @@ def interface(request):
                     UNION ALL
                     SELECT 'POS SALES' AS document, (
                         SELECT 
+                        'pos' as 'tag',
                             (SELECT COUNT(*) FROM pos_tran_hd where entry_date between @start_date and @end_date) AS total_entries,
                             (SELECT COUNT(*) FROM pos_tran_hd where entry_date between @start_date and @end_date and inv_valid = 1 AND inv_upd = 1) AS posted,
                             (SELECT COUNT(*) FROM pos_tran_hd where entry_date between @start_date and @end_date and inv_valid = 1 AND inv_upd = 0) AS not_posted,
@@ -3095,6 +3369,7 @@ def interface(request):
                     UNION ALL
                     SELECT 'ADJUSTMENT' AS document, (
                         SELECT 
+                        'ad' as 'tag',
                             (SELECT COUNT(*) FROM adj_hd where entry_date between @start_date and @end_date) AS total_entries,
                             (SELECT COUNT(*) FROM adj_hd where entry_date between @start_date and @end_date and valid = 1 AND posted = 1) AS posted,
                             (SELECT COUNT(*) FROM adj_hd where entry_date between @start_date and @end_date and valid = 1 AND posted = 0) AS not_posted,
@@ -3109,6 +3384,7 @@ def interface(request):
                     UNION ALL
                     SELECT 'TRANSFERS' AS document, (
                         SELECT 
+                        'tr' as 'tag',
                             (SELECT COUNT(*) FROM tran_hd where entry_date between @start_date and @end_date) AS total_entries,
                             (SELECT COUNT(*) FROM tran_hd where entry_date between @start_date and @end_date and valid = 1 AND posted = 1) AS posted,
                             (SELECT COUNT(*) FROM tran_hd where entry_date between @start_date and @end_date and valid = 1 AND posted = 0) AS not_posted,
@@ -3124,6 +3400,7 @@ def interface(request):
                     UNION ALL
                     SELECT 'SALES RETURN' AS document, (
                         SELECT 
+                        'sr' as 'tag',
                             (SELECT COUNT(*) FROM return_hd where entry_date between @start_date and @end_date) AS total_entries,
                             (SELECT COUNT(*) FROM return_hd where entry_date between @start_date and @end_date and valid = 1 AND posted = 1) AS posted,
                             (SELECT COUNT(*) FROM return_hd where entry_date between @start_date and @end_date and valid = 1 AND posted = 0) AS not_posted,
@@ -3138,6 +3415,7 @@ def interface(request):
                     UNION ALL
                     SELECT 'PURCHASE RETURN' AS document, (
                         SELECT 
+                        'pr' as 'tag',
                             (SELECT COUNT(*) FROM purch_ret_hd where entry_date between @start_date and @end_date) AS total_entries,
                             (SELECT COUNT(*) FROM purch_ret_hd where entry_date between @start_date and @end_date and valid = 1 AND posted = 1) AS posted,
                             (SELECT COUNT(*) FROM purch_ret_hd where entry_date between @start_date and @end_date and valid = 1 AND posted = 0) AS not_posted,
@@ -3162,6 +3440,7 @@ def interface(request):
                     ##print(daita)
                     obj = {}
                     json_data = json.loads(daita)
+                    obj['tag'] = json_data['tag']
                     obj['document'] = doc
                     obj['total_entries'] = json_data["total_entries"]
                     obj['posted'] = json_data["posted"]

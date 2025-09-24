@@ -38,7 +38,7 @@ def newjob(request):
     sers = Services.objects.filter(status=1)
     if sers.count() < 1:
         messages.error(request, "Please Create A Service")
-        return redirect('services')
+        return redirect('wo_services')
 
     context['users'] = UserAddOns.objects.all()
     context['technicians'] = User.objects.filter(is_superuser=True)
@@ -52,7 +52,7 @@ def newjob(request):
 @login_required()
 def jobcard(request):
     if ServiceCard.objects.all().count() < 1:
-        return redirect('newjob')
+        return redirect('wo_newjob')
 
     cardno = ServiceCard.objects.filter(pk__gt=0).last().cardno
     context['page']['title'] = "Job Cards"
@@ -60,7 +60,7 @@ def jobcard(request):
     return render(request, 'servicing/jobcard.html', context=context)
 
 
-@login_required()
+# @login_required()
 def tracking(request, cardno):
     context['nav'] = True
     context['pagevalid'] = False
@@ -72,7 +72,8 @@ def tracking(request, cardno):
         this_service = ServiceCard.objects.get(Q(cardno=cardno) | Q(task__uni=cardno))
 
         # validate owner
-        if this_service.owner.pk == request.user.pk or request.user.is_superuser:
+        # if this_service.owner.pk == request.user.pk or request.user.is_superuser:
+        if True:
             context['pagevalid'] = True
             context['pagemessage'] = this_service
         else:
@@ -107,7 +108,7 @@ def mail_to_provider(request,job):
         context = {
             'nav':True,
             'card':ServiceCard.objects.get(cardno=job),
-            'senders':MailSenders.objects.all()
+            'senders':MailSenders.objects.all(),
         }
         return render(request,'servicing/send-to-provider.html',context=context)
 

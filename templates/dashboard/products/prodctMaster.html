@@ -11,6 +11,7 @@
                     <button class="btn btn-sm"><i class="bi bi-pencil-fill text-warning"></i></button>
                     <button id="prev_nav" onclick="productMaster.loadProdMastScreen(this.value)" disabled class="btn btn-sm"><i class="bi bi-skip-backward-fill text-info"></i></button>
                     <button onclick="productMaster.loadProdMastScreen(this.value)" id="next_nav" class="btn btn-sm"><i class="bi bi-skip-forward-fill text-info"></i></button>
+                    <button id="issue_btn" class="btn btn-sm"><i class="bi bi-exclamation-circle-fill text-primary"></i> Issue</button>
                 </div>
                 <div class="w-50 h-100 d-flex flex-wrap align-content-center justify-content-end">
                     <strong class="card-title">PRODUCT MASTER</strong>
@@ -124,5 +125,75 @@
 
 
         productMaster.loadProdMastScreen('{{ barcode }}')
+
+        $(document).ready(function(){
+            $('#issue_btn').click(function(){
+            // Create the modal HTML if it doesn't exist
+            if ($('#issueModal').length === 0) {
+                const modalHtml = `
+                <div class="modal fade" id="issueModal" tabindex="-1" role="dialog" aria-labelledby="issueModalLabel" aria-hidden="true">
+                  <div class="modal-dialog" role="document">
+                    <form id="issueForm">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title" id="issueModalLabel">Issue Product</h5>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                          </button>
+                        </div>
+                        <div class="modal-body">
+                          <div class="form-group">
+                            <label for="issue_location">Location</label>
+                            <select class="form-control" id="issue_location" name="location" required>
+                              <option value="" disabled selected>Select Location</option>
+                              {% for loc in locs %}
+                                <option value="{{ loc.pk }}">{{ loc.code }} - {{ loc.descr }}</option>
+                              {% endfor %}
+                            </select>
+                          </div>
+                          <div class="form-group">
+                            <label for="issue_qty">Quantity</label>
+                            <input type="number" class="form-control" id="issue_qty" name="qty" min="1" required>
+                          </div>
+                          <div class="form-group">
+                            <label for="issue_remarks">Remarks</label>
+                            <input type="text" class="form-control" id="issue_remarks" name="remarks">
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                          <button type="submit" class="btn btn-primary">Submit</button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+                `;
+                $('body').append(modalHtml);
+            }
+
+            // Show the modal
+            $('#issueModal').modal('show');
+
+            // Optional: handle form submission
+            $('#issueForm').off('submit').on('submit', function(e){
+                e.preventDefault();
+                // You can handle the form data here
+                const location = $('#issue_location').val();
+                const qty = $('#issue_qty').val();
+                const remarks = $('#issue_remarks').val();
+                // Example: log or send via AJAX
+                // console.table({location, qty, remarks});
+                let payload = {
+                    module:'issue',
+                    data:anton.Inputs(['issue_location','issue_qty','issue_remarks','barcode'])
+                }
+
+                let issue = api.call('PUT',payload,'/inventory/api/')
+                console.table(issue)
+                $('#issueModal').modal('hide');
+            });
+            })
+        })
     </script>
 {% endblock %}

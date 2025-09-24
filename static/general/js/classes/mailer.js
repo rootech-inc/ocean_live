@@ -42,7 +42,7 @@ class Mailer {
 
             }
     que() {
-                let ids = ['sender','subject','recipient','cc','body'];
+                let ids = ['sender','subject','recipient','body','mypk'];
                 if(anton.validateInputs(ids)){
                     let data = anton.Inputs(ids);
                     var fileInput = document.getElementById('attachment');
@@ -54,6 +54,7 @@ class Mailer {
                         module:'que_mail',
                         data:data
                     };
+                    
                     console.table(payload)
                     let que = api.call('PUT',payload,'/adapi/');
                     Swal.fire({

@@ -20,10 +20,10 @@ from . import views, servicing_api
 urlpatterns = [
     path('', views.base, name='service_master'),
     path('api/', servicing_api.interface, name='servicing_api'),
-    path('services/', views.services, name='services'),
+    path('services/', views.services, name='wo_services'),
     path('service/<service_id>/', views.service, name='service'),
-    path('newjob/', views.newjob, name='newjob'),
-    path('jobcard/', views.jobcard, name='jobcard'),
+    path('newjob/', views.newjob, name='wo_newjob'),
+    path('wo/', views.jobcard, name='service_jobcard'),
     path('jobcard/tracking/<cardno>/', views.tracking, name='tracking'),
     path('main-to-provider/<job>/', views.mail_to_provider, name='mail_provider'),
     path('save-service-documents/',views.save_service_documents, name='save_service_documents'),

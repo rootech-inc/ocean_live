@@ -50,6 +50,25 @@ def contractor_api(request):
                     success_response['message'] = f"Error at line {e.__traceback__.tb_lineno}"
                     arr = f"Error at line {e.__traceback__.tb_lineno}: {e}"
 
+            elif module == 'minimal_contractor':
+                doc = data.get('doc','json')
+                if doc == 'json':
+                    arr = [contractor.minimal_obj() for contractor in Contractor.objects.all().order_by('company')]
+                elif doc == 'excel':
+                    arr = [contractor.minimal_obj() for contractor in Contractor.objects.all().order_by('company')]
+                    import openpyxl
+                    book = openpyxl.Workbook()
+                    sheet = book.active
+                    hd = ["CODE","COMPANY","OWNER","PHONE","EMAIL","COUNTRY","CITY","POSTAL CODE","GH POST CODE","GH CARD NO"]
+                    sheet.append(hd)
+                    for contractor in arr:
+                        sheet.append([contractor['code'],contractor['company'],contractor['owner'],contractor['phone'],contractor['email'],contractor['country'],contractor['city'],contractor['postal_code'],contractor['gh_post_code'],contractor['gh_card_no']])
+                    file = f"static/general/tmp/minimal_contractor.xlsx"
+                    book.save(file)
+                    arr = file
+                success_response['message'] = arr
+                response = success_response
+
             elif module == 'material':
                 try:
                     contractor_id = data.get('contractor_id')

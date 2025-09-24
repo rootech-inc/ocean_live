@@ -84,6 +84,41 @@ def interface(request):
                     error_response['message'] = f"Transfer Failed: {e}"
                     response = error_response
 
+            elif module == 'issue':
+                # Get data from request
+                location_id = data.get('issue_location')
+                qty = data.get('issue_qty')
+                remarks = data.get('issue_remarks')
+                barcode = data.get('barcode')
+
+                try:
+                    location = Locations.objects.get(pk=location_id)
+                    product = ProductMaster.objects.get(barcode=barcode)
+                    qty = float(qty)
+
+                    # Negate quantity since it is to reduce stock
+                    qty = -abs(qty)
+
+                   
+
+                    ProductTrans.objects.create(
+                        product=product,
+                        loc=location,
+                        doc_ref='ISSUE',
+                        tran_qty=qty,
+                        doc='IS'
+                    )
+
+                    success_response['message'] = f"Issued {abs(qty)} of {product.shrt_descr} from {location.code}"
+                    response = success_response
+                except Exception as e:
+                    error_response['message'] = f"Issue Failed: {e}"
+                    response = error_response
+
+            else:
+                error_response['message'] = 'Invalid Module'
+                response = error_response
+
         elif method == 'VIEW':
             print(data)
             # view transfer in window
