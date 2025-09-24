@@ -300,7 +300,6 @@ def api_function(request):
                 response["status_code"] = 400
                 response["status"] = "Bad Request"
                 response["message"] = f"Missing required field: {e.args[0]}"
-
         elif method == "DELETE":
             try:
                 module = body["module"]
@@ -906,6 +905,9 @@ def api_function(request):
                         })
 
                     response['message'] = ti
+
+                elif module == "inventory":
+                    pass
 
             except KeyError as e:
                 response["status_code"] = 400

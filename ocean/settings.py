@@ -105,6 +105,7 @@ DATABASE_ENGINE = os.environ.get('DB_ENGINE', 'django.db.backends.mysql')
 
 DATABASE_NAME = os.environ.get('DB_NAME', 'meters')
 DATABASE_USER = os.environ.get('DB_USER', 'root')
+
 DATABASE_PASSWORD = os.environ.get('DB_PASSWORD', 'Sunderland@411')
 BASE_URL = os.environ.get('BASE_URL', 'http://ec2-16-16-212-223.eu-north-1.compute.amazonaws.com/')
 
@@ -211,6 +212,10 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # email config
 
+
+#for iframe allow iframe on same origin
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+# X_FRAME_OPTIONS = 'ALLOWALL'
 
 # session setting
 SESSION_COOKIE_AGE = 1800  # 3 minutes. "1209600(2 weeks)" by default

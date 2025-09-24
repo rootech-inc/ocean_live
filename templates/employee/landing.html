@@ -2,13 +2,28 @@
 {% load static %}
 
 {% block body %}
+<div class="card-header">
+    <div class="w-100 d-flex">
+        <div class="w-50 d-flex">
 
+
+        </div>
+        <div class="w-50 d-flex justify-content-end">
+            <select name="" id="range" style="width: fit-content" class="form-control rounded-0">
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+            </select>
+            <button class="btn btn-info btn-sm ms-2" id="exp_attendance">Export</button>
+        </div>
+    </div>
+</div>
 <div class=card-body>
    <div class="table-responsive">
-       <table id="attd_table" class="table table-responsive-md">
+       <table id="attd_table" class="table table-lg">
            <thead>
                 <tr>
                     <th>DATE</th>
+                    <th>DAY</th>
                     <th>TIME IN</th>
                     <th>TIME OUT</th>
                     <th>IS LATE</th>
@@ -17,7 +32,7 @@
 
            <tbody id="att_bd">
            <tr class="loading-row">
-               <td colspan="5" class="text-center">
+               <td colspan="6" class="text-center">
                    <div class="spinner-border text-primary" role="status">
                        <span class="sr-only">Loading...</span>
                    </div>
@@ -32,6 +47,10 @@
         $(document).ready(function(){
             // load attendance
             staff.loadMyAttendance('week')
+
+            $('#range').on('change', function(){
+                staff.loadMyAttendance($(this).val())
+            })
         })
     </script>
 

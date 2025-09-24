@@ -17,6 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 from . import views, invento
 
+
 urlpatterns = [
     path('', views.inventory, name='inventory'),
     path('api/', invento.interface, name='interface'),
@@ -39,6 +40,12 @@ urlpatterns = [
     path('transfer/save-evidence/',views.save_evidence,name='save_inv_evidence'),
     path('adjustment/',views.adjustment,name='inventory-adjustment'),
 
+    #  upload vehicle asset image
+    path('vehicle/upload/', views.upload_vehicle_asset_image, name="upload_vehicle_asset"),
+    # upload vehicle docuemnt
+    path('vehicle/document/upload/', views.upload_vehicle_asset_document, name='upload_vhicle_assset_doc')
 ]
+
+
 
 # handler404 = 'blog.views.handler404'

@@ -4,9 +4,12 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 from admin_panel.models import UserAddOns, UserSettings, Emails, Sms, SmsApi
+from employee.modric import token
 from ocean import settings
 
 import re
+
+from ocean.settings import ATTENDANCE_URL
 
 
 def is_valid_password(password):

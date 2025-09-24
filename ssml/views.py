@@ -35,6 +35,7 @@ def index(request):
     context['installations'] = ServiceType.objects.all()
     context['total_installs'] = ServiceOrder.objects.all().count()
     context['today_installs'] = ServiceOrder.objects.filter(service_date=datetime.now().date()).count()
+    context['materials'] = InventoryMaterial.objects.all()
     # context['low_stock'] = InventoryMaterial.objects.filter()
     return render(request, 'ssml/index.html', context)
 

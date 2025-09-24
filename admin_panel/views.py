@@ -32,6 +32,7 @@ from django.views.decorators.csrf import csrf_exempt
 from inventory.models import AssetGroup
 from meeting.models import MeetingHD, MeetingTalkingPoints, MeetingTrans
 from ocean.settings import EMAIL_HOST_USER
+from .models import Company
 
 
 def today(what='none'):  # get time
@@ -2569,5 +2570,6 @@ def organization(request):
         },
         'locations':Locations.objects.all().order_by('descr'),
         'e_types':BusinessEntityTypes.objects.all().order_by('entity_type_name'),
+        'companies': Company.objects.all().order_by('name'),
     }
     return render(request,'console/organization.html',context=context)

@@ -398,7 +398,7 @@ def interface(request):
                     res = [att.obj() for att in Attendance.objects.filter(
                         emp_code=emp_code,
                         date__range=[start_date, end_date]
-                    )]
+                    ).order_by('date')]
                     
                 
                 if rg == 'month':
@@ -412,7 +412,7 @@ def interface(request):
                     res = [att.obj() for att in Attendance.objects.filter(
                         emp_code=emp_code,
                         date__range=[start_date, end_date]
-                    )]
+                    ).order_by('date')]
 
                 success_response['message'] = res
 
@@ -559,10 +559,6 @@ def interface(request):
             elif module == 'attendance_card':
                 # loop through ann employee
                 workers = staffs()
-
-
-
-
                 late_duration = {
                     "SHOP": {
                         'late_by': datetime.strptime('10:06', '%H:%M').time(),
@@ -586,9 +582,12 @@ def interface(request):
                 for worker in workers:
                     # print()
                     # print(worker)
+
                     enable_attendance = worker['attemployee']['enable_attendance']
-                    if not enable_attendance:
+
+                    if enable_attendance:
                         emp_id = worker.get('emp_code')
+                        print(emp_id)
                         # print(emp_id)
                         mobile = worker.get('mobile').replace(' ','').replace("'",'')
                         this_week_started = datetime.now().date() - timedelta(days=(datetime.now().weekday() + 1) % 7)
@@ -615,7 +614,7 @@ def interface(request):
                             total_absent += 0 if obj.get('status') == 'present' else 1
 
                             msg_tran += f"""{obj.get('date')} : {obj.get('time_in')}\n"""
-                            print(li)
+
 
                         my_meta = late_duration.get(department)
                         my_off_days = my_meta.get('off_days')
@@ -629,15 +628,20 @@ def interface(request):
                                    f"Total Late: {total_late}\n"
                                    f"Total Absent: {total_absent}\n\n"
                                    f"TRANSACTIONS:\n{msg_tran}\n\n")
-                        print(message)
+
 
                         # send SMS
+
                         if department != 'METERS':
+                            print("SMS SENT TO ",emp_id,"ON",mobile)
                             Sms(
                                 api=SmsApi.objects.get(is_default=True),
                                 to=mobile,
                                 message=message
                             ).save()
+
+                        else:
+                            print("SMS NOT SENT TO ",emp_id,"ON",mobile)
 
                         # print()
                         # exit()
