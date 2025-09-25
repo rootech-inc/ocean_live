@@ -235,7 +235,7 @@ def products(request,page=1):
         last_pk = last_500_products[-1].pk
         first_pk = last_500_products[0].pk
 
-        print(first_pk,last_pk)
+
 
         next_page = False
         if Products.objects.filter(pk__gt=last_pk):

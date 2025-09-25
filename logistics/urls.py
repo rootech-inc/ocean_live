@@ -22,4 +22,6 @@ urlpatterns = [
     path('api/', api.interface, name='logistics-api'),
     path('new-delivery/',views.newdelivery,name='logistics-new-delivery'),
     path('delivery/view/<enc>/',views.delivery_details,name='logistics-delivery-details'),
+    path('drivers/',views.drivers,name='logistics-drivers'),
+    path('upload-diver-image/',views.upload_diver_image,name='logistics-upload-diver-image'),
 ]

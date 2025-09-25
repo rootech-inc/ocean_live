@@ -1,0 +1,39 @@
+{% extends 'logistics/base.html' %}
+
+{% load static %}
+
+{% block body %}
+    <style>
+        #new_driver {
+            position: fixed !important;
+            bottom: 20px !important;
+            right: 20px !important;
+            z-index: 2000;
+        }
+    </style>
+    <button id="new_driver" style="width: 40px; height: 40px;" class="btn btn-info p-0 rounded-circle shadow">
+    +
+    </button>
+    <div class="container">
+        <div class="row" id="drivers">
+            <div class="text-center w-100 py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="mt-2">Loading drivers...</div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+
+        $(document).ready(function () {
+             logistics.loadDrivers()
+            $('#new_driver').click(function () {
+                logistics.newDriver()
+            })
+        })
+    </script>
+
+{% endblock %}

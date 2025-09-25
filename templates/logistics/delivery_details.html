@@ -3,12 +3,22 @@
 
 {% block body %}
 
-    <div class="h-100 overflow-auto">
+    <div style="max-height: 100%; overflow: hidden" class="overflow-auto">
         <div class="card">
         <div class="card-header">
-            <span class="card-title requested_by"><div class="spinner-border" role="status">
+            <div class="w-100 d-flex flex-wrap">
+                <div class="w-50">
+                    <span class="card-title requested_by"><div class="spinner-border" role="status">
                   <span class="sr-only">Loading...</span>
                 </div></span>
+                </div>
+
+                <div class="w-50 d-flex flex-wrap justify-content-end bt">
+
+                </div>
+            </div>
+
+
         </div>
         <div class="card-body p-2">
             <div class="d-flex flex-wrap align-items-center justify-content-between">
@@ -41,12 +51,7 @@
         </div>
     </div>
 
-        <div class="card mt-2">
-            <div class="card-body">
 
-
-            </div>
-        </div>
     </div>
 
     <script>

@@ -47,7 +47,16 @@ class Driver(models.Model):
         ('inactive', 'Inactive')
     ], default='available')
     email = models.EmailField(blank=False, null=False)
+    image = models.ImageField(upload_to='static/general/uploads/driver_images/',blank=True,null=True)
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True)
+    license = models.ImageField(upload_to='static/general/uploads/driver_images/',blank=True,null=True)
 
+
+
+    def deliveries(self):
+        return DeliveryRequest.objects.filter(driver=self)
+    def dp(self):
+        return self.image.url if self.image else f'https://placehold.co/100?text={self.name.split()[0][0]}{self.name.split()[-1][0]}'
 
     def obj(self):
         return {
@@ -56,7 +65,10 @@ class Driver(models.Model):
             "license_number": self.license_number,
             "status": self.status,
             "email": self.email,
-            "pk":self.pk
+            "pk":self.pk,
+            "deliveries":self.deliveries().count(),
+            "is_engaged":True if DeliveryRequest.objects.filter(driver=self,status='in_transit').exists() else False,
+            'db':self.dp()
         }
     def __str__(self):
         return self.name
@@ -81,7 +93,7 @@ class DeliveryRequest(models.Model):
 
     status_choices = [
         ('pending', 'Pending'),
-        ('scheduled', 'Scheduled'),
+        ('schedule', 'Scheduled'),
         ('in_transit', 'In Transit'),
         ('delivered', 'Delivered'),
         ('cancelled', 'Cancelled')
@@ -91,6 +103,7 @@ class DeliveryRequest(models.Model):
     driver = models.ForeignKey(Driver, on_delete=models.SET_NULL, null=True)
     departure_time = models.DateTimeField(blank=True, null=True)
     arrival_time = models.DateTimeField(blank=True, null=True)
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,related_name='updated_by')
 
 
     def obj(self):
@@ -125,7 +138,7 @@ class DeliveryRequest(models.Model):
         }
 
     def logs(self):
-        return [log.obj() for log in DeliveryLog.objects.filter(delivery=self).order_by('-pk')]
+        return [log.obj() for log in DeliveryLog.objects.filter(delivery=self)]
 
     def __str__(self):
         return f"→ {self.destination} ({self.status})"
@@ -140,6 +153,7 @@ class DeliveryLog(models.Model):
 
     def __str__(self):
         return f"Log for {self.delivery}"
+
 
     def obj(self):
         return {

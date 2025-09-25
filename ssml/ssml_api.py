@@ -1,16 +1,4 @@
-import json
-import sys
-from decimal import Decimal
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Q
-from django.contrib.auth.models import User
-from ocean.settings import BASE_URL
 
-
-from ssml.models import Cardex,Location,RequiredReturn, InvoiceHD,InvoiceTransactions, Contractor, Expense, InventoryGroup, InventoryMaterial, Issue, IssueTransaction, Ledger, MaterialOrderItem, Meter, PaySlipHD, Plot, RedeemTransactions, Reedem, Service, ServiceMaterials, ServiceOrder, ServiceOrderItem, ServiceOrderReturns, ServiceType, Supplier, Grn, GrnTransaction, ContractorError, TransferHd, TransferTr
-from admin_panel.models import Emails, Locations, BusinessEntityTypes,MailSenders, MailQueues,MailAttachments,Sms,SmsApi
-from admin_panel.anton import make_md5_hash
 
 def safe_add_image_to_pdf(pdf, image_path, x, y, w, h=None):
     """
@@ -53,9 +41,25 @@ def safe_add_image_to_pdf(pdf, image_path, x, y, w, h=None):
     print("Warning: No logo images could be loaded, skipping logo")
     return False
 
-
+from django.views.decorators.csrf import csrf_exempt
 @csrf_exempt
 def interface(request):
+    import json
+    import sys
+    from decimal import Decimal
+    from django.http import JsonResponse
+
+    from django.db.models import Q
+    from django.contrib.auth.models import User
+    from ocean.settings import BASE_URL
+
+    from ssml.models import Cardex, Location, RequiredReturn, InvoiceHD, InvoiceTransactions, Contractor, Expense, \
+        InventoryGroup, InventoryMaterial, Issue, IssueTransaction, Ledger, MaterialOrderItem, Meter, PaySlipHD, Plot, \
+        RedeemTransactions, Reedem, Service, ServiceMaterials, ServiceOrder, ServiceOrderItem, ServiceOrderReturns, \
+        ServiceType, Supplier, Grn, GrnTransaction, ContractorError, TransferHd, TransferTr
+    from admin_panel.models import Emails, Locations, BusinessEntityTypes, MailSenders, MailQueues, MailAttachments, \
+        Sms, SmsApi
+    from admin_panel.anton import make_md5_hash
     response = {
         'status_code': 0,
         'message': ""

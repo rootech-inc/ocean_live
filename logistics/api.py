@@ -7,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from numba.cpython.charseq import is_default
 
 from admin_panel.anton import make_md5_hash
-from admin_panel.models import Sms, SmsApi, MailQueues, MailSenders
+from admin_panel.models import Sms, SmsApi, MailQueues, MailSenders, UserAddOns
 from blog.anton import make_md5
 from logistics.models import Vehicle, Driver, DeliveryRequest, DeliveryLog
 from ocean.settings import LOGISTIC_CONTACT
@@ -45,16 +45,27 @@ def interface(request):
                 success_response['message'] = 'Successfully Updated'
 
             elif module == 'driver':
-                name = data.get('name')
-                phone_number = data.get('phone_number')
+
+                user = User.objects.get(pk=data.get('user'))
+                name =user.get_full_name()
+                ad_on = UserAddOns.objects.get(user=user)
+                phone_number = ad_on.phone
                 license_number = data.get('license_number')
-                email = data.get('email')
+                email = user.email
 
                 Driver.objects.create(
                     name=name,phone_number=phone_number,license_number=license_number,email=email
                 )
 
-                success_response['message'] = 'Driver Successfully Created'
+                Sms.objects.create(
+                    api=SmsApi.objects.get(is_default=True),
+                    to=phone_number,
+                    message=f"Hello {user.get_full_name()}, You have been registered as a driver with the following details: \nName: {name} \nLicense Number: {license_number}"
+                )
+
+
+
+                success_response['message'] = Driver.objects.get(name=name,phone_number=phone_number,license_number=license_number,email=email).pk
 
             elif module == 'delivery_request':
                 requested_by = User.objects.get(pk=data.get('requested_by'))
@@ -165,6 +176,46 @@ def interface(request):
             else:
                 raise Exception('Module Not Supported')
             response = success_response
+
+        elif method == 'PATCH':
+            if module == 'delivery_request':
+                enc = data.get('enc')
+                user = User.objects.get(pk=data.get('user'))
+                status = data.get('status')
+                delivery = DeliveryRequest.objects.get(enc=enc)
+                remarks = data.get('remarks')
+
+
+                DeliveryLog.objects.create(
+                    delivery=delivery,
+                    title=f"{status.replace('_', ' ').title()}",
+                    details=remarks,
+                    user=user
+                )
+
+                # Send SMS to requested person
+                Sms.objects.create(
+                    api=SmsApi.objects.get(is_default=True),
+                    to=user.username,
+                    message=f"Your delivery request status has been updated to {status}."
+                )
+
+                if status == 'schedule':
+                    delivery.driver = Driver.objects.get(pk=data.get('driver'))
+                    delivery.schedule_date = data.get('schedule_date')
+
+                if status == 'in_transit':
+                    delivery.vehicle = Vehicle.objects.get(pk=data.get('vehicle'))
+                    delivery.departure_time = data.get('in_transit_date')
+
+                delivery.status = status
+                delivery.save()
+
+
+                success_response['message'] = 'Delivery Request Updated'
+
+            response = success_response
+
         else:
             raise Exception('Method Not Supported')
 
