@@ -26,6 +26,7 @@ def base(request):
 
 @login_required()
 def clerks(request):
+    return HttpResponse("Module Discontinued")
     import random
 
     # Define the range for the random numbers (between 1000 and 9999)
@@ -48,6 +49,7 @@ def clerks(request):
 
 @login_required()
 def save_clerk(request):
+    return HttpResponse("Module Discontinued")
     if request.method == 'POST':
         form = NewClerk(request.POST, request.FILES)
         if form.is_valid():
@@ -73,7 +75,9 @@ def save_clerk(request):
 
 
 @login_required()
+
 def sync_clerks(request, fr):
+    return HttpResponse("Module Discontinued")
     try:
         if fr == 'locations':
             # sync from locations
@@ -149,6 +153,7 @@ def sync_clerks(request, fr):
 
 @login_required()
 def bolt_products(request):
+    return HttpResponse("Module Discontinued")
     context = {
         'nav': True,
         'page': {
@@ -160,6 +165,7 @@ def bolt_products(request):
 
 @login_required()
 def bolt_products_pending(request):
+    return HttpResponse("Module Discontinued")
     context = {
         'nav': True,
         'page': {
@@ -172,6 +178,7 @@ def bolt_products_pending(request):
 
 @login_required()
 def bolt_groups(request):
+    return HttpResponse("Module Discontinued")
     context = {
         'nav': True,
         'page': {
@@ -201,6 +208,7 @@ def has_next_page(current_page, paginator):
 
 @login_required()
 def bolt_hidden(request):
+    return HttpResponse("Module Discontinued")
     context = {
         'nav': True,
         'page': {
@@ -213,6 +221,7 @@ def bolt_hidden(request):
 
 @login_required()
 def products(request,page=1):
+    return HttpResponse("Module Discontinued")
     if Products.objects.all().count() > 500:
 
         page_size = 500
@@ -259,6 +268,7 @@ def products(request,page=1):
 
 @login_required()
 def recipe(request):
+    return HttpResponse("Module Discontinued")
     context = {
         'nav': True,
         'closed': RecipeProduct.objects.filter(is_open=False),
@@ -273,6 +283,7 @@ def recipe(request):
 
 @login_required()
 def recipe_group(request, group_id):
+    return HttpResponse("Module Discontinued")
     context = {
         'nav': True,
         'group_id': group_id
@@ -283,6 +294,7 @@ def recipe_group(request, group_id):
 @login_required()
 @csrf_exempt
 def upload_item_image(request):
+    return HttpResponse("Module Discontinued")
     if request.method == 'POST':
         product_key = request.POST['prod_pk']
         image = request.FILES['prod_image']
@@ -297,6 +309,7 @@ def upload_item_image(request):
 
 @login_required()
 def recipe_card(request):
+    return HttpResponse("Module Discontinued")
     context = {
         'nav': True,
         'last_pk':RecipeProduct.objects.all().last().pk
@@ -313,6 +326,7 @@ def stock(request):
 
 @login_required()
 def stock_count(request,ref_no):
+    return HttpResponse("Module Discontinued")
     context = {
         'nav': True,
         'ref_no': ref_no
@@ -322,6 +336,7 @@ def stock_count(request,ref_no):
 
 @login_required()
 def upload_stock_image(request):
+    return HttpResponse("Module Discontinued")
     if request.method == 'POST':
         barcode = request.POST['barcode']
         file = request.FILES['image']
@@ -341,6 +356,7 @@ def upload_stock_image(request):
 
 @login_required()
 def stock_monitor(request):
+    return HttpResponse("Module Discontinued")
     context = {
         'nav': True,
     }
@@ -349,6 +365,7 @@ def stock_monitor(request):
 
 @login_required()
 def retail_butch_moni(request):
+    return HttpResponse("Module Discontinued")
     context = {
         'nav': True
     }
@@ -356,6 +373,7 @@ def retail_butch_moni(request):
 
 @login_required()
 def retail_butch_cb(request):
+    return HttpResponse("Module Discontinued")
     context = {
         'nav': True
     }
@@ -363,6 +381,7 @@ def retail_butch_cb(request):
 
 
 def stock_to_send(request):
+    return HttpResponse("Module Discontinued")
     context = {
         'nav': True,
         'page':{
@@ -373,6 +392,7 @@ def stock_to_send(request):
 
 
 def retail_price_change(request):
+    return HttpResponse("Module Discontinued")
     context = {
         'nav': True,
         'page': {
@@ -383,6 +403,7 @@ def retail_price_change(request):
 
 
 def samples(request):
+    return HttpResponse("Module Discontinued")
     context = {
         'nav': True,
         'page': {
@@ -393,6 +414,7 @@ def samples(request):
 
 
 def bolt_category(request,pk):
+    return HttpResponse("Module Discontinued")
     if BoltGroups.objects.filter(pk=pk).exists():
         cat = BoltGroups.objects.get(pk=pk)
         context = {
@@ -410,6 +432,7 @@ def bolt_category(request,pk):
 
 @csrf_exempt
 def bolt_upload_image(request):
+    return HttpResponse("Module Discontinued")
     if request.method == 'POST':
         barcode = request.POST['barcode']
         file = request.FILES['image']
@@ -422,6 +445,7 @@ def bolt_upload_image(request):
         return JsonResponse({'message': 'Form submitted successfully!'})
 @login_required()
 def product_card(request):
+    return HttpResponse("Module Discontinued")
 
     context = {
         'nav': True,
@@ -433,6 +457,7 @@ def product_card(request):
 
 @login_required()
 def bolt_landing(request):
+    return HttpResponse("Module Discontinued")
     cent = BoltItems.objects.all().count() / Products.objects.all().count() * 100
     context = {
         'nav': True,
@@ -450,6 +475,7 @@ def bolt_landing(request):
 
 @login_required()
 def bolt_menu(request,entity):
+    return HttpResponse("Module Discontinued")
     # BoltSubGroups.objects.all().update(entity=BusinessEntityTypes.objects.get(entity_type_name='Retail'))
     context = {
         'nav': True,
@@ -463,6 +489,7 @@ def bolt_menu(request,entity):
 
 
 def wholesales(request):
+    return HttpResponse("Module Discontinued")
     context = {
         'nav': False,
         'page': {
