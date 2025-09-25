@@ -1,25 +1,72 @@
-Copyright (c) 2025 Rootech IT Solutions
+# 🌊 Ocean
 
-# ocean
-![alt text](ocean.png)
-_A tool to enhance enterprise productivity_
+> **Built by [Rootech IT Solutions](https://rootechgh.com) • Maintained by the Community**  
+> *An open-source, all-in-one enterprise suite for CRM, HRM, and beyond.*
 
-built with `python`,`django`,`CSS`,`JavaScript`,`HTML`,`Bootstrap4`,`Jquery`,`Sweet Alert`
+---
 
-Ocean is a handful tool for IT Department specifically. For now there are 4 core functionalities.
+## 📝 Founder’s Note
+Ocean started as a personal project to **automate my daily work** — managing attendance, generating salaries, and tracking customers and services.  
+Instead of keeping it private, I decided to open-source it, so the **community can innovate, improve, and benefit** together — ensuring Ocean stays open and independent of any single company.
 
-- **Finder** - This is a search engine for local organization. Where employees can read blogs. These blog content can include any sharing information. The idea behind this is basically to have a how-to articles where employees can read tutorial.
-- **Support Center** - This is an open platform where questions can be asked in a form of post and answers can be given as well in the form of comments.
-- **Video Stram** - Here we can stream videos uploaded by administrators. Content uploading is limited to administrator because we don't want employees uploading their personal videos on our storage. 
-- **OCEAN** - A tool for administrator to manage users, tasks, and inventory
+---
 
-# WHYS
-All these core functions are implemented for reasons and they will be outlined below.
-- Why Finder - as an IT Lead in my organization, people call asking for support. Most of these supports are not hardware related but procedure related, and also are support requested before. With the help of finder, the employee can be redirected to check from finder first, if there is no article relating to that? A resourceful person will make an article ( how to ) on specific topic and then share the link with the caller.
-- Why Support Center - There are moments an employee A is asking for support on a support given to Employee B on same issue. Or maybe aside IT Department, another employee has knowledge on how this issue will be resolved. Support Center is a place where questions can be posted and every authorized user has the chance to answer and these answers will be reviewed by an admin.
-- Why Video Stream - There are people who cannot follow instructions from reading rather from watching. With any article shared on finder, there will be a video explaining procedures if the issue has to do with procedure so there can be a watching version as well.
-- Why OCEAN - As a platform, there should be ad administrator to moderate content. Since this tool is specifically for IT Department, there should be functions of logging issues, relating them to post in support center, assigning these issues to resourceful person and finally tracking them. There is also an inventory section to manage stock for IT Devices.
+## 🌍 Vision
+Ocean is an **all-in-one open-source enterprise suite**, starting with **CRM**, **HRM**, and **IT & Maintenance Ticketing**, and expanding into a full ERP system.  
+Our goal is to create a **community-driven platform** that grows with real-world business needs.
 
-#### To A Contributor.
-As a contributor, it is important to share your changes so more functions can be merged
+---
 
+## 🏗 Features
+- **HRM** – Attendance tracking, automatic salary computation, and detailed attendance reports  
+- **CRM** – Sales and service tracking (optimized for automotive and retail businesses)  
+- **IT & Maintenance** – Built-in ticketing for IT and equipment maintenance  
+- **Future Modules** – Accounting, inventory, and project management  
+- **All-in-One** – No modular setup, everything bundled for simplicity  
+
+---
+
+## 🛠 Tech Stack
+- **Backend:** Django (Python)  
+- **Frontend:** Django Templates (API-first design planned)  
+- **Database:** PostgreSQL / MySQL  
+- **Deployment:** On-premise recommended, optional managed cloud hosting available  
+
+---
+
+## ⚖️ License
+Ocean is licensed under the **GNU AGPL v3**.  
+
+You are free to:
+- ✅ Use, modify, and self-host Ocean  
+- ✅ Contribute by submitting Pull Requests  
+- ✅ Offer your own hosting services  
+
+But you must:
+- 📢 Share any changes if you distribute a modified version  
+- 🛑 Keep the source open (no closed-source forks)  
+
+[Learn more about AGPL v3](https://www.gnu.org/licenses/agpl-3.0.en.html)
+
+---
+
+## 🚀 Why Open Source?
+- **Built for Real Work** – Designed to solve actual business challenges  
+- **Faster Innovation** – Community-driven development accelerates growth  
+- **Transparency** – Anyone can audit and trust the code  
+- **Independence** – No single company can lock it away  
+
+---
+
+## 🤝 Contributing
+Contributions are welcome!  
+Fork the repo, make changes, and submit a Pull Request.  
+(No strict contribution guidelines yet — just keep it clean and documented.)
+
+---
+
+## 📬 Contact
+For managed hosting, support, or consulting:  
+**Rootech IT Solutions** – [Website](https://rootechgh.com) | [Email](mailto:rootech.inc@proton.me)
+
+---
