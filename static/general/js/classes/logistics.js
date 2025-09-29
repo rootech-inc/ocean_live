@@ -381,6 +381,15 @@ class Logistics {
     async getFleet(pk='*') {
         return api.call("ViEW",{module:'vehicle',data:{pk:pk}},logistics.interface)
     }
+
+    async loadFleet(pk){
+        await this.getFleet(pk).then(response => {
+            if(anton.IsRequest(response)){
+                let fleet = response.message[0];
+                console.table(fleet)
+            }
+        }).catch(err =>{kasa.error(err)});
+    }
 }
 
 const logistics = new Logistics();

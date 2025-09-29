@@ -103,11 +103,13 @@ def upload_diver_image(request):
 
 @login_required
 def fleet(request):
+    last_fleet_pk = 0 if Vehicle.objects.all() == 0 else Vehicle.objects.all().last().pk
     context = {
         'nav':True,
         "page":{
             "title":"Fleet",
-        }
+        },
+        "last_fleet_pk":last_fleet_pk
     }
     return render(request,'logistics/fleet.html',context=context)
 

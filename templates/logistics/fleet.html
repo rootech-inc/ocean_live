@@ -140,7 +140,8 @@
 
     <script>
         $(document).ready(function(){
-                logistics.loadFleets()
+                {#logistics.loadFleets()#}
+                logistics.loadFleet(`{{ last_fleet_pk }}`)
 
                 $('#new_fleet').click(function(){
                     let form = "";
