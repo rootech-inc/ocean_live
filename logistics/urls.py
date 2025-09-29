@@ -24,4 +24,6 @@ urlpatterns = [
     path('delivery/view/<enc>/',views.delivery_details,name='logistics-delivery-details'),
     path('drivers/',views.drivers,name='logistics-drivers'),
     path('upload-diver-image/',views.upload_diver_image,name='logistics-upload-diver-image'),
+    path('fleet/',views.fleet,name='logistics-fleet'),
+    path('upload-fleet-image/',views.uploadfleetimage,name='logistics-upload-fleet-image'),
 ]

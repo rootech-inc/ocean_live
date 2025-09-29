@@ -40,9 +40,11 @@ def interface(request):
                 plate_number = data.get('plate_number')
                 description = data.get('description')
                 capacity = data.get('capacity')
+                owner = User.objects.get(pk=data.get('user'))
 
-                Vehicle.objects.create(plate_number=plate_number, description=description, capacity=capacity)
-                success_response['message'] = 'Successfully Updated'
+
+                Vehicle.objects.create(plate_number=plate_number, description=description, capacity=capacity,owner=owner)
+                success_response['message'] = Vehicle.objects.get(plate_number=plate_number).pk
 
             elif module == 'driver':
 

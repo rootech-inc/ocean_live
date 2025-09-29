@@ -4,23 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0a6085f9-92ce-410b-ac8a-bafcccfb80d8" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/logistics/api.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/logistics/urls.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/static/general/js/classes/logistics.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/logistics/base.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/logistics/delivery_details.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/logistics/delivery_request.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/templates/logistics/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/ocean_live.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/ocean_live.iml" afterDir="false" />
+    <list default="true" id="0a6085f9-92ce-410b-ac8a-bafcccfb80d8" name="Changes" comment="Mark all retail module views as &quot;Module Discontinued&quot;.">
+      <change afterPath="$PROJECT_DIR$/templates/logistics/fleet.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ocean/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/ocean/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ocean/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/ocean/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/general/js/error_handler.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/general/js/error_handler.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/dashboard/profile/loginv2.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/dashboard/profile/loginv2.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/logistics/api.py" beforeDir="false" afterPath="$PROJECT_DIR$/logistics/api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/logistics/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/logistics/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/logistics/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/logistics/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/logistics/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/logistics/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/general/js/classes/logistics.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/general/js/classes/logistics.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/logistics/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/logistics/base.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,18 +33,21 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "rootleet"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;rootleet&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/rootech-inc/ocean_live.git",
-    "accountId": "d26d768d-d160-40c2-b146-9cb3da94dd6d"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/rootech-inc/ocean_live.git&quot;,
+    &quot;accountId&quot;: &quot;d26d768d-d160-40c2-b146-9cb3da94dd6d&quot;
   }
-}]]></component>
+}</component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="AISelfReview" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 2
@@ -65,25 +60,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenDjangoStructureViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "django.template.preview.state": "SHOW_EDITOR",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "D:/Development/WORKSPACE/ocean_live/logistics",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "ml.llm.AIAssistantPromptsLibrary",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenDjangoStructureViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;django.template.preview.state&quot;: &quot;SHOW_EDITOR&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Development/WORKSPACE/ocean_live/logistics&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;ml.llm.AIAssistantPromptsLibrary&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\Development\WORKSPACE\ocean_live\logistics" />
@@ -132,11 +127,56 @@
       <updated>1758272889537</updated>
       <workItem from="1758272896093" duration="37000" />
       <workItem from="1758273172601" duration="4807000" />
-      <workItem from="1758709215715" duration="23817000" />
+      <workItem from="1758709215715" duration="24134000" />
+      <workItem from="1758789025928" duration="7007000" />
+      <workItem from="1758798780722" duration="14334000" />
+      <workItem from="1759139567978" duration="7342000" />
+      <workItem from="1759164429102" duration="1620000" />
     </task>
+    <task id="LOCAL-00001" summary="copy righted and some bonus">
+      <option name="closed" value="true" />
+      <created>1758735692055</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1758735692055</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Lohisy">
+      <option name="closed" value="true" />
+      <created>1758735713514</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1758735713514</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Revamp README.md with detailed project overview, vision, features, tech stack, contribution guide, and licensing information.">
+      <option name="closed" value="true" />
+      <created>1758789194501</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1758789194501</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Mark all retail module views as &quot;Module Discontinued&quot;.">
+      <option name="closed" value="true" />
+      <created>1758789384252</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1758789384252</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="copy righted and some bonus" />
+    <MESSAGE value="Lohisy" />
+    <MESSAGE value="Update `.idea` configuration and enhance README.md&#10;&#10;Streamlined the `.idea/workspace.xml` file by cleaning up redundant entries and converting metadata to proper format. Replaced old README content with structured, community-focused documentation, showcasing project vision, features, and contribution details." />
+    <MESSAGE value="Revamp README.md with detailed project overview, vision, features, tech stack, contribution guide, and licensing information." />
+    <MESSAGE value="Mark all retail module views as &quot;Module Discontinued&quot;." />
+    <option name="LAST_COMMIT_MESSAGE" value="Mark all retail module views as &quot;Module Discontinued&quot;." />
   </component>
 </project>

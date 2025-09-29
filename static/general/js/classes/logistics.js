@@ -349,6 +349,38 @@ class Logistics {
             }
         })
     }
+
+    async loadFleets() {
+       await this.getFleet().then(response =>{
+           let ht = ""
+            if(anton.IsRequest(response)){
+
+
+                response.message.map(fleet => {
+                    console.table(fleet)
+                    ht += `
+                        <div class="col-md-3 mb-4">
+                          <div class="card shadow-sm border-0">
+                              <img src="${fleet.img}" class="card-img-top" alt="Car Image">
+                              <div class="card-body text-center">
+                              <h5 class="card-title mb-1">${fleet.plate_number}</h5>
+                              <p class="card-text text-muted ellipsis" title="${fleet.description}">${fleet.description}</p>
+                            </div>
+                          </div>
+                        </div>
+                    `
+                })
+
+                $('#fleets').html(ht)
+            } else {
+                $('#fleets').html(response.message)
+            }
+       }) .catch(err =>{kasa.error(err)});
+    }
+
+    async getFleet(pk='*') {
+        return api.call("ViEW",{module:'vehicle',data:{pk:pk}},logistics.interface)
+    }
 }
 
 const logistics = new Logistics();

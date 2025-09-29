@@ -1,0 +1,85 @@
+{% extends 'logistics/base.html' %}
+{% load static %}
+
+
+{% block body %}
+    <style>
+        #new_fleet {
+            position: fixed !important;
+            bottom: 20px !important;
+            right: 20px !important;
+            z-index: 2000;
+        }
+    </style>
+    <button id="new_fleet" style="width: 40px; height: 40px;" class="btn btn-info p-0 rounded-circle shadow">
+    +
+    </button>
+    <div class="container mt-4 h-100 overflow-auto">
+        <div class="row row-cols-1 row-cols-md-3 g-4" id="fleets">
+
+            <!-- Car Card -->
+            <div class="col h-100 mb-4">
+                <div class="card h-100">
+                    <div class="d-flex justify-content-center align-items-center my-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function(){
+                logistics.loadFleets()
+                $('#new_fleet').click(function(){
+                    let form = "";
+                    form += fom.text('plate_number','',true)
+                    form += fom.text('description','Manufacturer / Model / Year',true)
+                    form += fom.number('capacity','in KG',true)
+                    form += fom.number('fuel','In Litres',true)
+
+                    form += `
+                        <form method="POST" action="/logistic/upload-fleet-image/" enctype="multipart/form-data" id="update_fleet_car">
+                            <h3>Images</h3>
+                            <div class="input-group card p-2 mb-2">
+                                <input type="hidden" id="fleet_id" name="fleet_id" value="">
+                                <label for="image">Dashboard</label>
+                                <input type="file" accept="image/*" class="form-control-file" id="image" name="image">
+                            </div>
+                        </form>
+                    `
+
+                    amodal.setTitleText("NEW FLEET")
+                    amodal.setBodyHtml(form);
+                    amodal.setFooterHtml(`<button class="btn btn-primary" id="save_fleet">SAVE</button>`)
+                    amodal.show()
+
+                    $('#save_fleet').click(async function(){
+                        let ids = ['plate_number','description','capacity','image','mypk']
+                        if(anton.validateInputs(ids)){
+                            let payload = {
+                                module:'vehicle',
+                                data:anton.Inputs(ids)
+                            }
+
+                            payload['data']['user'] = $('#mypk').val()
+
+                            await api.v2('PUT',payload,logistics.interface).then(response => {
+                                if(anton.IsRequest(response)){
+                                    $('#fleet_id').val(response.message)
+                                    $('#update_fleet_car').submit()
+                                } else {
+                                    kasa.response(response)
+                                }
+                            }).catch(error => {kasa.error(error)})
+                        }
+                    })
+                })
+            }
+        )
+    </script>
+
+{% endblock %}

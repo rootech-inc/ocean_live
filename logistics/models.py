@@ -15,6 +15,11 @@ class Vehicle(models.Model):
     ], default='available')
     last_service_date = models.DateField(blank=True, null=True)
     next_service_due = models.DateField(blank=True, null=True)
+    image = models.ImageField(upload_to='static/general/uploads/vehicle_images/',blank=True,null=True)
+    owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def dp(self):
+        return self.image.url if self.image else f'https://placehold.co/100?text={self.description.split()[0][0]}{self.description.split()[-1][0]}'
 
     def obj(self):
         return {
@@ -25,7 +30,8 @@ class Vehicle(models.Model):
             'last_service_date': self.last_service_date,
             'next_service_date': self.next_service_due,
             'deliveries': self.deliveries(),
-            'pk':self.pk
+            'pk':self.pk,
+            'img':self.dp()
         }
 
     def deliveries(self,status='*'):
