@@ -15,6 +15,113 @@
     +
     </button>
     <div class="container mt-4 h-100 overflow-auto">
+        <div class="card">
+
+            <div class="card-header">
+                <div class="w-100 d-flex">
+                    <div class="w-50 d-flex"></div>
+                    <div class="w-50 d-flex justify-content-end">
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle" type="button" id="statusDropdown"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Menu
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="statusDropdown">
+                                <a class="dropdown-item" id="trips" href="javascript:void(0)">Trips</a>
+                                <a class="dropdown-item" id="compliance" href="javascript:void(0)">Compliance</a>
+                                <a class="dropdown-item" id="images" href="javascript:void(0)">Images</a>
+                                <a class="dropdown-item" id="service_history" href="javascript:void(0)">Service History</a>
+                                <a class="dropdown-item" id="logs" href="javascript:void(0)">Logs</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-2">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <div class="row d-flex align-items-center mb-2">
+                                <label for="asset_no" class="col-sm-4">ASSET No.</label>
+                                <div class="col-sm-8">
+                                    <input type="text" readonly id="asset_no" class="form-control rounded-0">
+                                </div>
+                            </div>
+                            <!-- MANUFACTURER -->
+                            <div class="row d-flex align-items-center mb-2">
+                                <label for="manufacturer" class="col-sm-4">Manufacturer</label>
+                                <div class="col-sm-8">
+                                    <input type="text" readonly id="manufacturer" class="form-control rounded-0">
+                                </div>
+                            </div>
+
+                            <!-- MODEL -->
+                            <div class="row d-flex align-items-center mb-2">
+                                <label for="model" class="col-sm-4">Model</label>
+                                <div class="col-sm-8">
+                                    <input type="text" readonly id="model" class="form-control rounded-0">
+                                </div>
+                            </div>
+
+                            <!-- CHASIS -->
+                            <div class="row d-flex align-items-center mb-2">
+                                <label for="chassis" class="col-sm-4">Chassis</label>
+                                <div class="col-sm-8">
+                                    <input type="text" readonly id="chassis" class="form-control rounded-0">
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="col-sm-4">
+                            <!-- TYPE -->
+                            <div class="row d-flex align-items-center mb-2">
+                                <label for="type" class="col-sm-4">Type</label>
+                                <div class="col-sm-8">
+                                    <input type="text" readonly id="type" class="form-control rounded-0">
+                                </div>
+                            </div>
+
+                            <!-- FUEL -->
+                            <div class="row d-flex align-items-center mb-2">
+                                <label for="fuel" class="col-sm-4">Fuel</label>
+                                <div class="col-sm-8">
+                                    <input type="text" readonly id="fuel" class="form-control rounded-0">
+                                </div>
+                            </div>
+
+                            <!-- CAPACITY -->
+                            <div class="row d-flex align-items-center mb-2">
+                                <label for="capacity" class="col-sm-4">Capacity</label>
+                                <div class="col-sm-8">
+                                    <input type="text" readonly id="capacity" class="form-control rounded-0">
+                                </div>
+                            </div>
+
+                            <!-- YEAR -->
+                            <div class="row d-flex align-items-center mb-2">
+                                <label for="year" class="col-sm-4">Year</label>
+                                <div class="col-sm-8">
+                                    <input type="text" readonly id="year" class="form-control rounded-0">
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="col-sm-4">
+                            <div class="card">
+                                <div class="card-header"><strong class="card-title">Compliance</strong></div>
+                            </div>
+                        </div>
+
+                        
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row row-cols-1 row-cols-md-3 g-4" id="fleets">
 
             <!-- Car Card -->
@@ -34,6 +141,7 @@
     <script>
         $(document).ready(function(){
                 logistics.loadFleets()
+
                 $('#new_fleet').click(function(){
                     let form = "";
                     form += fom.text('plate_number','',true)
@@ -78,7 +186,59 @@
                         }
                     })
                 })
+
+                $('#trips').click(function(){
+                    let body = `
+                    <div style="height: 75vh !important" class="d-flex justify-content-center align-items-center">
+                        <div class="spinner-container">
+                            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    `
+
+                    amodal.setTitleText("TRIPS")
+                    amodal.setBodyHtml(body)
+                    amodal.setSize('L')
+                    amodal.show()
+                    amodal.setFooterHtml(`<button class="btn btn-primary">Export</button>`)
+                    amodal.show()
+                })
+
+                $('#compliance').click(function(){
+                    let body = `
+                    <div style="height: 75vh !important" class="d-flex justify-content-center align-items-center">
+                        <div class="spinner-container">
+                            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"> <span class="sr-only">Loading...</span></div>
+                        </div>
+                    </div>`
+
+                    amodal.setTitleText("COMPLIANCE")
+                    amodal.setBodyHtml(body)
+                    amodal.setSize('L')
+                    amodal.show()
+                    amodal.setFooterHtml(`<button class="btn btn-primary">Export</button>`)
+                    amodal.show()
+                })
+
+                $('#images').click(function(){
+                    let body = `
+                    <div style="height: 75vh !important" class="d-flex justify-content-center align-items-center">
+                        <div class="spinner-container">
+                            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"> <span class="sr-only">Loading...</span></div>
+                        </div>
+                    </div>`
+
+                    amodal.setTitleText("IMAGES")
+                    amodal.setBodyHtml(body)
+                    amodal.setSize('L')
+                    amodal.show()
+                    amodal.setFooterHtml(`<button class="btn btn-primary">Export</button>`)
+                    amodal.show()
+                })
             }
+
         )
     </script>
 
