@@ -4,15 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0a6085f9-92ce-410b-ac8a-bafcccfb80d8" name="Changes" comment="Mark all retail module views as &quot;Module Discontinued&quot;.">
-      <change afterPath="$PROJECT_DIR$/templates/logistics/fleet.html" afterDir="false" />
+    <list default="true" id="0a6085f9-92ce-410b-ac8a-bafcccfb80d8" name="Changes" comment="Enhance fleet management UI with new details card and dynamic dropdown actions. Add modals for Trips, Compliance, and Images with export functionality.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logistics/api.py" beforeDir="false" afterPath="$PROJECT_DIR$/logistics/api.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/logistics/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/logistics/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logistics/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/logistics/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/logistics/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/logistics/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/general/js/classes/anton.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/general/js/classes/anton.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/static/general/js/classes/logistics.js" beforeDir="false" afterPath="$PROJECT_DIR$/static/general/js/classes/logistics.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/logistics/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/logistics/base.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/logistics/fleet.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/logistics/fleet.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -131,7 +128,8 @@
       <workItem from="1758789025928" duration="7007000" />
       <workItem from="1758798780722" duration="14334000" />
       <workItem from="1759139567978" duration="7342000" />
-      <workItem from="1759164429102" duration="1620000" />
+      <workItem from="1759164429102" duration="4187000" />
+      <workItem from="1759221897121" duration="1116000" />
     </task>
     <task id="LOCAL-00001" summary="copy righted and some bonus">
       <option name="closed" value="true" />
@@ -165,7 +163,23 @@
       <option name="project" value="LOCAL" />
       <updated>1758789384252</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Add fleet management functionality to logistics module.&#10;&#10;Integrated fleet management features including a new Fleet page, vehicle image upload, and vehicle listing updates. Enhanced models to support vehicle images and ownership. Updated templates, views, API, and JavaScript logic accordingly.">
+      <option name="closed" value="true" />
+      <created>1759168944550</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1759168944550</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Enhance fleet management UI with new details card and dynamic dropdown actions. Add modals for Trips, Compliance, and Images with export functionality.">
+      <option name="closed" value="true" />
+      <created>1759171321095</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1759171321095</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -177,6 +191,8 @@
     <MESSAGE value="Update `.idea` configuration and enhance README.md&#10;&#10;Streamlined the `.idea/workspace.xml` file by cleaning up redundant entries and converting metadata to proper format. Replaced old README content with structured, community-focused documentation, showcasing project vision, features, and contribution details." />
     <MESSAGE value="Revamp README.md with detailed project overview, vision, features, tech stack, contribution guide, and licensing information." />
     <MESSAGE value="Mark all retail module views as &quot;Module Discontinued&quot;." />
-    <option name="LAST_COMMIT_MESSAGE" value="Mark all retail module views as &quot;Module Discontinued&quot;." />
+    <MESSAGE value="Add fleet management functionality to logistics module.&#10;&#10;Integrated fleet management features including a new Fleet page, vehicle image upload, and vehicle listing updates. Enhanced models to support vehicle images and ownership. Updated templates, views, API, and JavaScript logic accordingly." />
+    <MESSAGE value="Enhance fleet management UI with new details card and dynamic dropdown actions. Add modals for Trips, Compliance, and Images with export functionality." />
+    <option name="LAST_COMMIT_MESSAGE" value="Enhance fleet management UI with new details card and dynamic dropdown actions. Add modals for Trips, Compliance, and Images with export functionality." />
   </component>
 </project>

@@ -43,9 +43,9 @@
                     <div class="row">
                         <div class="col-sm-4">
                             <div class="row d-flex align-items-center mb-2">
-                                <label for="asset_no" class="col-sm-4">ASSET No.</label>
+                                <label for="plate_number" class="col-sm-4">ASSET No.</label>
                                 <div class="col-sm-8">
-                                    <input type="text" readonly id="asset_no" class="form-control rounded-0">
+                                    <input type="text" readonly id="plate_number" class="form-control rounded-0">
                                 </div>
                             </div>
                             <!-- MANUFACTURER -->
@@ -85,9 +85,9 @@
 
                             <!-- FUEL -->
                             <div class="row d-flex align-items-center mb-2">
-                                <label for="fuel" class="col-sm-4">Fuel</label>
+                                <label for="fuel_type" class="col-sm-4">Fuel</label>
                                 <div class="col-sm-8">
-                                    <input type="text" readonly id="fuel" class="form-control rounded-0">
+                                    <input type="text" readonly id="fuel_type" class="form-control rounded-0">
                                 </div>
                             </div>
 
@@ -101,18 +101,16 @@
 
                             <!-- YEAR -->
                             <div class="row d-flex align-items-center mb-2">
-                                <label for="year" class="col-sm-4">Year</label>
+                                <label for="make_year" class="col-sm-4">Year</label>
                                 <div class="col-sm-8">
-                                    <input type="text" readonly id="year" class="form-control rounded-0">
+                                    <input type="text" readonly id="make_year" class="form-control rounded-0">
                                 </div>
                             </div>
 
                         </div>
 
                         <div class="col-sm-4">
-                            <div class="card">
-                                <div class="card-header"><strong class="card-title">Compliance</strong></div>
-                            </div>
+                            <img src="" id="img" alt="" class="img-fluid img-thumbnail">
                         </div>
 
                         
@@ -122,26 +120,20 @@
             </div>
         </div>
 
-        <div class="row row-cols-1 row-cols-md-3 g-4" id="fleets">
 
-            <!-- Car Card -->
-            <div class="col h-100 mb-4">
-                <div class="card h-100">
-                    <div class="d-flex justify-content-center align-items-center my-5">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="sr-only">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
     </div>
 
     <script>
         $(document).ready(function(){
                 {#logistics.loadFleets()#}
                 logistics.loadFleet(`{{ last_fleet_pk }}`)
+
+                $('#img').click(function(){
+                    let img = $('#img').attr('src')
+                    if(img.length > 0){
+                        anton.viewFile(img,"Car Image")
+                    }
+                })
 
                 $('#new_fleet').click(function(){
                     let form = "";

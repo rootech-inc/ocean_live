@@ -18,6 +18,33 @@ class Vehicle(models.Model):
     image = models.ImageField(upload_to='static/general/uploads/vehicle_images/',blank=True,null=True)
     owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 
+    manufacturer_choices = [
+        ('toyota', 'Toyota'),
+        ('honda', 'Honda'),
+        ('ford', 'Ford'),
+        ('nissan', 'Nissan'),
+        ('bmw', 'BMW'),
+        ('audi', 'Audi'),
+        ('volkswagen', 'Volkswagen'),
+        ('mercedes', 'Mercedes'),
+        ('jeep', 'Jeep'),
+        ('hyundai', 'Hyundai'),
+        ('others',"Others")
+    ]
+    manufacturer = models.CharField(max_length=20, choices=manufacturer_choices, default='others')
+
+    fuel_type_choices = [
+        ('petrol', 'Petrol'),
+        ('diesel', 'Diesel'),
+        ('cng', 'CNG'),
+        ('lpg', 'LPG'),
+    ]
+    fuel_type = models.CharField(max_length=20, choices=fuel_type_choices, default='petrol')
+    make_year = models.IntegerField(blank=True, null=True)
+    chassis = models.CharField(max_length=255, blank=True, null=True)
+    model = models.CharField(max_length=255, blank=True, null=True)
+
+
     def dp(self):
         return self.image.url if self.image else f'https://placehold.co/100?text={self.description.split()[0][0]}{self.description.split()[-1][0]}'
 
@@ -31,7 +58,13 @@ class Vehicle(models.Model):
             'next_service_date': self.next_service_due,
             'deliveries': self.deliveries(),
             'pk':self.pk,
-            'img':self.dp()
+            'img':self.dp(),
+            'make_year':self.make_year,
+            'manufacturer':self.manufacturer,
+            'chassis':self.chassis,
+            'model':self.model,
+            'fuel_type':self.fuel_type,
+            'next':Vehicle.objects.filter(last_service_date__gt=self.last_service_date).order_by('last_service_date').first()
         }
 
     def deliveries(self,status='*'):

@@ -387,6 +387,8 @@ class Logistics {
             if(anton.IsRequest(response)){
                 let fleet = response.message[0];
                 console.table(fleet)
+                anton.setValues(fleet)
+                $('#img').attr('src',fleet.img)
             }
         }).catch(err =>{kasa.error(err)});
     }

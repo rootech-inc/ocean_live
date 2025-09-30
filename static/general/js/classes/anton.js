@@ -93,7 +93,7 @@ class Anton {
         }
     }
 
-    viewFile(url = '', title = null, description = null) {
+    viewFile(url = '', title = "", description = "") {
             console.log(url)
         amodal.setTitleText("Error!!");
         amodal.setBodyHtml("Cannot Load Resource")
