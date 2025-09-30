@@ -1047,7 +1047,15 @@ def approve_document(request):
             # INSERT_YOUR_CODE
             from django.http import JsonResponse
             return JsonResponse({'status_code': '500', 'message': str(e)})
-        
 
+@login_required()
+def foc_portal(request):
+    # Render the template into a response object
+    response = render(request, 'ssml/foc-potal.html')
 
+    # Check if 'stage' cookie exists
+    if not request.COOKIES.get('stage'):
+        # Set the cookie if it doesn't exist
+        response.set_cookie('stage', 'auth', max_age=3600)  # expires in 1 hour
 
+    return response

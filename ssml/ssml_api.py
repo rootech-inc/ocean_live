@@ -840,6 +840,31 @@ def interface(request):
                         contractor = Contractor.objects.get(id=id)
                         success_response['message'] = contractor.obj()
 
+                elif module == 'foc_otp':
+                    phone = data.get('phone')
+                    if Contractor.objects.filter(phone=phone).exists():
+                        # generate opt
+                        import random
+                        otp = random.randint(101010, 999999)
+
+                        contractor = Contractor.objects.get(phone=phone)
+                        contractor.otp = otp
+                        contractor.save()
+
+                        # Send OTP via SMS
+                        to = phone.replace('233', '0').replace('+233', '0')
+                        if len(to) == 10:
+                            sms_message = f"Your OTP code is: {otp}"
+                            Sms(
+                                api=SmsApi.objects.get(sender_id='SNEDA SML') if SmsApi.objects.filter(sender_id='SNEDA SML').exists() else SmsApi.objects.get(is_default=True),
+                                to=to,
+                                message=sms_message
+                            ).save()
+
+                        success_response['message'] = otp
+                    else:
+                        raise Exception("Contractor does not exist")
+
                 elif module == 'transfer':
                     id = data.get('id','*')
                     if id == '*':

@@ -3926,9 +3926,22 @@ class SSML {
         }
     }
 
-    
-    
 
+  async  focAuth(phone) {
+        
+    }
+
+    async focGetOTP(phone) {
+        let payload = {
+            'module':'foc_otp',
+            data:{
+                phone:phone
+            }
+        }
+
+        return await api.call('VIEW',payload,'/ssml/api/')
+
+    }
 }
 const ssml = new SSML();
 
