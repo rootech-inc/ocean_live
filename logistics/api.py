@@ -43,7 +43,17 @@ def interface(request):
                 owner = User.objects.get(pk=data.get('user'))
 
 
-                Vehicle.objects.create(plate_number=plate_number, description=description, capacity=capacity,owner=owner)
+
+                Vehicle.objects.create(plate_number=plate_number,
+                                       description=description,
+                                       capacity=capacity,
+                                       owner=owner,
+                                       model=data.get('model'),
+                                       manufacturer=data.get('manufacturer'),
+                                       make_year=data.get('make_year'),
+                                       fuel_type=data.get('fuel_type'),
+                                       chassis=data.get('chassis')
+                                       )
                 success_response['message'] = Vehicle.objects.get(plate_number=plate_number).pk
 
             elif module == 'driver':
@@ -136,6 +146,7 @@ def interface(request):
 
         elif method == 'VIEW':
             if module == 'vehicle':
+
                 pk = data.get('pk','*')
                 if pk == '*':
                     success_response['message'] = [v.obj() for v in Vehicle.objects.all()]

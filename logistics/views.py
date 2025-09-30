@@ -103,7 +103,8 @@ def upload_diver_image(request):
 
 @login_required
 def fleet(request):
-    last_fleet_pk = 0 if Vehicle.objects.all() == 0 else Vehicle.objects.all().last().pk
+
+    last_fleet_pk = 0 if Vehicle.objects.all().count() == 0 else Vehicle.objects.all().last().pk
     context = {
         'nav':True,
         "page":{

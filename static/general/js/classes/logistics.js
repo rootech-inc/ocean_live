@@ -383,12 +383,31 @@ class Logistics {
     }
 
     async loadFleet(pk){
+        console.log(pk)
         await this.getFleet(pk).then(response => {
+
             if(anton.IsRequest(response)){
                 let fleet = response.message[0];
                 console.table(fleet)
                 anton.setValues(fleet)
                 $('#img').attr('src',fleet.img)
+
+                if(fleet.next > 0){
+                    $('#next').attr('disabled',false)
+                    $('#next').attr('data-pk',fleet.next)
+                } else {
+                    $('#next').attr('disabled',true)
+                }
+
+                if(fleet.previous > 0){
+                    $('#previous').attr('disabled',false)
+                    $('#previous').attr('data-pk',fleet.prev)
+                } else {
+                    $('#previous').attr('disabled',true)
+                }
+
+            } else {
+                console.log(response)
             }
         }).catch(err =>{kasa.error(err)});
     }

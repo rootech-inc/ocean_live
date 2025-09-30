@@ -104,10 +104,20 @@
         .tox-promotion{
             display: none !important;
         }
+        #grabber {
+            position: fixed !important;
+            bottom: 20px !important;
+            right: 20px !important;
+            z-index: 2000;
+        }
     </style>
 </head>
 
 <body>
+
+    <button id="grabber" style="width: 40px; height: 40px;" class="btn btn-info p-0 rounded-circle shadow">
+        <i class="fa fa-link"></i>
+    </button>
     <!-- MODALS -->
     <div id="g_modal" class="modal fade">
         <div id="g_modal_size" class="modal-dialog modal-dialog-centered">
@@ -267,8 +277,8 @@
 
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow messages">
             <li class="dropdown-header">
-              You have 3 new messages
-              <a href="#"><span class="badge rounded-pill bg-primary p-2 ms-2">View all</span></a>
+              My Shortcuts
+              <a href="#"><span class="badge rounded-pill grab_link bg-primary p-2 ms-2">Grab Link</span></a>
             </li>
             <li>
               <hr class="dropdown-divider">
@@ -777,6 +787,8 @@ window.addEventListener('load', () => {
         });
     }
 });
+
+
 
     </script>
 

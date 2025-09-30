@@ -483,3 +483,18 @@ const linecomment = new LineComment();
 const kasa = new Kasa();
 const anton = new Anton();
 const lincal = new LineCalculate()
+
+$(document).ready(function () {
+    $('.grab_link').click(function () {
+        let url = window.location.href;
+        let host = window.location.origin;  // includes protocol + host + port if present
+        let remaining_url = url.replace(host, "");
+        let form = '';
+        form += fom.text("title",'',true)
+        amodal.setTitleText("Add To Shorcut");
+        amodal.setBodyHtml(form)
+        amodal.show()
+        console.log(remaining_url);
+
+    })
+})

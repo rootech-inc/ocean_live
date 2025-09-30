@@ -19,7 +19,10 @@
 
             <div class="card-header">
                 <div class="w-100 d-flex">
-                    <div class="w-50 d-flex"></div>
+                    <div class="w-50 d-flex">
+                        <button class="btn btn-info rounded-0 ms-2" id="previous"><i class="fa fa-fast-backward"></i></button>
+                        <button class="btn btn-info rounded-0 ms-2" id="next"><i class="fa fa-fast-forward"></i></button>
+                    </div>
                     <div class="w-50 d-flex justify-content-end">
                         <div class="dropdown">
                             <button class="btn btn-secondary dropdown-toggle" type="button" id="statusDropdown"
@@ -127,6 +130,15 @@
         $(document).ready(function(){
                 {#logistics.loadFleets()#}
                 logistics.loadFleet(`{{ last_fleet_pk }}`)
+                $('#previous').click(function(){
+                    let pk = $(this).data('pk')
+                    logistics.loadFleet(pk)
+                })
+
+                $('#next').click(function(){
+                    let pk = $(this).data('pk')
+                    logistics.loadFleet(pk)
+                })
 
                 $('#img').click(function(){
                     let img = $('#img').attr('src')
@@ -136,18 +148,49 @@
                 })
 
                 $('#new_fleet').click(function(){
-                    let form = "";
-                    form += fom.text('plate_number','',true)
-                    form += fom.text('description','Manufacturer / Model / Year',true)
-                    form += fom.number('capacity','in KG',true)
-                    form += fom.number('fuel','In Litres',true)
+
+                    let h1 = ``
+
+                    let h2 = ""
+
+                    h1 += fom.text('plate_number','',true)
+                    h1 += fom.text('description','',true)
+                    h1 += fom.number('capacity','in KG',true)
+                    h1 += fom.number('make_year','',true)
+                    h2 += fom.selectv2('manufacturer',[
+                        {val:'toyota',desc:'Toyota'},
+                        {val:'honda',desc:'Honda'},
+                        {val:'ford',desc:'Ford'},
+                        {val:'bmw',desc:'BMW'},
+                        {val:'nissan',desc:'Nissan'},
+                        {val:'hyundai',desc:'Hyundai'},
+                        {val:'kia',desc:'Kia'},
+                        {val:'mazda',desc:'Mazda'},
+                        {val:'mitsubishi',desc:'Mitsubishi'},
+                        {val:'tata',desc:'Tata'},
+                        {val:'others',desc:'Others'},
+                    ],'')
+                    h2 += fom.text('model','',true)
+                    h2 += fom.text('chassis','',true)
+                    h2 += fom.selectv2('fuel_type',[{val:'petrol',desc:"Petrol"},{val:'diesel',desc:"Diesel"},{val:'electric',desc:"Electric"},{val:'hybrid',desc:"Hybrid"},{val:'others',desc:"Others"}])
+
+
+
+                    let form = `
+                        <div class='container'>
+                            <div class="row">
+                                <div class="col-sm-6">${h1}</div>
+                                <div class="col-sm-6">${h2}</div>
+                            </div>
+                        </div>
+                    `
 
                     form += `
                         <form method="POST" action="/logistic/upload-fleet-image/" enctype="multipart/form-data" id="update_fleet_car">
                             <h3>Images</h3>
                             <div class="input-group card p-2 mb-2">
                                 <input type="hidden" id="fleet_id" name="fleet_id" value="">
-                                <label for="image">Dashboard</label>
+                                <label for="image">Image</label>
                                 <input type="file" accept="image/*" class="form-control-file" id="image" name="image">
                             </div>
                         </form>
@@ -159,7 +202,8 @@
                     amodal.show()
 
                     $('#save_fleet').click(async function(){
-                        let ids = ['plate_number','description','capacity','image','mypk']
+                        let ids = ['plate_number','description','capacity','make_year','mypk',
+                        'manufacturer','model','chassis','fuel_type']
                         if(anton.validateInputs(ids)){
                             let payload = {
                                 module:'vehicle',

@@ -25,7 +25,7 @@ class Vehicle(models.Model):
         ('nissan', 'Nissan'),
         ('bmw', 'BMW'),
         ('audi', 'Audi'),
-        ('volkswagen', 'Volkswagen'),
+        ('tata', 'Tata'),
         ('mercedes', 'Mercedes'),
         ('jeep', 'Jeep'),
         ('hyundai', 'Hyundai'),
@@ -64,7 +64,9 @@ class Vehicle(models.Model):
             'chassis':self.chassis,
             'model':self.model,
             'fuel_type':self.fuel_type,
-            'next':Vehicle.objects.filter(last_service_date__gt=self.last_service_date).order_by('last_service_date').first()
+            'next':( Vehicle.objects.filter(pk__gt=self.pk).first().pk if Vehicle.objects.filter(pk__gt=self.pk).exists() else 0),
+            'previous': (Vehicle.objects.filter(pk__lt=self.pk).last().pk if Vehicle.objects.filter(
+                pk__lt=self.pk).exists() else 0)
         }
 
     def deliveries(self,status='*'):
