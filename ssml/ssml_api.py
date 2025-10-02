@@ -783,7 +783,7 @@ def interface(request):
                     entry_year = entry_date.strftime("%Y")
 
                     # Add month and year to entry_no
-                    entry_no = f'TR-{entry_month}{entry_year}-{next_no}'
+                    entry_no = f'TR{entry_month}{entry_year}-{next_no}'
 
                     print(entry_no)
 
