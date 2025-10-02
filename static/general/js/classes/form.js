@@ -53,7 +53,7 @@ class Form {
     }
 
     selectv2(ini,options=[],comment='',required=false, ){
-        let opxt = `<option disabled selected >Select ${ini.toUpperCase().replace('_',' ')}</option>`;
+        let opxt = `<option disabled selected >--- ${ini.toUpperCase().replace('_',' ')} ---</option>`;
         for (let i = 0; i < options.length; i++) {
             let option = options[i];
             console.table(option)

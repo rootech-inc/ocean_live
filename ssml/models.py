@@ -125,13 +125,30 @@ class InventoryMaterial(models.Model):
     def services(self):
         return [x.obj() for x in ServiceMaterials.objects.filter(material=self)]
 
-    def stock(self, as_of='*'):
+    def stock(self, as_of='*',loc_id='*'):
         
         if as_of == '*':
 
-            total_ISS = Cardex.objects.filter(material=self,doc_type='ISS').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
-            total_GR = Cardex.objects.filter(material=self,doc_type='GR').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
-            total_RET = Cardex.objects.filter(material=self,doc_type='RET').aggregate(total_qty=Sum('qty'))['total_qty'] or 0
+            # build location filter depending on loc_id
+            if loc_id == '*':
+                location_filter = {'location__in': Location.objects.all()}
+            else:
+                location_filter = {'location': Location.objects.get(loc_id=loc_id)}
+
+            # single query for all doc_types
+            totals_qs = (
+                Cardex.objects.filter(material=self, doc_type__in=['ISS', 'GR', 'RET'], **location_filter)
+                .values('doc_type')
+                .annotate(total_qty=Sum('qty'))
+            )
+
+            # convert result into a dictionary {doc_type: total_qty}
+            totals = {row['doc_type']: row['total_qty'] or 0 for row in totals_qs}
+
+            # safely fetch values (default 0 if not present)
+            total_ISS = totals.get('ISS', 0)
+            total_GR = totals.get('GR', 0)
+            total_RET = totals.get('RET', 0)
 
             # issue is out - retuen
             # print(self.name)
@@ -148,10 +165,18 @@ class InventoryMaterial(models.Model):
             
             return total
         else:
-            return Cardex.objects.filter(
-                material=self,
-                created_at__lte=as_of
-            ).aggregate(total_qty=models.Sum('qty'))['total_qty'] or 0
+            if loc_id == '*':
+                location_filter = {'location__in': Location.objects.all()}
+            else:
+                location_filter = {'location': Location.objects.get(loc_id=loc_id)}
+
+            return (
+                    Cardex.objects.filter(
+                        material=self,
+                        created_at__lte=as_of,
+                        **location_filter
+                    ).aggregate(total_qty=Sum('qty'))['total_qty'] or 0
+            )
 
     def loc_stock(self,loc_id='*'):
         locations = Location.objects.all() if loc_id == '*' else Location.objects.filter(loc_id=loc_id)

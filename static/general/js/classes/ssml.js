@@ -2680,58 +2680,75 @@ class SSML {
     }
 
 
-    itemAvailability(){
-        let form = "<input type='date' class='form-control rounded-0' id='as_of_field' >"
-        amodal.setBodyHtml(form)
-        amodal.setFooterHtml(`<button  id='ret_avai' class='btn btn-success rounded-0'>RETRIEVE</button>`)
-        amodal.show()
+    async itemAvailability(){
 
-        $('#ret_avai').click(async function(){
-            if(anton.validateInputs(['as_of_field'])){
-                let as_of = $('#as_of_field').val()
-                loader.show()
-                let payload = {
-                    module:'item_availability',
-                    data:{'as_of':as_of}
-                }
-                console.table(payload)
-                await api.v2('VIEW',payload,
-                    '/ssml/api/').then(response => {
-                
-                    if(anton.IsRequest(response)){
-                        let data = response.message
-                        console.table(data)
-                        let json = data.data
-                        let html = ``;
-                        for(let x = 0; x < json.length; x++){
-                            let item = json[x];
-                            html += `<tr>
-                                <td>${item.name}</td>
-                                <td>${item.stock_qty}</td>
-                                <td>${item.value}</td>
-                                <td>${item.total_amount}</td>
-                            </tr>`
-        
-                        }
-                        amodal.setBodyHtml(`<table class='table table-bordered table-stripped table-hover'><thead><tr><th>Name</th><th>Stock Qty</th><th>Value</th><th>Total Amount</th></tr></thead><tbody>${html}</tbody></table>`)
-                        amodal.setTitleText('Item Availability')
-                        amodal.setSize('L')
-                        amodal.show()
-                        amodal.setFooterHtml(`<a href='/${data.file}' class='btn btn-primary' target='_blank' id='export_pdf'>Export PDF</a>`)
-                        loader.hide()
-                    } else {
-                        kasa.response(response)
-                        loader.hide()
+        // get all locations
+        await ssml.getLocations().then(loc_res => {
+            let locs = [];
+            loc_res.message.map(element => {
+
+                locs.push({val:element.loc_id,desc:element.name})
+            })
+            let form = ``
+            form += fom.selectv2('location',locs,'',true)
+            form += fom.date('as_of_field','',true)
+            form += fom.selectv2('stock_only',[{val:'yes',desc:'YES'},{val:'no',desc:'NO'}],'',true)
+            amodal.setBodyHtml(form)
+            amodal.setFooterHtml(`<button  id='ret_avai' class='btn btn-success rounded-0'>RETRIEVE</button>`)
+            amodal.show()
+
+            $('#ret_avai').click(async function(){
+                let locationName = $('#location option:selected').text();
+
+                if(anton.validateInputs(['as_of_field','location','stock_only'])){
+                    let as_of = $('#as_of_field').val()
+                    loader.show()
+                    let payload = {
+                        module:'item_availability',
+                        data:anton.Inputs(['as_of_field','location','stock_only'])
                     }
-                }).catch(error => {
-                    kasa.error(error)
-                    loader.hide()
-                })
-            } else {
-                kasa.error("Please Fill Form")
-            }
-            
-        })
+                    console.table(payload)
+                    await api.v2('VIEW',payload,
+                        '/ssml/api/').then(response => {
+
+                        if(anton.IsRequest(response)){
+                            let data = response.message
+                            console.table(data)
+                            let json = data.data
+                            let html = ``;
+                            for(let x = 0; x < json.length; x++){
+                                let item = json[x];
+                                html += `<tr>
+                                    <td>${item.name}</td>
+                                    <td>${item.stock_qty}</td>
+                                    <td>${item.value}</td>
+                                    <td>${item.total_amount}</td>
+                                </tr>`
+
+                            }
+                            amodal.setBodyHtml(`<table class='table table-bordered table-stripped table-hover'><thead><tr><th>Name</th><th>Stock Qty</th><th>Value</th><th>Total Amount</th></tr></thead><tbody>${html}</tbody></table>`)
+                            amodal.setTitleText(`Item Availability - ${locationName}`)
+                            amodal.setSize('L')
+                            amodal.show()
+                            amodal.setFooterHtml(`<a href='/${data.file}' class='btn btn-primary' target='_blank' id='export_pdf'>Export PDF</a>`)
+                            loader.hide()
+                        } else {
+                            kasa.response(response)
+                            loader.hide()
+                        }
+                    }).catch(error => {
+                        kasa.error(error)
+                        loader.hide()
+                    })
+                } else {
+                    kasa.error("Please Fill Form")
+                }
+
+            })
+        }).catch(error => kasa.error(error))
+
+
+
         
     }
 

@@ -2037,7 +2037,15 @@ def interface(request):
                 elif module == 'item_availability':
                     from django.utils import timezone
                     
-                    as_of = data.get('as_of',timezone.now().date())
+                    as_of = data.get('as_of_field',timezone.now().date())
+                    loc_id = data.get('loc_id','*')
+                    stock_only = data.get('stock_only','no')
+                    print(data)
+                    if stock_only == 'yes':
+                        stock_only = True
+                    else:
+                        stock_only = False
+
                     print(data)
                     print(as_of)
                     arr = []
@@ -2063,23 +2071,27 @@ def interface(request):
 
                     materials = InventoryMaterial.objects.all().order_by('name')
                     for material in materials:
-                        total_qty = material.stock(as_of)
-                        total_amount = total_qty * material.value
-                        pdf.cell(100, 5, txt=f"{material.name[:30]}", ln=False, align="L",border=1)
-                        pdf.cell(25, 5, txt=f"{total_qty}", ln=False, align="L",border=1)
-                        pdf.cell(30, 5, txt=f"{'{:,.2f}'.format(material.value)}", ln=False, align="L",border=1)
-                        pdf.cell(30, 5, txt=f"{'{:,.2f}'.format(total_amount)}", ln=True, align="L",border=1)
+                        total_qty = material.stock(as_of,loc_id)
+                        print(total_qty,stock_only)
+                        if stock_only == True and total_qty <= 0:
+                            pass
+                        else:
+                            total_amount = total_qty * material.value
+                            pdf.cell(100, 5, txt=f"{material.name[:30]}", ln=False, align="L",border=1)
+                            pdf.cell(25, 5, txt=f"{total_qty}", ln=False, align="L",border=1)
+                            pdf.cell(30, 5, txt=f"{'{:,.2f}'.format(material.value)}", ln=False, align="L",border=1)
+                            pdf.cell(30, 5, txt=f"{'{:,.2f}'.format(total_amount)}", ln=True, align="L",border=1)
 
-                        total += total_amount
-                        tq += total_qty
-                        total_value += material.value
+                            total += total_amount
+                            tq += total_qty
+                            total_value += material.value
 
-                        arr.append({
-                            'name':material.name,
-                            'stock_qty':total_qty,
-                            'value':material.value,
-                            'total_amount':total_amount
-                        })
+                            arr.append({
+                                'name':material.name,
+                                'stock_qty':total_qty,
+                                'value':material.value,
+                                'total_amount':total_amount
+                            })
                         
 
                     file_name = f"Item Availability As Of {as_of}.pdf"
