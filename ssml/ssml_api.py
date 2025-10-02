@@ -778,7 +778,15 @@ def interface(request):
                 try:
                 
                     next_no = TransferHd.objects.all().last().pk + 1 if TransferHd.objects.all().count() > 0 else 1
-                    entry_no = f'TR-{next_no}'
+                    # Extract month and year from entry_date 
+                    entry_month = entry_date.strftime("%m")
+                    entry_year = entry_date.strftime("%Y")
+
+                    # Add month and year to entry_no
+                    entry_no = f'TR-{entry_month}{entry_year}-{next_no}'
+
+                    print(entry_no)
+
 
                     TransferHd.objects.create(
                         loc_fr=loc_fr,

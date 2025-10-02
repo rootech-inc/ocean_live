@@ -330,7 +330,7 @@ class Logistics {
 
 
         $('#save_new_driver').on('click',async function(){
-            let ids = ['user','mypk','image','license_number','license']
+            let ids = ['user','mypk','image','license_number']
             if(anton.validateInputs(ids)){
                 let payload = {
                     module:'driver',

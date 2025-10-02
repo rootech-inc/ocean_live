@@ -476,6 +476,24 @@ class Loader {
     }
 }
 
+class Cookies{
+    getCookie(name) {
+        let value = `; ${document.cookie}`;
+        let parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    setCookie(name, value, days) {
+        let expires = '';
+        if (days) {
+            let date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = `; expires=${date.toUTCString()}`;
+        }
+        document.cookie = `${name}=${value}${expires}; path=/`;
+    }
+}
+
 const loader = new Loader();
 const rops = new ReportCard();
 const card = new reportCard();
@@ -483,6 +501,7 @@ const linecomment = new LineComment();
 const kasa = new Kasa();
 const anton = new Anton();
 const lincal = new LineCalculate()
+const cookies = new Cookies()
 
 $(document).ready(function () {
     $('.grab_link').click(function () {

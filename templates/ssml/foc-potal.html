@@ -4,10 +4,29 @@
 
 {% block body %}
 
+    <style>
+        .token-input{
+            width: 40px;
+            height: 40px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+
+            font-size: 16px;
+        }
+    </style>
+
+    <div id="content">
+
+    </div>
 
 
 
     <script>
+
+        let stage = cookies.getCookie('stage')
+        console.log(stage)
+
         let legend1 =  `
             <h1 class="mt-4">Contractor Dashboard</h1>
 
@@ -161,6 +180,37 @@
     </div>
         `;
 
+        let token_code = `
+             <div class="container h-100">
+              <div class="row justify-content-center h-100 d-flex align-items-center">
+                <div class="col-md-6 col-lg-4">
+                  <div class="card shadow-sm" style="border-radius:16px;">
+                    <div class="card-body p=2 text-center p-4">
+                      <h5 class="mb-3">Enter OTP</h5>
+                      <p class="text-muted mb-4" style="font-size:14px;">We sent you a 6-digit OTP</p>
+
+                      <div class="d-flex flex-wrap justify-content-between overflow-hidden">
+                        <input type="password" class="form-control token-input" maxlength="1">
+                        <input type="password" class="form-control token-input" maxlength="1">
+                        <input type="password" class="form-control token-input" maxlength="1">
+                        <input type="password" class="form-control token-input" maxlength="1">
+                        <input type="password" class="form-control token-input" maxlength="1">
+                        <input type="password" class="form-control token-input" maxlength="1">
+                      </div>
+
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+        `
+
+        if(stage === 'auth'){
+            $('#content').html(auth_html)
+        } else if(stage === 'verify_token'){
+            $('#content').html(token_code)
+        }
+
 
 
         $('#sendCode').click(async function(){
@@ -168,13 +218,47 @@
             await ssml.focGetOTP(phone).then(res => {
                 if(anton.IsRequest(res)){
 
-                   // otp auth page
+                    cookies.setCookie('stage','verify_token',1)
+                    cookies.setCookie('phone',phone,1)
+                    $('#content').html(token_code)
                 } else {
                     kasa.response(res)
                 }
             }).catch(error => {
                 kasa.info(error)})
         })
+
+
+        $(document).ready(function(){
+          $('.token-input').on('input', function(){
+            this.value = this.value.replace(/[^0-9]/g,''); // digits only
+            if(this.value.length === 1){
+              $(this).next('.token-input').focus();
+            }
+            // if it's the last input and filled, trigger function
+            if($(this).is(':last-child') && this.value.length === 1){
+              verifyToken();
+            }
+          });
+
+          $('.token-input').on('keydown', function(e){
+            if(e.key === "Backspace" && this.value === ''){
+              $(this).prev('.token-input').focus();
+            }
+          });
+        });
+
+        function verifyToken(){
+          let code = '';
+          $('.token-input').each(function(){
+            code += $(this).val();
+          });
+          if(code.length === 6){
+            alert("Entered Code: " + code);
+            // you can replace with AJAX call
+          }
+        }
+
     </script>
 
 {% endblock %}
