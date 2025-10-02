@@ -1542,8 +1542,8 @@ class TransferTr(models.Model):
     total_qty = models.DecimalField(max_digits=20,decimal_places=2,default=0.00)
     diff_qty = models.DecimalField(max_digits=20,decimal_places=2,default=0.00)
 
-    class Meta:
-        unique_together = (('entry','material'),)
+    # class Meta:
+    #     unique_together = (('entry','material'),)
 
     def obj(self):
         return {

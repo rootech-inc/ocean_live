@@ -813,7 +813,7 @@ def interface(request):
                         mt = InventoryMaterial.objects.get(barcode=transaction.get('barcode'))
 
 
-                        if TransferTr.objects.filter(entry_hd=hd, material=mt).exists():
+                        if TransferTr.objects.filter(entry=hd, material=mt).exists():
                             pass
                         else:
 
