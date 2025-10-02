@@ -811,15 +811,21 @@ def interface(request):
                     for transaction in transactions:
                         print(transaction)
                         mt = InventoryMaterial.objects.get(barcode=transaction.get('barcode'))
-                        TransferTr.objects.create(
-                            entry=hd,
-                            material=mt,
-                            name=mt.name,
-                            barcode=mt.barcode,
-                            oum=transaction.get('oum'),
-                            pack_qty=transaction.get('pack_qty'),
-                            sent_qty=transaction.get('sent_qty')
-                        )
+
+
+                        if TransferTr.objects.filter(entry_hd=hd, material=mt).exists():
+                            pass
+                        else:
+
+                            TransferTr.objects.create(
+                                entry=hd,
+                                material=mt,
+                                name=mt.name,
+                                barcode=mt.barcode,
+                                oum=transaction.get('oum'),
+                                pack_qty=transaction.get('pack_qty'),
+                                sent_qty=transaction.get('sent_qty')
+                            )
 
                     
                     success_response['message'] = "Transfer Created Successfully"
