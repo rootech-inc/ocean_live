@@ -778,12 +778,20 @@ def interface(request):
                 try:
                 
                     next_no = TransferHd.objects.all().last().pk + 1 if TransferHd.objects.all().count() > 0 else 1
-                    # Extract month and year from entry_date 
-                    entry_month = entry_date.strftime("%m")
-                    entry_year = entry_date.strftime("%Y")
+
+                    from datetime import datetime
+
+                    entry_date_str = hdd.get('entry_date')  # e.g. "2025-10-02"
+
+                    # Convert string to datetime (assuming format YYYY-MM-DD)
+                    entry_date = datetime.strptime(entry_date_str, "%Y-%m-%d").date()
+
+                    # Extract month and day
+                    month = entry_date.month
+                    day = entry_date.day
 
                     # Add month and year to entry_no
-                    entry_no = f'TR{entry_month}{entry_year}-{next_no}'
+                    entry_no = f'TR{month}{day}-{next_no}'
 
                     print(entry_no)
 
