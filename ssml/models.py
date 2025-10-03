@@ -255,8 +255,15 @@ class Contractor(models.Model):
     code = models.CharField(max_length=255, unique=False, null=True, blank=True)
     otp = models.CharField(max_length=6, null=True, blank=True)
 
+
     def __str__(self):
         return self.company
+
+    def can_work(self):
+        if ContractorError.objects.filter(contractor=self,is_cleared=False).exists():
+            return False
+        else:
+            return True
 
     def error_limit(self):
         return {
@@ -435,6 +442,7 @@ class Contractor(models.Model):
             'gh_post_code':self.gh_post_code,
             'gh_card_no':self.gh_card_no,
             'code':self.code,
+            'can_work':self.can_work(),
         }
 
     def obj(self):
@@ -464,6 +472,7 @@ class Contractor(models.Model):
             # 'matched':self.matched(),
             'ledger':0, #self.ledger_sum(),
             'code':self.code,
+            'can_work':self.can_work()
             
         }
 

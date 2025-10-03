@@ -2015,19 +2015,6 @@ def interface(request):
                         pdf.cell(65, 5, txt=f"{meter.contractor.company[:35]}", ln=True, align="L",border=1)
                         ln += 1
 
-                    
-
-                    
-                    
-
-
-
-
-                    
-
-                    
-                    
-                    
                     file_name = f"Daily Report {day_date}.pdf"
                     file = f"static/general/tmp/{file_name}"
                     pdf.output(file)
@@ -2037,7 +2024,7 @@ def interface(request):
                 elif module == 'item_availability':
                     from django.utils import timezone
                     
-                    as_of = data.get('as_of_field',timezone.now().date())
+                    as_of = data.get('as_of_field   ',timezone.now().date())
                     loc_id = data.get('location','*')
                     stock_only = data.get('stock_only','no')
                     print(data)

@@ -27,6 +27,15 @@
                         </div>
 
                         <div class="form-group mb-3">
+                            <label for="mt_location">Location</label>
+                            <select required class="form-control" id="mt_location" name="mt_location">
+                                {% for mt_location in locations %}
+                                    <option value="{{ mt_location.id }}">{{ mt_location.loc_name | slice:":20" }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-3">
                             <label for="meter">Meter</label>
                             <input required type="text" class="form-control" id="meter" name="meter">
                         </div>
@@ -44,6 +53,9 @@
                             <label for="description">Description</label>
                             <textarea required class="form-control" id="description" name="description"></textarea>
                         </div>
+
+
+                    
                         <button type="submit" class="btn btn-primary">Add Contractor Error</button>
                     </form>
                 </div>
@@ -102,4 +114,8 @@
                     
                     
     </div>
+
+    <script>
+
+    </script>
 {% endblock %}

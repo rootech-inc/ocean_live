@@ -381,13 +381,29 @@ def contractor_errors(request):
     context = {
         'page': page,
         'contractor_errors': ContractorError.objects.all(),
-        'contractors': Contractor.objects.all().order_by('company')
+        'contractors': Contractor.objects.all().order_by('company'),
+        'locations':Location.objects.all().order_by('loc_id')
     }
     return render(request, 'ssml/contractor_errors.html', context)
 
 @login_required
 def save_contractor_error(request):
     if request.method == 'POST':
+        meter_no = request.POST.get('meter')
+        location = Location.objects.get(pk=request.POST.get('mt_location'))
+
+        print(request.POST)
+
+    # add or get meter
+        if not Meter.objects.filter(meter_no=meter_no).exists():
+            Meter.objects.create(
+                meter_no=meter_no,
+                contractor=Contractor.objects.get(pk=request.POST.get('contractor')),
+                created_by=request.user,
+                location=location
+            )
+
+
         form = ContractorErrorForm(request.POST)
         if form.is_valid():
             form.save()

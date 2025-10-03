@@ -142,9 +142,15 @@
             if(anton.IsRequest(res)){
                 let contractors = res.message;
                 console.table(contractors);
-                let contractor_options = '';
+                let contractor_options = `<option disabled selected value="">--- Select Contractor ---</option>`;
                 contractors.forEach((contractor,index)=>{
-                    contractor_options += `<option value="${contractor.id}">${contractor.company}</option>`;
+                    console.log(contractor);
+                    if(contractor.can_work){
+                        contractor_options += `<option value="${contractor.id}">${contractor.company}</option>`;
+                    } else {
+                        contractor_options += `<option disabled value="disabled_to_issue"> ${contractor.company}</option>`;
+                    }
+
                 });
                 $("#contractor").html(contractor_options);
             } else {
