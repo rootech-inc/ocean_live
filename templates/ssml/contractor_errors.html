@@ -102,7 +102,7 @@
                                 </button>
                                 <ul class="dropdown-menu" aria-labelledby="actionDropdown{{ error.id }}">
                                     <li><a class="dropdown-item" href="javascript:void(0)">View</a></li>
-                                    <li><a class="dropdown-item" href="javascript:void(0)">Edit</a></li>
+                                    <li><a class="dropdown-item clear_error" data-pk="{{ error.pk }}" href="javascript:void(0)">Clear</a></li>
                                     <li><a class="dropdown-item" href="javascript:void(0)">Delete</a></li>
                                 </ul>
                             </div>
@@ -116,6 +116,42 @@
     </div>
 
     <script>
+        $(document).ready(function() {
+            $('.clear_error').click(function() {
+                let pk = $(this).data('pk')
 
+                let form = fom.textarea('remarks',3,true)
+                amodal.setBodyHtml(form)
+                amodal.setTitleText('Clear Contractor Error')
+                amodal.setFooterHtml(`<button class="btn btn-primary" id="clear_error_ct">Clear</button>`)
+                amodal.show()
+
+                $('#clear_error_ct').click(async function() {
+                    let fields = ['remarks','mypk']
+
+                    if(anton.validateInputs(fields)){
+                        let payload = {
+                            module: 'clear_contractor_error',
+                            data:anton.Inputs(fields),
+                        }
+
+                        payload['data']['pk'] = pk
+
+                        await api.v2('PATCH',payload,'/ssml/api/').then(response => {
+                             kasa.response(response)
+                            if(anton.IsRequest(response)){
+
+                                amodal.hide()
+                                location.reload()
+                            }
+
+                        }).catch(error => {
+                            kasa.error(error)
+                        })
+                    }
+                })
+
+            })
+        })
     </script>
 {% endblock %}

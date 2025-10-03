@@ -2255,6 +2255,21 @@ def interface(request):
                 material.save()
                 success_response['message'] = "Material Updated Successfully"
 
+            elif module == 'clear_contractor_error':
+                from django.utils import timezone
+                pk = data.get('pk')
+                user = User.objects.get(pk=data.get('mypk'))
+                remarks = data.get('remarks')
+
+                ContractorError.objects.filter(pk=pk).update(
+                    is_cleared=True,
+                    cleared_by=user,
+                    cleared_remarks=remarks,
+                    cleared_at=timezone.now()
+                )
+                success_response['message'] = "Contractor Error Cleared Successfully"
+                response = success_response
+
             elif module == 'location_default':
                 print(data)
                 Location.objects.all().update(is_default=False)
