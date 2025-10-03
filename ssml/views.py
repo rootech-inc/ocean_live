@@ -5,7 +5,8 @@ from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-from admin_panel.models import Emails, Locations, BusinessEntityTypes,MailSenders, MailQueues,MailAttachments
+from admin_panel.models import Emails, Locations, BusinessEntityTypes, MailSenders, MailQueues, MailAttachments, Sms, \
+    SmsApi
 from admin_panel.anton import make_md5_hash
 
 
@@ -392,7 +393,7 @@ def save_contractor_error(request):
         meter_no = request.POST.get('meter')
         location = Location.objects.get(pk=request.POST.get('mt_location'))
 
-        print(request.POST)
+        contractor = Contractor.objects.get(pk=request.POST.get('contractor'))
 
     # add or get meter
         if not Meter.objects.filter(meter_no=meter_no).exists():
@@ -406,7 +407,13 @@ def save_contractor_error(request):
 
         form = ContractorErrorForm(request.POST)
         if form.is_valid():
-            form.save()
+            error = form.save()
+            # make sms 
+            Sms.objects.create(
+                api=SmsApi.objects.get(is_default=True),
+                to=contractor.phone,
+                message=f"Error reported for meter {meter_no}. Issue: {error.description}. Please check and resolve before coming for new materials \nPay N Smile."
+            )
             return redirect('contractor_errors')
         else:
             return HttpResponse(form.errors)
