@@ -2038,7 +2038,7 @@ def interface(request):
                     from django.utils import timezone
                     
                     as_of = data.get('as_of_field',timezone.now().date())
-                    loc_id = data.get('loc_id','*')
+                    loc_id = data.get('location','*')
                     stock_only = data.get('stock_only','no')
                     print(data)
                     if stock_only == 'yes':
@@ -2072,10 +2072,17 @@ def interface(request):
                     materials = InventoryMaterial.objects.all().order_by('name')
                     for material in materials:
                         total_qty = material.stock(as_of,loc_id)
-                        print(total_qty,stock_only)
-                        if stock_only == True and total_qty <= 0:
-                            pass
+                        print(total_qty,as_of,loc_id)
+                        ql = False
+                        if stock_only :
+                            if total_qty > 0:
+                                ql = True
+                            else:
+                                ql = False
                         else:
+                            ql = True
+
+                        if ql:
                             total_amount = total_qty * material.value
                             pdf.cell(100, 5, txt=f"{material.name[:30]}", ln=False, align="L",border=1)
                             pdf.cell(25, 5, txt=f"{total_qty}", ln=False, align="L",border=1)
