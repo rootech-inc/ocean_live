@@ -2727,7 +2727,7 @@ class SSML {
 
                             }
                             amodal.setBodyHtml(`<table class='table table-bordered table-stripped table-hover'><thead><tr><th>Name</th><th>Stock Qty</th><th>Value</th><th>Total Amount</th></tr></thead><tbody>${html}</tbody></table>`)
-                            amodal.setTitleText(`Item Availability - ${locationName}`)
+                            amodal.setTitleText(`Item Availability -- ${locationName}`)
                             amodal.setSize('L')
                             amodal.show()
                             amodal.setFooterHtml(`<a href='/${data.file}' class='btn btn-primary' target='_blank' id='export_pdf'>Export PDF</a>`)
